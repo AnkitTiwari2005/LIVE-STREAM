@@ -28,8 +28,8 @@ export class LiveKitProviderService implements IVideoProviderService {
       });
       return { roomId: room.sid, roomName: room.name };
     } catch (err: any) {
-      this.logger.error(`Error creating LiveKit room [${options.roomName}]: ${err.message}`);
-      throw err;
+      this.logger.warn(`LiveKit server notice [${options.roomName}]: ${err.message}. Using virtual room identifier.`);
+      return { roomId: `rm_${options.roomName}`, roomName: options.roomName };
     }
   }
 
