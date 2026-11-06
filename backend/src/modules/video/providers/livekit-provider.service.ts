@@ -12,7 +12,8 @@ export class LiveKitProviderService implements IVideoProviderService {
   private roomService: RoomServiceClient;
 
   constructor() {
-    const livekitHost = process.env.LIVEKIT_HOST || 'http://livekit:7880';
+    const rawHost = process.env.LIVEKIT_URL || process.env.LIVEKIT_HOST || 'http://livekit:7880';
+    const livekitHost = rawHost.startsWith('wss://') ? rawHost.replace('wss://', 'https://') : rawHost;
     const apiKey = process.env.LIVEKIT_API_KEY || 'pooja';
     const apiSecret = process.env.LIVEKIT_API_SECRET || 'secret';
 

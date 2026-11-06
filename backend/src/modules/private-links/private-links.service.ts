@@ -235,7 +235,7 @@ export class PrivateLinksService {
     return {
       token,
       sessionId: session.id,
-      serverUrl: process.env.NEXT_PUBLIC_LIVEKIT_URL || 'wss://live.platform-domain.com',
+      serverUrl: process.env.NEXT_PUBLIC_LIVEKIT_URL || process.env.LIVEKIT_URL || 'wss://shubhdarshan-g8vupfey.livekit.cloud',
       streamTitle: link.stream.title,
       streamerName: link.stream.streamer.name,
     };

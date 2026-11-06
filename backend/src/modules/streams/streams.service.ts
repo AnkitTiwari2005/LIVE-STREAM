@@ -125,7 +125,7 @@ export class StreamsService {
     return {
       stream: updatedStream,
       publisherToken,
-      serverUrl: process.env.NEXT_PUBLIC_LIVEKIT_URL || 'wss://live.platform-domain.com',
+      serverUrl: process.env.NEXT_PUBLIC_LIVEKIT_URL || process.env.LIVEKIT_URL || 'wss://shubhdarshan-g8vupfey.livekit.cloud',
     };
   }
 
@@ -231,7 +231,7 @@ export class StreamsService {
 
     return {
       token,
-      serverUrl: process.env.NEXT_PUBLIC_LIVEKIT_URL || 'wss://live.platform-domain.com',
+      serverUrl: process.env.NEXT_PUBLIC_LIVEKIT_URL || process.env.LIVEKIT_URL || 'wss://shubhdarshan-g8vupfey.livekit.cloud',
       streamTitle: stream.title,
       streamerName: stream.streamer.name,
       quality: stream.videoQuality,
