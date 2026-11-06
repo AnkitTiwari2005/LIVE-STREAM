@@ -270,4 +270,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       durationMinutes: minutes,
     });
   }
+
+  broadcastDakshina(streamId: string, dakshina: any) {
+    if (this.server) {
+      this.server.to(`stream:${streamId}`).emit('stream:dakshina_received', dakshina);
+    }
+  }
 }

@@ -13,7 +13,9 @@ import { Request } from 'express';
 import { WebhookReceiver } from 'livekit-server-sdk';
 import { PrismaService } from '../../../database/prisma.service';
 import { StreamStatus } from '@prisma/client';
+import { Public } from '../../../common/decorators/public.decorator';
 
+@Public()
 @Controller('webhooks/livekit')
 export class LiveKitWebhookController {
   private readonly logger = new Logger(LiveKitWebhookController.name);

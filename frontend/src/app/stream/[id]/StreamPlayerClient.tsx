@@ -12,6 +12,7 @@ import { Track } from 'livekit-client';
 import { io, Socket } from 'socket.io-client';
 import { ChatWidget } from '@/components/ChatWidget';
 import { SpiritualReactions } from '@/components/SpiritualReactions';
+import { DakshinaModal } from '@/components/DakshinaModal';
 import { Users, AlertCircle, Share2, Heart, Sparkles } from 'lucide-react';
 
 export default function StreamPlayerClient() {
@@ -24,6 +25,8 @@ export default function StreamPlayerClient() {
   const [error, setError] = useState<string | null>(null);
   const [streamEnded, setStreamEnded] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [dakshinaModalOpen, setDakshinaModalOpen] = useState(false);
+  const [latestDakshina, setLatestDakshina] = useState<any>(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('pooja_user');
@@ -42,7 +45,13 @@ export default function StreamPlayerClient() {
     });
     setSocket(socketInstance);
 
+    socketInstance.on('stream:dakshina_received', (dakshina: any) => {
+      setLatestDakshina(dakshina);
+      setTimeout(() => setLatestDakshina(null), 8000);
+    });
+
     return () => {
+      socketInstance.off('stream:dakshina_received');
       socketInstance.disconnect();
     };
   }, []);
@@ -140,6 +149,20 @@ export default function StreamPlayerClient() {
                 </div>
               )}
 
+              {/* Floating Auspicious Dakshina Alert */}
+              {latestDakshina && (
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-gradient-to-r from-amber-500 via-yellow-400 to-orange-500 text-stone-950 px-4 py-2 rounded-2xl shadow-2xl flex items-center gap-2.5 animate-bounce border-2 border-yellow-200">
+                  <span className="text-xl">🪔</span>
+                  <div className="text-xs">
+                    <span className="font-extrabold">{latestDakshina.devoteeName}</span> offered <span className="font-black">₹{latestDakshina.amount}</span> Dakshina!
+                    {latestDakshina.prayerMessage && (
+                      <div className="text-[10px] font-semibold opacity-90 truncate max-w-xs">&ldquo;{latestDakshina.prayerMessage}&rdquo;</div>
+                    )}
+                  </div>
+                  <span className="text-xl">🙏</span>
+                </div>
+              )}
+
               {/* Floating Spiritual Reactions Overlay */}
               <div className="absolute bottom-4 left-4 z-20">
                 <SpiritualReactions socket={socket} streamId={id} />
@@ -164,12 +187,21 @@ export default function StreamPlayerClient() {
                     <p className="text-xs text-stone-400 mt-1 line-clamp-2">{stream.description}</p>
                   </div>
 
-                  <button
-                    onClick={handleShare}
-                    className="flex items-center gap-2 px-3.5 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold rounded-xl transition-all shadow"
-                  >
-                    <Share2 className="w-4 h-4" /> Share
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setDakshinaModalOpen(true)}
+                      className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-stone-950 text-xs font-bold rounded-xl transition-all shadow-md shadow-orange-950/40"
+                    >
+                      <span>🪔</span>
+                      <span>Arpan Dakshina</span>
+                    </button>
+                    <button
+                      onClick={handleShare}
+                      className="flex items-center gap-2 px-3.5 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold rounded-xl transition-all shadow"
+                    >
+                      <Share2 className="w-4 h-4" /> Share
+                    </button>
+                  </div>
                 </div>
 
                 <div className="mt-4 flex items-center justify-between text-xs text-stone-300">
@@ -199,6 +231,16 @@ export default function StreamPlayerClient() {
             />
           </div>
         </div>
+      )}
+
+      {stream && (
+        <DakshinaModal
+          isOpen={dakshinaModalOpen}
+          onClose={() => setDakshinaModalOpen(false)}
+          streamId={id}
+          streamerName={stream.streamer?.name || 'Vedic Pandit'}
+          currentUser={currentUser}
+        />
       )}
     </div>
   );

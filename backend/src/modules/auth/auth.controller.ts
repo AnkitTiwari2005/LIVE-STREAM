@@ -109,6 +109,19 @@ export class AuthController {
     return user;
   }
 
+  @Post('delete-account')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Self-serve account and personal data erasure under DPDP Act 2023' })
+  async deleteAccount(
+    @CurrentUser('id') userId: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.deleteAccount(userId);
+    res.clearCookie('access_token', { path: '/' });
+    res.clearCookie('refresh_token', { path: '/api/v1/auth/refresh' });
+    return result;
+  }
+
   private setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
     const isProd = process.env.NODE_ENV === 'production';
 

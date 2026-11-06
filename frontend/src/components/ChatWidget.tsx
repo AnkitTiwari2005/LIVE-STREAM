@@ -68,12 +68,31 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser }: ChatWi
       setTimeout(() => setErrorBanner(null), 4000);
     });
 
+    socket.on('stream:dakshina_received', (dakshina: any) => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `dakshina_${Date.now()}_${Math.random()}`,
+          message: `🚩 Offered ₹${dakshina.amount} Sacred Dakshina${dakshina.prayerMessage ? `: "${dakshina.prayerMessage}"` : ''} 🙏`,
+          createdAt: new Date().toISOString(),
+          user: {
+            id: '',
+            name: `${dakshina.devoteeName}${dakshina.gotra ? ` (${dakshina.gotra})` : ''}`,
+            role: 'DEVOTEE',
+          },
+          isPinned: false,
+          isDakshina: true,
+        } as any,
+      ]);
+    });
+
     return () => {
       socket.off('chat:history');
       socket.off('chat:message');
       socket.off('chat:message_deleted');
       socket.off('chat:message_pinned');
       socket.off('chat:error');
+      socket.off('stream:dakshina_received');
     };
   }, [socket, streamId]);
 
@@ -140,52 +159,72 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser }: ChatWi
 
       {/* Message List */}
       <div className="flex-1 p-3 overflow-y-auto space-y-2.5 text-xs">
-        {messages.map((msg) => (
-          <div key={msg.id} className="group flex items-start justify-between gap-2 p-1.5 rounded hover:bg-stone-800/60 transition-colors">
-            <div>
-              <span
-                className={`font-semibold mr-1.5 ${
-                  msg.user.role === 'STREAMER'
-                    ? 'text-orange-400'
-                    : msg.user.role === 'ADMIN'
-                    ? 'text-amber-400'
-                    : 'text-stone-300'
-                }`}
+        {messages.map((msg) => {
+          const isDakshina = (msg as any).isDakshina;
+          if (isDakshina) {
+            return (
+              <div
+                key={msg.id}
+                className="p-2 rounded-xl bg-gradient-to-r from-amber-950/70 via-orange-950/70 to-yellow-950/70 border border-amber-600/40 shadow-md text-amber-200"
               >
-                {msg.user.role === 'STREAMER' && '🕉️ '}
-                {msg.user.name}:
-              </span>
-              <span className="text-stone-100 break-words">{msg.message}</span>
-            </div>
-
-            {/* Moderation Controls (Streamer / Admin only) */}
-            {isStreamer && (
-              <div className="hidden group-hover:flex items-center gap-1 shrink-0 opacity-80">
-                <button
-                  onClick={() => handlePin(msg.id)}
-                  title="Pin message"
-                  className="p-1 hover:text-amber-400"
-                >
-                  <Pin className="w-3 h-3" />
-                </button>
-                <button
-                  onClick={() => handleDelete(msg.id)}
-                  title="Delete message"
-                  className="p-1 hover:text-red-400"
-                >
-                  <Trash2 className="w-3 h-3" />
-                </button>
-                <button
-                  onClick={() => handleMute(msg.user.id)}
-                  title="Mute user for 15 mins"
-                  className="p-1 hover:text-orange-400"
-                >
-                  <VolumeX className="w-3 h-3" />
-                </button>
+                <div className="flex items-center gap-1.5 font-bold text-amber-300 mb-0.5">
+                  <span>🪔</span>
+                  <span>{msg.user.name}</span>
+                </div>
+                <div className="text-white font-medium pl-5 text-[11px] leading-relaxed">
+                  {msg.message}
+                </div>
               </div>
-            )}
-          </div>
-        ))}
+            );
+          }
+
+          return (
+            <div key={msg.id} className="group flex items-start justify-between gap-2 p-1.5 rounded hover:bg-stone-800/60 transition-colors">
+              <div>
+                <span
+                  className={`font-semibold mr-1.5 ${
+                    msg.user.role === 'STREAMER'
+                      ? 'text-orange-400'
+                      : msg.user.role === 'ADMIN'
+                      ? 'text-amber-400'
+                      : 'text-stone-300'
+                  }`}
+                >
+                  {msg.user.role === 'STREAMER' && '🕉️ '}
+                  {msg.user.name}:
+                </span>
+                <span className="text-stone-100 break-words">{msg.message}</span>
+              </div>
+
+              {/* Moderation Controls (Streamer / Admin only) */}
+              {isStreamer && (
+                <div className="hidden group-hover:flex items-center gap-1 shrink-0 opacity-80">
+                  <button
+                    onClick={() => handlePin(msg.id)}
+                    title="Pin message"
+                    className="p-1 hover:text-amber-400"
+                  >
+                    <Pin className="w-3 h-3" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(msg.id)}
+                    title="Delete message"
+                    className="p-1 hover:text-red-400"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                  <button
+                    onClick={() => handleMute(msg.user.id)}
+                    title="Mute user for 15 mins"
+                    className="p-1 hover:text-orange-400"
+                  >
+                    <VolumeX className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
         <div ref={messagesEndRef} />
       </div>
 

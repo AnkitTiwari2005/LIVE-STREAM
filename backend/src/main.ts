@@ -109,6 +109,13 @@ Sitemap: https://darkturquoise-louse-359917.hostingersite.com/sitemap.xml
 </urlset>`);
   });
 
+  // Mount public uploads directory
+  const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  expressApp.use('/uploads', express.static(uploadsDir, { maxAge: '30d' }));
+
   // Unified Next.js Frontend Static Client Serving
   const clientDir = path.join(process.cwd(), 'public', 'client');
   if (fs.existsSync(clientDir)) {
@@ -119,8 +126,8 @@ Sitemap: https://darkturquoise-louse-359917.hostingersite.com/sitemap.xml
 
     // SPA Page Route Handler
     expressApp.get('*', (req: any, res: any, next: any) => {
-      // Pass all /api and /socket.io requests to NestJS
-      if (req.path.startsWith('/api') || req.path.startsWith('/socket.io')) {
+      // Pass all /api, /socket.io and /uploads requests
+      if (req.path.startsWith('/api') || req.path.startsWith('/socket.io') || req.path.startsWith('/uploads')) {
         return next();
       }
 

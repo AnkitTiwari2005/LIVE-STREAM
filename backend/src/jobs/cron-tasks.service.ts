@@ -26,7 +26,7 @@ export class CronTasksService {
    */
   @Cron(CronExpression.EVERY_30_SECONDS)
   async handleStreamDisconnectWatchdog() {
-    if (process.env.RUN_CRONS !== 'true') return;
+    if (process.env.RUN_CRONS === 'false') return;
 
     const twoMinutesAgo = new Date(Date.now() - 120 * 1000);
 
@@ -61,7 +61,7 @@ export class CronTasksService {
    */
   @Cron(CronExpression.EVERY_MINUTE)
   async reconcileLiveRooms() {
-    if (process.env.RUN_CRONS !== 'true') return;
+    if (process.env.RUN_CRONS === 'false') return;
 
     const activeLiveKitRooms = await this.videoProvider.listActiveRooms();
     const liveKitRoomNames = new Set(activeLiveKitRooms.map((r) => r.name));
@@ -95,7 +95,7 @@ export class CronTasksService {
    */
   @Cron(CronExpression.EVERY_MINUTE)
   async dispatchReminders() {
-    if (process.env.RUN_CRONS !== 'true') return;
+    if (process.env.RUN_CRONS === 'false') return;
     await this.remindersService.dispatch15MinuteReminders();
   }
 
@@ -107,7 +107,7 @@ export class CronTasksService {
    */
   @Cron('0 3 * * *')
   async performDataRetentionPurge() {
-    if (process.env.RUN_CRONS !== 'true') return;
+    if (process.env.RUN_CRONS === 'false') return;
 
     this.logger.log('Executing automated data retention purge...');
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);

@@ -63,6 +63,19 @@ enum ModerationActionType {
   BAN
 }
 
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum PaymentProvider {
+  RAZORPAY
+  CASHFREE
+  MOCK
+}
+
 model User {
   id                   String             @id @default(uuid())
   email                String             @unique
@@ -99,6 +112,7 @@ model User {
   moderationConducted  ModerationAction[] @relation("ActorUser")
   viewerSessions       ViewerSession[]
   blockedRecords       BlockedViewer[]    @relation("UserBlocks")
+  dakshinaOfferings    DakshinaOffering[]
 
   @@index([email])
   @@index([role, status])
@@ -170,6 +184,7 @@ model Stream {
   blockedViewers     BlockedViewer[]
   reports            Report[]         @relation("StreamReports")
   moderationActions  ModerationAction[]
+  dakshinaOfferings  DakshinaOffering[]
 
   @@index([status, visibility, scheduledAt])
   @@index([streamerId])
@@ -342,4 +357,26 @@ model StaticPage {
   title       String
   contentHtml String   @db.Text
   updatedAt   DateTime @updatedAt @db.Timestamptz
+}
+
+model DakshinaOffering {
+  id               String          @id @default(uuid())
+  streamId         String
+  stream           Stream          @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  devoteeId        String?
+  devotee          User?           @relation(fields: [devoteeId], references: [id], onDelete: SetNull)
+  devoteeName      String          @db.VarChar(100)
+  amount           Decimal         @db.Decimal(10, 2)
+  currency         String          @default("INR")
+  prayerMessage    String?         @db.VarChar(500)
+  gotra            String?         @db.VarChar(100)
+  provider         PaymentProvider @default(RAZORPAY)
+  orderId          String          @unique
+  paymentId        String?
+  status           PaymentStatus   @default(PENDING)
+  createdAt        DateTime        @default(now()) @db.Timestamptz
+  updatedAt        DateTime        @updatedAt @db.Timestamptz
+
+  @@index([streamId, status])
+  @@index([devoteeId])
 }

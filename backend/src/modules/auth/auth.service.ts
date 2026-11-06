@@ -259,4 +259,36 @@ export class AuthService {
       },
     };
   }
+
+  async deleteAccount(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    const anonymizedEmail = `deleted_${Date.now()}_${user.id.slice(0, 8)}@shubhdarshan.privacy`;
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        status: UserStatus.DELETION_REQUESTED,
+        deletedAt: new Date(),
+        passwordHash: null,
+        emailVerifyTokenHash: null,
+        email: anonymizedEmail,
+        name: 'Deleted Devotee',
+        avatarUrl: null,
+      },
+    });
+
+    await this.prisma.auditLog.create({
+      data: {
+        actorId: userId,
+        actorEmail: user.email,
+        action: 'DPDP_USER_ACCOUNT_DELETED',
+        targetResource: `User:${userId}`,
+        details: { reason: 'DPDP Act 2023 self-serve deletion request' },
+      },
+    });
+
+    return { message: 'Account and personal data successfully deleted under DPDP Act 2023.' };
+  }
 }

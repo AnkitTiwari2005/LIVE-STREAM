@@ -14,6 +14,8 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { InternalModule } from './modules/internal/internal.module';
 import { HealthModule } from './modules/health/health.module';
+import { PaymentsModule } from './modules/payments/payments.module';
+import { StorageModule } from './modules/storage/storage.module';
 
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
@@ -35,6 +37,8 @@ import { CronTasksService } from './jobs/cron-tasks.service';
     AdminModule,
     InternalModule,
     HealthModule,
+    PaymentsModule,
+    StorageModule,
   ],
   providers: [
     CronTasksService,

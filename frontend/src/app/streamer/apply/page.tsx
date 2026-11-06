@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Sparkles, CheckCircle2, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Sparkles, CheckCircle2, ShieldCheck, AlertCircle, UploadCloud, FileText } from 'lucide-react';
 
 export default function StreamerApplyPage() {
   const router = useRouter();
@@ -10,9 +10,52 @@ export default function StreamerApplyPage() {
   const [languages, setLanguages] = useState('Hindi, Sanskrit, English');
   const [specialties, setSpecialties] = useState('Vedic Pooja, Kundli Matching, Vastu Consultation');
   const [documentKey, setDocumentKey] = useState('kyc_demo_certificate.pdf');
+  const [documentUrl, setDocumentUrl] = useState<string | null>(null);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setError(null);
+    setUploadingDoc(true);
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+
+      // 1. Get presigned upload URL
+      const preRes = await fetch(`${apiUrl}/storage/presigned-url`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type || 'application/octet-stream',
+          folder: 'kyc',
+        }),
+      });
+
+      const preData = await preRes.json();
+      if (!preRes.ok) throw new Error(preData.message || 'Failed to obtain upload token');
+
+      // 2. Upload file binary
+      const upRes = await fetch(preData.uploadUrl, {
+        method: 'PUT',
+        body: file,
+      });
+
+      if (!upRes.ok) throw new Error('Failed to upload credential document');
+
+      setDocumentKey(preData.storageKey);
+      setDocumentUrl(preData.publicUrl);
+    } catch (err: any) {
+      setError(err.message || 'File upload failed');
+    } finally {
+      setUploadingDoc(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +80,7 @@ export default function StreamerApplyPage() {
           bio,
           languages: languages.split(',').map((s) => s.trim()).filter(Boolean),
           specialties: specialties.split(',').map((s) => s.trim()).filter(Boolean),
-          kycDocuments: [{ documentType: 'PAN_OR_CERTIFICATE', storageKey: documentKey }],
+          kycDocuments: [{ documentType: 'PAN_OR_CERTIFICATE', storageKey: documentKey, publicUrl: documentUrl }],
         }),
       });
 
@@ -140,18 +183,35 @@ export default function StreamerApplyPage() {
                 <br />
                 <span className="text-amber-400 font-medium">Important: Do NOT upload unmasked Aadhaar cards. Documents are deleted within 30 days of verification.</span>
               </p>
-              <input
-                type="text"
-                value={documentKey}
-                onChange={(e) => setDocumentKey(e.target.value)}
-                placeholder="Certificate reference or secure storage key"
-                className="w-full px-3 py-2 bg-stone-900 border border-stone-800 rounded-lg text-xs text-stone-300"
-              />
+
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center justify-center gap-2 p-3 border border-dashed border-stone-700 hover:border-orange-500 rounded-xl cursor-pointer bg-stone-900/60 transition">
+                  <UploadCloud className="w-4 h-4 text-orange-400" />
+                  <span className="text-xs text-stone-300">
+                    {uploadingDoc ? 'Uploading credential securely...' : 'Choose Certificate / ID Document'}
+                  </span>
+                  <input
+                    type="file"
+                    onChange={handleFileUpload}
+                    accept="image/*,application/pdf"
+                    className="hidden"
+                    disabled={uploadingDoc}
+                  />
+                </label>
+
+                {documentKey && (
+                  <div className="flex items-center gap-2 p-2 bg-stone-900 rounded-lg text-xs text-stone-300">
+                    <FileText className="w-3.5 h-3.5 text-green-400" />
+                    <span className="truncate flex-1 font-mono">{documentKey}</span>
+                    <span className="text-green-400 font-semibold text-[10px]">Attached ✓</span>
+                  </div>
+                )}
+              </div>
             </div>
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || uploadingDoc}
               className="w-full py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold rounded-xl text-sm shadow-xl transition-all disabled:opacity-50"
             >
               {loading ? 'Submitting Application...' : 'Submit Verification Profile'}
