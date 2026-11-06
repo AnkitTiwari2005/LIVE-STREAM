@@ -47,7 +47,7 @@ async function main() {
       title: 'Terms and Conditions of Service',
       contentHtml: `
         <h2>Terms of Service</h2>
-        <p>Welcome to our Pooja & Astrology Live Streaming Platform.</p>
+        <p>Welcome to Shubhdarshan - Sacred Pooja & Astrology Live Streaming Platform.</p>
         <h3>Spiritual and Astrological Disclaimer</h3>
         <p>All Pooja ceremonies, Aarti, Darshan, and astrological advice provided on this platform are for religious, spiritual, cultural, and counseling purposes only. Astrologers, pandits, and spiritual guides broadcast as independent practitioners. The platform does not warrant, verify, or guarantee any specific material, physical, health, financial, or future life outcomes.</p>
         <h3>User Conduct & Live Stream Etiquette</h3>

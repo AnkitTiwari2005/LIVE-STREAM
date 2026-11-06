@@ -5,8 +5,8 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 
 export const metadata: Metadata = {
-  title: 'Pooja & Astrology Live - Sacred Darshan & Live Consultations',
-  description: 'Connect with verified Vedic pandits and certified astrologers for live rituals, aarti, and spiritual consultations.',
+  title: 'Shubhdarshan - Sacred Pooja & Astrology Live Streaming',
+  description: 'Connect with verified Vedic pandits and certified astrologers for live rituals, aarti, and spiritual consultations on Shubhdarshan.',
 };
 
 export default function RootLayout({

@@ -1,7 +1,7 @@
 {
-  "name": "pooja-live-backend",
+  "name": "shubhdarshan-backend",
   "version": "1.0.0",
-  "description": "Backend API & Real-time Media Server for Pooja & Astrology Live Streaming Platform",
+  "description": "Backend API & Real-time Media Server for Shubhdarshan Live Streaming Platform",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\"",

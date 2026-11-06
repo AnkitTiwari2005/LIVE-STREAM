@@ -32,7 +32,7 @@ export function Navbar() {
         <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight text-white hover:opacity-90">
           <span className="text-2xl">🕉️</span>
           <span className="bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent">
-            Pooja & Astrology Live
+            Shubhdarshan
           </span>
         </Link>
 

@@ -39,8 +39,8 @@ async function bootstrap() {
 
   // Swagger OpenAPI Documentation
   const config = new DocumentBuilder()
-    .setTitle('Pooja & Astrology Live Streaming Platform API')
-    .setDescription('Self-hosted WebRTC & Live Chat Platform API for Spiritual Broadcasts')
+    .setTitle('Shubhdarshan Live Streaming Platform API')
+    .setDescription('Self-hosted WebRTC & Live Chat Platform API for Sacred Spiritual Broadcasts')
     .setVersion('1.0')
     .addBearerAuth()
     .build();

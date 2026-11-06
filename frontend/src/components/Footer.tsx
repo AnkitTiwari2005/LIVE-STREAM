@@ -11,7 +11,7 @@ export function Footer() {
             <div className="flex items-center gap-2 text-lg font-bold text-white mb-3">
               <span>🕉️</span>
               <span className="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
-                Pooja & Astrology Live
+                Shubhdarshan
               </span>
             </div>
             <p className="text-stone-400 text-xs leading-relaxed max-w-md">
@@ -57,7 +57,7 @@ export function Footer() {
         </div>
 
         <div className="mt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-stone-400 gap-2">
-          <p>© 2026 Pooja & Astrology Live. All rights reserved.</p>
+          <p>© 2026 Shubhdarshan. All rights reserved.</p>
           <p>Committed to Digital Personal Data Protection Act, 2023 compliance.</p>
         </div>
       </div>

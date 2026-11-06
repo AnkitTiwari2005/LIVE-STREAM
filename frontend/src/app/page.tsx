@@ -95,7 +95,7 @@ export default function HomePage() {
             <Sparkles className="w-3.5 h-3.5" /> Authentic Vedic Darshan & Consultation
           </div>
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4 leading-tight">
-            Sacred Pooja & Astrology <span className="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">Live Streaming</span>
+            Shubhdarshan <span className="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">Live Pooja & Darshan</span>
           </h1>
           <p className="text-stone-300 text-sm sm:text-base mb-6 leading-relaxed">
             Join verified pandits for live Aarti, Rudrabhishek, Kundli match, and personal spiritual consultations. Zero video fees, direct real-time blessings.

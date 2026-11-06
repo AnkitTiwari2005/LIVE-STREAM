@@ -153,7 +153,7 @@ export class AuthService {
     if (!user) throw new NotFoundException('User not found');
 
     const secret = authenticator.generateSecret();
-    const otpAuthUrl = authenticator.keyuri(user.email, 'PoojaPlatformAdmin', secret);
+    const otpAuthUrl = authenticator.keyuri(user.email, 'ShubhdarshanAdmin', secret);
     const qrCodeDataUrl = await qrcode.toDataURL(otpAuthUrl);
 
     // Encrypt secret with AES-256-GCM before saving

@@ -70,7 +70,7 @@ export class PrivateLinksService {
     const joinUrl = `${origin}/join/${rawTokenSlug}`;
 
     // Generate 2-part WhatsApp share text (FR-P9)
-    const whatsAppPart1 = `🙏 Namaste! You are invited to join the private live Pooja session:\n*${stream.title}*\n\n🔗 Join Link: ${joinUrl}\n\nPlease join on time. Har Har Mahadev!`;
+    const whatsAppPart1 = `🙏 Namaste! You are invited to attend our private live Pooja session on Shubhdarshan:\n*${stream.title}*\n\n🔗 Join Link: ${joinUrl}\n\nPlease join on time. Har Har Mahadev!`;
     const whatsAppPart2 = dto.password
       ? `🔑 Private Session Access Password: *${dto.password}*\n(Please do not forward this password to unauthorized guests)`
       : null;

@@ -1,4 +1,4 @@
-# Pooja & Astrology Live Streaming Platform (Phase 1)
+# Shubhdarshan - Pooja & Astrology Live Streaming Platform (Phase 1)
 > Production-hardened, self-hosted WebRTC live streaming platform designed for certified pandits and Vedic astrologers.
 
 ---

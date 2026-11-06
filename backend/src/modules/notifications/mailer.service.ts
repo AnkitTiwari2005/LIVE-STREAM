@@ -17,7 +17,7 @@ export class MailerService {
   constructor() {
     this.apiKey = process.env.BREVO_API_KEY || '';
     this.senderEmail = process.env.EMAIL_FROM_ADDRESS || 'notifications@platform-domain.com';
-    this.senderName = process.env.EMAIL_FROM_NAME || 'Pooja & Astrology Live';
+    this.senderName = process.env.EMAIL_FROM_NAME || 'Shubhdarshan Live';
   }
 
   async sendEmail(options: EmailOptions): Promise<boolean> {
@@ -61,7 +61,7 @@ export class MailerService {
     return this.sendEmail({
       to,
       toName: name,
-      subject: 'Verify your email address - Pooja & Astrology Live',
+      subject: 'Verify your email address - Shubhdarshan Live',
       htmlContent: `
         <div style="font-family: Arial, sans-serif; color: #222; max-width: 600px; margin: auto;">
           <h2 style="color: #c2410c;">🙏 Namaste ${name},</h2>
