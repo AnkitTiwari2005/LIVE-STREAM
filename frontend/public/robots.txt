@@ -1,5 +1,45 @@
+# ==============================================================================
+# Shubhdarshan - Web Crawlers & AI Agent Visibility Rules
+# ==============================================================================
+
 User-agent: *
 Allow: /
 Disallow: /join/
 Disallow: /studio/
 Disallow: /admin/
+Disallow: /api/
+
+# Explicitly grant indexing & citation access to leading AI crawlers
+User-agent: GPTBot
+Allow: /
+Disallow: /join/
+Disallow: /studio/
+Disallow: /admin/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /join/
+Disallow: /studio/
+Disallow: /admin/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /join/
+Disallow: /studio/
+Disallow: /admin/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /join/
+Disallow: /studio/
+Disallow: /admin/
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /join/
+Disallow: /studio/
+Disallow: /admin/
+
+# Sitemaps & Machine-Readable AI Knowledge Manifest
+Sitemap: https://darkturquoise-louse-359917.hostingersite.com/sitemap.xml
+Sitemap: https://darkturquoise-louse-359917.hostingersite.com/llms.txt
