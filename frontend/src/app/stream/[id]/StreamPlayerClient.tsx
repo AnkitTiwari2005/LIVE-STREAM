@@ -16,7 +16,15 @@ import { ChatWidget } from '@/components/ChatWidget';
 import { SpiritualReactions } from '@/components/SpiritualReactions';
 import { DakshinaModal } from '@/components/DakshinaModal';
 import { CoinTopupModal } from '@/components/CoinTopupModal';
-import { Users, AlertCircle, Share2, Heart, Sparkles, Coins, Zap, LogIn } from 'lucide-react';
+import { Users, AlertCircle, Share2, Sparkles, Zap } from 'lucide-react';
+import {
+  OmIcon,
+  DiyaIcon,
+  CoinIcon,
+  PranamIcon,
+  BellIcon,
+  VerifiedPanditBadge,
+} from '@/components/icons/SpiritualIcons';
 
 export default function StreamPlayerClient() {
   const { id: paramId } = useParams() as { id: string };
@@ -210,7 +218,7 @@ export default function StreamPlayerClient() {
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert('Sacred broadcast link copied to clipboard 🙏');
+      alert('Sacred broadcast link copied to clipboard!');
     }
   };
 
@@ -227,7 +235,7 @@ export default function StreamPlayerClient() {
       {remainingCoins !== null && remainingCoins <= 15 && remainingCoins > 0 && !isZeroBalance && (
         <div className="mb-4 p-3 bg-amber-950/90 border border-amber-600/70 rounded-2xl flex items-center justify-between gap-3 text-amber-200 animate-pulse shadow-lg">
           <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold">
-            <Coins className="w-4 h-4 text-amber-400" />
+            <CoinIcon size={18} />
             <span>
               Low Darshan Balance: {availableMinutes} minute(s) remaining ({remainingCoins} Coins).
             </span>
@@ -244,11 +252,14 @@ export default function StreamPlayerClient() {
       {/* Login Required Notice */}
       {loginRequired && (
         <div className="mb-6 p-6 bg-stone-900 border border-orange-500/40 rounded-3xl text-center max-w-xl mx-auto shadow-2xl">
-          <span className="text-4xl mb-3 block">🕉️</span>
+          <OmIcon size={44} className="mb-3 mx-auto" />
           <h2 className="text-xl font-bold text-white mb-2">Devotee Sign In Required</h2>
           <p className="text-stone-300 text-xs sm:text-sm mb-4">
             Join thousands of devotees receiving live blessings. Create your free account now and get{' '}
-            <span className="text-amber-400 font-extrabold">100 Free Sacred Coins</span> (= 20 minutes complimentary live darshan)!
+            <span className="text-amber-400 font-extrabold inline-flex items-center gap-1">
+              <CoinIcon size={16} /> 100 Free Sacred Coins
+            </span>{' '}
+            (= 20 minutes complimentary live darshan)!
           </p>
           <div className="flex items-center justify-center gap-3">
             <Link
@@ -276,7 +287,7 @@ export default function StreamPlayerClient() {
 
       {streamEnded ? (
         <div className="w-full aspect-video max-h-[600px] bg-stone-900 border border-stone-800 rounded-3xl flex flex-col items-center justify-center p-8 text-center shadow-2xl">
-          <span className="text-6xl mb-4">🙏</span>
+          <PranamIcon size={56} className="mb-4" />
           <h2 className="text-2xl font-bold text-white mb-2">Pooja Completed</h2>
           <p className="text-stone-400 text-sm max-w-md">
             This live broadcast has concluded. May the sacred blessings be upon you and your family.
@@ -290,7 +301,7 @@ export default function StreamPlayerClient() {
               {/* Zero Balance Blur & Eviction Overlay */}
               {isZeroBalance ? (
                 <div className="absolute inset-0 z-40 bg-stone-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
-                  <span className="text-5xl mb-3">🕉️</span>
+                  <OmIcon size={52} className="mb-3" />
                   <h3 className="text-xl font-bold text-white mb-1">Auspicious Darshan Paused</h3>
                   <p className="text-stone-400 text-xs sm:text-sm max-w-sm mb-6">
                     You have utilized your available darshan coins. Please recharge your wallet to continue receiving live blessings.
@@ -323,7 +334,9 @@ export default function StreamPlayerClient() {
                 >
                   <RoomAudioRenderer />
                   <VideoRenderer />
-                  <StartAudio label="Click to unmute live chanting & aarti 🔔" />
+                  <div className="absolute top-4 left-4 z-30">
+                    <StartAudio label="Click to Unmute Live Chanting & Aarti" />
+                  </div>
                 </LiveKitRoom>
               ) : (
                 <div className="flex flex-col items-center gap-3 text-stone-500">
@@ -342,7 +355,7 @@ export default function StreamPlayerClient() {
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-900/80 backdrop-blur-md border border-amber-500/50 hover:border-amber-400 rounded-full text-xs font-bold text-amber-400 shadow-xl transition-all"
                     title="Click to recharge coins"
                   >
-                    <span>🪙</span>
+                    <CoinIcon size={16} />
                     <span>{remainingCoins} Coins</span>
                     <span className="text-stone-400 text-[10px] font-normal">
                       ({availableMinutes}m left)
@@ -355,7 +368,7 @@ export default function StreamPlayerClient() {
               {/* Floating Auspicious Dakshina Alert */}
               {latestDakshina && (
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-gradient-to-r from-amber-500 via-yellow-400 to-orange-500 text-stone-950 px-4 py-2 rounded-2xl shadow-2xl flex items-center gap-2.5 animate-bounce border-2 border-yellow-200">
-                  <span className="text-xl">🪔</span>
+                  <DiyaIcon size={24} />
                   <div className="text-xs">
                     <span className="font-extrabold">{latestDakshina.devoteeName}</span> offered{' '}
                     <span className="font-black">₹{latestDakshina.amount}</span> Dakshina!
@@ -365,7 +378,7 @@ export default function StreamPlayerClient() {
                       </div>
                     )}
                   </div>
-                  <span className="text-xl">🙏</span>
+                  <PranamIcon size={20} />
                 </div>
               )}
 
@@ -389,8 +402,8 @@ export default function StreamPlayerClient() {
                         {stream.category?.name}
                       </span>
                       {remainingCoins !== null && (
-                        <span className="text-[11px] font-medium text-amber-400/90 bg-amber-950/40 border border-amber-800/40 px-2 py-0.5 rounded-full">
-                          5 Coins / min
+                        <span className="text-[11px] font-medium text-amber-400/90 bg-amber-950/40 border border-amber-800/40 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <CoinIcon size={12} /> 5 Coins / min
                         </span>
                       )}
                     </div>
@@ -403,7 +416,7 @@ export default function StreamPlayerClient() {
                       onClick={() => setDakshinaModalOpen(true)}
                       className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-stone-950 text-xs font-bold rounded-xl transition-all shadow-md shadow-orange-950/40"
                     >
-                      <span>🪔</span>
+                      <DiyaIcon size={16} />
                       <span>Arpan Dakshina</span>
                     </button>
                     <button
@@ -417,12 +430,12 @@ export default function StreamPlayerClient() {
 
                 <div className="mt-4 flex items-center justify-between text-xs text-stone-300">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-stone-100 text-sm">
-                      🙏 {stream.streamer?.name}
+                    <span className="font-semibold text-stone-100 text-sm flex items-center gap-1.5">
+                      <PranamIcon size={16} /> {stream.streamer?.name}
                     </span>
                     {stream.streamer?.streamerProfile?.isVerifiedBadge && (
-                      <span className="text-orange-400 font-bold" title="Verified Pandit">
-                        ✓ Verified
+                      <span className="inline-flex items-center gap-1 text-orange-400 font-bold" title="Verified Vedic Pandit">
+                        <VerifiedPanditBadge size={16} /> Verified
                       </span>
                     )}
                   </div>
@@ -470,7 +483,7 @@ function VideoRenderer() {
   if (tracks.length === 0) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center text-stone-400 bg-stone-950">
-        <span className="text-4xl mb-2">🪔</span>
+        <DiyaIcon size={44} className="mb-2" />
         <span className="text-sm font-medium">Awaiting Pandit video transmission...</span>
       </div>
     );

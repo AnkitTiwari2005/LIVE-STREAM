@@ -45,12 +45,14 @@ export class LiveKitProviderService implements IVideoProviderService {
       metadata: JSON.stringify(options.metadata || {}),
     });
 
+    const canPublish = options.isPublisher || options.canPublish || false;
+
     at.addGrant({
       roomJoin: true,
       room: options.roomName,
-      canPublish: options.isPublisher,
-      canPublishData: options.isPublisher,
-      canSubscribe: options.canSubscribe,
+      canPublish,
+      canPublishData: true,
+      canSubscribe: options.canSubscribe ?? true,
     });
 
     return at.toJwt();

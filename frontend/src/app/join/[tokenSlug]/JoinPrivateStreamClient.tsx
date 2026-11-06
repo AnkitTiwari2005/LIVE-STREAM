@@ -7,6 +7,7 @@ import {
   RoomAudioRenderer,
   StartAudio,
   useTracks,
+  useLocalParticipant,
   VideoTrack,
 } from '@livekit/components-react';
 import { Track } from 'livekit-client';
@@ -16,15 +17,23 @@ import { SpiritualReactions } from '@/components/SpiritualReactions';
 import { DakshinaModal } from '@/components/DakshinaModal';
 import {
   Lock,
-  ShieldCheck,
   User,
   AlertCircle,
   Play,
-  Sparkles,
   Share2,
-  Users,
+  Mic,
+  MicOff,
+  Video as VideoIcon,
+  VideoOff,
+  PhoneOff,
   Volume2,
 } from 'lucide-react';
+import {
+  OmIcon,
+  DiyaIcon,
+  PranamIcon,
+  VerifiedPanditBadge,
+} from '@/components/icons/SpiritualIcons';
 
 export default function JoinPrivateStreamClient() {
   const { tokenSlug: paramSlug } = useParams() as { tokenSlug: string };
@@ -182,15 +191,15 @@ export default function JoinPrivateStreamClient() {
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert('Private session link copied to clipboard 🙏');
+      alert('Private session link copied to clipboard');
     }
   };
 
   if (inspectLoading) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center text-stone-400">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-orange-500 mb-3" />
-        <span className="text-sm">Verifying private invitation link...</span>
+      <div className="min-h-[70vh] flex flex-col items-center justify-center text-stone-400 gap-3">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-orange-500" />
+        <span className="text-xs uppercase tracking-wider font-semibold">Validating Sacred Join Link...</span>
       </div>
     );
   }
@@ -211,29 +220,34 @@ export default function JoinPrivateStreamClient() {
                 audio={false}
                 className="w-full h-full"
               >
-                {/* RoomAudioRenderer ensures all remote audio tracks are played via HTMLAudioElement */}
+                {/* RoomAudioRenderer ensures remote audio tracks are played via HTMLAudioElement */}
                 <RoomAudioRenderer />
-                <PrivateVideoTrackRenderer />
-                <StartAudio label="🔊 Click to Unmute Live Sacred Chanting & Mantras 🙏" />
+                <PrivateTwoWayConsultationRenderer onLeave={() => setToken(null)} />
+                <div className="absolute top-4 left-4 z-30">
+                  <StartAudio label="Click to Unmute Live Chanting & Mantras" />
+                </div>
               </LiveKitRoom>
 
               {/* Floating Auspicious Dakshina Alert */}
               {latestDakshina && (
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-gradient-to-r from-amber-500 via-yellow-400 to-orange-500 text-stone-950 px-4 py-2 rounded-2xl shadow-2xl flex items-center gap-2.5 animate-bounce border-2 border-yellow-200">
-                  <span className="text-xl">🪔</span>
+                  <DiyaIcon size={22} />
                   <div className="text-xs">
-                    <span className="font-extrabold">{latestDakshina.devoteeName}</span> offered <span className="font-black">₹{latestDakshina.amount}</span> Dakshina!
+                    <span className="font-extrabold">{latestDakshina.devoteeName}</span> offered{' '}
+                    <span className="font-black">₹{latestDakshina.amount}</span> Dakshina!
                     {latestDakshina.prayerMessage && (
-                      <div className="text-[10px] font-semibold opacity-90 truncate max-w-xs">&ldquo;{latestDakshina.prayerMessage}&rdquo;</div>
+                      <div className="text-[10px] font-semibold opacity-90 truncate max-w-xs">
+                        &ldquo;{latestDakshina.prayerMessage}&rdquo;
+                      </div>
                     )}
                   </div>
-                  <span className="text-xl">🙏</span>
+                  <PranamIcon size={18} />
                 </div>
               )}
 
               {/* Floating Spiritual Reactions Overlay */}
               {streamId && (
-                <div className="absolute bottom-4 left-4 z-20">
+                <div className="absolute bottom-16 left-4 z-20">
                   <SpiritualReactions socket={socket} streamId={streamId} />
                 </div>
               )}
@@ -249,7 +263,7 @@ export default function JoinPrivateStreamClient() {
                       LIVE
                     </span>
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-950/80 text-orange-400 border border-orange-800">
-                      🔒 Private Consultation
+                      <Lock className="w-3 h-3 text-orange-400" /> Private Consultation
                     </span>
                   </div>
                   <h1 className="text-xl font-bold text-white tracking-tight">
@@ -265,7 +279,7 @@ export default function JoinPrivateStreamClient() {
                     onClick={() => setDakshinaModalOpen(true)}
                     className="flex items-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-stone-950 text-xs font-bold rounded-xl transition-all shadow-md shadow-orange-950/40"
                   >
-                    <span>🪔</span>
+                    <DiyaIcon size={16} />
                     <span>Arpan Dakshina</span>
                   </button>
                   <button
@@ -279,11 +293,11 @@ export default function JoinPrivateStreamClient() {
 
               <div className="mt-4 pt-4 border-t border-stone-800 flex items-center justify-between text-xs text-stone-300">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-stone-100 text-sm">
-                    🙏 {metadata?.streamerName || 'Acharya Devrat Sharma'}
+                  <span className="font-semibold text-stone-100 text-sm flex items-center gap-1.5">
+                    <PranamIcon size={16} /> {metadata?.streamerName || 'Acharya Devrat Sharma'}
                   </span>
-                  <span className="text-orange-400 font-bold flex items-center gap-0.5" title="Verified Vedic Pandit">
-                    <ShieldCheck className="w-3.5 h-3.5 inline" /> Verified Pandit
+                  <span className="text-orange-400 font-bold flex items-center gap-1" title="Verified Vedic Pandit">
+                    <VerifiedPanditBadge size={14} /> Verified Pandit
                   </span>
                 </div>
                 <span className="text-stone-400 font-medium">
@@ -324,8 +338,10 @@ export default function JoinPrivateStreamClient() {
         // Verification & Password Claim Screen
         <div className="max-w-md mx-auto bg-stone-900 border border-stone-800 rounded-3xl p-8 shadow-2xl">
           <div className="text-center mb-6">
-            <span className="text-4xl mb-2 inline-block">🕉️</span>
-            <h2 className="text-xl font-bold text-white">Private Pooja Consultation</h2>
+            <div className="flex justify-center mb-3">
+              <OmIcon size={44} />
+            </div>
+            <h2 className="text-xl font-bold text-white tracking-tight">Private Pooja Consultation</h2>
             <p className="text-xs text-stone-400 mt-1">
               {metadata?.streamTitle ? `"${metadata.streamTitle}" by ${metadata.streamerName}` : 'Enter your details to join'}
             </p>
@@ -340,9 +356,10 @@ export default function JoinPrivateStreamClient() {
               {(error.includes('logged into your account') || error.includes('Unauthorized')) && (
                 <a
                   href={`/login?redirect=/join/${tokenSlug}`}
-                  className="mt-1 text-center py-2 px-3 bg-orange-600 hover:bg-orange-500 text-white font-semibold rounded-lg transition-colors"
+                  className="mt-1 text-center py-2 px-3 bg-orange-600 hover:bg-orange-500 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5"
                 >
-                  Sign In to Devotee Account 🙏
+                  <PranamIcon size={16} />
+                  <span>Sign In to Devotee Account</span>
                 </a>
               )}
             </div>
@@ -361,7 +378,7 @@ export default function JoinPrivateStreamClient() {
                   value={guestName}
                   onChange={(e) => setGuestName(e.target.value)}
                   placeholder="Rahul Sharma"
-                  className="w-full pl-9 pr-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-sm text-white focus:outline-none focus:border-orange-500"
+                  className="w-full pl-9 pr-3 py-2.5 bg-stone-950 border border-stone-800 rounded-xl text-sm text-white focus:outline-none focus:border-orange-500"
                 />
               </div>
             </div>
@@ -379,7 +396,7 @@ export default function JoinPrivateStreamClient() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter password provided by Pandit"
-                    className="w-full pl-9 pr-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-sm text-white focus:outline-none focus:border-orange-500"
+                    className="w-full pl-9 pr-3 py-2.5 bg-stone-950 border border-stone-800 rounded-xl text-sm text-white focus:outline-none focus:border-orange-500"
                   />
                 </div>
               </div>
@@ -400,16 +417,94 @@ export default function JoinPrivateStreamClient() {
   );
 }
 
-function PrivateVideoTrackRenderer() {
+function PrivateTwoWayConsultationRenderer({ onLeave }: { onLeave: () => void }) {
   const tracks = useTracks([Track.Source.Camera]);
-  if (tracks.length === 0) {
-    return (
-      <div className="w-full h-full flex flex-col items-center justify-center text-stone-400 bg-stone-950">
-        <span className="text-4xl mb-2">🪔</span>
-        <span className="text-sm font-medium">Awaiting Pandit video transmission...</span>
-      </div>
-    );
-  }
+  const { localParticipant, isMicrophoneEnabled, isCameraEnabled, cameraTrack } = useLocalParticipant();
 
-  return <VideoTrack trackRef={tracks[0]} className="w-full h-full object-contain bg-black" />;
+  const toggleMic = async () => {
+    if (localParticipant) {
+      await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
+    }
+  };
+
+  const toggleCamera = async () => {
+    if (localParticipant) {
+      await localParticipant.setCameraEnabled(!isCameraEnabled);
+    }
+  };
+
+  // Find remote track (Pandit) vs local track (Devotee)
+  const remoteCameraTrack = tracks.find((t) => t.participant.identity !== localParticipant?.identity);
+
+  return (
+    <div className="relative w-full h-full bg-black">
+      {/* Remote Pandit Video (Main Screen) */}
+      {remoteCameraTrack ? (
+        <VideoTrack trackRef={remoteCameraTrack} className="w-full h-full object-contain bg-black" />
+      ) : (
+        <div className="w-full h-full flex flex-col items-center justify-center text-stone-400 bg-stone-950">
+          <DiyaIcon size={44} className="mb-2" />
+          <span className="text-sm font-medium">Awaiting Pandit video transmission...</span>
+        </div>
+      )}
+
+      {/* Devotee Self Camera Preview (Picture-in-Picture in Top Right) */}
+      {isCameraEnabled && cameraTrack && (
+        <div className="absolute top-4 right-4 w-36 sm:w-48 aspect-video rounded-xl overflow-hidden border-2 border-orange-500/80 shadow-2xl z-20 bg-stone-950">
+          <VideoTrack
+            trackRef={{
+              participant: localParticipant,
+              publication: cameraTrack,
+              source: Track.Source.Camera,
+            }}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute bottom-1 left-1 bg-black/70 px-1.5 py-0.5 rounded text-[9px] font-bold text-white">
+            You (Devotee)
+          </div>
+        </div>
+      )}
+
+      {/* Bottom Floating Interactive Two-Way Controls Bar */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2.5 bg-stone-950/85 backdrop-blur-md border border-stone-800 rounded-full px-4 py-2 shadow-2xl">
+        {/* Devotee Mic Toggle */}
+        <button
+          onClick={toggleMic}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all shadow-md ${
+            isMicrophoneEnabled
+              ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+              : 'bg-red-600 hover:bg-red-500 text-white animate-pulse'
+          }`}
+          title={isMicrophoneEnabled ? 'Mute Microphone' : 'Unmute Microphone (Speak to Pandit)'}
+        >
+          {isMicrophoneEnabled ? <Mic className="w-3.5 h-3.5" /> : <MicOff className="w-3.5 h-3.5" />}
+          <span>{isMicrophoneEnabled ? 'Mic: ON' : 'Mic: OFF'}</span>
+        </button>
+
+        {/* Devotee Camera Toggle */}
+        <button
+          onClick={toggleCamera}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all shadow-md ${
+            isCameraEnabled
+              ? 'bg-stone-800 hover:bg-stone-700 text-stone-200'
+              : 'bg-stone-800 hover:bg-stone-700 text-stone-400'
+          }`}
+          title={isCameraEnabled ? 'Turn Off Camera' : 'Turn On Camera'}
+        >
+          {isCameraEnabled ? <VideoIcon className="w-3.5 h-3.5" /> : <VideoOff className="w-3.5 h-3.5" />}
+          <span>{isCameraEnabled ? 'Cam: ON' : 'Cam: OFF'}</span>
+        </button>
+
+        {/* Leave Consultation */}
+        <button
+          onClick={onLeave}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-red-950 hover:bg-red-900 text-red-300 border border-red-800 transition-all shadow-md"
+          title="Leave Sacred Session"
+        >
+          <PhoneOff className="w-3.5 h-3.5" />
+          <span>Leave</span>
+        </button>
+      </div>
+    </div>
+  );
 }

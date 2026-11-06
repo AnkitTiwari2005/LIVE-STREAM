@@ -16,11 +16,11 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Shubhdarshan - Sacred Pooja & Astrology Live Streaming',
+    default: 'Shubhdarshan - Sacred Live Pooja, Aarti & Vedic Astrology Worldwide',
     template: '%s | Shubhdarshan',
   },
   description:
-    'Experience sacred live Hindu poojas, temple aartis, Vedic rituals, and 1-on-1 personalized astrology consultations with verified pandits on Shubhdarshan.',
+    'Experience sacred live Hindu poojas, temple aartis, Vedic rituals, and 1-on-1 personalized astrology consultations with verified pandits on Shubhdarshan. Claim 100 free coins on signup.',
   keywords: [
     'Shubhdarshan',
     'live pooja streaming',
@@ -28,11 +28,15 @@ export const metadata: Metadata = {
     'vedic pandit live',
     'astrology consultation',
     'hindu rituals streaming',
-    'live aarti kashi',
-    'online sankalp',
+    'live aarti kashi vishwanath',
+    'online sankalp pooja',
+    'sacred coins wallet',
+    'DPDP Act 2023 pooja',
+    'ayodhya live darshan',
+    'ujjain bhasma aarti live',
   ],
   authors: [{ name: 'Shubhdarshan Platform Team' }],
-  creator: 'Shubhdarshan',
+  creator: 'Shubhdarshan Devotional Media Private Limited',
   publisher: 'Shubhdarshan Devotional Media',
   alternates: {
     canonical: '/',
@@ -42,15 +46,15 @@ export const metadata: Metadata = {
     locale: 'en_IN',
     url: SITE_URL,
     siteName: 'Shubhdarshan',
-    title: 'Shubhdarshan - Sacred Pooja & Astrology Live Streaming',
+    title: 'Shubhdarshan - Sacred Live Pooja, Aarti & Vedic Astrology Worldwide',
     description:
-      'Connect with verified Vedic pandits and certified astrologers for live rituals, aarti, and spiritual consultations.',
+      'Connect with verified Vedic pandits and certified astrologers for live rituals, aarti, and spiritual consultations in real-time. 100 free coins for all new devotees.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Shubhdarshan - Sacred Pooja & Astrology Live Streaming',
+    title: 'Shubhdarshan - Sacred Live Pooja & Aarti Broadcast',
     description:
-      'Live devotional broadcasts, online pooja sankalp, and Vedic astrological consultations.',
+      'Sub-second live devotional broadcasts, online pooja sankalp, and Vedic astrological consultations with verified Acharyas.',
   },
   robots: {
     index: true,
@@ -78,10 +82,35 @@ export default function RootLayout({
         '@type': 'Organization',
         '@id': `${SITE_URL}/#organization`,
         name: 'Shubhdarshan',
+        legalName: 'Shubhdarshan Devotional Media Private Limited',
         url: SITE_URL,
         logo: `${SITE_URL}/logo.png`,
         description:
-          'Premier platform for live Hindu devotional broadcasts, temple pooja streaming, and Vedic astrological consultations.',
+          'Premier platform for live Hindu devotional broadcasts, temple pooja streaming, and Vedic astrological consultations worldwide.',
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress: 'Level 5, Lotus Spiritual Tower, Andheri East',
+          addressLocality: 'Mumbai',
+          addressRegion: 'Maharashtra',
+          postalCode: '400069',
+          addressCountry: 'IN',
+        },
+        contactPoint: [
+          {
+            '@type': 'ContactPoint',
+            telephone: '+91-98765-43210',
+            contactType: 'customer support',
+            email: 'support@shubhdarshan.com',
+            areaServed: 'IN',
+            availableLanguage: ['Hindi', 'English', 'Sanskrit'],
+          },
+          {
+            '@type': 'ContactPoint',
+            email: 'grievance@shubhdarshan.com',
+            contactType: 'Grievance Officer',
+            areaServed: 'IN',
+          },
+        ],
         sameAs: [],
       },
       {
@@ -106,6 +135,35 @@ export default function RootLayout({
         },
         areaServed: 'Worldwide',
         inLanguage: ['hi', 'sa', 'en'],
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: SITE_URL,
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Sacred Coins Topup',
+            item: `${SITE_URL}/wallet/topup`,
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: 'About Us',
+            item: `${SITE_URL}/about`,
+          },
+          {
+            '@type': 'ListItem',
+            position: 4,
+            name: 'Devotee FAQ',
+            item: `${SITE_URL}/faq`,
+          },
+        ],
       },
     ],
   };

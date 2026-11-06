@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Video, ShieldCheck, User, LogOut, Sparkles, Menu, X, PlusCircle } from 'lucide-react';
+import { Video, ShieldCheck, LogOut, Sparkles, Menu, X, PlusCircle, HelpCircle } from 'lucide-react';
 import { CoinTopupModal } from './CoinTopupModal';
+import { OmIcon, CoinIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
 
 export function Navbar() {
   const [user, setUser] = useState<any>(null);
@@ -53,10 +54,10 @@ export function Navbar() {
     <>
       <header className="sticky top-0 z-50 bg-stone-950/90 backdrop-blur-md border-b border-stone-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Brand Logo */}
-          <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight text-white hover:opacity-90">
-            <span className="text-2xl">🕉️</span>
-            <span className="bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent">
+          {/* Brand Logo with Pure SVG */}
+          <Link href="/" className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-white hover:opacity-90 transition-opacity">
+            <OmIcon size={28} />
+            <span className="bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent font-extrabold">
               Shubhdarshan
             </span>
           </Link>
@@ -69,12 +70,18 @@ export function Navbar() {
             <Link href="/#upcoming" className="hover:text-orange-400 transition-colors">
               Schedule
             </Link>
+            <Link href="/about" className="hover:text-orange-400 transition-colors">
+              About
+            </Link>
+            <Link href="/faq" className="hover:text-orange-400 transition-colors flex items-center gap-1">
+              <HelpCircle className="w-3.5 h-3.5 text-stone-400" /> FAQ
+            </Link>
             {user?.role === 'STREAMER' && (
               <Link
                 href="/studio/create"
                 className="flex items-center gap-1.5 text-orange-400 font-semibold hover:text-orange-300"
               >
-                <Video className="w-4 h-4" /> Go Live
+                <Video className="w-4 h-4" /> Pandit Studio
               </Link>
             )}
             {user?.role === 'ADMIN' && (
@@ -90,7 +97,7 @@ export function Navbar() {
                 href="/streamer/apply"
                 className="flex items-center gap-1.5 text-stone-400 hover:text-white"
               >
-                <Sparkles className="w-4 h-4 text-orange-400" /> Apply as Streamer
+                <Sparkles className="w-4 h-4 text-orange-400" /> Apply as Pandit
               </Link>
             )}
           </nav>
@@ -99,13 +106,13 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-3">
             {user ? (
               <div className="flex items-center gap-3">
-                {/* Coin Wallet Balance Pill */}
+                {/* SVG Coin Wallet Balance Pill */}
                 <button
                   onClick={() => setTopupModalOpen(true)}
                   className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-950/60 via-stone-900 to-amber-950/60 border border-amber-500/50 hover:border-amber-400 shadow-sm transition-all"
                   title="Your Sacred Coins (Click to Recharge)"
                 >
-                  <span className="text-base group-hover:scale-110 transition-transform">🪙</span>
+                  <CoinIcon size={20} className="group-hover:scale-110 transition-transform" />
                   <div className="flex flex-col text-left">
                     <div className="flex items-center gap-1">
                       <span className="text-xs font-black text-amber-400">
@@ -117,9 +124,10 @@ export function Navbar() {
                   <PlusCircle className="w-3.5 h-3.5 text-amber-400 ml-0.5 group-hover:text-amber-300" />
                 </button>
 
-                <span className="text-sm font-medium text-stone-200">
-                  🙏 {user.name}
-                </span>
+                <div className="flex items-center gap-1.5 text-sm font-medium text-stone-200">
+                  <PranamIcon size={18} />
+                  <span>{user.name}</span>
+                </div>
                 <button
                   onClick={handleLogout}
                   className="p-2 rounded-lg text-stone-400 hover:text-red-400 hover:bg-stone-900 transition-colors"
@@ -141,8 +149,8 @@ export function Navbar() {
                   className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-lg shadow-md transition-all flex items-center gap-1.5"
                 >
                   <span>Join Free</span>
-                  <span className="text-xs font-black text-amber-200 bg-amber-900/60 px-1.5 py-0.5 rounded-full">
-                    +100 Coins
+                  <span className="text-xs font-black text-amber-200 bg-amber-900/60 px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                    <CoinIcon size={12} /> +100
                   </span>
                 </Link>
               </div>
@@ -154,9 +162,9 @@ export function Navbar() {
             {user && (
               <button
                 onClick={() => setTopupModalOpen(true)}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-950/60 border border-amber-500/50 text-amber-400 text-xs font-bold"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-950/60 border border-amber-500/50 text-amber-400 text-xs font-bold"
               >
-                <span>🪙</span>
+                <CoinIcon size={16} />
                 <span>{coinBalance !== null ? coinBalance : 100}</span>
               </button>
             )}
@@ -178,31 +186,39 @@ export function Navbar() {
             <Link href="/#upcoming" className="block py-2 text-stone-200 font-medium">
               Schedule
             </Link>
+            <Link href="/about" className="block py-2 text-stone-200 font-medium">
+              About Us
+            </Link>
+            <Link href="/faq" className="block py-2 text-stone-200 font-medium">
+              FAQ
+            </Link>
             {user?.role === 'STREAMER' && (
-              <Link href="/studio/create" className="block py-2 text-orange-400 font-semibold">
-                🎥 Pandit Studio (Go Live)
+              <Link href="/studio/create" className="block py-2 text-orange-400 font-semibold flex items-center gap-2">
+                <Video className="w-4 h-4" /> Pandit Studio (Go Live)
               </Link>
             )}
             {user?.role === 'ADMIN' && (
-              <Link href="/admin" className="block py-2 text-amber-400 font-semibold">
-                🛡️ Admin Console
+              <Link href="/admin" className="block py-2 text-amber-400 font-semibold flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4" /> Admin Console
               </Link>
             )}
             {user?.role === 'VIEWER' && (
-              <Link href="/streamer/apply" className="block py-2 text-stone-300">
-                ✨ Apply as Pandit / Astrologer
+              <Link href="/streamer/apply" className="block py-2 text-stone-300 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-orange-400" /> Apply as Pandit
               </Link>
             )}
             <div className="pt-3 border-t border-stone-800">
               {user ? (
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
-                    <span className="text-sm text-stone-300 font-medium">Signed in as {user.name}</span>
+                    <span className="text-sm text-stone-300 font-medium flex items-center gap-1.5">
+                      <PranamIcon size={16} /> {user.name}
+                    </span>
                     <button
                       onClick={() => setTopupModalOpen(true)}
                       className="text-xs text-amber-400 font-bold flex items-center gap-1 mt-1"
                     >
-                      🪙 {coinBalance !== null ? coinBalance : 100} Coins (Tap to recharge)
+                      <CoinIcon size={14} /> {coinBalance !== null ? coinBalance : 100} Coins (Tap to recharge)
                     </button>
                   </div>
                   <button onClick={handleLogout} className="text-sm text-red-400 font-medium">

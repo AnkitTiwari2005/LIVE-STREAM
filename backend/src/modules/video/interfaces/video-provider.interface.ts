@@ -9,6 +9,7 @@ export interface ParticipantTokenOptions {
   participantId: string;
   participantName: string;
   isPublisher: boolean;
+  canPublish?: boolean;
   canSubscribe: boolean;
   ttlMinutes: number;
   metadata?: Record<string, any>;

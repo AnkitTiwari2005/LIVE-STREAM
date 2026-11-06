@@ -1,5 +1,8 @@
 'use client';
 
+import Link from 'next/link';
+import { PranamIcon, OmIcon, DiyaIcon } from '@/components/icons/SpiritualIcons';
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
@@ -269,7 +272,7 @@ export default function StudioClient() {
               {isLive && <span className="text-xs bg-red-600 px-2 py-0.5 rounded-full font-bold">LIVE ON AIR</span>}
             </h1>
             <p className="text-xs text-stone-400">
-              {stream?.visibility === 'PRIVATE' ? '🔒 Private Consultation' : '🌐 Public Darshan'} • Quality: {stream?.videoQuality || '480p'}
+              {stream?.visibility === 'PRIVATE' ? 'Private Sacred Consultation' : 'Public Live Darshan'} • Quality: {stream?.videoQuality || '480p'}
             </p>
           </div>
         </div>
@@ -299,6 +302,24 @@ export default function StudioClient() {
         <div className="mb-6 p-4 rounded-2xl bg-red-950/90 border border-red-800 text-red-200 text-xs flex items-center gap-2">
           <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
           <span>{error}</span>
+        </div>
+      )}
+
+      {stream?.status === 'ENDED' && (
+        <div className="mb-6 p-4 rounded-2xl bg-amber-950/70 border border-amber-700/60 text-amber-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <DiyaIcon size={24} />
+            <div>
+              <span className="font-bold text-amber-300 block text-sm">Previous Live Broadcast Concluded</span>
+              <span>This sacred ritual session has ended. To go live again, configure a fresh broadcast.</span>
+            </div>
+          </div>
+          <Link
+            href="/studio/create"
+            className="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-xl text-xs transition-colors shrink-0 shadow-md text-center"
+          >
+            Setup New Broadcast
+          </Link>
         </div>
       )}
 
@@ -375,13 +396,40 @@ export default function StudioClient() {
                 </div>
               </div>
 
+              {videoDevices.length === 0 && (
+                <div className="p-3 rounded-xl bg-stone-950 border border-stone-800 flex items-center justify-between gap-2">
+                  <span className="text-xs text-stone-400">Camera / mic devices not yet detected</span>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                        stream.getTracks().forEach((t) => t.stop());
+                        const devices = await navigator.mediaDevices.enumerateDevices();
+                        const vInputs = devices.filter((d) => d.kind === 'videoinput');
+                        const aInputs = devices.filter((d) => d.kind === 'audioinput');
+                        setVideoDevices(vInputs);
+                        setAudioDevices(aInputs);
+                        if (vInputs.length > 0) setSelectedVideo(vInputs[0].deviceId);
+                        if (aInputs.length > 0) setSelectedAudio(aInputs[0].deviceId);
+                      } catch (err: any) {
+                        setError('Please grant camera and microphone permissions in your browser to broadcast.');
+                      }
+                    }}
+                    className="px-3 py-1.5 bg-orange-600/30 hover:bg-orange-600/50 text-orange-300 font-semibold text-xs rounded-lg transition-colors"
+                  >
+                    Grant Camera & Mic Access
+                  </button>
+                </div>
+              )}
+
               <button
                 onClick={handleGoLive}
                 disabled={loading}
                 className="w-full py-3.5 bg-gradient-to-r from-orange-600 via-red-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold rounded-xl text-base shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <Radio className="w-5 h-5 animate-pulse" />
-                {loading ? 'Starting Broadcast Engine...' : 'START LIVE BROADCAST NOW 🙏'}
+                {loading ? 'Starting Broadcast Engine...' : (<span className="flex items-center gap-1.5">START LIVE BROADCAST NOW <PranamIcon size={18} /></span>)}
               </button>
             </div>
           ) : (

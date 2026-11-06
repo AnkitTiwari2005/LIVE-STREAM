@@ -1,7 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Sparkles, Heart, X, CheckCircle2, ShieldCheck, CreditCard } from 'lucide-react';
+import { Sparkles, X, CheckCircle2, ShieldCheck, CreditCard } from 'lucide-react';
+import {
+  OmIcon,
+  DiyaIcon,
+  LotusIcon,
+  BellIcon,
+  CoinIcon,
+  AartiThaliIcon,
+  PranamIcon,
+} from '@/components/icons/SpiritualIcons';
 
 interface DakshinaModalProps {
   isOpen: boolean;
@@ -12,11 +21,11 @@ interface DakshinaModalProps {
 }
 
 const SHUBH_PRESETS = [
-  { amount: 51, label: 'Shubh Bhent', icon: '🥥' },
-  { amount: 101, label: 'Aarti Prasad', icon: '🪔' },
-  { amount: 251, label: 'Vedic Sankalp', icon: '🌸' },
-  { amount: 501, label: 'Devotee Aradhana', icon: '🔔' },
-  { amount: 1100, label: 'Maha Arpan', icon: '🚩' },
+  { amount: 51, label: 'Shubh Bhent', Icon: CoinIcon },
+  { amount: 101, label: 'Aarti Prasad', Icon: DiyaIcon },
+  { amount: 251, label: 'Vedic Sankalp', Icon: LotusIcon },
+  { amount: 501, label: 'Devotee Aradhana', Icon: BellIcon },
+  { amount: 1100, label: 'Maha Arpan', Icon: AartiThaliIcon },
 ];
 
 export const DakshinaModal: React.FC<DakshinaModalProps> = ({
@@ -143,9 +152,12 @@ export const DakshinaModal: React.FC<DakshinaModalProps> = ({
             <div className="w-16 h-16 bg-green-950/80 border border-green-700 text-green-400 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
               <CheckCircle2 className="w-9 h-9" />
             </div>
-            <h2 className="text-2xl font-bold text-white mb-1">ॐ Dakshina Accepted</h2>
-            <p className="text-orange-400 text-sm font-semibold mb-3">
-              May the divine blessings of {streamerName} be upon you 🙏
+            <h2 className="text-2xl font-bold text-white mb-1 flex items-center justify-center gap-2">
+              <OmIcon size={24} /> Dakshina Accepted
+            </h2>
+            <p className="text-orange-400 text-sm font-semibold mb-3 flex items-center justify-center gap-1.5">
+              <span>May the divine blessings of {streamerName} be upon you</span>
+              <PranamIcon size={16} />
             </p>
             <div className="bg-stone-950 border border-stone-800 rounded-2xl p-4 text-left text-xs space-y-2 mb-6">
               <div className="flex justify-between text-stone-400">
@@ -178,7 +190,7 @@ export const DakshinaModal: React.FC<DakshinaModalProps> = ({
         ) : (
           <form onSubmit={handleOffering} className="space-y-4">
             <div className="flex items-center gap-3 border-b border-stone-800 pb-4">
-              <span className="text-2xl">🕉️</span>
+              <OmIcon size={28} />
               <div>
                 <h2 className="text-lg font-bold text-white">Offer Sacred Dakshina</h2>
                 <p className="text-xs text-stone-400">
@@ -201,6 +213,7 @@ export const DakshinaModal: React.FC<DakshinaModalProps> = ({
               <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                 {SHUBH_PRESETS.map((preset) => {
                   const isSelected = !customAmount && selectedAmount === preset.amount;
+                  const Icon = preset.Icon;
                   return (
                     <button
                       key={preset.amount}
@@ -209,13 +222,13 @@ export const DakshinaModal: React.FC<DakshinaModalProps> = ({
                         setSelectedAmount(preset.amount);
                         setCustomAmount('');
                       }}
-                      className={`p-2.5 rounded-2xl border text-center transition flex flex-col items-center gap-1 ${
+                      className={`p-2.5 rounded-2xl border text-center transition flex flex-col items-center gap-1.5 ${
                         isSelected
                           ? 'bg-orange-600/30 border-orange-500 text-white shadow-lg shadow-orange-950'
                           : 'bg-stone-950 border-stone-800 text-stone-300 hover:border-stone-700'
                       }`}
                     >
-                      <span className="text-base">{preset.icon}</span>
+                      <Icon size={20} />
                       <span className="text-xs font-bold">₹{preset.amount}</span>
                       <span className="text-[10px] text-stone-400 leading-tight">{preset.label}</span>
                     </button>
@@ -279,24 +292,29 @@ export const DakshinaModal: React.FC<DakshinaModalProps> = ({
                 rows={2}
                 value={prayerMessage}
                 onChange={(e) => setPrayerMessage(e.target.value)}
-                placeholder="Write your personal prayer, wishes for family health, prosperity..."
+                placeholder="Family well-being, health, peace..."
                 className="w-full px-3.5 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500"
               />
             </div>
 
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3.5 bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 hover:from-orange-500 hover:to-yellow-500 text-white font-bold rounded-2xl text-sm shadow-xl shadow-orange-950 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-              >
-                <Sparkles className="w-4 h-4" />
-                {loading ? 'Initiating Sacred Dakshina...' : `Offer Dakshina of ₹${currentFinalAmount} 🙏`}
-              </button>
-              <div className="flex items-center justify-center gap-2 mt-2 text-[11px] text-stone-400">
-                <ShieldCheck className="w-3.5 h-3.5 text-green-400" />
-                <span>100% Secure via UPI, RuPay, NetBanking & Cards</span>
-              </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3.5 bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-stone-950 font-extrabold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+            >
+              {loading ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-stone-950" />
+              ) : (
+                <>
+                  <DiyaIcon size={18} />
+                  <span>Bless Offering of ₹{currentFinalAmount}</span>
+                </>
+              )}
+            </button>
+
+            <div className="flex items-center justify-center gap-2 text-[10px] text-stone-500 pt-2">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+              <span>Encrypted via Razorpay • 100% Goes Directly to Vedic Rituals</span>
             </div>
           </form>
         )}

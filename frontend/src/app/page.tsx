@@ -2,7 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Flame, Calendar, Users, Bell, Play, Sparkles } from 'lucide-react';
+import { Search, Flame, Calendar, Users, Bell, Play, Sparkles, Zap, ShieldCheck } from 'lucide-react';
+import {
+  OmIcon,
+  DiyaIcon,
+  CoinIcon,
+  PranamIcon,
+  VerifiedPanditBadge,
+} from '@/components/icons/SpiritualIcons';
 
 interface Stream {
   id: string;
@@ -88,18 +95,61 @@ export default function HomePage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Sacred Hero Banner */}
-      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-orange-950 via-stone-900 to-amber-950 border border-orange-900/40 p-8 sm:p-12 mb-10 shadow-2xl">
-        <div className="max-w-2xl">
+      {/* Sacred Modernized Hero Banner */}
+      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-orange-950/80 via-stone-900 to-amber-950/80 border border-orange-900/40 p-8 sm:p-12 mb-10 shadow-2xl">
+        {/* Sacred Ambient Background Mandala */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-orange-600/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="max-w-3xl relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-600/20 border border-orange-500/30 text-orange-300 text-xs font-semibold mb-4">
             <Sparkles className="w-3.5 h-3.5" /> Authentic Vedic Darshan & Consultation
           </div>
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4 leading-tight">
-            Shubhdarshan <span className="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">Live Pooja & Darshan</span>
-          </h1>
-          <p className="text-stone-300 text-sm sm:text-base mb-6 leading-relaxed">
-            Join verified pandits for live Aarti, Rudrabhishek, Kundli match, and personal spiritual consultations. Zero video fees, direct real-time blessings.
+
+          <div className="flex items-center gap-3 mb-3">
+            <OmIcon size={44} />
+            <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
+              Shubhdarshan{' '}
+              <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-red-500 bg-clip-text text-transparent">
+                Live Darshan & Pooja
+              </span>
+            </h1>
+          </div>
+
+          <p className="text-stone-300 text-sm sm:text-base mb-6 leading-relaxed max-w-2xl">
+            Participate in real-time temple Aartis, Rudrabhishek, Kundli match, and personalized family sankalps with verified Vedic Pandits worldwide. Sub-second WebRTC video, zero delay chanting.
           </p>
+
+          {/* Quick Platform Metrics */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-stone-800/80">
+            <div className="flex items-center gap-2 text-xs">
+              <CoinIcon size={20} />
+              <div>
+                <span className="font-extrabold text-white block">100 Free Coins</span>
+                <span className="text-[10px] text-stone-400">Joining Bonus</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <DiyaIcon size={20} />
+              <div>
+                <span className="font-extrabold text-white block">5 Coins / min</span>
+                <span className="text-[10px] text-stone-400">Live Metered Darshan</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <VerifiedPanditBadge size={20} />
+              <div>
+                <span className="font-extrabold text-white block">Verified Pandits</span>
+                <span className="text-[10px] text-stone-400">Strict Gurukul KYC</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <ShieldCheck className="w-5 h-5 text-emerald-400" />
+              <div>
+                <span className="font-extrabold text-white block">DPDP Act 2023</span>
+                <span className="text-[10px] text-stone-400">100% Privacy Safe</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -111,7 +161,7 @@ export default function HomePage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search pooja, astrologer name, or ritual..."
+            placeholder="Search pooja, pandit name, or ritual..."
             className="w-full pl-10 pr-4 py-2 bg-stone-900 border border-stone-800 rounded-xl text-sm text-white placeholder-stone-500 focus:outline-none focus:border-orange-500"
           />
         </div>
@@ -176,7 +226,7 @@ export default function HomePage() {
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-stone-900 to-orange-950/40 flex items-center justify-center">
-                      <span className="text-4xl">🕉️</span>
+                      <OmIcon size={48} />
                     </div>
                   )}
 
@@ -212,10 +262,11 @@ export default function HomePage() {
                   </div>
 
                   <div className="mt-4 pt-3 border-t border-stone-800 flex items-center justify-between text-xs text-stone-300">
-                    <span className="flex items-center gap-1 font-medium">
-                      🙏 {stream.streamer.name}
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <PranamIcon size={14} />
+                      <span>{stream.streamer.name}</span>
                       {stream.streamer.streamerProfile?.isVerifiedBadge && (
-                        <span className="text-orange-400 font-bold" title="Verified Pandit">✓</span>
+                        <VerifiedPanditBadge size={14} />
                       )}
                     </span>
                     <span className="flex items-center gap-1 text-stone-400">
@@ -263,8 +314,8 @@ export default function HomePage() {
                   <p className="text-xs text-stone-400 mt-1 line-clamp-2">
                     {stream.description || 'Upcoming pooja ceremony.'}
                   </p>
-                  <p className="text-xs text-stone-300 mt-3 font-medium">
-                    By: {stream.streamer.name}
+                  <p className="text-xs text-stone-300 mt-3 font-medium flex items-center gap-1.5">
+                    <span>By:</span> <PranamIcon size={14} /> {stream.streamer.name}
                   </p>
                 </div>
 

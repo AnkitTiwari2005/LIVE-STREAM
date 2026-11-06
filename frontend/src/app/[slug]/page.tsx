@@ -4,7 +4,12 @@ export async function generateStaticParams() {
   return [
     { slug: 'terms' },
     { slug: 'privacy' },
+    { slug: 'refund' },
     { slug: 'grievance' },
+    { slug: 'pandit-guidelines' },
+    { slug: 'about' },
+    { slug: 'contact' },
+    { slug: 'faq' },
   ];
 }
 

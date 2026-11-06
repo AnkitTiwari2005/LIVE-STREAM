@@ -152,17 +152,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('chat:send')
   async handleSendMessage(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { streamId: string; message: string; guestName?: string },
+    @MessageBody() data: { streamId: string; message: string; guestName?: string; token?: string },
   ) {
-    const user = client.data.user;
+    let user = client.data.user;
 
-    // Allow chat if logged in, or fallback to user verification
-    if (!user || !user.sub) {
-      client.emit('chat:error', { message: 'Please log in and verify your email to chat in live streams.' });
-      return;
+    // Fallback: If socket connected before login token was available, verify from message payload
+    if (!user && (data as any)?.token) {
+      try {
+        const rawToken = (data as any).token.replace(/^Bearer\s+/i, '');
+        user = this.jwtService.verify(rawToken, {
+          secret: process.env.JWT_ACCESS_SECRET || 'jwt_default_insecure_access_secret_key',
+        });
+        client.data.user = user;
+      } catch {}
     }
 
-    const { streamId, message } = data;
+    const { streamId, message, guestName } = data;
     if (!streamId || !message || typeof message !== 'string') return;
 
     // Check if chat is enabled on this stream
@@ -179,8 +184,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    // FR-C2: Rate limit of 1 message per second per user
-    const rateLimitKey = `rate:chat:${streamId}:${user.sub}`;
+    // FR-C2: Rate limit of 1 message per second
+    const actorId = user?.sub || client.id;
+    const rateLimitKey = `rate:chat:${streamId}:${actorId}`;
     let isAllowed = this.memoryCache.checkRateLimit(rateLimitKey, 1000);
     try {
       if (this.isRedisReady() && this.redis) {
@@ -197,7 +203,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     // Check if user is muted in this stream
-    const muteKey = `mute:${streamId}:${user.sub}`;
+    const muteKey = `mute:${streamId}:${actorId}`;
     let isMuted = this.memoryCache.isMuted(muteKey);
     try {
       if (this.isRedisReady() && this.redis) {
@@ -219,8 +225,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    // Persist message
-    const saved = await this.chatService.saveMessage(streamId, user.sub, trimmedMessage);
+    // Persist message (supports registered users and guest devotees)
+    const saved = await this.chatService.saveMessage(streamId, user?.sub || null, trimmedMessage);
 
     // Broadcast message to all viewers in stream room (NFR-P4: <1s delivery)
     this.server.to(`stream:${streamId}`).emit('chat:message', {
@@ -229,8 +235,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       message: saved.message,
       createdAt: saved.createdAt,
       user: {
-        id: saved.user?.id || user.sub,
-        name: saved.user?.name || 'Devotee',
+        id: saved.user?.id || actorId,
+        name: saved.user?.name || guestName || 'Devotee',
         avatarUrl: saved.user?.avatarUrl || null,
         role: saved.user?.role || 'VIEWER',
       },
@@ -248,7 +254,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { streamId: string; emoji: string },
   ) {
     const { streamId, emoji } = data;
-    const allowedEmojis = ['🙏', '🪔', '🌸', '🔔', '🕉️', '🌺'];
+    const allowedEmojis = [
+      'diya', 'lotus', 'pranam', 'bell', 'om', 'conch',
+      '🙏', '🪔', '🌸', '🔔', '🕉️', '🌺', '🐚'
+    ];
 
     if (!streamId || !allowedEmojis.includes(emoji)) return;
 

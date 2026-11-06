@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Video, Shield, Calendar, Settings, Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import { Video, Calendar, AlertCircle, LogIn, Sparkles, UserCheck } from 'lucide-react';
+import { OmIcon, DiyaIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
 
 export default function CreateStreamPage() {
   const router = useRouter();
@@ -15,8 +17,29 @@ export default function CreateStreamPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isViewerRole, setIsViewerRole] = useState(false);
 
   useEffect(() => {
+    // Check logged in user state
+    if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem('pooja_user');
+      const storedToken = localStorage.getItem('pooja_token');
+
+      if (!storedToken || !storedUser) {
+        setError('Please sign in to your verified Pandit account to setup a live broadcast.');
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(storedUser);
+        setCurrentUser(parsed);
+        if (parsed.role === 'VIEWER') {
+          setIsViewerRole(true);
+        }
+      } catch {}
+    }
+
     async function loadCategories() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
       try {
@@ -32,6 +55,12 @@ export default function CreateStreamPage() {
     }
     loadCategories();
   }, []);
+
+  const handleSwitchAccount = () => {
+    localStorage.removeItem('pooja_token');
+    localStorage.removeItem('pooja_user');
+    router.push('/login?redirect=/studio/create');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,12 +95,15 @@ export default function CreateStreamPage() {
       const data = await res.json();
       if (!res.ok) {
         if (res.status === 401) {
-          localStorage.removeItem('pooja_token');
-          localStorage.removeItem('pooja_user');
-          router.push('/login?expired=1&redirect=/studio/create');
+          setError('Your session has expired. Please sign in again.');
           return;
         }
-        throw new Error(data.message || 'Failed to create stream');
+        if (res.status === 403) {
+          setError('Access denied: Broadcaster privileges are reserved for verified Pandits and Acharyas.');
+          setIsViewerRole(true);
+          return;
+        }
+        throw new Error(data.message || 'Failed to create broadcast');
       }
 
       router.push(`/studio/${data.id}`);
@@ -95,9 +127,51 @@ export default function CreateStreamPage() {
           </div>
         </div>
 
-        {error && (
-          <div className="mb-6 p-3 rounded-xl bg-red-950/80 border border-red-800 text-red-200 text-xs">
-            {error}
+        {/* Devotee Role Warning Banner */}
+        {isViewerRole && (
+          <div className="mb-6 p-4 rounded-2xl bg-amber-950/60 border border-amber-700/60 text-amber-200 text-xs flex flex-col gap-3">
+            <div className="flex items-start gap-2.5">
+              <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-amber-300 block mb-0.5">Devotee Account Detected</span>
+                <span>
+                  You are currently signed in as <strong>{currentUser?.name || 'Devotee'}</strong> (Devotee Account). Broadcasting is exclusively available for verified Pandits and Acharyas.
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 pt-1 border-t border-amber-800/40">
+              <Link
+                href="/streamer/apply"
+                className="px-3 py-1.5 bg-orange-600 hover:bg-orange-500 text-white font-semibold rounded-lg text-xs transition-colors inline-flex items-center gap-1"
+              >
+                <Sparkles className="w-3.5 h-3.5" /> Apply as Pandit
+              </Link>
+              <button
+                type="button"
+                onClick={handleSwitchAccount}
+                className="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 font-semibold rounded-lg text-xs transition-colors inline-flex items-center gap-1"
+              >
+                <LogIn className="w-3.5 h-3.5" /> Sign in as Pandit
+              </button>
+            </div>
+          </div>
+        )}
+
+        {error && !isViewerRole && (
+          <div className="mb-6 p-4 rounded-xl bg-red-950/80 border border-red-800 text-red-200 text-xs flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+              <span>{error}</span>
+            </div>
+            {error.includes('sign in') && (
+              <button
+                type="button"
+                onClick={handleSwitchAccount}
+                className="mt-1 self-start px-3 py-1.5 bg-orange-600 hover:bg-orange-500 text-white font-semibold rounded-lg text-xs transition-colors inline-flex items-center gap-1"
+              >
+                <LogIn className="w-3.5 h-3.5" /> Sign In to Pandit Account
+              </button>
+            )}
           </div>
         )}
 
@@ -209,11 +283,11 @@ export default function CreateStreamPage() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || isViewerRole}
             className="w-full mt-4 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold rounded-xl text-sm shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            <Sparkles className="w-4 h-4" />
-            {loading ? 'Entering Studio...' : 'Proceed to Camera & Mic Studio Preview'}
+            <DiyaIcon size={18} />
+            <span>{loading ? 'Entering Studio...' : 'Proceed to Camera & Mic Studio Preview'}</span>
           </button>
         </form>
       </div>

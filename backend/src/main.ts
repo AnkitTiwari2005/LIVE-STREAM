@@ -1,3 +1,6 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe, Logger } from '@nestjs/common';
@@ -90,19 +93,73 @@ Sitemap: https://darkturquoise-louse-359917.hostingersite.com/sitemap.xml
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://darkturquoise-louse-359917.hostingersite.com/</loc>
-    <lastmod>2026-11-06</lastmod>
+    <lastmod>2026-11-07</lastmod>
     <changefreq>hourly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://darkturquoise-louse-359917.hostingersite.com/wallet/topup</loc>
+    <lastmod>2026-11-07</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://darkturquoise-louse-359917.hostingersite.com/about</loc>
+    <lastmod>2026-11-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://darkturquoise-louse-359917.hostingersite.com/faq</loc>
+    <lastmod>2026-11-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://darkturquoise-louse-359917.hostingersite.com/pandit-guidelines</loc>
+    <lastmod>2026-11-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://darkturquoise-louse-359917.hostingersite.com/terms</loc>
+    <lastmod>2026-11-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://darkturquoise-louse-359917.hostingersite.com/privacy</loc>
+    <lastmod>2026-11-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://darkturquoise-louse-359917.hostingersite.com/refund</loc>
+    <lastmod>2026-11-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://darkturquoise-louse-359917.hostingersite.com/grievance</loc>
+    <lastmod>2026-11-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://darkturquoise-louse-359917.hostingersite.com/contact</loc>
+    <lastmod>2026-11-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://darkturquoise-louse-359917.hostingersite.com/api/docs</loc>
-    <lastmod>2026-11-06</lastmod>
+    <lastmod>2026-11-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://darkturquoise-louse-359917.hostingersite.com/llms.txt</loc>
-    <lastmod>2026-11-06</lastmod>
+    <lastmod>2026-11-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -143,32 +200,34 @@ Sitemap: https://darkturquoise-louse-359917.hostingersite.com/sitemap.xml
         return res.sendFile(exactFile);
       }
 
-      // Clean directory routing (e.g. /login/ -> /login/index.html)
-      const dirIndex = path.join(clientDir, req.path, 'index.html');
-      if (fs.existsSync(dirIndex)) {
-        return res.sendFile(dirIndex);
+      const cleanPath = req.path.replace(/^\/+|\/+$/g, '');
+
+      // Explicit studio create check (handles /studio/create or /studio/create/)
+      if (cleanPath === 'studio/create') {
+        const createIndex = path.join(clientDir, 'studio', 'create', 'index.html');
+        if (fs.existsSync(createIndex)) return res.sendFile(createIndex);
       }
 
-      // Clean route without slash (e.g. /login -> /login/index.html)
-      const altIndex = path.join(clientDir, `${req.path.replace(/^\//, '')}`, 'index.html');
+      // Clean directory routing (e.g. /login or /login/ -> /login/index.html)
+      const altIndex = path.join(clientDir, cleanPath, 'index.html');
       if (fs.existsSync(altIndex)) {
         return res.sendFile(altIndex);
       }
 
       // Dynamic stream route fallback: /stream/:id -> /stream/demo/index.html
-      if (req.path.startsWith('/stream/')) {
+      if (cleanPath.startsWith('stream/')) {
         const streamFile = path.join(clientDir, 'stream', 'demo', 'index.html');
         if (fs.existsSync(streamFile)) return res.sendFile(streamFile);
       }
 
       // Dynamic studio route fallback: /studio/:id -> /studio/demo/index.html
-      if (req.path.startsWith('/studio/')) {
+      if (cleanPath.startsWith('studio/') && cleanPath !== 'studio/create') {
         const studioFile = path.join(clientDir, 'studio', 'demo', 'index.html');
         if (fs.existsSync(studioFile)) return res.sendFile(studioFile);
       }
 
       // Dynamic private link fallback: /join/:tokenSlug -> /join/invite/index.html
-      if (req.path.startsWith('/join/')) {
+      if (cleanPath.startsWith('join/')) {
         const joinFile = path.join(clientDir, 'join', 'invite', 'index.html');
         if (fs.existsSync(joinFile)) return res.sendFile(joinFile);
       }

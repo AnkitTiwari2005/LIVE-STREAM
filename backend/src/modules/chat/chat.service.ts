@@ -24,11 +24,11 @@ export class ChatService implements OnModuleInit {
     this.logger.log(`Loaded ${prohibitedWords.length} active words into chat filter.`);
   }
 
-  async saveMessage(streamId: string, userId: string, message: string) {
+  async saveMessage(streamId: string, userId: string | null, message: string) {
     return this.prisma.chatMessage.create({
       data: {
         streamId,
-        userId,
+        userId: userId || undefined,
         message,
       },
       include: {

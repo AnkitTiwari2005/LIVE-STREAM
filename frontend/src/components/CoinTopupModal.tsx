@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { X, Sparkles, CheckCircle2, Shield, Zap } from 'lucide-react';
+import { CoinIcon, OmIcon, DiyaIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
 
 interface CoinTopupModalProps {
   isOpen: boolean;
@@ -32,7 +33,7 @@ const PACKAGES = [
     coins: 600,
     priceInr: 1000,
     watchTime: '120 Mins (2 Hours)',
-    badge: 'Most Popular 🔥',
+    badge: 'Most Popular',
     highlight: true,
   },
   {
@@ -41,7 +42,7 @@ const PACKAGES = [
     coins: 1500,
     priceInr: 2100,
     watchTime: '300 Mins (5 Hours)',
-    badge: 'Best Value 🌟',
+    badge: 'Best Value',
   },
 ];
 
@@ -157,8 +158,8 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess }: CoinTopupModalPro
         <div className="absolute top-0 right-1/4 w-72 h-72 bg-orange-600/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex items-center justify-between pb-4 border-b border-stone-800">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🪙</span>
+          <div className="flex items-center gap-2.5">
+            <CoinIcon size={28} />
             <div>
               <h2 className="text-lg font-bold text-white">Recharge Sacred Coins</h2>
               <p className="text-xs text-stone-400">5 Coins = 1 Minute of Auspicious Public Live Darshan</p>
@@ -184,7 +185,10 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess }: CoinTopupModalPro
               <CheckCircle2 className="w-10 h-10" />
             </div>
             <h3 className="text-xl font-bold text-white mb-2">{successMessage}</h3>
-            <p className="text-sm text-stone-400">May you receive peace, divine grace, and spiritual blessings 🙏</p>
+            <p className="text-sm text-stone-400 flex items-center justify-center gap-1.5">
+              <span>May you receive peace, divine grace, and spiritual blessings</span>
+              <PranamIcon size={18} />
+            </p>
           </div>
         ) : (
           <div className="mt-5 space-y-4">
@@ -212,13 +216,14 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess }: CoinTopupModalPro
                       <span className="text-sm font-extrabold text-amber-400">₹{pkg.priceInr}</span>
                     </div>
 
-                    <div className="flex items-baseline gap-1.5 my-1">
+                    <div className="flex items-center gap-1.5 my-1">
+                      <CoinIcon size={20} />
                       <span className="text-2xl font-black text-white">{pkg.coins}</span>
                       <span className="text-xs text-amber-400/90 font-bold">Coins</span>
                     </div>
 
-                    <p className="text-[11px] text-stone-400 flex items-center gap-1 mt-1">
-                      <Sparkles className="w-3 h-3 text-orange-400" />
+                    <p className="text-[11px] text-stone-400 flex items-center gap-1.5 mt-1">
+                      <DiyaIcon size={14} />
                       {pkg.watchTime}
                     </p>
                   </div>

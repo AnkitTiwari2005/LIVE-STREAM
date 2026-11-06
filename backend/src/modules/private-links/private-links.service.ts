@@ -254,14 +254,15 @@ export class PrivateLinksService {
       },
     });
 
-    // Generate short-lived LiveKit token (5 minutes TTL - NFR-S4)
+    // Generate LiveKit token for private interactive pooja consultation (60 minutes TTL, with publish grant)
     const token = await this.videoProvider.generateToken({
       roomName: link.stream.id,
       participantId,
       participantName,
       isPublisher: false,
+      canPublish: true, // Allow devotee to speak & show camera during private consultation
       canSubscribe: true,
-      ttlMinutes: 5,
+      ttlMinutes: 60,
       metadata: { role: 'private_viewer', sessionId: session.id, linkId: link.id },
     });
 
