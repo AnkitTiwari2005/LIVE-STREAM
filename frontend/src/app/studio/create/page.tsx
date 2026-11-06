@@ -18,7 +18,7 @@ export default function CreateStreamPage() {
 
   useEffect(() => {
     async function loadCategories() {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
       try {
         const res = await fetch(`${apiUrl}/admin/categories`);
         if (res.ok) {
@@ -45,7 +45,7 @@ export default function CreateStreamPage() {
     }
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
       const res = await fetch(`${apiUrl}/streams`, {
         method: 'POST',
         headers: {

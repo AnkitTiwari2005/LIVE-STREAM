@@ -48,7 +48,7 @@ export default function AdminConsolePage() {
   const loadAdminData = async () => {
     setLoading(true);
     const token = localStorage.getItem('pooja_token');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
     const headers = { Authorization: `Bearer ${token}` };
 
     try {
@@ -80,7 +80,7 @@ export default function AdminConsolePage() {
 
   const handleKycDecision = async (profileId: string, decision: 'APPROVED' | 'REJECTED') => {
     const token = localStorage.getItem('pooja_token');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
     let rejectionReason: string | undefined = undefined;
     if (decision === 'REJECTED') {
@@ -105,7 +105,7 @@ export default function AdminConsolePage() {
   const handleForceEndStream = async (streamId: string) => {
     if (!confirm('Emergency Action: Force end this stream immediately on LiveKit SFU?')) return;
     const token = localStorage.getItem('pooja_token');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
     try {
       await fetch(`${apiUrl}/admin/streams/${streamId}/force-end`, {
@@ -120,7 +120,7 @@ export default function AdminConsolePage() {
 
   const handleSearchUsers = async () => {
     const token = localStorage.getItem('pooja_token');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
     try {
       const res = await fetch(`${apiUrl}/admin/users?query=${encodeURIComponent(searchUser)}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -133,7 +133,7 @@ export default function AdminConsolePage() {
 
   const handleUserStatus = async (userId: string, status: 'ACTIVE' | 'SUSPENDED' | 'BANNED') => {
     const token = localStorage.getItem('pooja_token');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
     try {
       await fetch(`${apiUrl}/admin/users/${userId}/status`, {
         method: 'PATCH',

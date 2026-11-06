@@ -11,7 +11,7 @@ export default function StaticCMSClient() {
 
   useEffect(() => {
     async function loadPage() {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
       try {
         const res = await fetch(`${apiUrl}/admin/pages/${slug}`);
         if (res.ok) {
