@@ -1,0 +1,95 @@
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  Query,
+  Req,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
+import { StreamsService } from './streams.service';
+import { CreateStreamDto } from './dto/create-stream.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { Public } from '../../common/decorators/public.decorator';
+import { UserRole } from '@prisma/client';
+import { Request } from 'express';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
+
+@ApiTags('Streams')
+@Controller('streams')
+export class StreamsController {
+  constructor(private readonly streamsService: StreamsService) {}
+
+  @Roles(UserRole.STREAMER)
+  @Post()
+  @ApiOperation({ summary: 'Create a new stream (FR-L1, FR-L2)' })
+  async createStream(
+    @CurrentUser('id') streamerId: string,
+    @Body() dto: CreateStreamDto,
+  ) {
+    return this.streamsService.createStream(streamerId, dto);
+  }
+
+  @Roles(UserRole.STREAMER)
+  @Post(':id/go-live')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Start broadcasting live and get LiveKit publisher token (FR-L2)' })
+  async goLive(
+    @Param('id') streamId: string,
+    @CurrentUser('id') streamerId: string,
+  ) {
+    return this.streamsService.goLive(streamId, streamerId);
+  }
+
+  @Post(':id/end')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Terminate live stream (FR-L6)' })
+  async endStream(
+    @Param('id') streamId: string,
+    @CurrentUser() user: any,
+  ) {
+    const isAdmin = user.role === UserRole.ADMIN;
+    return this.streamsService.endStream(streamId, user.id, isAdmin);
+  }
+
+  @Public()
+  @Post(':id/token/viewer')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get LiveKit viewer token for a public stream (FR-L7)' })
+  async getViewerToken(
+    @Param('id') streamId: string,
+    @Body('guestName') guestName: string,
+    @CurrentUser('id') userId: string,
+    @Req() req: Request,
+  ) {
+    const ip = req.ip || req.headers['x-forwarded-for'] as string;
+    return this.streamsService.getViewerToken(streamId, userId, guestName, ip);
+  }
+
+  @Public()
+  @Get('public')
+  @ApiOperation({ summary: 'List active and upcoming public streams (FR-L8)' })
+  async getPublicStreams(
+    @Query('categoryId') categoryId?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.streamsService.getPublicStreams(categoryId, search);
+  }
+
+  @Roles(UserRole.STREAMER)
+  @Get('streamer/past')
+  @ApiOperation({ summary: 'Streamer dashboard past streams and stats (FR-L10)' })
+  async getStreamerPastStreams(@CurrentUser('id') streamerId: string) {
+    return this.streamsService.getStreamerPastStreams(streamerId);
+  }
+
+  @Public()
+  @Get(':id')
+  @ApiOperation({ summary: 'Get stream details by ID' })
+  async getStreamById(@Param('id') id: string) {
+    return this.streamsService.getStreamById(id);
+  }
+}

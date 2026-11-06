@@ -1,0 +1,344 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  VIEWER
+  STREAMER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  BANNED
+  DELETION_REQUESTED
+}
+
+enum KycStatus {
+  NOT_APPLIED
+  PENDING
+  APPROVED
+  REJECTED
+  MORE_INFO_NEEDED
+}
+
+enum StreamVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum StreamStatus {
+  DRAFT
+  SCHEDULED
+  LIVE
+  RECONNECTING_GRACE_PERIOD
+  ENDED
+  CANCELLED
+}
+
+enum ReportTargetType {
+  STREAM
+  STREAMER
+  CHAT_MESSAGE
+}
+
+enum ReportStatus {
+  OPEN
+  REVIEWED
+  ACTION_TAKEN
+  DISMISSED
+}
+
+enum ModerationActionType {
+  MUTE
+  KICK
+  BLOCK
+  BAN
+}
+
+model User {
+  id                   String             @id @default(uuid())
+  email                String             @unique
+  passwordHash         String?            
+  googleId             String?            @unique
+  name                 String             @db.VarChar(100)
+  avatarUrl            String?
+  role                 UserRole           @default(VIEWER)
+  status               UserStatus         @default(ACTIVE)
+  isEmailVerified      Boolean            @default(false)
+  emailVerifyTokenHash String?            
+  resetTokenHash       String?            
+  resetTokenExpiry     DateTime?
+  preferredLanguage    String             @default("en")
+  emailNotification    Boolean            @default(true)
+  twoFactorSecretEnc   String?            // AES-256-GCM encrypted TOTP secret
+  twoFactorBackupCodes String[]           // Hashed backup codes
+  isTwoFactorEnabled   Boolean            @default(false)
+  isAgeConfirmed18Plus Boolean            @default(false) // Self-declaration
+  consentRecordedAt    DateTime?          @db.Timestamptz
+  termsVersionAccepted String?            @default("v1.0")
+  deletedAt            DateTime?          @db.Timestamptz // Soft delete
+  createdAt            DateTime           @default(now()) @db.Timestamptz
+  updatedAt            DateTime           @updatedAt @db.Timestamptz
+
+  streamerProfile      StreamerProfile?
+  streams              Stream[]           @relation("StreamerStreams")
+  chatMessages         ChatMessage[]      @relation("UserChatMessages")
+  follows              Follow[]           @relation("UserFollows")
+  reminders            StreamReminder[]
+  reportsFiled         Report[]           @relation("ReporterUser")
+  reportsTargeted      Report[]           @relation("ReportedUser")
+  moderationTargeted   ModerationAction[] @relation("TargetUser")
+  moderationConducted  ModerationAction[] @relation("ActorUser")
+  viewerSessions       ViewerSession[]
+  blockedRecords       BlockedViewer[]    @relation("UserBlocks")
+
+  @@index([email])
+  @@index([role, status])
+}
+
+model StreamerProfile {
+  id               String       @id @default(uuid())
+  userId           String       @unique
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio              String?      @db.Text
+  languages        String[]     
+  specialties      String[]     
+  kycStatus        KycStatus    @default(NOT_APPLIED)
+  kycDocuments     Json?        // Encrypted R2 keys. NEVER unmasked Aadhaar. Deleted 30 days post-review.
+  kycReviewedAt    DateTime?    @db.Timestamptz
+  rejectionReason  String?
+  isVerifiedBadge  Boolean      @default(false)
+  followerCount    Int          @default(0)
+  createdAt        DateTime     @default(now()) @db.Timestamptz
+  updatedAt        DateTime     @updatedAt @db.Timestamptz
+
+  followers        Follow[]     @relation("StreamerFollowers")
+
+  @@index([kycStatus])
+}
+
+model StreamCategory {
+  id           String    @id @default(uuid())
+  name         String    @unique
+  slug         String    @unique
+  displayOrder Int       @default(0)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now()) @db.Timestamptz
+
+  streams      Stream[]
+
+  @@index([isActive, displayOrder])
+}
+
+model Stream {
+  id                 String           @id @default(uuid())
+  streamerId         String
+  streamer           User             @relation("StreamerStreams", fields: [streamerId], references: [id], onDelete: Restrict)
+  categoryId         String
+  category           StreamCategory   @relation(fields: [categoryId], references: [id])
+  title              String           @db.VarChar(200)
+  description        String?          @db.Text
+  thumbnailUrl       String?
+  visibility         StreamVisibility @default(PUBLIC)
+  status             StreamStatus     @default(DRAFT)
+  videoQuality       String           @default("480p")
+  scheduledAt        DateTime?        @db.Timestamptz
+  startedAt          DateTime?        @db.Timestamptz
+  endedAt            DateTime?        @db.Timestamptz
+  durationSeconds    Int              @default(0)
+  peakViewers        Int              @default(0)
+  livekitRoomSid     String?
+  
+  isChatEnabled      Boolean          @default(true)
+  isChatFollowerOnly Boolean          @default(false)
+  deletedAt          DateTime?        @db.Timestamptz
+  createdAt          DateTime         @default(now()) @db.Timestamptz
+  updatedAt          DateTime         @updatedAt @db.Timestamptz
+
+  privateLinks       PrivateAccessLink[]
+  chatMessages       ChatMessage[]
+  reminders          StreamReminder[]
+  viewerSessions     ViewerSession[]
+  blockedViewers     BlockedViewer[]
+  reports            Report[]         @relation("StreamReports")
+  moderationActions  ModerationAction[]
+
+  @@index([status, visibility, scheduledAt])
+  @@index([streamerId])
+  @@index([categoryId])
+}
+
+model PrivateAccessLink {
+  id              String    @id @default(uuid())
+  streamId        String
+  stream          Stream    @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  tokenHash       String    @unique // SHA-256 for fast lookup
+  tokenEncrypted  String    // AES-256-GCM encrypted for streamer studio display
+  passwordHash    String?   // bcrypt/argon2
+  expiresAt       DateTime? @db.Timestamptz
+  maxViewers      Int?      
+  requireApproval Boolean   @default(false)
+  requireLogin    Boolean   @default(true) // Enforce login to ensure ban adherence
+  isRevoked       Boolean   @default(false)
+  createdAt       DateTime  @default(now()) @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @db.Timestamptz
+
+  sessions        ViewerSession[]
+
+  @@index([tokenHash, isRevoked])
+}
+
+model ViewerSession {
+  id                  String             @id @default(uuid())
+  streamId            String
+  stream              Stream             @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  userId              String?            
+  user                User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  guestName           String?
+  privateLinkId       String?
+  privateLink         PrivateAccessLink? @relation(fields: [privateLinkId], references: [id], onDelete: SetNull)
+  sessionFingerprint  String?            
+  ipAddress           String?            // Purged/anonymized after 90 days
+  joinedAt            DateTime           @default(now()) @db.Timestamptz
+  leftAt              DateTime?          @db.Timestamptz
+  isRemoved           Boolean            @default(false)
+
+  @@index([streamId, userId])
+  @@index([streamId, sessionFingerprint])
+}
+
+model BlockedViewer {
+  id                 String   @id @default(uuid())
+  streamId           String
+  stream             Stream   @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  userId             String?
+  user               User?    @relation("UserBlocks", fields: [userId], references: [id], onDelete: Cascade)
+  sessionFingerprint String?
+  reason             String?
+  createdAt          DateTime @default(now()) @db.Timestamptz
+
+  @@index([streamId, userId])
+  @@index([streamId, sessionFingerprint])
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  streamId  String
+  stream    Stream   @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  userId    String?  
+  user      User?    @relation("UserChatMessages", fields: [userId], references: [id], onDelete: SetNull)
+  message   String   @db.VarChar(500)
+  isDeleted Boolean  @default(false)
+  isPinned  Boolean  @default(false)
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  reports   Report[] @relation("ChatMessageReports")
+
+  @@index([streamId, createdAt])
+}
+
+model Follow {
+  id         String          @id @default(uuid())
+  followerId String
+  follower   User            @relation("UserFollows", fields: [followerId], references: [id], onDelete: Cascade)
+  streamerId String
+  streamer   StreamerProfile @relation("StreamerFollowers", fields: [streamerId], references: [id], onDelete: Cascade)
+  createdAt  DateTime        @default(now()) @db.Timestamptz
+
+  @@unique([followerId, streamerId])
+  @@index([followerId])
+  @@index([streamerId])
+}
+
+model StreamReminder {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  streamId         String
+  stream           Stream   @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  isSentScheduled  Boolean  @default(false)
+  isSent15Min      Boolean  @default(false)
+  isSentLive       Boolean  @default(false)
+  createdAt        DateTime @default(now()) @db.Timestamptz
+
+  @@unique([userId, streamId])
+  @@index([streamId])
+}
+
+model Report {
+  id             String           @id @default(uuid())
+  reporterId     String
+  reporter       User             @relation("ReporterUser", fields: [reporterId], references: [id], onDelete: Cascade)
+  targetType     ReportTargetType
+  streamId       String?
+  stream         Stream?          @relation("StreamReports", fields: [streamId], references: [id], onDelete: Cascade)
+  targetUserId   String?
+  targetUser     User?            @relation("ReportedUser", fields: [targetUserId], references: [id], onDelete: SetNull)
+  chatMessageId  String?
+  chatMessage    ChatMessage?     @relation("ChatMessageReports", fields: [chatMessageId], references: [id], onDelete: Cascade)
+  reason         String           @db.VarChar(255)
+  details        String?          @db.Text
+  status         ReportStatus     @default(OPEN)
+  handledBy      String?
+  adminNotes     String?          @db.Text
+  createdAt      DateTime         @default(now()) @db.Timestamptz
+  updatedAt      DateTime         @updatedAt @db.Timestamptz
+
+  @@index([status, createdAt])
+}
+
+model ModerationAction {
+  id                 String               @id @default(uuid())
+  actorId            String
+  actor              User                 @relation("ActorUser", fields: [actorId], references: [id])
+  targetUserId       String?              // Nullable for guest moderation
+  targetUser         User?                @relation("TargetUser", fields: [targetUserId], references: [id], onDelete: SetNull)
+  sessionFingerprint String?              
+  streamId           String?
+  stream             Stream?              @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  actionType         ModerationActionType
+  reason             String?
+  durationMinutes    Int?                 
+  expiresAt          DateTime?            @db.Timestamptz
+  createdAt          DateTime             @default(now()) @db.Timestamptz
+
+  @@index([targetUserId, streamId, actionType])
+}
+
+model AuditLog {
+  id             String   @id @default(uuid())
+  actorId        String?  // Plain string snapshot - allows admin user deletion
+  actorEmail     String?  // Historical snapshot
+  action         String   
+  targetResource String   
+  details        Json?    
+  ipAddress      String?
+  createdAt      DateTime @default(now()) @db.Timestamptz
+
+  @@index([action, createdAt])
+}
+
+model ChatWordFilter {
+  id        String   @id @default(uuid())
+  word      String   @unique
+  severity  String   @default("HIGH") 
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  @@index([isActive])
+}
+
+model StaticPage {
+  id          String   @id @default(uuid())
+  slug        String   @unique 
+  title       String
+  contentHtml String   @db.Text
+  updatedAt   DateTime @updatedAt @db.Timestamptz
+}

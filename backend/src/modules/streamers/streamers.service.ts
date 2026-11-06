@@ -1,0 +1,230 @@
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  ConflictException,
+  Logger,
+} from '@nestjs/common';
+import { PrismaService } from '../../database/prisma.service';
+import { ApplyStreamerDto, ReviewKycDto } from './dto/apply-streamer.dto';
+import { KycStatus, UserRole, StreamStatus } from '@prisma/client';
+
+@Injectable()
+export class StreamersService {
+  private readonly logger = new Logger(StreamersService.name);
+
+  constructor(private readonly prisma: PrismaService) {}
+
+  async apply(userId: string, dto: ApplyStreamerDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { streamerProfile: true },
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+
+    if (user.streamerProfile?.kycStatus === KycStatus.APPROVED) {
+      throw new ConflictException('You are already an approved streamer on the platform');
+    }
+
+    if (user.streamerProfile?.kycStatus === KycStatus.PENDING) {
+      throw new ConflictException('Your streamer verification application is already pending review');
+    }
+
+    const profile = await this.prisma.streamerProfile.upsert({
+      where: { userId },
+      update: {
+        bio: dto.bio,
+        languages: dto.languages,
+        specialties: dto.specialties,
+        kycStatus: KycStatus.PENDING,
+        kycDocuments: dto.kycDocuments || null,
+        rejectionReason: null,
+      },
+      create: {
+        userId,
+        bio: dto.bio,
+        languages: dto.languages,
+        specialties: dto.specialties,
+        kycStatus: KycStatus.PENDING,
+        kycDocuments: dto.kycDocuments || null,
+      },
+    });
+
+    this.logger.log(`User ${userId} applied for streamer verification`);
+    return {
+      message: 'Streamer application submitted successfully. Administrator will review your credentials.',
+      profile,
+    };
+  }
+
+  async getPendingApplications() {
+    return this.prisma.streamerProfile.findMany({
+      where: { kycStatus: KycStatus.PENDING },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true, avatarUrl: true, createdAt: true },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async reviewKyc(profileId: string, adminId: string, adminEmail: string, dto: ReviewKycDto) {
+    const profile = await this.prisma.streamerProfile.findUnique({
+      where: { id: profileId },
+      include: { user: true },
+    });
+
+    if (!profile) throw new NotFoundException('Streamer application not found');
+
+    if (dto.decision === KycStatus.APPROVED) {
+      await this.prisma.$transaction([
+        this.prisma.streamerProfile.update({
+          where: { id: profileId },
+          data: {
+            kycStatus: KycStatus.APPROVED,
+            isVerifiedBadge: true,
+            kycReviewedAt: new Date(),
+            rejectionReason: null,
+          },
+        }),
+        this.prisma.user.update({
+          where: { id: profile.userId },
+          data: { role: UserRole.STREAMER },
+        }),
+        this.prisma.auditLog.create({
+          data: {
+            actorId: adminId,
+            actorEmail: adminEmail,
+            action: 'STREAMER_KYC_APPROVED',
+            targetResource: `StreamerProfile:${profileId}`,
+            details: { applicantUserId: profile.userId, decision: 'APPROVED' },
+          },
+        }),
+      ]);
+      return { message: 'Streamer application approved successfully. Verified badge awarded.' };
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.streamerProfile.update({
+        where: { id: profileId },
+        data: {
+          kycStatus: dto.decision,
+          rejectionReason: dto.rejectionReason || null,
+          kycReviewedAt: new Date(),
+        },
+      }),
+      this.prisma.auditLog.create({
+        data: {
+          actorId: adminId,
+          actorEmail: adminEmail,
+          action: `STREAMER_KYC_${dto.decision}`,
+          targetResource: `StreamerProfile:${profileId}`,
+          details: {
+            applicantUserId: profile.userId,
+            decision: dto.decision,
+            reason: dto.rejectionReason,
+          },
+        },
+      }),
+    ]);
+
+    return { message: `Streamer application updated with decision: ${dto.decision}` };
+  }
+
+  async getPublicProfile(profileIdOrUserId: string) {
+    const profile = await this.prisma.streamerProfile.findFirst({
+      where: {
+        OR: [{ id: profileIdOrUserId }, { userId: profileIdOrUserId }],
+        kycStatus: KycStatus.APPROVED,
+      },
+      include: {
+        user: {
+          select: { id: true, name: true, avatarUrl: true, createdAt: true },
+        },
+        followers: { select: { followerId: true } },
+      },
+    });
+
+    if (!profile) throw new NotFoundException('Verified streamer profile not found');
+
+    // Fetch live streams and upcoming scheduled streams (FR-S3)
+    const activeStreams = await this.prisma.stream.findMany({
+      where: {
+        streamerId: profile.userId,
+        visibility: 'PUBLIC',
+        status: { in: [StreamStatus.LIVE, StreamStatus.SCHEDULED] },
+      },
+      include: { category: true },
+      orderBy: { scheduledAt: 'asc' },
+    });
+
+    return {
+      profile: {
+        id: profile.id,
+        userId: profile.userId,
+        name: profile.user.name,
+        avatarUrl: profile.user.avatarUrl,
+        bio: profile.bio,
+        languages: profile.languages,
+        specialties: profile.specialties,
+        isVerifiedBadge: profile.isVerifiedBadge,
+        followerCount: profile.followerCount,
+      },
+      streams: activeStreams,
+    };
+  }
+
+  async follow(followerId: string, streamerProfileId: string) {
+    const profile = await this.prisma.streamerProfile.findUnique({
+      where: { id: streamerProfileId },
+    });
+    if (!profile) throw new NotFoundException('Streamer not found');
+
+    const follower = await this.prisma.user.findUnique({ where: { id: followerId } });
+    if (!follower?.isEmailVerified) {
+      throw new BadRequestException('Email address must be verified before following streamers (FR-A2)');
+    }
+
+    try {
+      await this.prisma.$transaction([
+        this.prisma.follow.create({
+          data: {
+            followerId,
+            streamerId: streamerProfileId,
+          },
+        }),
+        this.prisma.streamerProfile.update({
+          where: { id: streamerProfileId },
+          data: { followerCount: { increment: 1 } },
+        }),
+      ]);
+      return { following: true };
+    } catch {
+      return { following: true, message: 'Already following' };
+    }
+  }
+
+  async unfollow(followerId: string, streamerProfileId: string) {
+    try {
+      await this.prisma.$transaction([
+        this.prisma.follow.delete({
+          where: {
+            followerId_streamerId: {
+              followerId,
+              streamerId: streamerProfileId,
+            },
+          },
+        }),
+        this.prisma.streamerProfile.update({
+          where: { id: streamerProfileId },
+          data: { followerCount: { decrement: 1 } },
+        }),
+      ]);
+      return { following: false };
+    } catch {
+      return { following: false };
+    }
+  }
+}
