@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
@@ -65,17 +65,31 @@ export default function VerifyEmailPage() {
         {status === 'error' && (
           <div>
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-            <h2 className="text-xl font-bold text-white mb-2">Verification Link Expired</h2>
+            <h2 className="text-xl font-bold text-white mb-2">Verification Failed</h2>
             <p className="text-xs text-red-300 leading-relaxed mb-6">{message}</p>
             <Link
               href="/login"
-              className="inline-block py-2.5 px-6 bg-stone-800 hover:bg-stone-700 text-stone-200 font-semibold rounded-xl text-xs transition-colors"
+              className="inline-block py-2.5 px-6 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-xl text-xs transition-colors"
             >
-              Back to Login
+              Return to Login
             </Link>
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[70vh] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-orange-500" />
+        </div>
+      }
+    >
+      <VerifyEmailContent />
+    </Suspense>
   );
 }

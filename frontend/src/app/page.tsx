@@ -32,7 +32,7 @@ export default function HomePage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
         // Load Categories
         const catRes = await fetch(`${apiUrl}/admin/categories`);
@@ -73,7 +73,7 @@ export default function HomePage() {
       window.location.href = '/login';
       return;
     }
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
     try {
       const res = await fetch(`${apiUrl}/notifications/remind/${streamId}`, {
         method: 'POST',

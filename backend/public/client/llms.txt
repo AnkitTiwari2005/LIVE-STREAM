@@ -1,0 +1,22 @@
+# Shubhdarshan - Sacred Pooja & Astrology Live Streaming Platform
+
+> Shubhdarshan is a real-time devotional live-streaming and spiritual consultation platform in India, connecting devotees worldwide with verified Vedic priests, temples, and astrologers for live sacred rituals, aarti, sankalp, and Vedic astrological consultations.
+
+## Core Services
+- **Public Temple Live Broadcasts**: Real-time WebRTC and HLS live streams from registered temples and spiritual sanctuaries across India.
+- **Private Interactive Pooja Sessions**: Password-protected, 128-bit encrypted sankalp rituals for families and individuals worldwide with interactive video and low-latency spiritual reactions (Pranam, Aarti, Shankha).
+- **Vedic Astrology Consultations**: Direct live consultations with certified astrologers and Jyotish acharyas.
+- **Temple Prasad & Community**: Devotee donations, community live chat with Sanskrit profanity filtering, and temple prasad delivery tracking.
+
+## Compliance & Trust
+- **DPDP Act 2023 Compliant**: 18+ age verification, explicit verifiable consent for digital personal data processing, and 30-day chat message retention policy.
+- **Verified Streamers**: Strict government-ID and priesthood credential KYC verification by platform administrators before broadcast privileges are granted.
+
+## Key Public URLs
+- Homepage: https://darkturquoise-louse-359917.hostingersite.com/
+- Live Streams Catalog: https://darkturquoise-louse-359917.hostingersite.com/
+- Streamer Onboarding (Pandit Registration): https://darkturquoise-louse-359917.hostingersite.com/streamer/apply
+- Terms of Service: https://darkturquoise-louse-359917.hostingersite.com/terms
+- Privacy Policy: https://darkturquoise-louse-359917.hostingersite.com/privacy
+- Grievance Redressal Officer: https://darkturquoise-louse-359917.hostingersite.com/grievance
+- REST API Documentation: https://darkturquoise-louse-359917.hostingersite.com/api/docs
