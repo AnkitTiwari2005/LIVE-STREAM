@@ -35,7 +35,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly prisma: PrismaService,
   ) {
     const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-    this.redis = new Redis(redisUrl);
+    this.redis = new Redis(redisUrl, {
+      lazyConnect: true,
+      enableOfflineQueue: false,
+    });
+    this.redis.on('error', (err) => {
+      this.logger.warn(`Redis connection notice: ${err.message}`);
+    });
   }
 
   async handleConnection(client: Socket) {

@@ -40,3 +40,4 @@ Thumbs.db
 backups/
 /opt/pooja/
 certbot-www/
+.neon
