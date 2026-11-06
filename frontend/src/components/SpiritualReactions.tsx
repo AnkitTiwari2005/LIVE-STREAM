@@ -18,23 +18,26 @@ export function SpiritualReactions({ socket, streamId }: SpiritualReactionsProps
   const [activeReactions, setActiveReactions] = useState<ReactionItem[]>([]);
   const emojis = ['🙏', '🪔', '🌸', '🔔', '🕉️', '🌺'];
 
+  const triggerReactionAnimation = (emoji: string) => {
+    const newReaction: ReactionItem = {
+      id: `${Date.now()}_${Math.random()}`,
+      emoji,
+      left: 15 + Math.random() * 70, // random horizontal offset 15% to 85%
+    };
+
+    setActiveReactions((prev) => [...prev.slice(-20), newReaction]);
+
+    setTimeout(() => {
+      setActiveReactions((prev) => prev.filter((r) => r.id !== newReaction.id));
+    }, 2500);
+  };
+
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !streamId) return;
 
     const handleReactionReceived = (data: { streamId: string; emoji: string }) => {
       if (data.streamId !== streamId) return;
-
-      const newReaction: ReactionItem = {
-        id: `${Date.now()}_${Math.random()}`,
-        emoji: data.emoji,
-        left: 20 + Math.random() * 60, // random horizontal offset 20% to 80%
-      };
-
-      setActiveReactions((prev) => [...prev.slice(-20), newReaction]);
-
-      setTimeout(() => {
-        setActiveReactions((prev) => prev.filter((r) => r.id !== newReaction.id));
-      }, 2500);
+      triggerReactionAnimation(data.emoji);
     };
 
     socket.on('chat:reaction', handleReactionReceived);
@@ -44,18 +47,23 @@ export function SpiritualReactions({ socket, streamId }: SpiritualReactionsProps
   }, [socket, streamId]);
 
   const sendReaction = (emoji: string) => {
-    if (!socket) return;
-    socket.emit('chat:reaction', { streamId, emoji });
+    // 1. Instant local optimistic feedback for user
+    triggerReactionAnimation(emoji);
+
+    // 2. Broadcast via socket to all other room attendees
+    if (socket && streamId) {
+      socket.emit('chat:reaction', { streamId, emoji });
+    }
   };
 
   return (
     <div className="relative">
       {/* Floating particles container */}
-      <div className="absolute bottom-16 right-4 w-48 h-80 pointer-events-none overflow-hidden z-40">
+      <div className="absolute bottom-16 right-0 w-64 h-80 pointer-events-none overflow-hidden z-40">
         {activeReactions.map((r) => (
           <div
             key={r.id}
-            className="absolute bottom-0 text-3xl animate-float-up opacity-90 transition-all select-none"
+            className="absolute bottom-0 text-3xl sm:text-4xl animate-float-up opacity-90 transition-all select-none"
             style={{
               left: `${r.left}%`,
               animation: 'floatUp 2.4s ease-out forwards',
@@ -67,12 +75,13 @@ export function SpiritualReactions({ socket, streamId }: SpiritualReactionsProps
       </div>
 
       {/* Emoji trigger bar */}
-      <div className="flex items-center justify-around bg-stone-900/90 border border-stone-800 rounded-full px-3 py-1.5 backdrop-blur-md shadow-lg">
+      <div className="flex items-center justify-around bg-stone-900/90 border border-stone-800 rounded-full px-3 py-1.5 backdrop-blur-md shadow-2xl">
         {emojis.map((emoji) => (
           <button
             key={emoji}
+            type="button"
             onClick={() => sendReaction(emoji)}
-            className="text-xl sm:text-2xl hover:scale-130 active:scale-95 transition-transform p-1 select-none"
+            className="text-xl sm:text-2xl hover:scale-125 active:scale-95 transition-transform p-1 select-none"
             title={`Offer ${emoji}`}
           >
             {emoji}
@@ -87,10 +96,10 @@ export function SpiritualReactions({ socket, streamId }: SpiritualReactionsProps
             opacity: 1;
           }
           70% {
-            opacity: 0.9;
+            opacity: 0.95;
           }
           100% {
-            transform: translateY(-240px) scale(1.3);
+            transform: translateY(-240px) scale(1.4);
             opacity: 0;
           }
         }

@@ -32,9 +32,17 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser }: ChatWi
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !streamId) return;
 
-    socket.emit('chat:join', { streamId });
+    const joinRoom = () => {
+      socket.emit('chat:join', { streamId });
+    };
+
+    // Join room immediately if already connected, and also on every connect/reconnect
+    if (socket.connected) {
+      joinRoom();
+    }
+    socket.on('connect', joinRoom);
 
     socket.on('chat:history', (history: ChatMessage[]) => {
       setMessages(history);
@@ -87,6 +95,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser }: ChatWi
     });
 
     return () => {
+      socket.off('connect', joinRoom);
       socket.off('chat:history');
       socket.off('chat:message');
       socket.off('chat:message_deleted');
@@ -102,14 +111,27 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser }: ChatWi
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || !socket) return;
+    const trimmed = input.trim();
+    if (!trimmed) return;
 
-    if (!currentUser) {
+    const storedUser = typeof window !== 'undefined' ? localStorage.getItem('pooja_user') : null;
+    const activeUser = currentUser || (storedUser ? JSON.parse(storedUser) : null);
+
+    if (!activeUser) {
       setErrorBanner('Please sign in to participate in live chat.');
       return;
     }
 
-    socket.emit('chat:send', { streamId, message: input });
+    if (!socket || !socket.connected) {
+      setErrorBanner('Connecting to chat server, please retry in a moment...');
+      return;
+    }
+
+    socket.emit('chat:send', {
+      streamId,
+      message: trimmed,
+      guestName: activeUser.name,
+    });
     setInput('');
   };
 
@@ -127,8 +149,12 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser }: ChatWi
     }
   };
 
+  const hasUserSession =
+    !!currentUser ||
+    (typeof window !== 'undefined' && !!localStorage.getItem('pooja_user'));
+
   return (
-    <div className="flex flex-col h-full bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
+    <div className="flex flex-col h-full bg-stone-900 border border-stone-800 rounded-2xl overflow-hidden shadow-xl">
       {/* Header */}
       <div className="px-4 py-3 bg-stone-950 border-b border-stone-800 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -159,13 +185,20 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser }: ChatWi
 
       {/* Message List */}
       <div className="flex-1 p-3 overflow-y-auto space-y-2.5 text-xs">
+        {messages.length === 0 && (
+          <div className="h-full flex flex-col items-center justify-center text-stone-500 text-center px-4">
+            <span className="text-2xl mb-1">🙏</span>
+            <span className="text-xs">No messages yet. Send a prayer or chant to start the conversation!</span>
+          </div>
+        )}
+
         {messages.map((msg) => {
           const isDakshina = (msg as any).isDakshina;
           if (isDakshina) {
             return (
               <div
                 key={msg.id}
-                className="p-2 rounded-xl bg-gradient-to-r from-amber-950/70 via-orange-950/70 to-yellow-950/70 border border-amber-600/40 shadow-md text-amber-200"
+                className="p-2.5 rounded-xl bg-gradient-to-r from-amber-950/70 via-orange-950/70 to-yellow-950/70 border border-amber-600/40 shadow-md text-amber-200"
               >
                 <div className="flex items-center gap-1.5 font-bold text-amber-300 mb-0.5">
                   <span>🪔</span>
@@ -179,7 +212,10 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser }: ChatWi
           }
 
           return (
-            <div key={msg.id} className="group flex items-start justify-between gap-2 p-1.5 rounded hover:bg-stone-800/60 transition-colors">
+            <div
+              key={msg.id}
+              className="group flex items-start justify-between gap-2 p-1.5 rounded-lg hover:bg-stone-800/60 transition-colors"
+            >
               <div>
                 <span
                   className={`font-semibold mr-1.5 ${
@@ -230,7 +266,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser }: ChatWi
 
       {/* Input Form */}
       <div className="p-3 bg-stone-950 border-t border-stone-800">
-        {currentUser ? (
+        {hasUserSession ? (
           <form onSubmit={handleSendMessage} className="flex gap-2">
             <input
               type="text"
@@ -238,11 +274,11 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser }: ChatWi
               onChange={(e) => setInput(e.target.value)}
               placeholder="Send sacred offering or prayer..."
               maxLength={500}
-              className="flex-1 bg-stone-900 border border-stone-700 rounded-lg px-3 py-2 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-orange-500"
+              className="flex-1 bg-stone-900 border border-stone-700 rounded-xl px-3.5 py-2 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-orange-500"
             />
             <button
               type="submit"
-              className="bg-orange-600 hover:bg-orange-500 text-white p-2 rounded-lg transition-colors"
+              className="bg-orange-600 hover:bg-orange-500 text-white p-2.5 rounded-xl transition-colors shadow-md shrink-0"
               title="Send Message"
             >
               <Send className="w-4 h-4" />
@@ -250,7 +286,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser }: ChatWi
           </form>
         ) : (
           <div className="text-center py-1">
-            <a href="/login" className="text-xs text-orange-400 hover:underline font-medium">
+            <a href="/login" className="text-xs text-orange-400 hover:underline font-semibold">
               Sign in to participate in sacred live chat 🙏
             </a>
           </div>

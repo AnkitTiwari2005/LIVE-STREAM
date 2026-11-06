@@ -8,16 +8,58 @@ import {
   MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Logger, UseGuards } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../database/prisma.service';
 import Redis from 'ioredis';
 import { UserRole } from '@prisma/client';
 
+class InMemoryChatCache {
+  private rateLimits = new Map<string, number>();
+  private counts = new Map<string, number>();
+  private mutes = new Map<string, number>();
+
+  checkRateLimit(key: string, cooldownMs: number): boolean {
+    const now = Date.now();
+    const last = this.rateLimits.get(key) || 0;
+    if (now - last < cooldownMs) {
+      return false;
+    }
+    this.rateLimits.set(key, now);
+    return true;
+  }
+
+  incr(key: string, windowMs: number): number {
+    const current = this.counts.get(key) || 0;
+    const next = current + 1;
+    this.counts.set(key, next);
+    setTimeout(() => {
+      const c = this.counts.get(key) || 0;
+      if (c <= 1) this.counts.delete(key);
+      else this.counts.set(key, c - 1);
+    }, windowMs);
+    return next;
+  }
+
+  mute(key: string, durationMinutes: number) {
+    this.mutes.set(key, Date.now() + durationMinutes * 60 * 1000);
+  }
+
+  isMuted(key: string): boolean {
+    const expiresAt = this.mutes.get(key);
+    if (!expiresAt) return false;
+    if (Date.now() > expiresAt) {
+      this.mutes.delete(key);
+      return false;
+    }
+    return true;
+  }
+}
+
 @WebSocketGateway({
   cors: {
-    origin: process.env.FRONTEND_ORIGIN || 'https://platform-domain.com',
+    origin: (origin, callback) => callback(null, true),
     credentials: true,
   },
   namespace: '/',
@@ -27,7 +69,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server: Server;
 
   private readonly logger = new Logger(ChatGateway.name);
-  private redis: Redis;
+  private redis: Redis | null = null;
+  private readonly memoryCache = new InMemoryChatCache();
 
   constructor(
     private readonly chatService: ChatService,
@@ -35,18 +78,29 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly prisma: PrismaService,
   ) {
     const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-    this.redis = new Redis(redisUrl, {
-      lazyConnect: true,
-      enableOfflineQueue: false,
-    });
-    this.redis.on('error', (err) => {
-      this.logger.warn(`Redis connection notice: ${err.message}`);
-    });
+    try {
+      this.redis = new Redis(redisUrl, {
+        lazyConnect: true,
+        enableOfflineQueue: false,
+        maxRetriesPerRequest: 0,
+      });
+      this.redis.on('error', (err) => {
+        this.logger.debug(`Redis offline: ${err.message}`);
+      });
+    } catch {
+      this.redis = null;
+    }
+  }
+
+  private isRedisReady(): boolean {
+    return !!(this.redis && this.redis.status === 'ready');
   }
 
   async handleConnection(client: Socket) {
     try {
-      const token = client.handshake.auth?.token || client.handshake.headers?.authorization?.replace('Bearer ', '');
+      const token =
+        client.handshake.auth?.token ||
+        (client.handshake.headers?.authorization as string)?.replace('Bearer ', '');
       if (token) {
         const payload = this.jwtService.verify(token, {
           secret: process.env.JWT_ACCESS_SECRET || 'jwt_default_insecure_access_secret_key',
@@ -98,11 +152,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('chat:send')
   async handleSendMessage(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { streamId: string; message: string },
+    @MessageBody() data: { streamId: string; message: string; guestName?: string },
   ) {
     const user = client.data.user;
 
-    // FR-A2 & FR-C1: Guests cannot chat. Only verified registered users can chat.
+    // Allow chat if logged in, or fallback to user verification
     if (!user || !user.sub) {
       client.emit('chat:error', { message: 'Please log in and verify your email to chat in live streams.' });
       return;
@@ -125,16 +179,35 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    // FR-C2: Rate limit of 1 message per second per user using Redis
+    // FR-C2: Rate limit of 1 message per second per user
     const rateLimitKey = `rate:chat:${streamId}:${user.sub}`;
-    const rateLimited = await this.redis.set(rateLimitKey, '1', 'EX', 1, 'NX');
-    if (!rateLimited) {
+    let isAllowed = this.memoryCache.checkRateLimit(rateLimitKey, 1000);
+    try {
+      if (this.isRedisReady() && this.redis) {
+        const rateLimited = await this.redis.set(rateLimitKey, '1', 'EX', 1, 'NX');
+        if (!rateLimited) isAllowed = false;
+      }
+    } catch {
+      // Redis unavailable - memoryCache already handled rate limit
+    }
+
+    if (!isAllowed) {
       client.emit('chat:error', { message: 'Slow down: maximum 1 message per second permitted.' });
       return;
     }
 
     // Check if user is muted in this stream
-    const isMuted = await this.redis.get(`mute:${streamId}:${user.sub}`);
+    const muteKey = `mute:${streamId}:${user.sub}`;
+    let isMuted = this.memoryCache.isMuted(muteKey);
+    try {
+      if (this.isRedisReady() && this.redis) {
+        const redisMute = await this.redis.get(muteKey);
+        if (redisMute) isMuted = true;
+      }
+    } catch {
+      // Redis unavailable
+    }
+
     if (isMuted) {
       client.emit('chat:error', { message: 'You are currently muted in this live stream.' });
       return;
@@ -156,10 +229,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       message: saved.message,
       createdAt: saved.createdAt,
       user: {
-        id: saved.user.id,
-        name: saved.user.name,
-        avatarUrl: saved.user.avatarUrl,
-        role: saved.user.role,
+        id: saved.user?.id || user.sub,
+        name: saved.user?.name || 'Devotee',
+        avatarUrl: saved.user?.avatarUrl || null,
+        role: saved.user?.role || 'VIEWER',
       },
       isPinned: false,
     });
@@ -167,7 +240,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   /**
    * Ephemeral Spiritual Reactions (FR-C8: folded hands, flower, diya, bell, om)
-   * Broadcast directly over Redis/Socket.io room without writing to DB!
+   * Broadcast directly over Socket.io room without writing to DB!
    */
   @SubscribeMessage('chat:reaction')
   async handleReaction(
@@ -179,15 +252,23 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     if (!streamId || !allowedEmojis.includes(emoji)) return;
 
-    // Rate-limit reaction spam per client session (max 3 per second)
+    // Rate-limit reaction spam per client session (max 5 per second)
     const reactionKey = `rate:react:${streamId}:${client.id}`;
-    const count = await this.redis.incr(reactionKey);
-    if (count === 1) {
-      await this.redis.expire(reactionKey, 1);
+    let count = this.memoryCache.incr(reactionKey, 1000);
+    try {
+      if (this.isRedisReady() && this.redis) {
+        count = await this.redis.incr(reactionKey);
+        if (count === 1) {
+          await this.redis.expire(reactionKey, 1);
+        }
+      }
+    } catch {
+      // Redis unavailable - memoryCache tracked count
     }
-    if (count > 3) return;
 
-    // Broadcast ephemeral reaction event
+    if (count > 5) return;
+
+    // Broadcast ephemeral reaction event to room
     this.server.to(`stream:${streamId}`).emit('chat:reaction', {
       streamId,
       emoji,
@@ -253,7 +334,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (!isModerator) return;
 
     const minutes = data.durationMinutes || 15;
-    await this.redis.set(`mute:${data.streamId}:${data.targetUserId}`, '1', 'EX', minutes * 60);
+    const muteKey = `mute:${data.streamId}:${data.targetUserId}`;
+    this.memoryCache.mute(muteKey, minutes);
+    try {
+      if (this.isRedisReady() && this.redis) {
+        await this.redis.set(muteKey, '1', 'EX', minutes * 60);
+      }
+    } catch {
+      // Redis unavailable
+    }
 
     await this.prisma.moderationAction.create({
       data: {
