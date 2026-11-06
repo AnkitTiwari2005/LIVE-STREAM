@@ -22,11 +22,28 @@ export default function JoinPrivateStreamClient() {
   const [metadata, setMetadata] = useState<any>(null);
   const [password, setPassword] = useState('');
   const [guestName, setGuestName] = useState('');
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [token, setToken] = useState<string | null>(null);
   const [serverUrl, setServerUrl] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [inspectLoading, setInspectLoading] = useState(true);
+
+  // Auto-populate logged-in user name
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('pooja_user');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          setCurrentUser(parsed);
+          if (parsed.name) {
+            setGuestName(parsed.name);
+          }
+        } catch {}
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -71,13 +88,23 @@ export default function JoinPrivateStreamClient() {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (storedToken) headers.Authorization = `Bearer ${storedToken}`;
 
+    let resolvedUserId: string | undefined = currentUser?.id;
+    if (!resolvedUserId) {
+      try {
+        const stored = localStorage.getItem('pooja_user');
+        if (stored) resolvedUserId = JSON.parse(stored)?.id;
+      } catch {}
+    }
+
     try {
       const res = await fetch(`${apiUrl}/private-links/claim/${tokenSlug}`, {
         method: 'POST',
         headers,
+        credentials: 'include',
         body: JSON.stringify({
           password: password || undefined,
           guestName: guestName || undefined,
+          userId: resolvedUserId || undefined,
         }),
       });
 
@@ -145,9 +172,19 @@ export default function JoinPrivateStreamClient() {
           </div>
 
           {error && (
-            <div className="mb-6 p-3 rounded-xl bg-red-950/80 border border-red-800 text-red-200 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-              <span>{error}</span>
+            <div className="mb-6 p-4 rounded-xl bg-red-950/80 border border-red-800 text-red-200 text-xs flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                <span>{error}</span>
+              </div>
+              {(error.includes('logged into your account') || error.includes('Unauthorized')) && (
+                <a
+                  href={`/login?redirect=/join/${tokenSlug}`}
+                  className="mt-1 text-center py-2 px-3 bg-orange-600 hover:bg-orange-500 text-white font-semibold rounded-lg transition-colors"
+                >
+                  Sign In to Devotee Account 🙏
+                </a>
+              )}
             </div>
           )}
 

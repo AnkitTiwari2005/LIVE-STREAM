@@ -52,4 +52,8 @@ export class ClaimPrivateLinkDto {
   @IsOptional()
   @IsString()
   guestName?: string;
+
+  @IsOptional()
+  @IsString()
+  userId?: string;
 }

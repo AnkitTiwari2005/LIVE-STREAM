@@ -41,6 +41,34 @@ export class PrivateLinksService {
       throw new BadRequestException('Cannot create private join links for a public stream');
     }
 
+    // If no password or expiration is set, check if an unrevoked active link already exists
+    if (!dto.password && !dto.expiresAt && !dto.maxViewers) {
+      const existingLink = await this.prisma.privateAccessLink.findFirst({
+        where: { streamId: dto.streamId, isRevoked: false },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (existingLink && (!existingLink.expiresAt || existingLink.expiresAt > new Date())) {
+        const rawTokenSlug = CryptoUtil.decryptAesGcm(existingLink.tokenEncrypted);
+        const origin = process.env.FRONTEND_ORIGIN || 'https://darkturquoise-louse-359917.hostingersite.com';
+        const joinUrl = `${origin}/join/${rawTokenSlug}`;
+        const whatsAppPart1 = `🙏 Namaste! You are invited to attend our private live Pooja session on Shubhdarshan:\n*${stream.title}*\n\n🔗 Join Link: ${joinUrl}\n\nPlease join on time. Har Har Mahadev!`;
+        return {
+          linkId: existingLink.id,
+          joinUrl,
+          rawTokenSlug,
+          hasPassword: !!existingLink.passwordHash,
+          maxViewers: existingLink.maxViewers,
+          expiresAt: existingLink.expiresAt,
+          requireApproval: existingLink.requireApproval,
+          requireLogin: existingLink.requireLogin,
+          whatsAppShare: {
+            part1Url: `https://api.whatsapp.com/send?text=${encodeURIComponent(whatsAppPart1)}`,
+            part2Text: null,
+          },
+        };
+      }
+    }
+
     // Generate 128-bit cryptographically secure token slug (FR-P2)
     const rawTokenSlug = CryptoUtil.generate128BitToken();
     const tokenHash = CryptoUtil.hashSha256(rawTokenSlug);
@@ -66,7 +94,7 @@ export class PrivateLinksService {
       },
     });
 
-    const origin = process.env.FRONTEND_ORIGIN || 'https://platform-domain.com';
+    const origin = process.env.FRONTEND_ORIGIN || 'https://darkturquoise-louse-359917.hostingersite.com';
     const joinUrl = `${origin}/join/${rawTokenSlug}`;
 
     // Generate 2-part WhatsApp share text (FR-P9)
@@ -161,8 +189,26 @@ export class PrivateLinksService {
       throw new BadRequestException('The private live session is not currently streaming');
     }
 
+    // Check user verification and account status if userId provided
+    let verifiedUser = null;
+    if (userId) {
+      verifiedUser = await this.prisma.user.findUnique({ where: { id: userId } });
+      if (verifiedUser) {
+        if (verifiedUser.status === UserStatus.BANNED || verifiedUser.status === UserStatus.SUSPENDED) {
+          throw new ForbiddenException('Your account is restricted from attending live streams');
+        }
+
+        const blocked = await this.prisma.blockedViewer.findFirst({
+          where: { streamId: link.streamId, userId },
+        });
+        if (blocked) {
+          throw new ForbiddenException('You have been removed and blocked from this private session (FR-P7)');
+        }
+      }
+    }
+
     // Enforce login requirement if configured
-    if (link.requireLogin && !userId) {
+    if (link.requireLogin && !verifiedUser) {
       throw new UnauthorizedException('This private session requires you to be logged into your account');
     }
 
@@ -174,21 +220,6 @@ export class PrivateLinksService {
       const isMatch = await bcrypt.compare(dto.password, link.passwordHash);
       if (!isMatch) {
         throw new UnauthorizedException('Incorrect private access password');
-      }
-    }
-
-    // Check ban / block status
-    if (userId) {
-      const user = await this.prisma.user.findUnique({ where: { id: userId } });
-      if (user?.status === UserStatus.BANNED || user?.status === UserStatus.SUSPENDED) {
-        throw new ForbiddenException('Your account is restricted from attending live streams');
-      }
-
-      const blocked = await this.prisma.blockedViewer.findFirst({
-        where: { streamId: link.streamId, userId },
-      });
-      if (blocked) {
-        throw new ForbiddenException('You have been removed and blocked from this private session (FR-P7)');
       }
     }
 
@@ -207,8 +238,8 @@ export class PrivateLinksService {
       }
     }
 
-    const participantId = userId || `priv_guest_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-    const participantName = dto.guestName || (userId ? 'Private Devotee' : 'Guest Devotee');
+    const participantId = verifiedUser ? verifiedUser.id : `priv_guest_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const participantName = dto.guestName || verifiedUser?.name || 'Private Devotee';
 
     // Create session record
     const session = await this.prisma.viewerSession.create({

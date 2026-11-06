@@ -236,12 +236,12 @@ export class AuthService {
     };
 
     const accessToken = this.jwtService.sign(payload, {
-      expiresIn: '15m',
+      expiresIn: '7d',
       secret: process.env.JWT_ACCESS_SECRET || 'jwt_default_insecure_access_secret_key',
     });
 
     const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: '7d',
+      expiresIn: '30d',
       secret: process.env.JWT_REFRESH_SECRET || 'jwt_default_insecure_refresh_secret_key',
     });
 

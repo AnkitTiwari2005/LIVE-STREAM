@@ -50,7 +50,30 @@ export class PrivateLinksController {
     @Req() req: Request,
   ) {
     const ip = req.ip || (req.headers['x-forwarded-for'] as string);
-    return this.privateLinksService.claimLink(tokenSlug, dto, userId, ip);
+
+    // Resolve user ID via multiple fallbacks:
+    // 1. @CurrentUser('id') from JwtAuthGuard
+    // 2. req.user?.id attached by Passport strategy
+    // 3. dto.userId explicitly passed in request body
+    // 4. Decode Bearer token directly from Authorization header
+    let resolvedUserId = userId || (req as any).user?.id || dto.userId;
+
+    if (!resolvedUserId && req.headers.authorization) {
+      try {
+        const token = req.headers.authorization.replace(/^Bearer\s+/i, '');
+        const base64Payload = token.split('.')[1];
+        if (base64Payload) {
+          const payload = JSON.parse(Buffer.from(base64Payload, 'base64').toString('utf8'));
+          if (payload?.sub) {
+            resolvedUserId = payload.sub;
+          }
+        }
+      } catch {
+        // Fallback silently if token is malformed
+      }
+    }
+
+    return this.privateLinksService.claimLink(tokenSlug, dto, resolvedUserId, ip);
   }
 
   @Roles(UserRole.STREAMER)

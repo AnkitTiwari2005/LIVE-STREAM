@@ -40,7 +40,7 @@ export default function CreateStreamPage() {
 
     const token = localStorage.getItem('pooja_token');
     if (!token) {
-      router.push('/login');
+      router.push('/login?redirect=/studio/create');
       return;
     }
 
@@ -52,6 +52,7 @@ export default function CreateStreamPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
+        credentials: 'include',
         body: JSON.stringify({
           title,
           description,
@@ -63,7 +64,15 @@ export default function CreateStreamPage() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to create stream');
+      if (!res.ok) {
+        if (res.status === 401) {
+          localStorage.removeItem('pooja_token');
+          localStorage.removeItem('pooja_user');
+          router.push('/login?expired=1&redirect=/studio/create');
+          return;
+        }
+        throw new Error(data.message || 'Failed to create stream');
+      }
 
       router.push(`/studio/${data.id}`);
     } catch (err: any) {

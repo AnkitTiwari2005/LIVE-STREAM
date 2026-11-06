@@ -65,8 +65,9 @@ export class StreamsController {
     @CurrentUser('id') userId: string,
     @Req() req: Request,
   ) {
-    const ip = req.ip || req.headers['x-forwarded-for'] as string;
-    return this.streamsService.getViewerToken(streamId, userId, guestName, ip);
+    const ip = req.ip || (req.headers['x-forwarded-for'] as string);
+    const resolvedUserId = userId || (req as any).user?.id;
+    return this.streamsService.getViewerToken(streamId, resolvedUserId, guestName, ip);
   }
 
   @Public()
