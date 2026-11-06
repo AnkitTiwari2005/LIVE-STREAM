@@ -2,9 +2,29 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { LiveKitRoom, StartAudio, useTracks, VideoTrack } from '@livekit/components-react';
+import {
+  LiveKitRoom,
+  RoomAudioRenderer,
+  StartAudio,
+  useTracks,
+  VideoTrack,
+} from '@livekit/components-react';
 import { Track } from 'livekit-client';
-import { Lock, ShieldCheck, User, AlertCircle, Play, Sparkles } from 'lucide-react';
+import { io, Socket } from 'socket.io-client';
+import { ChatWidget } from '@/components/ChatWidget';
+import { SpiritualReactions } from '@/components/SpiritualReactions';
+import { DakshinaModal } from '@/components/DakshinaModal';
+import {
+  Lock,
+  ShieldCheck,
+  User,
+  AlertCircle,
+  Play,
+  Sparkles,
+  Share2,
+  Users,
+  Volume2,
+} from 'lucide-react';
 
 export default function JoinPrivateStreamClient() {
   const { tokenSlug: paramSlug } = useParams() as { tokenSlug: string };
@@ -25,6 +45,10 @@ export default function JoinPrivateStreamClient() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [token, setToken] = useState<string | null>(null);
   const [serverUrl, setServerUrl] = useState<string>('');
+  const [streamId, setStreamId] = useState<string>('');
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [dakshinaModalOpen, setDakshinaModalOpen] = useState(false);
+  const [latestDakshina, setLatestDakshina] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [inspectLoading, setInspectLoading] = useState(true);
@@ -69,6 +93,9 @@ export default function JoinPrivateStreamClient() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Invalid or expired link');
         setMetadata(data);
+        if (data.streamId) {
+          setStreamId(data.streamId);
+        }
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -77,6 +104,29 @@ export default function JoinPrivateStreamClient() {
     }
     inspect();
   }, [tokenSlug]);
+
+  // Connect to WebSocket chat gateway when streamId is available
+  useEffect(() => {
+    if (!streamId) return;
+
+    const storedToken = localStorage.getItem('pooja_token');
+    const socketUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || '';
+    const socketInstance = io(socketUrl, {
+      auth: { token: storedToken },
+      withCredentials: true,
+    });
+    setSocket(socketInstance);
+
+    socketInstance.on('stream:dakshina_received', (dakshina: any) => {
+      setLatestDakshina(dakshina);
+      setTimeout(() => setLatestDakshina(null), 8000);
+    });
+
+    return () => {
+      socketInstance.off('stream:dakshina_received');
+      socketInstance.disconnect();
+    };
+  }, [streamId]);
 
   const handleClaim = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,10 +163,26 @@ export default function JoinPrivateStreamClient() {
 
       setToken(data.token);
       setServerUrl(data.serverUrl);
+      if (data.streamId) {
+        setStreamId(data.streamId);
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: metadata?.streamTitle || 'Private Pooja Session',
+        text: `Join private sacred pooja: ${metadata?.streamTitle}`,
+        url: window.location.href,
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      alert('Private session link copied to clipboard 🙏');
     }
   };
 
@@ -130,35 +196,129 @@ export default function JoinPrivateStreamClient() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {token ? (
-        // Connected to Private Stream Video Room
-        <div className="space-y-4">
-          <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-semibold text-orange-400 uppercase tracking-wider">
-                🔒 Private Sacred Consultation
-              </span>
-              <h1 className="text-xl font-bold text-white mt-0.5">
-                {metadata?.streamTitle}
-              </h1>
+        // Connected to Private Stream Video Room with Full Two-Column Devotee Interface
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Video Viewport (Col span 2) */}
+          <div className="lg:col-span-2 flex flex-col gap-4">
+            <div className="relative w-full aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl border border-stone-800 flex items-center justify-center">
+              <LiveKitRoom
+                serverUrl={serverUrl}
+                token={token}
+                connect={true}
+                video={false}
+                audio={false}
+                className="w-full h-full"
+              >
+                {/* RoomAudioRenderer ensures all remote audio tracks are played via HTMLAudioElement */}
+                <RoomAudioRenderer />
+                <PrivateVideoTrackRenderer />
+                <StartAudio label="🔊 Click to Unmute Live Sacred Chanting & Mantras 🙏" />
+              </LiveKitRoom>
+
+              {/* Floating Auspicious Dakshina Alert */}
+              {latestDakshina && (
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-gradient-to-r from-amber-500 via-yellow-400 to-orange-500 text-stone-950 px-4 py-2 rounded-2xl shadow-2xl flex items-center gap-2.5 animate-bounce border-2 border-yellow-200">
+                  <span className="text-xl">🪔</span>
+                  <div className="text-xs">
+                    <span className="font-extrabold">{latestDakshina.devoteeName}</span> offered <span className="font-black">₹{latestDakshina.amount}</span> Dakshina!
+                    {latestDakshina.prayerMessage && (
+                      <div className="text-[10px] font-semibold opacity-90 truncate max-w-xs">&ldquo;{latestDakshina.prayerMessage}&rdquo;</div>
+                    )}
+                  </div>
+                  <span className="text-xl">🙏</span>
+                </div>
+              )}
+
+              {/* Floating Spiritual Reactions Overlay */}
+              {streamId && (
+                <div className="absolute bottom-4 left-4 z-20">
+                  <SpiritualReactions socket={socket} streamId={streamId} />
+                </div>
+              )}
             </div>
-            <span className="text-xs text-stone-400">By {metadata?.streamerName}</span>
+
+            {/* Stream Metadata & Pandit Info Card */}
+            <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5 shadow-lg">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-950 text-red-400 border border-red-800">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                      LIVE
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-950/80 text-orange-400 border border-orange-800">
+                      🔒 Private Consultation
+                    </span>
+                  </div>
+                  <h1 className="text-xl font-bold text-white tracking-tight">
+                    {metadata?.streamTitle || 'Private Pooja Consultation'}
+                  </h1>
+                  {metadata?.streamDescription && (
+                    <p className="text-xs text-stone-400 mt-1 line-clamp-2">{metadata.streamDescription}</p>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => setDakshinaModalOpen(true)}
+                    className="flex items-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-stone-950 text-xs font-bold rounded-xl transition-all shadow-md shadow-orange-950/40"
+                  >
+                    <span>🪔</span>
+                    <span>Arpan Dakshina</span>
+                  </button>
+                  <button
+                    onClick={handleShare}
+                    className="flex items-center gap-2 px-3.5 py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold rounded-xl transition-all shadow"
+                  >
+                    <Share2 className="w-4 h-4" /> Share
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-stone-800 flex items-center justify-between text-xs text-stone-300">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-stone-100 text-sm">
+                    🙏 {metadata?.streamerName || 'Acharya Devrat Sharma'}
+                  </span>
+                  <span className="text-orange-400 font-bold flex items-center gap-0.5" title="Verified Vedic Pandit">
+                    <ShieldCheck className="w-3.5 h-3.5 inline" /> Verified Pandit
+                  </span>
+                </div>
+                <span className="text-stone-400 font-medium">
+                  Devotee: <span className="text-white font-semibold">{currentUser?.name || guestName}</span>
+                </span>
+              </div>
+            </div>
           </div>
 
-          <div className="relative aspect-video bg-black rounded-2xl overflow-hidden border border-stone-800 shadow-2xl">
-            <LiveKitRoom
-              serverUrl={serverUrl}
-              token={token}
-              connect={true}
-              video={true}
-              audio={true}
-              className="w-full h-full"
-            >
-              <StartAudio label="Tap to Unmute Sacred Audio 🙏" />
-              <PrivateVideoTrackRenderer />
-            </LiveKitRoom>
+          {/* Right Live Chat Sidebar (Col span 1) */}
+          <div className="h-[550px] lg:h-[620px]">
+            {streamId ? (
+              <ChatWidget
+                socket={socket}
+                streamId={streamId}
+                isStreamer={false}
+                currentUser={currentUser}
+              />
+            ) : (
+              <div className="w-full h-full bg-stone-900 border border-stone-800 rounded-2xl flex items-center justify-center text-stone-500 text-xs">
+                Connecting to sacred pooja chat...
+              </div>
+            )}
           </div>
+
+          {/* Dakshina Offering Modal */}
+          {streamId && (
+            <DakshinaModal
+              isOpen={dakshinaModalOpen}
+              onClose={() => setDakshinaModalOpen(false)}
+              streamId={streamId}
+              streamerName={metadata?.streamerName || 'Acharya Devrat Sharma'}
+              currentUser={currentUser}
+            />
+          )}
         </div>
       ) : (
         // Verification & Password Claim Screen
@@ -251,5 +411,5 @@ function PrivateVideoTrackRenderer() {
     );
   }
 
-  return <VideoTrack trackRef={tracks[0]} className="w-full h-full object-cover" />;
+  return <VideoTrack trackRef={tracks[0]} className="w-full h-full object-contain bg-black" />;
 }

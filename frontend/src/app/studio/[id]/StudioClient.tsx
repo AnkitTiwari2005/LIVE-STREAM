@@ -420,22 +420,59 @@ export default function StudioClient() {
 }
 
 function PublisherTrackRenderer() {
-  const { cameraTrack, localParticipant } = useLocalParticipant();
+  const { cameraTrack, localParticipant, isMicrophoneEnabled, isCameraEnabled } = useLocalParticipant();
+
+  const toggleMic = async () => {
+    if (localParticipant) {
+      await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
+    }
+  };
+
+  const toggleCamera = async () => {
+    if (localParticipant) {
+      await localParticipant.setCameraEnabled(!isCameraEnabled);
+    }
+  };
+
   if (!cameraTrack || !cameraTrack.track) {
     return (
-      <div className="w-full h-full flex items-center justify-center text-stone-400">
-        Initializing local publisher track...
+      <div className="w-full h-full flex flex-col items-center justify-center text-stone-400 bg-stone-950">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-orange-500 mb-3" />
+        <span className="text-xs font-semibold">Broadcasting Live Video & Audio...</span>
       </div>
     );
   }
+
   return (
-    <VideoTrack
-      trackRef={{
-        participant: localParticipant,
-        publication: cameraTrack,
-        source: Track.Source.Camera,
-      }}
-      className="w-full h-full object-cover"
-    />
+    <div className="relative w-full h-full">
+      <VideoTrack
+        trackRef={{
+          participant: localParticipant,
+          publication: cameraTrack,
+          source: Track.Source.Camera,
+        }}
+        className="w-full h-full object-contain bg-black"
+      />
+
+      {/* Pandit Live Status Badges & Controls Overlay */}
+      <div className="absolute top-4 left-4 flex items-center gap-2 z-20">
+        <span className="bg-red-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-lg animate-pulse">
+          <span className="w-2 h-2 rounded-full bg-white" />
+          LIVE ON AIR
+        </span>
+        <button
+          onClick={toggleMic}
+          className={`text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-lg transition-colors backdrop-blur-md ${
+            isMicrophoneEnabled
+              ? 'bg-emerald-600/90 hover:bg-emerald-500 text-white'
+              : 'bg-red-600/90 hover:bg-red-500 text-white animate-bounce'
+          }`}
+          title="Click to toggle microphone"
+        >
+          <Mic className="w-3 h-3" />
+          {isMicrophoneEnabled ? 'Mic: ON (Broadcasting)' : 'Mic: MUTED ⚠️'}
+        </button>
+      </div>
+    </div>
   );
 }

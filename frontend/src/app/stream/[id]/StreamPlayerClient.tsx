@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import {
   LiveKitRoom,
+  RoomAudioRenderer,
   StartAudio,
   useTracks,
   VideoTrack,
@@ -158,6 +159,7 @@ export default function StreamPlayerClient() {
                   onDisconnected={() => setStreamEnded(true)}
                   className="w-full h-full"
                 >
+                  <RoomAudioRenderer />
                   <VideoRenderer />
                   <StartAudio label="Click to unmute live chanting & aarti 🔔" />
                 </LiveKitRoom>

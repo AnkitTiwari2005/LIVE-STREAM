@@ -149,7 +149,9 @@ export class PrivateLinksService {
     }
 
     return {
+      streamId: link.streamId,
       streamTitle: link.stream.title,
+      streamDescription: link.stream.description,
       streamerName: link.stream.streamer.name,
       streamerAvatar: link.stream.streamer.avatarUrl,
       thumbnailUrl: link.stream.thumbnailUrl,
@@ -267,8 +269,11 @@ export class PrivateLinksService {
       token,
       sessionId: session.id,
       serverUrl: process.env.NEXT_PUBLIC_LIVEKIT_URL || process.env.LIVEKIT_URL || 'wss://shubhdarshan-g8vupfey.livekit.cloud',
+      streamId: link.streamId,
       streamTitle: link.stream.title,
+      streamDescription: link.stream.description,
       streamerName: link.stream.streamer.name,
+      streamerAvatar: link.stream.streamer.avatarUrl,
     };
   }
 
