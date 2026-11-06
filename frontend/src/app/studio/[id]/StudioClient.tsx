@@ -31,8 +31,19 @@ import {
 } from 'lucide-react';
 
 export default function StudioClient() {
-  const { id: streamId } = useParams() as { id: string };
+  const { id: paramId } = useParams() as { id: string };
   const router = useRouter();
+
+  const [streamId, setStreamId] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const parts = window.location.pathname.replace(/\/$/, '').split('/').filter(Boolean);
+      const urlId = parts[parts.length - 1];
+      if (urlId && urlId !== 'studio' && urlId !== 'demo' && urlId !== '[id]') {
+        return urlId;
+      }
+    }
+    return paramId || '';
+  });
 
   const [stream, setStream] = useState<any>(null);
   const [isLive, setIsLive] = useState(false);
@@ -54,6 +65,17 @@ export default function StudioClient() {
   const [privateLinkData, setPrivateLinkData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Ensure streamId updates if URL changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const parts = window.location.pathname.replace(/\/$/, '').split('/').filter(Boolean);
+      const urlId = parts[parts.length - 1];
+      if (urlId && urlId !== 'studio' && urlId !== 'demo' && urlId !== '[id]') {
+        setStreamId(urlId);
+      }
+    }
+  }, [paramId]);
 
   // Screen Wake Lock API
   useEffect(() => {
@@ -99,6 +121,7 @@ export default function StudioClient() {
           headers: { Authorization: `Bearer ${storedToken}` },
         });
         const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Stream not found');
         setStream(data);
 
         // If stream is private, auto-generate private link
@@ -121,23 +144,7 @@ export default function StudioClient() {
       }
     }
 
-    async function loadDevices() {
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const vInputs = devices.filter((d) => d.kind === 'videoinput');
-        const aInputs = devices.filter((d) => d.kind === 'audioinput');
-
-        setVideoDevices(vInputs);
-        setAudioDevices(aInputs);
-        if (vInputs.length > 0) setSelectedVideo(vInputs[0].deviceId);
-        if (aInputs.length > 0) setSelectedAudio(aInputs[0].deviceId);
-      } catch (e) {
-        console.warn('Could not list media devices:', e);
-      }
-    }
-
     loadStream();
-    loadDevices();
 
     // Socket.io chat
     const socketUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || '';
@@ -177,14 +184,22 @@ export default function StudioClient() {
           videoEl.className = 'w-full h-full object-cover';
           previewRef.current.appendChild(videoEl);
         }
+
+        if (navigator.mediaDevices?.enumerateDevices) {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const vInputs = devices.filter((d) => d.kind === 'videoinput');
+          const aInputs = devices.filter((d) => d.kind === 'audioinput');
+          setVideoDevices(vInputs);
+          setAudioDevices(aInputs);
+          if (!selectedVideo && vInputs.length > 0) setSelectedVideo(vInputs[0].deviceId);
+          if (!selectedAudio && aInputs.length > 0) setSelectedAudio(aInputs[0].deviceId);
+        }
       } catch (err: any) {
         console.warn('Camera preview acquire error:', err.message);
       }
     }
 
-    if (selectedVideo || selectedAudio) {
-      startPreview();
-    }
+    startPreview();
 
     return () => {
       localVideo?.stop();

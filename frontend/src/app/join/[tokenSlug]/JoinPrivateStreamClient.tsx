@@ -7,7 +7,18 @@ import { Track } from 'livekit-client';
 import { Lock, ShieldCheck, User, AlertCircle, Play, Sparkles } from 'lucide-react';
 
 export default function JoinPrivateStreamClient() {
-  const { tokenSlug } = useParams() as { tokenSlug: string };
+  const { tokenSlug: paramSlug } = useParams() as { tokenSlug: string };
+  const [tokenSlug, setTokenSlug] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const parts = window.location.pathname.replace(/\/$/, '').split('/').filter(Boolean);
+      const urlSlug = parts[parts.length - 1];
+      if (urlSlug && urlSlug !== 'join' && urlSlug !== 'invite' && urlSlug !== '[tokenSlug]') {
+        return urlSlug;
+      }
+    }
+    return paramSlug || '';
+  });
+
   const [metadata, setMetadata] = useState<any>(null);
   const [password, setPassword] = useState('');
   const [guestName, setGuestName] = useState('');
@@ -16,6 +27,16 @@ export default function JoinPrivateStreamClient() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [inspectLoading, setInspectLoading] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const parts = window.location.pathname.replace(/\/$/, '').split('/').filter(Boolean);
+      const urlSlug = parts[parts.length - 1];
+      if (urlSlug && urlSlug !== 'join' && urlSlug !== 'invite' && urlSlug !== '[tokenSlug]') {
+        setTokenSlug(urlSlug);
+      }
+    }
+  }, [paramSlug]);
 
   // Safe inspection on load
   useEffect(() => {

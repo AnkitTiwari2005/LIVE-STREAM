@@ -56,7 +56,7 @@ export class StreamsController {
   }
 
   @Public()
-  @Post(':id/token/viewer')
+  @Post([':id/token/viewer', ':id/token'])
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get LiveKit viewer token for a public stream (FR-L7)' })
   async getViewerToken(

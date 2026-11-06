@@ -16,7 +16,18 @@ import { DakshinaModal } from '@/components/DakshinaModal';
 import { Users, AlertCircle, Share2, Heart, Sparkles } from 'lucide-react';
 
 export default function StreamPlayerClient() {
-  const { id } = useParams() as { id: string };
+  const { id: paramId } = useParams() as { id: string };
+  const [id, setId] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const parts = window.location.pathname.replace(/\/$/, '').split('/').filter(Boolean);
+      const urlId = parts[parts.length - 1];
+      if (urlId && urlId !== 'stream' && urlId !== 'demo' && urlId !== '[id]') {
+        return urlId;
+      }
+    }
+    return paramId || '';
+  });
+
   const [stream, setStream] = useState<any>(null);
   const [token, setToken] = useState<string | null>(null);
   const [serverUrl, setServerUrl] = useState<string>('');
@@ -27,6 +38,16 @@ export default function StreamPlayerClient() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [dakshinaModalOpen, setDakshinaModalOpen] = useState(false);
   const [latestDakshina, setLatestDakshina] = useState<any>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const parts = window.location.pathname.replace(/\/$/, '').split('/').filter(Boolean);
+      const urlId = parts[parts.length - 1];
+      if (urlId && urlId !== 'stream' && urlId !== 'demo' && urlId !== '[id]') {
+        setId(urlId);
+      }
+    }
+  }, [paramId]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('pooja_user');
