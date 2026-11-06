@@ -2,19 +2,42 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Video, ShieldCheck, User, LogOut, Sparkles, Menu, X } from 'lucide-react';
+import { Video, ShieldCheck, User, LogOut, Sparkles, Menu, X, PlusCircle } from 'lucide-react';
+import { CoinTopupModal } from './CoinTopupModal';
 
 export function Navbar() {
   const [user, setUser] = useState<any>(null);
+  const [coinBalance, setCoinBalance] = useState<number | null>(null);
+  const [topupModalOpen, setTopupModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     // Check session
     const storedUser = localStorage.getItem('pooja_user');
+    const storedToken = localStorage.getItem('pooja_token');
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsed = JSON.parse(storedUser);
+        setUser(parsed);
+        if (parsed.wallet?.balanceCoins !== undefined) {
+          setCoinBalance(parsed.wallet.balanceCoins);
+        }
       } catch {}
+    }
+
+    // Fetch live wallet balance from backend
+    if (storedToken) {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      fetch(`${apiUrl}/wallet/balance`, {
+        headers: { Authorization: `Bearer ${storedToken}` },
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data && typeof data.balanceCoins === 'number') {
+            setCoinBalance(data.balanceCoins);
+          }
+        })
+        .catch(() => {});
     }
   }, []);
 
@@ -22,143 +45,190 @@ export function Navbar() {
     localStorage.removeItem('pooja_user');
     localStorage.removeItem('pooja_token');
     setUser(null);
+    setCoinBalance(null);
     window.location.href = '/';
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-stone-950/90 backdrop-blur-md border-b border-stone-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight text-white hover:opacity-90">
-          <span className="text-2xl">🕉️</span>
-          <span className="bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent">
-            Shubhdarshan
-          </span>
-        </Link>
-
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-stone-300">
-          <Link href="/" className="hover:text-orange-400 transition-colors">
-            Live Darshan
+    <>
+      <header className="sticky top-0 z-50 bg-stone-950/90 backdrop-blur-md border-b border-stone-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          {/* Brand Logo */}
+          <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight text-white hover:opacity-90">
+            <span className="text-2xl">🕉️</span>
+            <span className="bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent">
+              Shubhdarshan
+            </span>
           </Link>
-          <Link href="/#upcoming" className="hover:text-orange-400 transition-colors">
-            Schedule
-          </Link>
-          {user?.role === 'STREAMER' && (
-            <Link
-              href="/studio/create"
-              className="flex items-center gap-1.5 text-orange-400 font-semibold hover:text-orange-300"
-            >
-              <Video className="w-4 h-4" /> Go Live
-            </Link>
-          )}
-          {user?.role === 'ADMIN' && (
-            <Link
-              href="/admin"
-              className="flex items-center gap-1.5 text-amber-400 font-semibold hover:text-amber-300"
-            >
-              <ShieldCheck className="w-4 h-4" /> Admin Console
-            </Link>
-          )}
-          {user?.role === 'VIEWER' && (
-            <Link
-              href="/streamer/apply"
-              className="flex items-center gap-1.5 text-stone-400 hover:text-white"
-            >
-              <Sparkles className="w-4 h-4 text-orange-400" /> Apply as Streamer
-            </Link>
-          )}
-        </nav>
 
-        {/* User Account Controls */}
-        <div className="hidden md:flex items-center gap-3">
-          {user ? (
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-stone-200">
-                🙏 {user.name}
-              </span>
-              <button
-                onClick={handleLogout}
-                className="p-2 rounded-lg text-stone-400 hover:text-red-400 hover:bg-stone-900 transition-colors"
-                title="Log Out"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-stone-300">
+            <Link href="/" className="hover:text-orange-400 transition-colors">
+              Live Darshan
+            </Link>
+            <Link href="/#upcoming" className="hover:text-orange-400 transition-colors">
+              Schedule
+            </Link>
+            {user?.role === 'STREAMER' && (
               <Link
-                href="/login"
-                className="px-4 py-2 text-sm font-medium text-stone-300 hover:text-white transition-colors"
+                href="/studio/create"
+                className="flex items-center gap-1.5 text-orange-400 font-semibold hover:text-orange-300"
               >
-                Sign In
+                <Video className="w-4 h-4" /> Go Live
               </Link>
+            )}
+            {user?.role === 'ADMIN' && (
               <Link
-                href="/register"
-                className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-lg shadow-md transition-all"
+                href="/admin"
+                className="flex items-center gap-1.5 text-amber-400 font-semibold hover:text-amber-300"
               >
-                Join Free
+                <ShieldCheck className="w-4 h-4" /> Admin Console
               </Link>
-            </div>
-          )}
-        </div>
+            )}
+            {user?.role === 'VIEWER' && (
+              <Link
+                href="/streamer/apply"
+                className="flex items-center gap-1.5 text-stone-400 hover:text-white"
+              >
+                <Sparkles className="w-4 h-4 text-orange-400" /> Apply as Streamer
+              </Link>
+            )}
+          </nav>
 
-        {/* Mobile menu toggle button */}
-        <div className="flex md:hidden">
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 text-stone-400 hover:text-white"
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Menu Dropdown */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-stone-900 border-b border-stone-800 px-4 pt-3 pb-5 space-y-3">
-          <Link href="/" className="block py-2 text-stone-200 font-medium">
-            Live Darshan
-          </Link>
-          <Link href="/#upcoming" className="block py-2 text-stone-200 font-medium">
-            Schedule
-          </Link>
-          {user?.role === 'STREAMER' && (
-            <Link href="/studio/create" className="block py-2 text-orange-400 font-semibold">
-              🎥 Pandit Studio (Go Live)
-            </Link>
-          )}
-          {user?.role === 'ADMIN' && (
-            <Link href="/admin" className="block py-2 text-amber-400 font-semibold">
-              🛡️ Admin Console
-            </Link>
-          )}
-          {user?.role === 'VIEWER' && (
-            <Link href="/streamer/apply" className="block py-2 text-stone-300">
-              ✨ Apply as Pandit / Astrologer
-            </Link>
-          )}
-          <div className="pt-3 border-t border-stone-800">
+          {/* User Account Controls */}
+          <div className="hidden md:flex items-center gap-3">
             {user ? (
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-stone-300">Signed in as {user.name}</span>
-                <button onClick={handleLogout} className="text-sm text-red-400 font-medium">
-                  Log Out
+              <div className="flex items-center gap-3">
+                {/* Coin Wallet Balance Pill */}
+                <button
+                  onClick={() => setTopupModalOpen(true)}
+                  className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-950/60 via-stone-900 to-amber-950/60 border border-amber-500/50 hover:border-amber-400 shadow-sm transition-all"
+                  title="Your Sacred Coins (Click to Recharge)"
+                >
+                  <span className="text-base group-hover:scale-110 transition-transform">🪙</span>
+                  <div className="flex flex-col text-left">
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs font-black text-amber-400">
+                        {coinBalance !== null ? coinBalance : 100}
+                      </span>
+                      <span className="text-[10px] text-stone-400 font-medium">Coins</span>
+                    </div>
+                  </div>
+                  <PlusCircle className="w-3.5 h-3.5 text-amber-400 ml-0.5 group-hover:text-amber-300" />
+                </button>
+
+                <span className="text-sm font-medium text-stone-200">
+                  🙏 {user.name}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="p-2 rounded-lg text-stone-400 hover:text-red-400 hover:bg-stone-900 transition-colors"
+                  title="Log Out"
+                >
+                  <LogOut className="w-4 h-4" />
                 </button>
               </div>
             ) : (
-              <div className="flex gap-2">
-                <Link href="/login" className="flex-1 text-center py-2 bg-stone-800 rounded-lg text-sm text-white">
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/login"
+                  className="px-4 py-2 text-sm font-medium text-stone-300 hover:text-white transition-colors"
+                >
                   Sign In
                 </Link>
-                <Link href="/register" className="flex-1 text-center py-2 bg-orange-600 rounded-lg text-sm text-white font-medium">
-                  Join Free
+                <Link
+                  href="/register"
+                  className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-lg shadow-md transition-all flex items-center gap-1.5"
+                >
+                  <span>Join Free</span>
+                  <span className="text-xs font-black text-amber-200 bg-amber-900/60 px-1.5 py-0.5 rounded-full">
+                    +100 Coins
+                  </span>
                 </Link>
               </div>
             )}
           </div>
+
+          {/* Mobile menu toggle button */}
+          <div className="flex md:hidden items-center gap-2">
+            {user && (
+              <button
+                onClick={() => setTopupModalOpen(true)}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-950/60 border border-amber-500/50 text-amber-400 text-xs font-bold"
+              >
+                <span>🪙</span>
+                <span>{coinBalance !== null ? coinBalance : 100}</span>
+              </button>
+            )}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 text-stone-400 hover:text-white"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
-      )}
-    </header>
+
+        {/* Mobile Menu Dropdown */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-stone-900 border-b border-stone-800 px-4 pt-3 pb-5 space-y-3">
+            <Link href="/" className="block py-2 text-stone-200 font-medium">
+              Live Darshan
+            </Link>
+            <Link href="/#upcoming" className="block py-2 text-stone-200 font-medium">
+              Schedule
+            </Link>
+            {user?.role === 'STREAMER' && (
+              <Link href="/studio/create" className="block py-2 text-orange-400 font-semibold">
+                🎥 Pandit Studio (Go Live)
+              </Link>
+            )}
+            {user?.role === 'ADMIN' && (
+              <Link href="/admin" className="block py-2 text-amber-400 font-semibold">
+                🛡️ Admin Console
+              </Link>
+            )}
+            {user?.role === 'VIEWER' && (
+              <Link href="/streamer/apply" className="block py-2 text-stone-300">
+                ✨ Apply as Pandit / Astrologer
+              </Link>
+            )}
+            <div className="pt-3 border-t border-stone-800">
+              {user ? (
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-sm text-stone-300 font-medium">Signed in as {user.name}</span>
+                    <button
+                      onClick={() => setTopupModalOpen(true)}
+                      className="text-xs text-amber-400 font-bold flex items-center gap-1 mt-1"
+                    >
+                      🪙 {coinBalance !== null ? coinBalance : 100} Coins (Tap to recharge)
+                    </button>
+                  </div>
+                  <button onClick={handleLogout} className="text-sm text-red-400 font-medium">
+                    Log Out
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Link href="/login" className="flex-1 text-center py-2 bg-stone-800 rounded-lg text-sm text-white">
+                    Sign In
+                  </Link>
+                  <Link href="/register" className="flex-1 text-center py-2 bg-orange-600 rounded-lg text-sm text-white font-medium">
+                    Join Free (+100 Coins)
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </header>
+
+      <CoinTopupModal
+        isOpen={topupModalOpen}
+        onClose={() => setTopupModalOpen(false)}
+        onSuccess={(newBal) => setCoinBalance(newBal)}
+      />
+    </>
   );
 }

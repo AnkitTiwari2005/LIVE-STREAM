@@ -12,7 +12,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto, ResetPasswordDto, VerifyTotpDto } from './dto/login.dto';
 import { CryptoUtil } from '../../common/crypto.util';
 import * as bcrypt from 'bcrypt';
-import { UserRole, UserStatus } from '@prisma/client';
+import { UserRole, UserStatus, WalletTxType, WalletTxCategory } from '@prisma/client';
 import { authenticator } from 'otplib';
 import * as qrcode from 'qrcode';
 
@@ -49,7 +49,28 @@ export class AuthService {
         isAgeConfirmed18Plus: true,
         consentRecordedAt: new Date(),
         termsVersionAccepted: 'v1.0',
+        wallet: {
+          create: {
+            balanceCoins: 100,
+            bonusCoins: 100,
+            purchasedCoins: 0,
+            lifetimeEarned: 100,
+            lifetimeSpent: 0,
+            transactions: {
+              create: {
+                type: WalletTxType.CREDIT,
+                category: WalletTxCategory.JOINING_BONUS,
+                amountCoins: 100,
+                balanceBefore: 0,
+                balanceAfter: 100,
+                referenceId: `signup_bonus_${dto.email.toLowerCase()}`,
+                metadata: { note: 'Auspicious Welcome Darshan Bonus' },
+              },
+            },
+          },
+        },
       },
+      include: { wallet: true },
     });
 
     this.logger.log(`New user registered: ${user.email}. Verification token: ${rawVerifyToken}`);
@@ -86,7 +107,7 @@ export class AuthService {
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email.toLowerCase() },
-      include: { streamerProfile: true },
+      include: { streamerProfile: true, wallet: true },
     });
 
     if (!user || !user.passwordHash) {
@@ -256,6 +277,11 @@ export class AuthService {
         isEmailVerified: user.isEmailVerified,
         avatarUrl: user.avatarUrl,
         streamerProfile: user.streamerProfile,
+        wallet: user.wallet ? {
+          balanceCoins: user.wallet.balanceCoins,
+          bonusCoins: user.wallet.bonusCoins,
+          purchasedCoins: user.wallet.purchasedCoins,
+        } : undefined,
       },
     };
   }

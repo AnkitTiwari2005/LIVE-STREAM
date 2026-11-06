@@ -113,6 +113,8 @@ model User {
   viewerSessions       ViewerSession[]
   blockedRecords       BlockedViewer[]    @relation("UserBlocks")
   dakshinaOfferings    DakshinaOffering[]
+  wallet               UserWallet?
+  topupOrders          WalletTopupOrder[]
 
   @@index([email])
   @@index([role, status])
@@ -185,6 +187,7 @@ model Stream {
   reports            Report[]         @relation("StreamReports")
   moderationActions  ModerationAction[]
   dakshinaOfferings  DakshinaOffering[]
+  viewingMeterSessions StreamViewingSession[]
 
   @@index([status, visibility, scheduledAt])
   @@index([streamerId])
@@ -379,4 +382,144 @@ model DakshinaOffering {
 
   @@index([streamId, status])
   @@index([devoteeId])
+}
+
+
+// ==========================================
+// VEDIC WALLET & METERED DARSHAN COIN LEDGER
+// ==========================================
+
+enum WalletTxType {
+  CREDIT
+  DEBIT
+}
+
+enum WalletTxCategory {
+  JOINING_BONUS
+  TOPUP_PURCHASE
+  STREAM_METERED_VIEW
+  DAKSHINA_OFFERING
+  ADMIN_ADJUSTMENT
+  PROMOTIONAL_REWARD
+}
+
+enum ViewingSessionStatus {
+  ACTIVE
+  PAUSED_LOW_BALANCE
+  COMPLETED_NATURAL
+  EVICTED_ZERO_BALANCE
+  DISCONNECTED_TIMEOUT
+}
+
+model UserWallet {
+  id              String                 @id @default(uuid())
+  userId          String                 @unique
+  user            User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balanceCoins    Int                    @default(0)
+  bonusCoins      Int                    @default(0)
+  purchasedCoins  Int                    @default(0)
+  lifetimeEarned  Int                    @default(0)
+  lifetimeSpent   Int                    @default(0)
+  version         Int                    @default(0)
+  createdAt       DateTime               @default(now()) @db.Timestamptz
+  updatedAt       DateTime               @updatedAt @db.Timestamptz
+
+  transactions    WalletTransaction[]
+  viewingSessions StreamViewingSession[]
+
+  @@index([userId])
+}
+
+model WalletTransaction {
+  id             String           @id @default(uuid())
+  walletId       String
+  wallet         UserWallet       @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  type           WalletTxType
+  category       WalletTxCategory
+  amountCoins    Int
+  balanceBefore  Int
+  balanceAfter   Int
+  streamId       String?
+  referenceId    String?
+  idempotencyKey String?          @unique
+  metadata       Json?
+  createdAt      DateTime         @default(now()) @db.Timestamptz
+
+  @@index([walletId, createdAt])
+  @@index([streamId])
+  @@index([idempotencyKey])
+}
+
+model StreamViewingSession {
+  id                  String               @id @default(uuid())
+  streamId            String
+  stream              Stream               @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  userId              String
+  wallet              UserWallet           @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  sessionToken        String               @unique
+  status              ViewingSessionStatus @default(ACTIVE)
+  startedAt           DateTime             @default(now()) @db.Timestamptz
+  lastTickAt          DateTime             @default(now()) @db.Timestamptz
+  endedAt             DateTime?            @db.Timestamptz
+  totalMinutesWatched Int                  @default(1)
+  totalCoinsDebited   Int                  @default(5)
+  ipAddress           String?
+  userAgent           String?
+
+  meterTicks          MeterTickLog[]
+
+  @@index([userId, status])
+  @@index([streamId, status])
+  @@index([sessionToken])
+}
+
+model MeterTickLog {
+  id           String               @id @default(uuid())
+  sessionId    String
+  session      StreamViewingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  minuteIndex  Int
+  coinsCharged Int                  @default(5)
+  balanceAfter Int
+  tickedAt     DateTime             @default(now()) @db.Timestamptz
+
+  @@unique([sessionId, minuteIndex])
+  @@index([sessionId])
+}
+
+model CoinPackage {
+  id           String             @id @default(uuid())
+  sku          String             @unique
+  name         String
+  coins        Int
+  bonusCoins   Int                @default(0)
+  totalCoins   Int
+  priceInr     Decimal            @db.Decimal(10, 2)
+  badgeText    String?
+  displayOrder Int                @default(0)
+  isActive     Boolean            @default(true)
+  createdAt    DateTime           @default(now()) @db.Timestamptz
+
+  topupOrders  WalletTopupOrder[]
+
+  @@index([isActive, displayOrder])
+}
+
+model WalletTopupOrder {
+  id            String          @id @default(uuid())
+  userId        String
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  packageId     String
+  package       CoinPackage     @relation(fields: [packageId], references: [id])
+  coinsToCredit Int
+  amountInr     Decimal         @db.Decimal(10, 2)
+  provider      PaymentProvider @default(RAZORPAY)
+  orderId       String          @unique
+  paymentId     String?
+  status        PaymentStatus   @default(PENDING)
+  failureReason String?
+  createdAt     DateTime        @default(now()) @db.Timestamptz
+  updatedAt     DateTime        @updatedAt @db.Timestamptz
+
+  @@index([userId, status])
+  @@index([orderId])
 }

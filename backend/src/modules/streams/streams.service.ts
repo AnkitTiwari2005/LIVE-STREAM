@@ -3,10 +3,12 @@ import {
   BadRequestException,
   NotFoundException,
   ForbiddenException,
+  UnauthorizedException,
   ServiceUnavailableException,
   Inject,
   Logger,
 } from '@nestjs/common';
+import { WalletService } from '../wallet/wallet.service';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateStreamDto } from './dto/create-stream.dto';
 import { StreamStatus, StreamVisibility, UserRole, UserStatus } from '@prisma/client';
@@ -24,6 +26,7 @@ export class StreamsService {
     private readonly prisma: PrismaService,
     @Inject(VIDEO_PROVIDER_TOKEN)
     private readonly videoProvider: IVideoProviderService,
+    private readonly walletService: WalletService,
   ) {}
 
   async createStream(streamerId: string, dto: CreateStreamDto) {
@@ -208,6 +211,22 @@ export class StreamsService {
     const participantId = userId || `guest_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     const participantName = guestName || (userId ? 'Registered Devotee' : 'Guest Devotee');
 
+    let viewingSession: any = null;
+
+    // Devotees watching public live streams are metered at 5 coins/min
+    if (stream.visibility === StreamVisibility.PUBLIC) {
+      if (!userId) {
+        throw new UnauthorizedException(
+          'Please sign in or register to receive your 100 free coins and join the sacred live darshan.'
+        );
+      }
+
+      // If user is not the stream host/pandit, meter their darshan session
+      if (userId !== stream.streamerId) {
+        viewingSession = await this.walletService.startViewingSession(userId, streamId, ip);
+      }
+    }
+
     // Record or update viewer session
     await this.prisma.viewerSession.create({
       data: {
@@ -226,7 +245,7 @@ export class StreamsService {
       isPublisher: false,
       canSubscribe: true,
       ttlMinutes: 15,
-      metadata: { role: 'viewer', isGuest: !userId },
+      metadata: { role: 'viewer', isGuest: !userId, sessionToken: viewingSession?.sessionToken },
     });
 
     return {
@@ -235,6 +254,9 @@ export class StreamsService {
       streamTitle: stream.title,
       streamerName: stream.streamer.name,
       quality: stream.videoQuality,
+      sessionToken: viewingSession?.sessionToken,
+      remainingCoins: viewingSession?.remainingCoins,
+      availableMinutes: viewingSession?.availableMinutes,
     };
   }
 
