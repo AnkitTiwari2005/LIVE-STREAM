@@ -264,9 +264,12 @@ export default function StudioClient() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      {/* Top Banner & Emergency Actions */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 bg-stone-900 border border-stone-800 p-4 rounded-2xl">
+    <div className="min-h-screen bg-obsidian text-foreground py-6 relative overflow-hidden">
+      <div className="mandala-bg absolute inset-0 opacity-20 pointer-events-none" />
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Top Banner & Emergency Actions */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 bg-obsidian-soft border border-gold/20 p-4 rounded-2xl shadow-lg">
         <div className="flex items-center gap-3">
           <div className={`p-2.5 rounded-xl ${isLive ? 'bg-red-600 text-white animate-pulse' : 'bg-stone-800 text-stone-300'}`}>
             <Radio className="w-5 h-5" />
@@ -482,6 +485,7 @@ export default function StudioClient() {
           joinUrl={privateLinkData.joinUrl}
         />
       )}
+      </div>
     </div>
   );
 }

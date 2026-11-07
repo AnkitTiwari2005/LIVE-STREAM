@@ -1,8 +1,8 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Sparkles, Globe, Shield, HeartHandshake, Zap, Users } from 'lucide-react';
-import { OmIcon, DiyaIcon, LotusIcon } from '@/components/icons/SpiritualIcons';
+import { Sparkles, Globe, Shield, HeartHandshake, Zap, Users, Flame, CheckCircle2 } from 'lucide-react';
+import { OmIcon, DiyaIcon, LotusIcon, CoinIcon, VerifiedPanditBadge } from '@/components/icons/SpiritualIcons';
 
 export const metadata: Metadata = {
   title: 'About Us - Sacred Devotion Meets Modern Technology',
@@ -13,93 +13,169 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {/* Hero Header */}
-      <div className="text-center mb-16 relative">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-600/20 text-orange-400 text-xs font-bold border border-orange-500/30 mb-4">
-          <Sparkles className="w-3.5 h-3.5" /> Sanatana Dharma Worldwide
-        </div>
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <OmIcon size={44} />
-          <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
-            About Shubhdarshan
+    <div className="min-h-screen bg-obsidian text-foreground py-12 relative overflow-hidden">
+      <div className="mandala-bg absolute inset-0 opacity-20 pointer-events-none" />
+
+      <div className="relative max-w-5xl mx-auto px-5 lg:px-8">
+        {/* Sacred Hero Header */}
+        <div className="text-center mb-16 relative">
+          <p className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.24em] text-gold-pale mb-5">
+            <Flame className="w-3.5 h-3.5 text-gold animate-flame" />
+            Sanatana Dharma Worldwide
+          </p>
+          <h1 className="font-serif text-4xl sm:text-6xl font-bold text-white tracking-tight leading-tight">
+            Ancient ritual, carried by{' '}
+            <span className="gold-text italic font-serif">modern hands</span>
           </h1>
-        </div>
-        <p className="text-stone-300 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-          Bridging timeless Vedic traditions with real-time WebRTC technology to bring the sacred energy of India&apos;s holiest temples directly into your home.
-        </p>
-      </div>
-
-      {/* Pillars Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-        <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 shadow-xl relative overflow-hidden">
-          <div className="w-12 h-12 rounded-2xl bg-orange-600/20 border border-orange-500/30 flex items-center justify-center text-orange-400 mb-4">
-            <DiyaIcon size={28} />
-          </div>
-          <h3 className="text-lg font-bold text-white mb-2">Authentic Vedic Lineage</h3>
-          <p className="text-stone-400 text-xs sm:text-sm leading-relaxed">
-            Every ritual, aarti, and sankalp is led by verified Acharyas and Purohits trained in authentic Sanskrit scriptures, maintaining scriptural fidelity.
+          <p className="mt-5 text-stone-300 text-sm sm:text-lg max-w-2xl mx-auto leading-relaxed">
+            Bridging timeless Vedic traditions with real-time WebRTC technology to bring the sacred darshan of Bharat’s holiest sanctums into devotees’ homes across 62 countries.
           </p>
         </div>
 
-        <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 shadow-xl relative overflow-hidden">
-          <div className="w-12 h-12 rounded-2xl bg-amber-600/20 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-4">
-            <Zap className="w-6 h-6" />
+        {/* Hero Temple Image Banner */}
+        <div className="relative rounded-3xl overflow-hidden border border-gold/25 mb-16 shadow-2xl">
+          <img
+            src="/images/photo-1561361058-c24cecae35ca.webp"
+            alt="Morning bathers at the sacred ghats of Varanasi"
+            className="w-full h-72 sm:h-96 object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/40 to-transparent" />
+          <div className="absolute bottom-6 left-6 right-6 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-soft">
+                Kashi Mokshadayini
+              </span>
+              <h3 className="font-serif text-2xl font-bold text-white">
+                Varanasi Ghats &amp; Kashi Vishwanath
+              </h3>
+            </div>
+            <span className="text-xs text-gold-pale bg-obsidian/80 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-gold/25">
+              Live WebRTC broadcast point
+            </span>
           </div>
-          <h3 className="text-lg font-bold text-white mb-2">Sub-Second LiveKit SFU</h3>
-          <p className="text-stone-400 text-xs sm:text-sm leading-relaxed">
-            Unlike delayed social media video feeds, our self-hosted WebRTC SFU delivers ultra-low latency chanting, allowing devotees to chant along in real time.
+        </div>
+
+        {/* Pillars Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+          <div className="bg-obsidian-soft border border-gold/15 rounded-3xl p-6 shadow-xl relative">
+            <div className="w-12 h-12 rounded-2xl bg-gold/10 border border-gold/30 flex items-center justify-center text-gold mb-4">
+              <DiyaIcon size={28} />
+            </div>
+            <h3 className="font-serif text-xl font-bold text-white mb-2">Authentic Vedic Lineage</h3>
+            <p className="text-stone-400 text-xs sm:text-sm leading-relaxed">
+              Every ritual, aarti, and sankalp is led by verified Acharyas and Purohits trained in authentic Sanskrit scriptures, maintaining scriptural fidelity.
+            </p>
+          </div>
+
+          <div className="bg-obsidian-soft border border-gold/15 rounded-3xl p-6 shadow-xl relative">
+            <div className="w-12 h-12 rounded-2xl bg-gold/10 border border-gold/30 flex items-center justify-center text-gold mb-4">
+              <Zap className="w-6 h-6 text-gold" />
+            </div>
+            <h3 className="font-serif text-xl font-bold text-white mb-2">Sub-Second LiveKit SFU</h3>
+            <p className="text-stone-400 text-xs sm:text-sm leading-relaxed">
+              Unlike delayed social media video streams, our dedicated WebRTC SFU delivers sub-second video and acoustic chanting, allowing devotees to chant along in real time.
+            </p>
+          </div>
+
+          <div className="bg-obsidian-soft border border-gold/15 rounded-3xl p-6 shadow-xl relative">
+            <div className="w-12 h-12 rounded-2xl bg-gold/10 border border-gold/30 flex items-center justify-center text-gold mb-4">
+              <Shield className="w-6 h-6 text-emerald-400" />
+            </div>
+            <h3 className="font-serif text-xl font-bold text-white mb-2">DPDP Act 2023 Compliant</h3>
+            <p className="text-stone-400 text-xs sm:text-sm leading-relaxed">
+              Engineered with strict adherence to the Digital Personal Data Protection Act 2023, closed-loop wallet security, zero tracker leakage, and end-to-end respect for devotee privacy.
+            </p>
+          </div>
+        </div>
+
+        {/* Gurukul 7-Step Verification Section */}
+        <div className="bg-obsidian-soft border border-gold/25 rounded-3xl p-8 sm:p-12 mb-16 shadow-2xl relative overflow-hidden">
+          <div className="max-w-2xl mb-8">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-gold-soft">
+              Priesthood Integrity
+            </p>
+            <h2 className="mt-1 font-serif text-3xl font-bold text-white">
+              The Gurukul 7-step verification every pandit must pass
+            </h2>
+            <p className="mt-2 text-stone-300 text-xs sm:text-sm leading-relaxed">
+              We hold religious sanctity to the highest possible standard. No unauthorized or unvetted broadcaster can stream on Shubhdarshan.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-obsidian border border-gold/10">
+              <CheckCircle2 className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-white text-xs sm:text-sm block">1. Government Identity Verification</span>
+                <span className="text-[11px] text-stone-400">Aadhaar/PAN KYC with biometric matching.</span>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-obsidian border border-gold/10">
+              <CheckCircle2 className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-white text-xs sm:text-sm block">2. Gurukul Certificate Audit</span>
+                <span className="text-[11px] text-stone-400">Authentic credentials from recognized Sanskrit Pathshalas.</span>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-obsidian border border-gold/10">
+              <CheckCircle2 className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-white text-xs sm:text-sm block">3. Vedic Mantra Pronunciation Test</span>
+                <span className="text-[11px] text-stone-400">Evaluated by senior Varanasi &amp; Haridwar Acharyas.</span>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-obsidian border border-gold/10">
+              <CheckCircle2 className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-white text-xs sm:text-sm block">4. Temple Affiliation Reference</span>
+                <span className="text-[11px] text-stone-400">Written recommendation from registered temple trust.</span>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-obsidian border border-gold/10">
+              <CheckCircle2 className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-white text-xs sm:text-sm block">5. Zero Commercial Exploitation Pledge</span>
+                <span className="text-[11px] text-stone-400">Legal commitment to transparent, fair seva fees.</span>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-obsidian border border-gold/10">
+              <CheckCircle2 className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-white text-xs sm:text-sm block">6. Broadcast Studio Hardware Check</span>
+                <span className="text-[11px] text-stone-400">HD optics and acoustic microphone certification.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* CTA Box */}
+        <div className="rounded-3xl border border-gold/30 bg-gradient-to-r from-gold/15 via-obsidian-soft to-gold/15 p-8 sm:p-12 text-center shadow-2xl">
+          <h2 className="font-serif text-3xl font-bold text-white mb-3">
+            Begin with 100 free coins and your first live Darshan
+          </h2>
+          <p className="text-stone-300 text-xs sm:text-sm max-w-md mx-auto mb-6 leading-relaxed">
+            Create your account in under 30 seconds and receive divine blessings directly from Bharat’s holy sanctums.
           </p>
-        </div>
-
-        <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 shadow-xl relative overflow-hidden">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-4">
-            <Shield className="w-6 h-6" />
-          </div>
-          <h3 className="text-lg font-bold text-white mb-2">DPDP & RBI Compliance</h3>
-          <p className="text-stone-400 text-xs sm:text-sm leading-relaxed">
-            Engineered with strict adherence to the Digital Personal Data Protection Act 2023, closed-loop wallet security, and zero data leakage.
-          </p>
-        </div>
-      </div>
-
-      {/* Mission & Holy Temples */}
-      <div className="bg-gradient-to-br from-stone-900 via-stone-900 to-amber-950/40 border border-stone-800 rounded-3xl p-8 sm:p-12 mb-16 shadow-2xl">
-        <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-          <LotusIcon size={28} /> Connecting Sacred Teerth Kshtras
-        </h2>
-        <p className="text-stone-300 text-sm leading-relaxed mb-6">
-          Whether you are in Mumbai, New Delhi, London, New York, or Singapore, Shubhdarshan enables you to take part in daily Mangala Aarti from Kashi Vishwanath, Bhasma Aarti from Ujjain, evening Sandhya Aarti on the banks of Maa Ganga in Haridwar, and divine Darshan from Ayodhya.
-        </p>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-          <div className="p-4 bg-stone-950/70 border border-stone-800/80 rounded-2xl">
-            <span className="block text-2xl font-extrabold text-amber-400">100%</span>
-            <span className="text-[11px] text-stone-400">Verified Pandits</span>
-          </div>
-          <div className="p-4 bg-stone-950/70 border border-stone-800/80 rounded-2xl">
-            <span className="block text-2xl font-extrabold text-amber-400">&lt; 300ms</span>
-            <span className="text-[11px] text-stone-400">Live Video Latency</span>
-          </div>
-          <div className="p-4 bg-stone-950/70 border border-stone-800/80 rounded-2xl">
-            <span className="block text-2xl font-extrabold text-amber-400">100 Coins</span>
-            <span className="text-[11px] text-stone-400">Free Devotee Bonus</span>
-          </div>
-          <div className="p-4 bg-stone-950/70 border border-stone-800/80 rounded-2xl">
-            <span className="block text-2xl font-extrabold text-amber-400">DPDP 2023</span>
-            <span className="text-[11px] text-stone-400">Protected Privacy</span>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <Link
+              href="/register"
+              className="rounded-full bg-gold px-8 py-3.5 text-xs sm:text-sm font-bold text-obsidian shadow-xl hover:bg-gold-deep transition"
+            >
+              Join Free &amp; Claim 100 Coins
+            </Link>
+            <Link
+              href="/"
+              className="rounded-full border border-gold/40 bg-obsidian px-6 py-3.5 text-xs sm:text-sm font-bold text-gold-pale hover:bg-gold/10 transition"
+            >
+              Watch Live Mandir Darshan
+            </Link>
           </div>
         </div>
-      </div>
-
-      {/* CTA Box */}
-      <div className="text-center">
-        <Link
-          href="/register"
-          className="inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold rounded-2xl shadow-xl shadow-orange-950/50 text-sm transition-all"
-        >
-          <span>Join Free & Claim 100 Sacred Coins</span>
-        </Link>
       </div>
     </div>
   );

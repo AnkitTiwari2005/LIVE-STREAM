@@ -55,37 +55,41 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center px-4 py-12">
-      <div className="max-w-md w-full bg-stone-900 border border-stone-800 rounded-2xl p-8 shadow-2xl">
+    <div className="min-h-[85vh] bg-obsidian flex items-center justify-center px-4 py-12 relative overflow-hidden">
+      <div className="mandala-bg absolute inset-0 opacity-20 pointer-events-none" />
+
+      <div className="relative max-w-md w-full bg-obsidian-soft border border-gold/25 rounded-3xl p-8 shadow-2xl">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-3">
-            <OmIcon size={44} />
+            <span className="relative flex h-12 w-12 items-center justify-center rounded-full border border-gold/40 bg-gradient-to-b from-[#2a1e12] to-obsidian shadow-[0_0_15px_rgba(245,158,11,0.25)]">
+              <OmIcon size={28} />
+            </span>
           </div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">Create Devotee Account</h2>
-          <p className="text-stone-400 text-xs mt-1">
-            Join thousands watching authentic Vedic Darshan and Kundli analysis
+          <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white tracking-tight">Create Devotee Account</h2>
+          <p className="text-stone-400 text-xs mt-1.5 leading-relaxed">
+            Join thousands receiving daily authentic temple Darshan, Aarti, and blessings
           </p>
-          <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-950/60 border border-amber-800/60 text-amber-300 text-xs font-semibold">
+          <div className="mt-3.5 inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-gold/10 border border-gold/30 text-gold-pale text-xs font-bold">
             <CoinIcon size={14} />
             <span>100 Free Darshan Coins (20 mins free) upon registration!</span>
           </div>
         </div>
 
         {error && (
-          <div className="mb-6 p-3 rounded-xl bg-red-950/80 border border-red-800 text-red-200 text-xs flex items-center gap-2">
+          <div className="mb-6 p-3.5 rounded-xl bg-red-950/80 border border-red-800 text-red-200 text-xs flex items-center gap-2">
             <ShieldAlert className="w-4 h-4 text-red-400 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {success ? (
-          <div className="text-center p-6 bg-stone-950 border border-stone-800 rounded-2xl">
-            <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-3" />
-            <h3 className="text-base font-bold text-white mb-2">Check Your Inbox</h3>
-            <p className="text-xs text-stone-300 mb-6">{success}</p>
+          <div className="text-center p-6 bg-obsidian border border-gold/20 rounded-2xl">
+            <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
+            <h3 className="font-serif text-xl font-bold text-white mb-2">Check Your Inbox</h3>
+            <p className="text-xs text-stone-300 mb-6 leading-relaxed">{success}</p>
             <Link
               href="/login"
-              className="inline-block py-2 px-6 bg-orange-600 hover:bg-orange-500 text-white font-semibold rounded-xl text-xs transition-colors"
+              className="inline-block py-2.5 px-6 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs transition-colors shadow"
             >
               Proceed to Sign In
             </Link>
@@ -97,14 +101,14 @@ export default function RegisterPage() {
                 Full Name
               </label>
               <div className="relative">
-                <User className="w-4 h-4 text-stone-500 absolute left-3 top-3" />
+                <User className="w-4 h-4 text-gold-soft absolute left-3.5 top-3.5" />
                 <input
                   type="text"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Pandit / Devotee Name"
-                  className="w-full pl-9 pr-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-sm text-white focus:outline-none focus:border-orange-500"
+                  className="w-full pl-10 pr-3 py-2.5 bg-obsidian border border-gold/20 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-gold transition"
                 />
               </div>
             </div>
@@ -114,14 +118,14 @@ export default function RegisterPage() {
                 Email Address
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-stone-500 absolute left-3 top-3" />
+                <Mail className="w-4 h-4 text-gold-soft absolute left-3.5 top-3.5" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="devotee@example.com"
-                  className="w-full pl-9 pr-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-sm text-white focus:outline-none focus:border-orange-500"
+                  className="w-full pl-10 pr-3 py-2.5 bg-obsidian border border-gold/20 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-gold transition"
                 />
               </div>
             </div>
@@ -131,7 +135,7 @@ export default function RegisterPage() {
                 Password (min 8 chars)
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-stone-500 absolute left-3 top-3" />
+                <Lock className="w-4 h-4 text-gold-soft absolute left-3.5 top-3.5" />
                 <input
                   type="password"
                   required
@@ -139,7 +143,7 @@ export default function RegisterPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-9 pr-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-sm text-white focus:outline-none focus:border-orange-500"
+                  className="w-full pl-10 pr-3 py-2.5 bg-obsidian border border-gold/20 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-gold transition"
                 />
               </div>
             </div>
@@ -152,14 +156,14 @@ export default function RegisterPage() {
                   required
                   checked={isAgeConfirmed18Plus}
                   onChange={(e) => setIsAgeConfirmed18Plus(e.target.checked)}
-                  className="mt-0.5 rounded border-stone-700 text-orange-600 focus:ring-orange-500 h-4 w-4 bg-stone-950"
+                  className="mt-0.5 rounded border-stone-700 text-gold focus:ring-gold h-4 w-4 bg-obsidian"
                 />
                 <span className="text-[11px] text-stone-400 leading-tight select-none">
                   I confirm that <strong>I am 18 years of age or older</strong> and I agree to the{' '}
-                  <Link href="/terms" target="_blank" className="text-orange-400 underline">Terms of Service</Link>{' '}
+                  <Link href="/terms" target="_blank" className="text-gold underline">Terms of Service</Link>{' '}
                   and{' '}
-                  <Link href="/privacy" target="_blank" className="text-orange-400 underline">Privacy Policy</Link>{' '}
-                  under India's DPDP Act, 2023.
+                  <Link href="/privacy" target="_blank" className="text-gold underline">Privacy Policy</Link>{' '}
+                  under India&apos;s DPDP Act, 2023.
                 </span>
               </label>
             </div>
@@ -167,16 +171,16 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-3 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-semibold rounded-xl text-sm shadow-md transition-all disabled:opacity-50"
+              className="w-full mt-3 py-3 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs sm:text-sm shadow-lg shadow-gold/20 transition-all disabled:opacity-50"
             >
-              {loading ? 'Creating Account...' : 'Create Free Account'}
+              {loading ? 'Creating Account...' : 'Create Free Account (+100 Coins)'}
             </button>
           </form>
         )}
 
         <div className="mt-6 text-center text-xs text-stone-400">
           Already have an account?{' '}
-          <Link href="/login" className="text-orange-400 hover:underline font-semibold">
+          <Link href="/login" className="text-gold hover:underline font-bold">
             Sign In
           </Link>
         </div>

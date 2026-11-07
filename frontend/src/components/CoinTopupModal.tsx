@@ -141,7 +141,7 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
           handler: async (response: any) => {
             await verifyPayment(response.razorpay_order_id, response.razorpay_payment_id, response.razorpay_signature);
           },
-          theme: { color: '#ea580c' },
+          theme: { color: '#f59e0b' },
         });
 
         rzp.on('payment.failed', function (resp: any) {
@@ -208,46 +208,46 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-xl bg-stone-900 border border-stone-800 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
+      <div className="relative w-full max-w-xl bg-obsidian-deep border border-gold/30 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden">
         {/* Sacred ambient background glow */}
-        <div className="absolute top-0 right-1/4 w-72 h-72 bg-orange-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="mandala-bg absolute inset-0 opacity-20 pointer-events-none" />
 
-        <div className="flex items-center justify-between pb-4 border-b border-stone-800">
-          <div className="flex items-center gap-2.5">
-            <CoinIcon size={28} />
+        <div className="relative z-10 flex items-center justify-between pb-4 border-b border-stone-800">
+          <div className="flex items-center gap-3">
+            <CoinIcon size={32} />
             <div>
-              <h2 className="text-lg font-bold text-white">Recharge Sacred Coins</h2>
+              <h2 className="font-serif text-xl sm:text-2xl font-bold text-white">Recharge Sacred Coins</h2>
               <p className="text-xs text-stone-400">5 Coins = 1 Minute of Auspicious Public Live Darshan</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full text-stone-400 hover:text-white hover:bg-stone-800 transition-colors"
+            className="p-2 rounded-full text-stone-400 hover:text-white hover:bg-stone-900 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {error && (
-          <div className="mt-4 p-3 bg-red-950/80 border border-red-800 rounded-xl text-xs text-red-200">
+          <div className="relative z-10 mt-4 p-3.5 bg-red-950/80 border border-red-800 rounded-xl text-xs text-red-200">
             {error}
           </div>
         )}
 
         {successMessage ? (
-          <div className="my-8 text-center py-6">
+          <div className="relative z-10 my-8 text-center py-6">
             <div className="w-16 h-16 mx-auto mb-4 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center">
               <CheckCircle2 className="w-10 h-10" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">{successMessage}</h3>
-            <p className="text-sm text-stone-400 flex items-center justify-center gap-1.5">
+            <h3 className="font-serif text-2xl font-bold text-white mb-2">{successMessage}</h3>
+            <p className="text-sm text-stone-300 flex items-center justify-center gap-1.5">
               <span>May you receive peace, divine grace, and spiritual blessings</span>
               <PranamIcon size={18} />
             </p>
           </div>
         ) : (
-          <div className="mt-5 space-y-4">
+          <div className="relative z-10 mt-5 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {packages.map((pkg) => {
                 const isSelected = selectedSku === pkg.sku;
@@ -257,25 +257,25 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
                     onClick={() => setSelectedSku(pkg.sku)}
                     className={`relative p-4 rounded-2xl cursor-pointer transition-all border ${
                       isSelected
-                        ? 'bg-gradient-to-br from-stone-800 to-amber-950/40 border-amber-500 shadow-lg shadow-amber-950/30'
-                        : 'bg-stone-950/60 border-stone-800 hover:border-stone-700'
+                        ? 'bg-gold/10 border-gold shadow-lg shadow-gold/20'
+                        : 'bg-obsidian-soft border-gold/15 hover:border-gold/40'
                     }`}
                   >
                     {pkg.badge && (
-                      <span className="absolute -top-2.5 right-3 px-2 py-0.5 text-[10px] font-bold rounded-full bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-sm">
+                      <span className="absolute -top-2.5 right-3 px-2 py-0.5 text-[10px] font-bold rounded-full bg-gold text-obsidian shadow-sm">
                         {pkg.badge}
                       </span>
                     )}
 
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-semibold text-stone-300">{pkg.name}</span>
-                      <span className="text-sm font-extrabold text-amber-400">₹{pkg.priceInr}</span>
+                      <span className="font-serif text-base font-bold text-gold-pale">₹{pkg.priceInr}</span>
                     </div>
 
                     <div className="flex items-center gap-1.5 my-1">
                       <CoinIcon size={20} />
-                      <span className="text-2xl font-black text-white">{pkg.coins}</span>
-                      <span className="text-xs text-amber-400/90 font-bold">Coins</span>
+                      <span className="font-serif text-3xl font-bold text-white">{pkg.coins}</span>
+                      <span className="text-xs text-gold font-bold">Coins</span>
                     </div>
 
                     <p className="text-[11px] text-stone-400 flex items-center gap-1.5 mt-1">
@@ -291,24 +291,24 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
               <button
                 onClick={handlePurchase}
                 disabled={loading}
-                className="w-full py-3.5 px-4 bg-gradient-to-r from-orange-600 via-amber-600 to-orange-500 hover:from-orange-500 hover:to-amber-500 text-white font-bold rounded-2xl shadow-lg shadow-orange-950/50 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                className="w-full py-3.5 px-4 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full shadow-lg shadow-gold/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50 text-xs sm:text-sm"
               >
                 {loading ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-white" />
+                  <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-obsidian" />
                 ) : (
                   <>
-                    <Zap className="w-4 h-4 fill-white" />
+                    <Zap className="w-4 h-4 fill-obsidian" />
                     <span>Proceed to Recharge Now</span>
                   </>
                 )}
               </button>
 
-              <div className="flex items-center justify-center gap-4 text-[11px] text-stone-500">
+              <div className="flex items-center justify-center gap-4 text-[11px] text-stone-400">
                 <span className="flex items-center gap-1">
-                  <Shield className="w-3 h-3 text-emerald-400" /> Instant UPI & Net Banking
+                  <Shield className="w-3 h-3 text-emerald-400" /> Instant UPI &amp; Net Banking
                 </span>
                 <span>•</span>
-                <span>100% Encrypted & Safe</span>
+                <span>100% Encrypted &amp; Safe</span>
               </div>
             </div>
           </div>

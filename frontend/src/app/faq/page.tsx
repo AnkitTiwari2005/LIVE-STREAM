@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { HelpCircle, ChevronDown, Sparkles, Coins, Video, ShieldCheck, Heart } from 'lucide-react';
-import { OmIcon, CoinIcon } from '@/components/icons/SpiritualIcons';
+import { HelpCircle, ChevronDown, Sparkles, Search, ShieldCheck } from 'lucide-react';
+import { OmIcon, CoinIcon, DiyaIcon } from '@/components/icons/SpiritualIcons';
 
 const FAQS = [
   {
@@ -13,7 +13,12 @@ const FAQS = [
   },
   {
     q: 'How do I top up my Sacred Coins wallet?',
-    a: 'You can recharge your coin wallet anytime by clicking the gold coin pill in the header navbar or during a live stream. We accept instant UPI (Google Pay, PhonePe, Paytm, BHIM), Net Banking, and Debit/Credit Cards via our secure, encrypted payment gateway. Packs include ₹200 (100 coins), ₹500 (275 coins with 10% bonus), ₹1,000 (600 coins with 20% bonus), and ₹2,100 (1,500 coins with 25% bonus).',
+    a: 'You can recharge your coin wallet anytime by clicking the gold coin pill in the header navbar or during a live stream. We accept instant UPI (Google Pay, PhonePe, Paytm, BHIM), Net Banking, and Debit/Credit Cards via our secure Razorpay gateway. Packs include ₹200 (100 coins), ₹500 (275 coins with 10% bonus), ₹1,000 (600 coins with 20% bonus), and ₹2,100 (1,500 coins with 25% bonus).',
+    category: 'Coins & Wallet',
+  },
+  {
+    q: 'Do coins expire?',
+    a: 'No, sacred coins never expire. Any coins credited to your wallet remain safe and accessible until you choose to utilize them for live Darshan or Dakshina.',
     category: 'Coins & Wallet',
   },
   {
@@ -22,14 +27,24 @@ const FAQS = [
     category: 'Live Darshan',
   },
   {
+    q: 'What is metered Darshan?',
+    a: 'Metered Darshan deducts 5 coins per minute while you are actively connected to the live sanctum stream. Our heartbeat reconciler ensures that you are only billed for actual time watched — if you close the stream or your internet drops, coin deduction stops immediately.',
+    category: 'Live Darshan',
+  },
+  {
     q: 'How are Pandits and Astrologers verified before broadcasting?',
-    a: 'We enforce stringent vetting for all spiritual broadcasters. Pandits must provide credential proof from recognized Vedic Sanskrit Gurukuls, Vidyapeeths, or established temple trusts, along with verified government photo KYC. All priests strictly abide by our Anti-Superstition Code, which prohibits fear-based coercions and false worldly guarantees.',
+    a: 'We enforce stringent 7-step vetting for all spiritual broadcasters. Pandits must provide credential proof from recognized Vedic Sanskrit Gurukuls, Vidyapeeths, or established temple trusts, along with verified government photo KYC. All priests strictly abide by our Anti-Superstition Code, which prohibits fear-based coercions and false worldly guarantees.',
+    category: 'Pandits & Trust',
+  },
+  {
+    q: 'What does the blue tick on a pandit profile mean?',
+    a: 'The blue checkmark signifies that the pandit has completed biometric identity verification, Gurukul degree auditing, and Sanskrit recitation evaluation by our Acharya council.',
     category: 'Pandits & Trust',
   },
   {
     q: 'Can I book private poojas or astrological consultations for my family?',
     a: 'Yes. Verified Pandits can conduct private 1-on-1 consultations and family sankalps through encrypted, secret-link rooms. These rooms provide bi-directional video and audio, allowing the Pandit to view your family and perform personalized Vedic mantras with your family Gotra and birth coordinates.',
-    category: 'Private Consultations',
+    category: 'Sankalp & Pooja',
   },
   {
     q: 'Is my personal data and horoscope information secure under Indian law?',
@@ -38,10 +53,22 @@ const FAQS = [
   },
 ];
 
+const CATEGORIES = ['All', 'Coins & Wallet', 'Live Darshan', 'Pandits & Trust', 'Sankalp & Pooja', 'Privacy & Security'];
+
 export default function FAQPage() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const [selectedCat, setSelectedCat] = useState('All');
+  const [search, setSearch] = useState('');
 
-  // Schema.org FAQPage Structured Data for Google Rich Snippets
+  const filtered = FAQS.filter((f) => {
+    const matchesCat = selectedCat === 'All' || f.category === selectedCat;
+    const matchesSearch =
+      !search ||
+      f.q.toLowerCase().includes(search.toLowerCase()) ||
+      f.a.toLowerCase().includes(search.toLowerCase());
+    return matchesCat && matchesSearch;
+  });
+
   const faqSchema = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
@@ -62,77 +89,120 @@ export default function FAQPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-600/20 text-orange-400 text-xs font-bold border border-orange-500/30 mb-3">
-            <HelpCircle className="w-3.5 h-3.5" /> Devotee Knowledge Base
-          </div>
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <OmIcon size={36} />
-            <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
-              Frequently Asked Questions
+      <div className="min-h-screen bg-obsidian text-foreground py-12 relative overflow-hidden">
+        <div className="mandala-bg absolute inset-0 opacity-20 pointer-events-none" />
+
+        <div className="relative max-w-4xl mx-auto px-5 lg:px-8">
+          {/* Header */}
+          <div className="text-center mb-12">
+            <p className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.24em] text-gold-pale mb-4">
+              <HelpCircle className="w-3.5 h-3.5 text-gold" />
+              Devotee Knowledge Base
+            </p>
+            <h1 className="font-serif text-3xl sm:text-5xl font-bold text-white tracking-tight">
+              Questions, answered with{' '}
+              <span className="gold-text italic font-serif">clarity</span>
             </h1>
-          </div>
-          <p className="text-stone-400 text-sm sm:text-base max-w-lg mx-auto">
-            Everything you need to know about Shubhdarshan live streaming, coin wallet metering, verified Pandits, and privacy.
-          </p>
-        </div>
+            <p className="mt-4 text-stone-300 text-xs sm:text-base max-w-lg mx-auto leading-relaxed">
+              Everything you need to know about Shubhdarshan live streams, coin wallet metering, verified Pandits, and privacy.
+            </p>
 
-        {/* FAQ Accordion List */}
-        <div className="space-y-3 mb-14">
-          {FAQS.map((faq, idx) => {
-            const isOpen = openIndex === idx;
-            return (
-              <div
-                key={idx}
-                className="bg-stone-900 border border-stone-800 rounded-2xl overflow-hidden transition-all shadow-md"
-              >
+            {/* Search Box */}
+            <div className="mt-8 max-w-md mx-auto relative">
+              <Search className="w-4 h-4 absolute left-4 top-3.5 text-gold-soft" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search questions or keywords..."
+                className="w-full pl-11 pr-4 py-3 rounded-full bg-obsidian-soft border border-gold/20 text-xs sm:text-sm text-white placeholder-stone-500 focus:outline-none focus:border-gold transition shadow-md"
+              />
+            </div>
+
+            {/* Category Pills */}
+            <div className="flex items-center justify-center gap-2 overflow-x-auto py-5 no-scrollbar">
+              {CATEGORIES.map((cat) => (
                 <button
-                  type="button"
-                  onClick={() => setOpenIndex(isOpen ? null : idx)}
-                  className="w-full p-5 text-left flex items-center justify-between gap-4 hover:bg-stone-800/40 transition-colors"
+                  key={cat}
+                  onClick={() => setSelectedCat(cat)}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition ${
+                    selectedCat === cat
+                      ? 'bg-gold text-obsidian shadow-[0_0_15px_rgba(245,158,11,0.3)]'
+                      : 'bg-obsidian-soft text-stone-300 border border-gold/15 hover:border-gold/30 hover:text-gold-pale'
+                  }`}
                 >
-                  <span className="text-sm sm:text-base font-bold text-white leading-snug">
-                    {faq.q}
-                  </span>
-                  <ChevronDown
-                    className={`w-5 h-5 text-amber-400 flex-shrink-0 transition-transform duration-200 ${
-                      isOpen ? 'rotate-180 text-orange-400' : ''
-                    }`}
-                  />
+                  {cat}
                 </button>
-                {isOpen && (
-                  <div className="px-5 pb-5 text-stone-300 text-xs sm:text-sm leading-relaxed border-t border-stone-800/60 pt-4 bg-stone-950/40">
-                    <p>{faq.a}</p>
-                    <span className="inline-block mt-3 text-[10px] font-bold uppercase tracking-wider text-amber-500/80 bg-amber-950/50 border border-amber-800/40 px-2 py-0.5 rounded-md">
-                      {faq.category}
-                    </span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+              ))}
+            </div>
+          </div>
 
-        {/* Still Have Questions Box */}
-        <div className="bg-gradient-to-r from-orange-950/60 via-stone-900 to-amber-950/60 border border-stone-800 rounded-3xl p-8 text-center shadow-xl">
-          <h3 className="text-xl font-bold text-white mb-2">Still Have Questions?</h3>
-          <p className="text-stone-400 text-xs sm:text-sm mb-6 max-w-md mx-auto">
-            Our spiritual assistance desk is available to answer any questions about rituals, astrologers, or payments.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <Link
-              href="/contact"
-              className="px-6 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md transition-all"
-            >
-              Contact Devotee Support
-            </Link>
-            <Link
-              href="/wallet/topup"
-              className="px-5 py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-200 font-semibold rounded-xl text-xs sm:text-sm transition-all"
-            >
-              Explore Coin Packs
-            </Link>
+          {/* FAQ Accordion List */}
+          <div className="space-y-3 mb-14">
+            {filtered.length === 0 ? (
+              <div className="rounded-2xl border border-gold/15 bg-obsidian-soft p-8 text-center text-stone-400 text-xs sm:text-sm">
+                No matching questions found for &ldquo;{search}&rdquo;. Try another term or contact support.
+              </div>
+            ) : (
+              filtered.map((faq, idx) => {
+                const isOpen = openIndex === idx;
+                return (
+                  <div
+                    key={idx}
+                    className="rounded-2xl bg-obsidian-soft border border-gold/15 overflow-hidden transition-all shadow-md hover:border-gold/30"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setOpenIndex(isOpen ? null : idx)}
+                      className="w-full p-5 text-left flex items-center justify-between gap-4 hover:bg-stone-900/40 transition-colors"
+                    >
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-gold-soft block mb-1">
+                          {faq.category}
+                        </span>
+                        <span className="font-serif text-base sm:text-lg font-bold text-white leading-snug">
+                          {faq.q}
+                        </span>
+                      </div>
+                      <ChevronDown
+                        className={`w-5 h-5 text-gold flex-shrink-0 transition-transform duration-200 ${
+                          isOpen ? 'rotate-180 text-gold-soft' : ''
+                        }`}
+                      />
+                    </button>
+                    {isOpen && (
+                      <div className="px-5 pb-5 text-xs sm:text-sm text-stone-300 leading-relaxed border-t border-stone-800/60 pt-3">
+                        {faq.a}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Need More Assistance Card */}
+          <div className="rounded-3xl border border-gold/30 bg-gradient-to-r from-gold/10 via-obsidian-soft to-gold/10 p-8 text-center shadow-xl">
+            <h3 className="font-serif text-2xl font-bold text-white mb-2">
+              Still have a question?
+            </h3>
+            <p className="text-stone-300 text-xs sm:text-sm max-w-md mx-auto mb-5 leading-relaxed">
+              Our devotee support and grievance desk is available daily from 6 AM to 10 PM IST to assist you.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <Link
+                href="/contact"
+                className="rounded-full bg-gold px-6 py-2.5 text-xs font-bold text-obsidian shadow hover:bg-gold-deep transition"
+              >
+                Contact Devotee Support
+              </Link>
+              <Link
+                href="/"
+                className="rounded-full border border-gold/40 bg-obsidian px-5 py-2.5 text-xs font-bold text-gold-pale hover:bg-gold/10 transition"
+              >
+                Return to Live Darshan
+              </Link>
+            </div>
           </div>
         </div>
       </div>

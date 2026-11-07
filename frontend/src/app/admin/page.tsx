@@ -227,23 +227,26 @@ export default function AdminConsolePage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center justify-between mb-8 pb-4 border-b border-stone-800">
-        <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <ShieldCheck className="w-6 h-6 text-amber-500" /> Platform Operator Console
-          </h1>
-          <p className="text-xs text-stone-400 mt-1">
-            Global monitoring, KYC approvals, emergency kill switches, and audit trail
-          </p>
+    <div className="min-h-screen bg-obsidian text-foreground py-8 relative overflow-hidden">
+      <div className="mandala-bg absolute inset-0 opacity-20 pointer-events-none" />
+
+      <div className="relative max-w-7xl mx-auto px-5 lg:px-8">
+        <div className="flex items-center justify-between mb-8 pb-4 border-b border-gold/15">
+          <div>
+            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-white flex items-center gap-2">
+              <ShieldCheck className="w-6 h-6 text-gold" /> Platform Operator Console
+            </h1>
+            <p className="text-xs text-stone-400 mt-1">
+              Global monitoring, KYC approvals, emergency kill switches, and audit trail
+            </p>
+          </div>
+          <button
+            onClick={loadAdminData}
+            className="text-xs font-semibold px-4 py-2 bg-obsidian-soft hover:bg-stone-800 text-gold-pale border border-gold/20 rounded-full transition-colors"
+          >
+            Refresh Data
+          </button>
         </div>
-        <button
-          onClick={loadAdminData}
-          className="text-xs font-semibold px-4 py-2 bg-stone-900 hover:bg-stone-800 text-stone-200 border border-stone-800 rounded-xl transition-colors"
-        >
-          Refresh Data
-        </button>
-      </div>
 
       {/* Tabs */}
       <div className="flex items-center gap-2 border-b border-stone-800 pb-3 mb-8 overflow-x-auto">
@@ -556,6 +559,7 @@ export default function AdminConsolePage() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

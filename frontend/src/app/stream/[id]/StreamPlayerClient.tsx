@@ -333,22 +333,22 @@ export default function StreamPlayerClient() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Video Viewport (Col span 2) */}
           <div className="lg:col-span-2 flex flex-col gap-4">
-            <div className="relative w-full aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl border border-stone-800 flex items-center justify-center">
+            <div className="relative w-full aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl border border-gold/20 flex items-center justify-center">
               {/* Scheduled Stream Announcement Overlay */}
               {isScheduled ? (
-                <div className="absolute inset-0 z-40 bg-gradient-to-br from-stone-900 via-stone-950 to-amber-950/80 flex flex-col items-center justify-center p-6 text-center">
-                  <div className="p-4 bg-orange-950/60 border border-orange-500/30 rounded-3xl text-orange-400 mb-4 shadow-xl">
+                <div className="absolute inset-0 z-40 bg-gradient-to-br from-obsidian-deep via-obsidian to-[#241a12] flex flex-col items-center justify-center p-6 text-center">
+                  <div className="p-4 bg-gold/10 border border-gold/30 rounded-3xl text-gold mb-4 shadow-xl">
                     <Calendar className="w-10 h-10" />
                   </div>
-                  <span className="text-xs uppercase font-extrabold tracking-widest text-amber-400 mb-1">
+                  <span className="text-xs uppercase font-extrabold tracking-widest text-gold mb-1">
                     Scheduled Sacred Pooja
                   </span>
-                  <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 max-w-md">
+                  <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white mb-2 max-w-md">
                     {stream?.title}
                   </h3>
                   {stream?.scheduledAt && (
-                    <p className="text-stone-300 text-sm font-semibold mb-3 bg-stone-900/90 border border-stone-800 px-4 py-1.5 rounded-full inline-flex items-center gap-2 shadow">
-                      <Clock className="w-4 h-4 text-orange-400" />
+                    <p className="text-stone-300 text-sm font-semibold mb-3 bg-obsidian-soft/90 border border-gold/20 px-4 py-1.5 rounded-full inline-flex items-center gap-2 shadow">
+                      <Clock className="w-4 h-4 text-gold" />
                       {new Date(stream.scheduledAt).toLocaleString([], { dateStyle: 'full', timeStyle: 'short' })}
                     </p>
                   )}
@@ -359,11 +359,11 @@ export default function StreamPlayerClient() {
                     <button
                       onClick={handleSetReminder}
                       disabled={reminderSet}
-                      className="px-6 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold rounded-2xl shadow-xl shadow-orange-950/60 flex items-center justify-center gap-2 text-xs sm:text-sm transition-all disabled:opacity-60"
+                      className="px-6 py-3 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full shadow-xl shadow-gold/20 flex items-center justify-center gap-2 text-xs sm:text-sm transition-all disabled:opacity-60"
                     >
                       {reminderSet ? (
                         <>
-                          <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                          <CheckCircle2 className="w-4 h-4 text-obsidian" />
                           <span>Reminder Scheduled ✓</span>
                         </>
                       ) : (
@@ -375,30 +375,30 @@ export default function StreamPlayerClient() {
                     </button>
                     <button
                       onClick={handleShare}
-                      className="px-4 py-3 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold rounded-2xl transition"
+                      className="px-5 py-3 bg-obsidian-soft hover:bg-stone-800 text-stone-200 text-xs font-semibold rounded-full border border-gold/20 transition"
                     >
                       Share Pooja Link
                     </button>
                   </div>
                 </div>
               ) : isZeroBalance ? (
-                <div className="absolute inset-0 z-40 bg-stone-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
+                <div className="absolute inset-0 z-40 bg-obsidian-deep/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
                   <OmIcon size={52} className="mb-3" />
-                  <h3 className="text-xl font-bold text-white mb-1">Auspicious Darshan Paused</h3>
-                  <p className="text-stone-400 text-xs sm:text-sm max-w-sm mb-6">
+                  <h3 className="font-serif text-2xl font-bold text-white mb-1">Auspicious Darshan Paused</h3>
+                  <p className="text-stone-400 text-xs sm:text-sm max-w-sm mb-6 leading-relaxed">
                     You have utilized your available darshan coins. Please recharge your wallet to continue receiving live blessings.
                   </p>
                   <div className="flex flex-col sm:flex-row items-center gap-3">
                     <button
                       onClick={() => setTopupModalOpen(true)}
-                      className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-orange-600 via-amber-600 to-orange-500 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold rounded-2xl shadow-xl shadow-orange-950/60 flex items-center justify-center gap-2 text-sm"
+                      className="w-full sm:w-auto px-6 py-3 bg-gold hover:bg-gold-deep text-obsidian font-extrabold rounded-full shadow-xl shadow-gold/20 flex items-center justify-center gap-2 text-sm transition"
                     >
-                      <Zap className="w-4 h-4 fill-white" />
+                      <Zap className="w-4 h-4 fill-obsidian" />
                       <span>Recharge Coins (from ₹200)</span>
                     </button>
                     <Link
                       href="/"
-                      className="text-stone-400 hover:text-stone-200 text-xs font-semibold py-2"
+                      className="text-stone-400 hover:text-gold-pale text-xs font-semibold py-2"
                     >
                       Return to Darshan Schedule
                     </Link>
@@ -422,8 +422,8 @@ export default function StreamPlayerClient() {
                 </LiveKitRoom>
               ) : (
                 <div className="flex flex-col items-center gap-3 text-stone-500">
-                  <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-orange-500" />
-                  <span className="text-xs uppercase tracking-wider font-semibold">
+                  <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-gold" />
+                  <span className="text-xs uppercase tracking-wider font-semibold text-gold-soft">
                     Connecting to Sacred Broadcast...
                   </span>
                 </div>
@@ -434,15 +434,15 @@ export default function StreamPlayerClient() {
                 <div className="absolute top-4 right-4 z-30 flex items-center gap-2">
                   <button
                     onClick={() => setTopupModalOpen(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-900/80 backdrop-blur-md border border-amber-500/50 hover:border-amber-400 rounded-full text-xs font-bold text-amber-400 shadow-xl transition-all"
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 bg-obsidian/85 backdrop-blur-md border border-gold/40 hover:border-gold rounded-full text-xs font-bold text-gold-pale shadow-xl transition-all"
                     title="Click to recharge coins"
                   >
                     <CoinIcon size={16} />
-                    <span>{remainingCoins} Coins</span>
-                    <span className="text-stone-400 text-[10px] font-normal">
+                    <span className="text-gold font-extrabold">{remainingCoins} Coins</span>
+                    <span className="text-stone-300 text-[10px] font-normal">
                       ({availableMinutes}m left)
                     </span>
-                    <span className="text-amber-400 ml-1 font-extrabold">+</span>
+                    <span className="text-gold ml-0.5 font-black">+</span>
                   </button>
                 </div>
               )}
@@ -472,68 +472,68 @@ export default function StreamPlayerClient() {
 
             {/* Stream Metadata & Pandit Info */}
             {stream && (
-              <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5 shadow-lg">
+              <div className="bg-obsidian-soft border border-gold/15 rounded-2xl p-5 shadow-lg">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2 mb-2">
                       {stream.status === 'LIVE' ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-950 text-red-400 border border-red-800">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-950/80 text-red-400 border border-red-800">
                           <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
                           LIVE
                         </span>
                       ) : stream.status === 'SCHEDULED' ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-950 text-amber-400 border border-amber-800">
-                          <Calendar className="w-3.5 h-3.5" />
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gold/10 text-gold-pale border border-gold/30">
+                          <Calendar className="w-3.5 h-3.5 text-gold" />
                           SCHEDULED
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-stone-800 text-stone-400 border border-stone-700">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-stone-900 text-stone-400 border border-stone-800">
                           CONCLUDED
                         </span>
                       )}
-                      <span className="text-xs text-stone-400 font-medium">
+                      <span className="text-xs text-gold-soft font-semibold uppercase tracking-wider">
                         {stream.category?.name}
                       </span>
                       {remainingCoins !== null && (
-                        <span className="text-[11px] font-medium text-amber-400/90 bg-amber-950/40 border border-amber-800/40 px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <span className="text-[11px] font-bold text-gold-pale bg-gold/10 border border-gold/25 px-2.5 py-0.5 rounded-full flex items-center gap-1">
                           <CoinIcon size={12} /> 5 Coins / min
                         </span>
                       )}
                     </div>
-                    <h1 className="text-xl font-bold text-white tracking-tight">{stream.title}</h1>
-                    <p className="text-xs text-stone-400 mt-1 line-clamp-2">{stream.description}</p>
+                    <h1 className="font-serif text-2xl font-bold text-white tracking-tight">{stream.title}</h1>
+                    <p className="text-xs sm:text-sm text-stone-400 mt-1 line-clamp-2 leading-relaxed">{stream.description}</p>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setDakshinaModalOpen(true)}
-                      className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-stone-950 text-xs font-bold rounded-xl transition-all shadow-md shadow-orange-950/40"
+                      className="flex items-center gap-2 px-4 py-2.5 bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold rounded-full transition-all shadow-[0_0_24px_rgba(245,158,11,0.25)]"
                     >
                       <DiyaIcon size={16} />
                       <span>Arpan Dakshina</span>
                     </button>
                     <button
                       onClick={handleShare}
-                      className="flex items-center gap-2 px-3.5 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold rounded-xl transition-all shadow"
+                      className="flex items-center gap-1.5 px-3.5 py-2.5 bg-obsidian border border-gold/20 hover:bg-stone-900 text-stone-200 text-xs font-semibold rounded-full transition-all shadow"
                     >
-                      <Share2 className="w-4 h-4" /> Share
+                      <Share2 className="w-4 h-4 text-gold-soft" /> Share
                     </button>
                   </div>
                 </div>
 
-                <div className="mt-4 flex items-center justify-between text-xs text-stone-300">
+                <div className="mt-4 pt-3.5 border-t border-stone-800/80 flex items-center justify-between text-xs text-stone-300">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-stone-100 text-sm flex items-center gap-1.5">
                       <PranamIcon size={16} /> {stream.streamer?.name}
                     </span>
                     {stream.streamer?.streamerProfile?.isVerifiedBadge && (
-                      <span className="inline-flex items-center gap-1 text-orange-400 font-bold" title="Verified Vedic Pandit">
+                      <span className="inline-flex items-center gap-1 text-gold-soft font-bold" title="Verified Vedic Pandit">
                         <VerifiedPanditBadge size={16} /> Verified
                       </span>
                     )}
                   </div>
                   <span className="flex items-center gap-1 text-stone-400 font-medium">
-                    <Users className="w-3.5 h-3.5" /> Live Devotees
+                    <Users className="w-3.5 h-3.5 text-gold" /> Live Devotees
                   </span>
                 </div>
               </div>

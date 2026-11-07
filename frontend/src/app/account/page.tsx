@@ -193,30 +193,33 @@ export default function AccountPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
-      <div className="flex items-center gap-3 mb-8 pb-4 border-b border-stone-800">
-        <div className="p-3 rounded-2xl bg-orange-950/60 border border-orange-500/30 text-orange-400">
-          <User className="w-6 h-6" />
-        </div>
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-2">
-            <OmIcon size={26} /> My Sacred Profile & Settings
-          </h1>
-          <p className="text-xs text-stone-400 mt-0.5">
-            Manage your personal information, security, and devotional preferences
-          </p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-obsidian text-foreground py-10 relative overflow-hidden">
+      <div className="mandala-bg absolute inset-0 opacity-20 pointer-events-none" />
 
-      {loading ? (
-        <div className="p-12 text-center text-stone-400">
-          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-orange-500" />
-          Loading account details...
+      <div className="relative max-w-4xl mx-auto px-5 lg:px-8 w-full">
+        <div className="flex items-center gap-3 mb-8 pb-4 border-b border-gold/15">
+          <div className="p-3 rounded-2xl bg-gold/10 border border-gold/30 text-gold">
+            <User className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-white flex items-center gap-2">
+              <OmIcon size={26} /> My Sacred Profile &amp; Settings
+            </h1>
+            <p className="text-xs text-stone-400 mt-0.5">
+              Manage your personal information, security, and devotional preferences
+            </p>
+          </div>
         </div>
-      ) : (
-        <div className="space-y-8">
-          {/* User Info Card */}
-          <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 sm:p-8 shadow-xl">
+
+        {loading ? (
+          <div className="p-12 text-center text-stone-400">
+            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-gold" />
+            Loading account details...
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {/* User Info Card */}
+            <div className="bg-obsidian-soft border border-gold/15 rounded-3xl p-6 sm:p-8 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <User className="w-5 h-5 text-orange-400" /> Account Overview
@@ -456,6 +459,7 @@ export default function AccountPage() {
             </div>
           </div>
         )}
+      </div>
     </div>
   );
 }

@@ -2,21 +2,39 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Flame, Calendar, Users, Bell, Play, Sparkles, Zap, ShieldCheck } from 'lucide-react';
+import {
+  Search,
+  Flame,
+  Calendar,
+  Users,
+  Bell,
+  Play,
+  Sparkles,
+  Zap,
+  ShieldCheck,
+  Star,
+  CheckCircle2,
+  Clock,
+  ArrowRight,
+  Shield,
+  HelpCircle,
+} from 'lucide-react';
 import {
   OmIcon,
   DiyaIcon,
   CoinIcon,
   PranamIcon,
+  BellIcon,
   VerifiedPanditBadge,
 } from '@/components/icons/SpiritualIcons';
+import { CoinTopupModal } from '@/components/CoinTopupModal';
 
 interface Stream {
   id: string;
   title: string;
   description?: string;
   thumbnailUrl?: string;
-  status: 'LIVE' | 'SCHEDULED';
+  status: 'LIVE' | 'SCHEDULED' | 'ENDED';
   videoQuality: string;
   scheduledAt?: string;
   peakViewers: number;
@@ -29,6 +47,78 @@ interface Stream {
   };
 }
 
+const FALLBACK_THUMBNAILS = [
+  '/images/photo-1681797849099-0053b1567d95.webp', // Ganga Sandhya Aarti
+  '/images/photo-1678593628844-6ea49dee8ce3.webp', // Kashi Mangala Aarti
+  '/images/photo-1763479939733-eea29c578c17.webp', // Rudrabhishek Abhishekam
+  '/images/photo-1763479168649-8ffb3bbb9103.webp', // Sandhya Deep Aarti
+  '/images/photo-1741358706805-a5935a200a5c.webp', // Bhasma Aarti Mahakal
+  '/images/photo-1577083753695-e010191bacb5.webp', // Grand Deepotsav
+];
+
+const CURATED_PANDITS = [
+  {
+    name: 'Pandit Aarav Sharma',
+    title: 'Head Archak, Kashi Vishwanath Parampara',
+    experience: '22 Years Seva',
+    rating: '4.98',
+    reviews: '1,420',
+    specialties: ['Rudrabhishek', 'Mahamrityunjaya Jaap', 'Ganga Aarti'],
+    image: '/images/photo-1543934776-32d1cc654abb.webp',
+  },
+  {
+    name: 'Pandit Hariram Vyas',
+    title: 'Senior Purohit, Haridwar Ganga Sabha',
+    experience: '18 Years Seva',
+    rating: '4.95',
+    reviews: '980',
+    specialties: ['Sandhya Aarti', 'Navgrah Shanti', 'Kavach Path'],
+    image: '/images/photo-1544186196-6908a9d76ab3.webp',
+  },
+  {
+    name: 'Pandit Vishwanath Bhatt',
+    title: 'Vedic Scholar, Tirupati Devasthanam Tradition',
+    experience: '26 Years Seva',
+    rating: '5.0',
+    reviews: '2,140',
+    specialties: ['Vishnu Sahasranama', 'Satyanarayan Katha', 'Vedic Chanting'],
+    image: '/images/photo-1596604820148-da737958af16.webp',
+  },
+  {
+    name: 'Acharya Devrishi',
+    title: 'Sanskrit Acharya, Rishikesh Gurukul',
+    experience: '15 Years Seva',
+    rating: '4.92',
+    reviews: '810',
+    specialties: ['Vedic Astrology', 'Kundli Milan', 'Vastu Shanti'],
+    image: '/images/photo-1762838105804-c3264c29a390.webp',
+  },
+];
+
+const DEVOTEE_TESTIMONIALS = [
+  {
+    name: 'Dr. Ramesh Sundaram',
+    location: 'London, United Kingdom',
+    quote:
+      'Living in London, participating in Kashi Vishwanath Mangala Aarti live at 4 AM IST with sub-second audio clarity felt like sitting right inside the temple sanctum. Shubhdarshan is a divine blessing.',
+    ritual: 'Kashi Mangala Aarti',
+  },
+  {
+    name: 'Meera & Rajesh Patel',
+    location: 'Fremont, California',
+    quote:
+      'We booked a personalized family Sankalp for our mother’s 70th birthday. The pandit ji chanted our gotra and names with pure Vedic precision. The video quality was crystal clear.',
+    ritual: 'Rudrabhishek Sankalp',
+  },
+  {
+    name: 'Ananya Deshmukh',
+    location: 'Singapore',
+    quote:
+      'The transparent 5 coins/min rate and instant Razorpay recharge make it so effortless. No complicated subscriptions, just pure devotion whenever I seek peace after work.',
+    ritual: 'Sandhya Deep Aarti',
+  },
+];
+
 export default function HomePage() {
   const [streams, setStreams] = useState<Stream[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -36,6 +126,17 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [topupModalOpen, setTopupModalOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('pooja_user');
+    if (stored) {
+      try {
+        setUser(JSON.parse(stored));
+      } catch {}
+    }
+  }, []);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -95,252 +196,644 @@ export default function HomePage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      alert(data.message || 'Reminder set!');
+      alert(data.message || 'Email reminder scheduled successfully!');
     } catch {
       alert('Failed to set reminder.');
     }
   };
 
+  const featuredStream = liveStreams[0] || null;
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Sacred Modernized Hero Banner */}
-      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-orange-950/80 via-stone-900 to-amber-950/80 border border-orange-900/40 p-8 sm:p-12 mb-10 shadow-2xl">
-        {/* Sacred Ambient Background Mandala */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-orange-600/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-obsidian text-foreground">
+      {/* 1. Sacred Hero Section */}
+      <section className="relative overflow-hidden pt-8 pb-16 lg:pt-14 lg:pb-24 border-b border-gold/15">
+        {/* Background Image with Ambient Saffron Glow */}
+        <div className="absolute inset-0 pointer-events-none">
+          <img
+            src="/images/photo-1681797849099-0053b1567d95.webp"
+            alt="Sandhya Ganga Aarti"
+            className="h-full w-full object-cover opacity-25 scale-105 blur-[3px]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-obsidian/80 via-obsidian/90 to-obsidian" />
+          <div className="mandala-bg absolute inset-0 opacity-40 [mask-image:radial-gradient(700px_500px_at_70%_25%,black,transparent)]" />
+        </div>
 
-        <div className="max-w-3xl relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-600/20 border border-orange-500/30 text-orange-300 text-xs font-semibold mb-4">
-            <Sparkles className="w-3.5 h-3.5" /> Authentic Vedic Darshan & Consultation
-          </div>
+        <div className="relative mx-auto grid max-w-7xl gap-12 px-5 lg:grid-cols-12 lg:gap-8 lg:px-8 items-center">
+          {/* Left Column: Sacred Copy & Value Props */}
+          <div className="flex flex-col justify-center lg:col-span-7">
+            <div>
+              <p className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.24em] text-gold-pale shadow-sm">
+                <span className="live-dot" />
+                Live from Bharat&apos;s sacred sanctums
+              </p>
+            </div>
 
-          <div className="flex items-center gap-3 mb-3">
-            <OmIcon size={44} />
-            <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
-              Shubhdarshan{' '}
-              <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-red-500 bg-clip-text text-transparent">
-                Live Darshan & Pooja
-              </span>
+            <h1 className="mt-6 max-w-2xl font-serif text-4xl sm:text-6xl lg:text-7xl font-bold leading-[1.06] tracking-tight">
+              The sanctum is now{' '}
+              <span className="gold-text italic block sm:inline font-serif">one tap away</span>
             </h1>
+
+            <p className="mt-6 max-w-xl text-stone-300 text-sm sm:text-base lg:text-lg leading-relaxed">
+              Shubhdarshan brings real-time temple Darshan, personalized Vedic poojas, and Gurukul-verified astrologers to devotees in 62 countries — in sub-second 4K, from the sacred ghats of Kashi to your living room.
+            </p>
+
+            {/* Hero Action Buttons */}
+            <div className="mt-8 flex flex-wrap items-center gap-4">
+              <Link
+                href={featuredStream ? `/stream/${featuredStream.id}` : '#live-section'}
+                className="group inline-flex items-center gap-3 rounded-full bg-gold px-7 py-3.5 text-sm font-bold text-obsidian shadow-[0_0_36px_rgba(245,158,11,0.35)] transition hover:bg-gold-deep hover:shadow-[0_0_48px_rgba(245,158,11,0.5)]"
+              >
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-obsidian/20">
+                  <Play className="h-3.5 w-3.5 fill-obsidian text-obsidian ml-0.5" />
+                </span>
+                <span>Watch Live Darshan</span>
+              </Link>
+
+              {user ? (
+                <button
+                  onClick={() => setTopupModalOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-6 py-3.5 text-sm font-bold text-gold-pale transition hover:border-gold hover:bg-gold/20"
+                >
+                  <CoinIcon size={18} />
+                  <span>Recharge Coins</span>
+                </button>
+              ) : (
+                <Link
+                  href="/register"
+                  className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-6 py-3.5 text-sm font-bold text-gold-pale transition hover:border-gold hover:bg-gold/20"
+                >
+                  <Sparkles className="w-4 h-4 text-gold" />
+                  <span>Claim 100 Free Coins</span>
+                </Link>
+              )}
+            </div>
+
+            {/* Platform Stats Row */}
+            <dl className="mt-12 grid grid-cols-2 gap-x-6 gap-y-6 border-t border-stone-800/80 pt-6 sm:grid-cols-4">
+              <div>
+                <dt className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400">
+                  Verified Pandits
+                </dt>
+                <dd className="font-serif text-2xl sm:text-3xl font-bold text-gold-pale">85+</dd>
+              </div>
+              <div>
+                <dt className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400">
+                  Devotee Rating
+                </dt>
+                <dd className="font-serif text-2xl sm:text-3xl font-bold text-gold-pale">4.98 / 5</dd>
+              </div>
+              <div>
+                <dt className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400">
+                  Countries Reached
+                </dt>
+                <dd className="font-serif text-2xl sm:text-3xl font-bold text-gold-pale">62+</dd>
+              </div>
+              <div>
+                <dt className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400">
+                  Compliance
+                </dt>
+                <dd className="font-serif text-xl sm:text-2xl font-bold text-emerald-400">DPDP 2023</dd>
+              </div>
+            </dl>
           </div>
 
-          <p className="text-stone-300 text-sm sm:text-base mb-6 leading-relaxed max-w-2xl">
-            Participate in real-time temple Aartis, Rudrabhishek, Kundli match, and personalized family sankalps with verified Vedic Pandits worldwide. Sub-second WebRTC video, zero delay chanting.
-          </p>
+          {/* Right Column: Hero Featured Live Stream Card */}
+          <div className="lg:col-span-5">
+            <div className="relative rounded-3xl border border-gold/30 bg-gradient-to-b from-[#1f1710] to-obsidian p-3 shadow-[0_20px_60px_rgba(0,0,0,0.7)] group">
+              <div className="relative aspect-video sm:aspect-[4/3] rounded-2xl overflow-hidden bg-black">
+                <img
+                  src={
+                    featuredStream?.thumbnailUrl ||
+                    '/images/photo-1678593628844-6ea49dee8ce3.webp'
+                  }
+                  alt={featuredStream?.title || 'Kashi Vishwanath Mangala Aarti'}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-90" />
 
-          {/* Quick Platform Metrics */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-stone-800/80">
-            <div className="flex items-center gap-2 text-xs">
-              <CoinIcon size={20} />
-              <div>
-                <span className="font-extrabold text-white block">100 Free Coins</span>
-                <span className="text-[10px] text-stone-400">Joining Bonus</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-xs">
-              <DiyaIcon size={20} />
-              <div>
-                <span className="font-extrabold text-white block">5 Coins / min</span>
-                <span className="text-[10px] text-stone-400">Live Metered Darshan</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-xs">
-              <VerifiedPanditBadge size={20} />
-              <div>
-                <span className="font-extrabold text-white block">Verified Pandits</span>
-                <span className="text-[10px] text-stone-400">Strict Gurukul KYC</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-xs">
-              <ShieldCheck className="w-5 h-5 text-emerald-400" />
-              <div>
-                <span className="font-extrabold text-white block">DPDP Act 2023</span>
-                <span className="text-[10px] text-stone-400">100% Privacy Safe</span>
+                {/* Top Overlay Badges */}
+                <div className="absolute top-3 left-3 flex items-center gap-2">
+                  <span className="flex items-center gap-1.5 rounded-full bg-red-600/90 backdrop-blur-md px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                    LIVE
+                  </span>
+                  <span className="rounded-full bg-black/60 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-gold-pale border border-gold/20">
+                    Sub-second 4K
+                  </span>
+                </div>
+
+                <div className="absolute top-3 right-3 rounded-full bg-black/60 backdrop-blur-md px-2.5 py-1 text-[11px] font-semibold text-stone-300 flex items-center gap-1 border border-stone-800">
+                  <Users className="w-3.5 h-3.5 text-gold" />
+                  <span>{featuredStream?.peakViewers || 248} watching</span>
+                </div>
+
+                {/* Bottom Overlay Title & Join CTA */}
+                <div className="absolute bottom-4 left-4 right-4">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-soft">
+                    {featuredStream?.category.name || 'Mangala Aarti'}
+                  </span>
+                  <h3 className="font-serif text-xl sm:text-2xl font-bold text-white line-clamp-1 mt-0.5">
+                    {featuredStream?.title || 'Mangala Aarti — Kashi Vishwanath'}
+                  </h3>
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <PranamIcon size={16} />
+                      <span className="text-xs font-semibold text-stone-200">
+                        {featuredStream?.streamer.name || 'Pandit Aarav Sharma'}
+                      </span>
+                      <VerifiedPanditBadge size={14} />
+                    </div>
+                    <Link
+                      href={featuredStream ? `/stream/${featuredStream.id}` : '#live-section'}
+                      className="rounded-full bg-gold px-4 py-1.5 text-xs font-bold text-obsidian shadow hover:bg-gold-deep transition"
+                    >
+                      Join Darshan
+                    </Link>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Search & Category Filter Bar */}
-      <div className="space-y-4 mb-10">
-        <div className="relative max-w-md">
-          <Search className="w-4 h-4 absolute left-3.5 top-3 text-stone-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search pooja, pandit name, or ritual..."
-            className="w-full pl-10 pr-4 py-2 bg-stone-900 border border-stone-800 rounded-xl text-sm text-white placeholder-stone-500 focus:outline-none focus:border-orange-500"
-          />
+      {/* 2. Category Filter & Search Section ("Every ritual, every tradition") */}
+      <section className="mx-auto max-w-7xl px-5 lg:px-8 py-10" id="live-section">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-gold/15">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-gold-soft">
+              Vedic Sanctums
+            </p>
+            <h2 className="mt-1 font-serif text-3xl sm:text-4xl font-bold text-white">
+              Every ritual, every tradition
+            </h2>
+          </div>
+
+          {/* Search Box */}
+          <div className="relative w-full md:w-80">
+            <Search className="w-4 h-4 absolute left-3.5 top-3 text-gold-soft" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search pooja, pandit, or mandir..."
+              className="w-full pl-10 pr-4 py-2.5 rounded-full bg-obsidian-soft border border-gold/20 text-xs sm:text-sm text-white placeholder-stone-400 focus:outline-none focus:border-gold transition"
+            />
+          </div>
         </div>
 
         {/* Category Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+        <div className="flex items-center gap-2 overflow-x-auto py-5 no-scrollbar">
           <button
             onClick={() => setSelectedCategory('')}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
               selectedCategory === ''
-                ? 'bg-orange-600 text-white'
-                : 'bg-stone-900 text-stone-300 hover:bg-stone-800'
+                ? 'bg-gold text-obsidian shadow-[0_0_18px_rgba(245,158,11,0.3)]'
+                : 'bg-obsidian-soft text-stone-300 border border-gold/15 hover:border-gold/40 hover:text-gold-pale'
             }`}
           >
-            All Categories
+            All Sacred Rituals
           </button>
           {categories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
                 selectedCategory === cat.id
-                  ? 'bg-orange-600 text-white'
-                  : 'bg-stone-900 text-stone-300 hover:bg-stone-800'
+                  ? 'bg-gold text-obsidian shadow-[0_0_18px_rgba(245,158,11,0.3)]'
+                  : 'bg-obsidian-soft text-stone-300 border border-gold/15 hover:border-gold/40 hover:text-gold-pale'
               }`}
             >
               {cat.name}
             </button>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* Live Now Section */}
-      <section className="mb-14">
-        <div className="flex items-center gap-2 mb-6">
-          <span className="flex h-3 w-3 relative">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+      {/* 3. Live Now Section ("Darshan streaming this very moment") */}
+      <section className="mx-auto max-w-7xl px-5 lg:px-8 py-8">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <span className="live-dot" />
+            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white">
+              Darshan streaming this very moment
+            </h2>
+          </div>
+          <span className="text-xs text-gold-soft/90 font-medium hidden sm:inline">
+            5 Coins / min metered darshan
           </span>
-          <h2 className="text-xl font-bold text-white tracking-tight">Live Darshan Right Now</h2>
         </div>
 
         {liveStreams.length === 0 ? (
-          <div className="bg-stone-900/50 border border-stone-800/60 rounded-2xl p-8 text-center text-stone-400 text-sm">
-            No live streams active at this moment. Check the upcoming schedule below.
+          <div className="rounded-3xl border border-gold/15 bg-obsidian-soft p-12 text-center shadow-xl">
+            <DiyaIcon size={44} className="mx-auto mb-3 opacity-70" />
+            <h3 className="font-serif text-xl font-bold text-white mb-2">
+              No live darshan streaming at this precise instant
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-400 max-w-md mx-auto mb-6 leading-relaxed">
+              Temple pandits are preparing for the upcoming sandhya and mangala aartis. Review the scheduled timings below or receive an instant notification.
+            </p>
+            <a
+              href="#upcoming"
+              className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-5 py-2.5 text-xs font-bold text-gold-pale hover:bg-gold/20 transition"
+            >
+              <Calendar className="w-4 h-4 text-gold" />
+              <span>Browse Scheduled Poojas</span>
+            </a>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {liveStreams.map((stream) => (
-              <Link
-                key={stream.id}
-                href={`/stream/${stream.id}`}
-                className="group bg-stone-900 border border-stone-800 rounded-2xl overflow-hidden hover:border-orange-600/50 transition-all flex flex-col shadow-lg"
-              >
-                {/* Thumbnail / Video Box */}
-                <div className="relative aspect-video bg-black flex items-center justify-center overflow-hidden">
-                  {stream.thumbnailUrl ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            {liveStreams.map((stream, idx) => {
+              const fallbackImg = FALLBACK_THUMBNAILS[idx % FALLBACK_THUMBNAILS.length];
+              return (
+                <Link
+                  key={stream.id}
+                  href={`/stream/${stream.id}`}
+                  className="group rounded-2xl overflow-hidden bg-obsidian-soft border border-gold/15 hover:border-gold/50 transition-all flex flex-col shadow-xl hover:shadow-[0_12px_36px_rgba(245,158,11,0.12)]"
+                >
+                  {/* Thumbnail Container */}
+                  <div className="relative aspect-video bg-black overflow-hidden">
                     <img
-                      src={stream.thumbnailUrl}
+                      src={stream.thumbnailUrl || fallbackImg}
                       alt={stream.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-stone-900 to-orange-950/40 flex items-center justify-center">
-                      <OmIcon size={48} />
+                    <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-80" />
+
+                    {/* LIVE badge */}
+                    <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-red-600/90 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
+                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
                     </div>
-                  )}
 
-                  {/* LIVE Pill */}
-                  <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-red-600/90 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider backdrop-blur-sm">
-                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
-                  </div>
+                    {/* Quality & Coin Meter */}
+                    <div className="absolute top-3 right-3 flex items-center gap-1">
+                      <span className="rounded bg-black/60 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-stone-300">
+                        {stream.videoQuality || '1080p'}
+                      </span>
+                    </div>
 
-                  {/* Quality Pill */}
-                  <div className="absolute top-3 right-3 bg-black/60 text-stone-300 text-[10px] font-bold px-2 py-0.5 rounded uppercase backdrop-blur-sm">
-                    {stream.videoQuality}
-                  </div>
-
-                  <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-full bg-orange-600/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transform scale-90 group-hover:scale-100 transition-all shadow-xl">
-                      <Play className="w-5 h-5 ml-0.5" />
+                    {/* Play Hover Overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gold text-obsidian shadow-xl transform scale-90 group-hover:scale-100 transition-transform">
+                        <Play className="h-5 w-5 fill-obsidian ml-0.5" />
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Details */}
-                <div className="p-4 flex-1 flex flex-col justify-between">
-                  <div>
-                    <span className="text-[11px] font-semibold text-orange-400 uppercase tracking-wider">
-                      {stream.category.name}
-                    </span>
-                    <h3 className="font-bold text-white text-base mt-1 line-clamp-1 group-hover:text-orange-300 transition-colors">
-                      {stream.title}
-                    </h3>
-                    <p className="text-xs text-stone-400 mt-1 line-clamp-2">
-                      {stream.description || 'Join live sacred rituals and chanting.'}
-                    </p>
-                  </div>
+                  {/* Card Content */}
+                  <div className="p-5 flex-1 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-soft">
+                          {stream.category.name}
+                        </span>
+                        <span className="text-[10px] font-bold text-gold-pale bg-gold/10 border border-gold/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <CoinIcon size={12} /> 5 C/min
+                        </span>
+                      </div>
 
-                  <div className="mt-4 pt-3 border-t border-stone-800 flex items-center justify-between text-xs text-stone-300">
-                    <span className="flex items-center gap-1.5 font-medium">
-                      <PranamIcon size={14} />
-                      <span>{stream.streamer.name}</span>
-                      {stream.streamer.streamerProfile?.isVerifiedBadge && (
-                        <VerifiedPanditBadge size={14} />
-                      )}
-                    </span>
-                    <span className="flex items-center gap-1 text-stone-400">
-                      <Users className="w-3.5 h-3.5" /> {stream.peakViewers || 1} watching
-                    </span>
+                      <h3 className="font-serif text-lg font-bold text-white line-clamp-1 group-hover:text-gold-pale transition">
+                        {stream.title}
+                      </h3>
+                      <p className="text-xs text-stone-400 mt-1 line-clamp-2 leading-relaxed">
+                        {stream.description || 'Join live sacred rituals, Vedic chanting, and Aarti.'}
+                      </p>
+                    </div>
+
+                    <div className="mt-5 pt-3.5 border-t border-stone-800/80 flex items-center justify-between text-xs text-stone-300">
+                      <div className="flex items-center gap-1.5 font-medium">
+                        <PranamIcon size={16} />
+                        <span className="text-stone-200">{stream.streamer.name}</span>
+                        {stream.streamer.streamerProfile?.isVerifiedBadge && (
+                          <VerifiedPanditBadge size={14} />
+                        )}
+                      </div>
+                      <span className="flex items-center gap-1 text-stone-400 font-medium">
+                        <Users className="w-3.5 h-3.5 text-gold" />
+                        <span>{stream.peakViewers || 1}</span>
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         )}
       </section>
 
-      {/* Upcoming Scheduled Streams */}
-      <section id="upcoming">
-        <div className="flex items-center gap-2 mb-6">
-          <Calendar className="w-5 h-5 text-orange-400" />
-          <h2 className="text-xl font-bold text-white tracking-tight">Upcoming Scheduled Pooja & Discourses</h2>
+      {/* 4. Upcoming Sacred Gatherings ("Upcoming sacred gatherings") */}
+      <section className="mx-auto max-w-7xl px-5 lg:px-8 py-14" id="upcoming">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-gold-soft">
+              Pooja Calendar
+            </p>
+            <h2 className="mt-1 font-serif text-2xl sm:text-3xl font-bold text-white">
+              Upcoming sacred gatherings
+            </h2>
+          </div>
         </div>
 
         {upcomingStreams.length === 0 ? (
-          <div className="bg-stone-900/50 border border-stone-800/60 rounded-2xl p-8 text-center text-stone-400 text-sm">
-            No scheduled poojas yet. Please check back soon.
+          <div className="rounded-2xl border border-stone-800 bg-obsidian-soft p-8 text-center text-stone-400 text-xs sm:text-sm">
+            All sanctum schedules for the week are currently being synchronized with mandir trusts. Please check back shortly.
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {upcomingStreams.map((stream) => (
               <div
                 key={stream.id}
-                className="bg-stone-900 border border-stone-800 rounded-2xl overflow-hidden flex flex-col p-5 justify-between shadow-lg"
+                className="rounded-2xl bg-obsidian-soft border border-gold/15 p-5 flex flex-col justify-between shadow-lg hover:border-gold/35 transition"
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] font-semibold text-orange-400 uppercase tracking-wider">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-soft">
                       {stream.category.name}
                     </span>
                     {stream.scheduledAt && (
-                      <span className="text-[11px] bg-stone-800 px-2.5 py-0.5 rounded-full text-stone-300 font-medium">
-                        {new Date(stream.scheduledAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                      <span className="text-[11px] font-semibold text-gold-pale bg-gold/10 border border-gold/25 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-gold" />
+                        {new Date(stream.scheduledAt).toLocaleString([], {
+                          dateStyle: 'short',
+                          timeStyle: 'short',
+                        })}
                       </span>
                     )}
                   </div>
 
-                  <h3 className="font-bold text-white text-base line-clamp-1">{stream.title}</h3>
-                  <p className="text-xs text-stone-400 mt-1 line-clamp-2">
-                    {stream.description || 'Upcoming pooja ceremony.'}
+                  <h3 className="font-serif text-lg font-bold text-white line-clamp-1">{stream.title}</h3>
+                  <p className="text-xs text-stone-400 mt-1 line-clamp-2 leading-relaxed">
+                    {stream.description || 'Sacred upcoming Vedic pooja and Aarti.'}
                   </p>
-                  <p className="text-xs text-stone-300 mt-3 font-medium flex items-center gap-1.5">
-                    <span>By:</span> <PranamIcon size={14} /> {stream.streamer.name}
-                  </p>
+
+                  <div className="mt-4 flex items-center gap-1.5 text-xs text-stone-300 font-medium">
+                    <PranamIcon size={14} />
+                    <span>{stream.streamer.name}</span>
+                    <VerifiedPanditBadge size={14} />
+                  </div>
                 </div>
 
-                <div className="mt-5 pt-3 border-t border-stone-800 flex items-center justify-between">
+                <div className="mt-5 pt-3 border-t border-stone-800/80 flex items-center justify-between">
                   <button
                     onClick={() => handleRemindMe(stream.id)}
-                    className="flex items-center gap-1.5 text-xs font-semibold bg-stone-800 hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg transition-colors"
+                    className="flex items-center gap-1.5 text-xs font-bold text-gold-pale bg-gold/10 hover:bg-gold/20 border border-gold/30 px-3.5 py-1.5 rounded-full transition"
                   >
-                    <Bell className="w-3.5 h-3.5" /> Remind Me (Email)
+                    <Bell className="w-3.5 h-3.5 text-gold" /> Remind Me
                   </button>
-                  <span className="text-[11px] text-stone-400 font-medium uppercase">{stream.videoQuality || '480p'}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                    {stream.videoQuality || '1080p'} SFU
+                  </span>
                 </div>
               </div>
             ))}
           </div>
         )}
       </section>
+
+      {/* 5. Meet the Custodians of Tradition ("Verified Pandits & Acharyas") */}
+      <section className="mx-auto max-w-7xl px-5 lg:px-8 py-16 border-t border-gold/15" id="pandits">
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <p className="text-xs font-bold uppercase tracking-[0.28em] text-gold-soft">
+            Gurukul Verification
+          </p>
+          <h2 className="mt-2 font-serif text-3xl sm:text-4xl font-bold text-white">
+            Meet the custodians of tradition
+          </h2>
+          <p className="mt-3 text-stone-400 text-xs sm:text-sm leading-relaxed">
+            Every pandit on Shubhdarshan undergoes rigorous background verification, Gurukul lineage scrutiny, and Sanskrit pronunciation auditing before being authorized to broadcast.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {CURATED_PANDITS.map((p) => (
+            <div
+              key={p.name}
+              className="rounded-2xl bg-obsidian-soft border border-gold/15 overflow-hidden shadow-xl hover:border-gold/40 transition group"
+            >
+              <div className="relative aspect-square overflow-hidden bg-stone-900">
+                <img
+                  src={p.image}
+                  alt={p.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-90" />
+                <div className="absolute top-3 right-3 rounded-full bg-black/60 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-gold-pale flex items-center gap-1 border border-gold/20">
+                  <Star className="w-3 h-3 fill-gold text-gold" />
+                  <span>{p.rating}</span>
+                </div>
+                <div className="absolute bottom-3 left-3 right-3">
+                  <div className="flex items-center gap-1 text-gold-pale font-bold text-xs">
+                    <VerifiedPanditBadge size={16} />
+                    <span>Gurukul Verified</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 space-y-2">
+                <h3 className="font-serif text-lg font-bold text-white">{p.name}</h3>
+                <p className="text-[11px] text-stone-400 leading-tight">{p.title}</p>
+                <div className="flex items-center justify-between text-[11px] text-gold-soft pt-1">
+                  <span>{p.experience}</span>
+                  <span>{p.reviews} sevas conducted</span>
+                </div>
+                <div className="flex flex-wrap gap-1 pt-2">
+                  {p.specialties.map((s) => (
+                    <span
+                      key={s}
+                      className="text-[9px] font-bold uppercase tracking-wider text-stone-300 bg-stone-900/80 border border-stone-800 px-2 py-0.5 rounded"
+                    >
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 6. Three Steps to Your First Darshan ("How It Works") */}
+      <section className="mx-auto max-w-7xl px-5 lg:px-8 py-16 border-t border-gold/15">
+        <div className="text-center max-w-xl mx-auto mb-12">
+          <p className="text-xs font-bold uppercase tracking-[0.28em] text-gold-soft">
+            Seamless Experience
+          </p>
+          <h2 className="mt-2 font-serif text-3xl sm:text-4xl font-bold text-white">
+            Three steps to your first Darshan
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="rounded-2xl bg-obsidian-soft border border-gold/15 p-6 shadow-xl relative">
+            <span className="font-serif text-5xl font-black text-gold/20 block mb-2">01</span>
+            <h3 className="font-serif text-xl font-bold text-white mb-2">
+              Choose Temple &amp; Tradition
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-400 leading-relaxed">
+              Explore live shrines from Kashi, Haridwar, Ujjain, Ayodhya, and Tirupati. Filter by Aarti, Rudrabhishek, or Katha according to your spiritual sankalp.
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-obsidian-soft border border-gold/15 p-6 shadow-xl relative">
+            <span className="font-serif text-5xl font-black text-gold/20 block mb-2">02</span>
+            <h3 className="font-serif text-xl font-bold text-white mb-2">
+              Receive Sub-Second Darshan
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-400 leading-relaxed">
+              Connect to our ultra-low latency WebRTC stream with zero audio lag. Hear Vedic mantras with studio acoustics right from your home or phone.
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-obsidian-soft border border-gold/15 p-6 shadow-xl relative">
+            <span className="font-serif text-5xl font-black text-gold/20 block mb-2">03</span>
+            <h3 className="font-serif text-xl font-bold text-white mb-2">
+              Offer Sankalp &amp; Pranam
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-400 leading-relaxed">
+              Use your sacred coin wallet to tip dakshina, request your family gotra chant, and interact with the pandit in the live consecrated chatroom.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* 7. One Currency for Every Seva ("Devotional Coins & Transparent Seva") */}
+      <section className="mx-auto max-w-7xl px-5 lg:px-8 py-16 border-t border-gold/15">
+        <div className="rounded-3xl border border-gold/30 bg-gradient-to-r from-[#1c140c] via-obsidian to-[#1c140c] p-8 sm:p-12 shadow-2xl relative overflow-hidden">
+          <div className="mandala-bg absolute inset-0 opacity-30 pointer-events-none" />
+
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-7 space-y-4">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold/10 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-gold-pale">
+                <CoinIcon size={16} /> Transparent Devotional Economy
+              </span>
+              <h2 className="font-serif text-3xl sm:text-4xl font-bold text-white">
+                One currency for every seva
+              </h2>
+              <p className="text-stone-300 text-xs sm:text-sm leading-relaxed max-w-xl">
+                No hidden subscriptions or recurring credit card traps. You receive 100 free coins upon signup. Metered Darshan costs a transparent 5 coins per minute, deducted smoothly as you watch. Top up securely anytime via UPI, Cards, or NetBanking.
+              </p>
+              <div className="flex flex-wrap items-center gap-4 pt-2">
+                <button
+                  onClick={() => setTopupModalOpen(true)}
+                  className="rounded-full bg-gold px-6 py-3 text-xs font-black text-obsidian shadow-lg hover:bg-gold-deep transition"
+                >
+                  View Coin Packages (from ₹200)
+                </button>
+                <Link
+                  href="/faq"
+                  className="text-xs font-semibold text-stone-300 hover:text-gold-pale transition flex items-center gap-1"
+                >
+                  <HelpCircle className="w-3.5 h-3.5" /> How do coins work?
+                </Link>
+              </div>
+            </div>
+
+            <div className="lg:col-span-5 grid grid-cols-2 gap-3 text-center">
+              <div className="p-4 rounded-2xl bg-obsidian/80 border border-gold/20">
+                <span className="font-serif text-2xl font-bold text-gold-pale block">100 Coins</span>
+                <span className="text-[11px] text-stone-400">Free Joining Bonus</span>
+              </div>
+              <div className="p-4 rounded-2xl bg-obsidian/80 border border-gold/20">
+                <span className="font-serif text-2xl font-bold text-gold-pale block">5 Coins/min</span>
+                <span className="text-[11px] text-stone-400">Live Metered Stream</span>
+              </div>
+              <div className="p-4 rounded-2xl bg-obsidian/80 border border-gold/20">
+                <span className="font-serif text-2xl font-bold text-gold-pale block">100% Secure</span>
+                <span className="text-[11px] text-stone-400">Razorpay Encrypted</span>
+              </div>
+              <div className="p-4 rounded-2xl bg-obsidian/80 border border-gold/20">
+                <span className="font-serif text-2xl font-bold text-gold-pale block">No Expiry</span>
+                <span className="text-[11px] text-stone-400">Coins Valid Forever</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 8. Devotee Testimonials ("Blessings received across the world") */}
+      <section className="mx-auto max-w-7xl px-5 lg:px-8 py-16 border-t border-gold/15">
+        <div className="text-center max-w-xl mx-auto mb-12">
+          <p className="text-xs font-bold uppercase tracking-[0.28em] text-gold-soft">
+            Global Sangha
+          </p>
+          <h2 className="mt-2 font-serif text-3xl sm:text-4xl font-bold text-white">
+            Blessings received, across the seas
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {DEVOTEE_TESTIMONIALS.map((t) => (
+            <div
+              key={t.name}
+              className="rounded-2xl bg-obsidian-soft border border-gold/15 p-6 shadow-xl flex flex-col justify-between"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center gap-1 text-gold">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-3.5 h-3.5 fill-gold" />
+                  ))}
+                </div>
+                <p className="text-xs sm:text-sm text-stone-300 leading-relaxed italic">
+                  &ldquo;{t.quote}&rdquo;
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-stone-800/80 flex items-center justify-between text-xs">
+                <div>
+                  <span className="font-bold text-white block">{t.name}</span>
+                  <span className="text-[10px] text-stone-400">{t.location}</span>
+                </div>
+                <span className="text-[10px] font-bold text-gold-soft bg-gold/10 px-2 py-0.5 rounded-full border border-gold/20">
+                  {t.ritual}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 9. Final Sacred Call to Action Banner ("Your first Darshan is on us") */}
+      <section className="mx-auto max-w-7xl px-5 lg:px-8 py-16">
+        <div className="rounded-3xl border border-gold/40 bg-gradient-to-r from-gold/20 via-obsidian-soft to-gold/20 p-8 sm:p-14 text-center shadow-2xl relative overflow-hidden">
+          <div className="mandala-bg absolute inset-0 opacity-40 pointer-events-none" />
+
+          <div className="relative z-10 max-w-2xl mx-auto space-y-5">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-gold-pale">
+              <Sparkles className="w-4 h-4 text-gold" /> 100 Free Coins on Joining
+            </span>
+
+            <h2 className="font-serif text-3xl sm:text-5xl font-bold text-white">
+              Your first Darshan is on us
+            </h2>
+
+            <p className="text-stone-300 text-xs sm:text-base leading-relaxed">
+              Experience the grace of Bharat’s sanctums today. Join over 40,000 devotees across the globe receiving daily morning and evening Aarti blessings.
+            </p>
+
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-4">
+              <Link
+                href="/register"
+                className="rounded-full bg-gold px-8 py-3.5 text-sm font-bold text-obsidian shadow-[0_0_36px_rgba(245,158,11,0.4)] hover:bg-gold-deep transition"
+              >
+                Join Free &amp; Claim 100 Coins
+              </Link>
+              <a
+                href="#live-section"
+                className="rounded-full border border-gold/40 bg-obsidian px-6 py-3.5 text-sm font-bold text-gold-pale hover:bg-gold/10 transition"
+              >
+                Explore Live Sanatan Sanctums
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Coin Topup Modal */}
+      <CoinTopupModal
+        isOpen={topupModalOpen}
+        onClose={() => setTopupModalOpen(false)}
+        onSuccess={() => {}}
+      />
     </div>
   );
 }

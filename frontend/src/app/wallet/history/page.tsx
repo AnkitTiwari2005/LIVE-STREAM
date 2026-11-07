@@ -66,17 +66,20 @@ export default function WalletHistoryPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
-      {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-stone-800">
+    <div className="min-h-screen bg-obsidian text-foreground py-10 relative overflow-hidden">
+      <div className="mandala-bg absolute inset-0 opacity-20 pointer-events-none" />
+
+      <div className="relative max-w-5xl mx-auto px-5 lg:px-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-gold/15">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-950/60 text-amber-400 text-xs font-bold border border-amber-800/60 mb-2">
+            <p className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3.5 py-1 text-xs font-bold uppercase tracking-[0.24em] text-gold-pale mb-2">
               <CoinIcon size={14} /> Sacred Coin Ledger
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white flex items-center gap-2.5">
-              <OmIcon size={28} /> Darshan Wallet History
+            </p>
+            <h1 className="font-serif text-3xl sm:text-4xl font-bold text-white flex items-center gap-3">
+              Transaction history
             </h1>
-            <p className="text-stone-400 text-xs mt-1">
+            <p className="text-stone-400 text-xs sm:text-sm mt-1">
               Transparent, tamper-proof record of all blessings, coin top-ups, and live darshan viewing minutes.
             </p>
           </div>
@@ -84,14 +87,14 @@ export default function WalletHistoryPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={loadData}
-              className="p-2.5 bg-stone-900 hover:bg-stone-800 border border-stone-800 rounded-xl text-stone-300 transition"
+              className="p-2.5 bg-obsidian-soft hover:bg-stone-800 border border-gold/20 rounded-full text-stone-300 transition"
               title="Refresh Ledger"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 text-gold ${loading ? 'animate-spin' : ''}`} />
             </button>
             <Link
               href="/wallet/topup"
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold rounded-xl text-xs shadow-lg transition"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs shadow-lg shadow-gold/20 transition"
             >
               <PlusCircle className="w-4 h-4" />
               Recharge Coins
@@ -102,112 +105,138 @@ export default function WalletHistoryPage() {
         {/* Stats Summary Cards */}
         {balance && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-            <div className="bg-stone-900 border border-stone-800 p-5 rounded-2xl">
+            <div className="bg-obsidian-soft border border-gold/20 p-5 rounded-2xl shadow-lg">
               <span className="text-xs font-semibold text-stone-400 block">Available Sacred Balance</span>
               <div className="flex items-center gap-2 mt-2">
-                <CoinIcon size={24} />
-                <span className="text-2xl font-bold text-amber-400">{balance.balanceCoins} Coins</span>
+                <CoinIcon size={26} />
+                <span className="font-serif text-3xl font-bold text-gold">{balance.balanceCoins} Coins</span>
               </div>
-              <span className="text-[11px] text-stone-500 mt-1 block">
+              <span className="text-[11px] text-stone-400 mt-1 block">
                 ≈ {balance.availableMinutes} mins live darshan
               </span>
             </div>
 
-            <div className="bg-stone-900 border border-stone-800 p-5 rounded-2xl">
+            <div className="bg-obsidian-soft border border-gold/15 p-5 rounded-2xl shadow-lg">
               <span className="text-xs font-semibold text-stone-400 block">Lifetime Coins Received</span>
               <div className="flex items-center gap-2 mt-2">
                 <ArrowDownLeft className="w-5 h-5 text-emerald-400" />
-                <span className="text-2xl font-bold text-emerald-400">{balance.lifetimeEarned} Coins</span>
+                <span className="font-serif text-3xl font-bold text-emerald-400">{balance.lifetimeEarned} Coins</span>
               </div>
-              <span className="text-[11px] text-stone-500 mt-1 block">Welcome bonus + purchases</span>
+              <span className="text-[11px] text-stone-400 mt-1 block">Through signup &amp; recharges</span>
             </div>
 
-            <div className="bg-stone-900 border border-stone-800 p-5 rounded-2xl">
-              <span className="text-xs font-semibold text-stone-400 block">Lifetime Darshan Spent</span>
+            <div className="bg-obsidian-soft border border-gold/15 p-5 rounded-2xl shadow-lg">
+              <span className="text-xs font-semibold text-stone-400 block">Lifetime Coins Spent</span>
               <div className="flex items-center gap-2 mt-2">
-                <ArrowUpRight className="w-5 h-5 text-orange-400" />
-                <span className="text-2xl font-bold text-orange-400">{balance.lifetimeSpent} Coins</span>
+                <ArrowUpRight className="w-5 h-5 text-gold-soft" />
+                <span className="font-serif text-3xl font-bold text-gold-pale">{balance.lifetimeSpent} Coins</span>
               </div>
-              <span className="text-[11px] text-stone-500 mt-1 block">Watch time + offerings</span>
+              <span className="text-[11px] text-stone-400 mt-1 block">Live aartis &amp; dakshina</span>
             </div>
           </div>
         )}
 
-        {/* Transactions Table */}
-        <div className="bg-stone-900 border border-stone-800 rounded-2xl overflow-hidden shadow-xl">
-          <div className="p-4 bg-stone-950/60 border-b border-stone-800 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-stone-200">Recent Transactions</h3>
-            <span className="text-xs text-stone-500">Rate: 5 Coins / Minute</span>
+        {/* Transaction History Table */}
+        <div className="bg-obsidian-soft border border-gold/15 rounded-3xl overflow-hidden shadow-xl">
+          <div className="p-5 border-b border-stone-800/80 flex items-center justify-between">
+            <h2 className="font-serif text-xl font-bold text-white flex items-center gap-2">
+              <Clock className="w-5 h-5 text-gold" />
+              <span>Ledger Entries</span>
+            </h2>
+            <div className="flex items-center gap-2 text-[11px] text-stone-400">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span>Double-entry cryptographic ledger</span>
+            </div>
           </div>
 
           {loading ? (
-            <div className="p-12 text-center text-stone-400 text-sm">
-              <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-orange-500" />
-              Loading sacred ledger records...
+            <div className="p-12 text-center text-stone-400">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-gold mx-auto mb-3" />
+              <p className="text-xs">Fetching ledger entries from blockchain-style store...</p>
             </div>
           ) : transactions.length === 0 ? (
-            <div className="p-12 text-center text-stone-400 text-sm space-y-3">
-              <div className="flex justify-center">
-                <DiyaIcon size={36} />
-              </div>
-              <p>No coin transactions found yet.</p>
+            <div className="p-12 text-center text-stone-400 text-xs sm:text-sm">
+              <DiyaIcon size={40} className="mx-auto mb-3 opacity-60 text-gold" />
+              <p className="font-medium text-white mb-1">No transactions recorded yet</p>
+              <p className="text-stone-400 text-xs max-w-sm mx-auto mb-4">
+                When you watch live darshans or recharge your wallet, your ledger will update instantly here.
+              </p>
               <Link
-                href="/wallet/topup"
-                className="inline-block px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white font-semibold rounded-xl text-xs transition"
+                href="/"
+                className="inline-flex items-center gap-2 text-xs font-bold text-gold hover:text-gold-pale underline"
               >
-                Get Welcome Coins
+                Watch a live darshan now &rarr;
               </Link>
             </div>
           ) : (
-            <div className="divide-y divide-stone-800 overflow-x-auto">
-              {transactions.map((tx) => {
-                const isCredit = tx.type === 'CREDIT';
-                return (
-                  <div key={tx.id} className="p-4 flex items-center justify-between gap-4 hover:bg-stone-800/40 transition">
-                    <div className="flex items-center gap-3.5">
-                      <div
-                        className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                          isCredit
-                            ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/30'
-                            : 'bg-stone-800 text-stone-300'
-                        }`}
-                      >
-                        {isCredit ? <ArrowDownLeft className="w-4 h-4" /> : <ArrowUpRight className="w-4 h-4" />}
-                      </div>
-                      <div>
-                        <h4 className="text-xs sm:text-sm font-semibold text-stone-100">
-                          {formatCategory(tx.category)}
-                        </h4>
-                        <span className="text-[11px] text-stone-500">
-                          {new Date(tx.createdAt).toLocaleDateString('en-IN', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-obsidian border-b border-stone-800/80 text-stone-400 font-bold uppercase tracking-wider text-[10px]">
+                  <tr>
+                    <th className="py-3.5 px-5">Date &amp; Time</th>
+                    <th className="py-3.5 px-4">Transaction Details</th>
+                    <th className="py-3.5 px-4 text-right">Amount</th>
+                    <th className="py-3.5 px-4 text-right">Balance After</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-stone-800/60 text-stone-300">
+                  {transactions.map((tx) => {
+                    const isCredit = tx.type === 'CREDIT';
+                    return (
+                      <tr key={tx.id} className="hover:bg-stone-900/40 transition">
+                        <td className="py-4 px-5 whitespace-nowrap text-stone-400">
+                          {new Date(tx.createdAt).toLocaleString([], {
+                            dateStyle: 'medium',
+                            timeStyle: 'short',
                           })}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="text-right shrink-0">
-                      <span
-                        className={`text-sm font-bold ${
-                          isCredit ? 'text-emerald-400' : 'text-stone-300'
-                        }`}
-                      >
-                        {isCredit ? '+' : '-'}{tx.amountCoins} Coins
-                      </span>
-                      <span className="text-[11px] text-stone-500 block">
-                        Balance: {tx.balanceAfter}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="flex items-center gap-2.5">
+                            <span
+                              className={`p-1.5 rounded-full ${
+                                isCredit ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-stone-900 text-gold-soft border border-stone-800'
+                              }`}
+                            >
+                              {isCredit ? (
+                                <ArrowDownLeft className="w-3.5 h-3.5" />
+                              ) : (
+                                <ArrowUpRight className="w-3.5 h-3.5" />
+                              )}
+                            </span>
+                            <div>
+                              <span className="font-bold text-white block">
+                                {formatCategory(tx.category)}
+                              </span>
+                              {tx.referenceId && (
+                                <span className="text-[10px] text-stone-500 font-mono">
+                                  Ref: {tx.referenceId}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-4 text-right whitespace-nowrap">
+                          <span
+                            className={`font-serif text-base font-bold ${
+                              isCredit ? 'text-emerald-400' : 'text-stone-300'
+                            }`}
+                          >
+                            {isCredit ? '+' : '-'}
+                            {tx.amountCoins} Coins
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 text-right whitespace-nowrap font-bold text-gold-pale font-serif text-sm">
+                          {tx.balanceAfter} Coins
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
+      </div>
     </div>
   );
 }

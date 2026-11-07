@@ -91,37 +91,40 @@ export default function StreamerEarningsPage() {
   }, []);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-stone-800">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-950/60 text-orange-400 text-xs font-bold border border-orange-800/60 mb-2">
-            <VerifiedPanditBadge size={14} /> Acharya Revenue & Dakshina Portal
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white flex items-center gap-2.5">
-            <OmIcon size={28} /> Pandit Earnings Dashboard
-          </h1>
-          <p className="text-stone-400 text-xs sm:text-sm mt-1">
-            Transparent breakdown of devotee dakshina, live chanting minutes, and settlement payouts.
-          </p>
-        </div>
+    <div className="min-h-screen bg-obsidian text-foreground py-10 relative overflow-hidden">
+      <div className="mandala-bg absolute inset-0 opacity-20 pointer-events-none" />
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={loadData}
-            className="p-2.5 bg-stone-900 hover:bg-stone-800 border border-stone-800 rounded-xl text-stone-300 transition"
-            title="Refresh Data"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-          <Link
-            href="/studio/create"
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold rounded-xl text-xs shadow-lg transition"
-          >
-            <Video className="w-4 h-4" /> Go Live Now
-          </Link>
+      <div className="relative max-w-6xl mx-auto px-5 lg:px-8 w-full">
+        {/* Header Banner */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-gold/15">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold/10 text-gold-pale text-xs font-bold border border-gold/30 mb-2">
+              <VerifiedPanditBadge size={14} /> Acharya Revenue &amp; Dakshina Portal
+            </div>
+            <h1 className="font-serif text-3xl sm:text-4xl font-bold text-white flex items-center gap-2.5">
+              <OmIcon size={28} /> Pandit Earnings Dashboard
+            </h1>
+            <p className="text-stone-400 text-xs sm:text-sm mt-1">
+              Transparent breakdown of devotee dakshina, live chanting minutes, and settlement payouts.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={loadData}
+              className="p-2.5 bg-obsidian-soft hover:bg-stone-800 border border-gold/20 rounded-full text-stone-300 transition"
+              title="Refresh Data"
+            >
+              <RefreshCw className={`w-4 h-4 text-gold ${loading ? 'animate-spin' : ''}`} />
+            </button>
+            <Link
+              href="/studio/create"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs shadow-lg shadow-gold/20 transition"
+            >
+              <Video className="w-4 h-4" /> Go Live Now
+            </Link>
+          </div>
         </div>
-      </div>
 
       {loading ? (
         <div className="p-16 text-center text-stone-400">
@@ -326,6 +329,7 @@ export default function StreamerEarningsPage() {
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }

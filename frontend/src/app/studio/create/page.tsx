@@ -121,17 +121,20 @@ export default function CreateStreamPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-12">
-      <div className="bg-stone-900 border border-stone-800 rounded-3xl p-8 shadow-2xl">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-3 bg-orange-600/20 text-orange-400 rounded-2xl">
-            <Video className="w-6 h-6" />
+    <div className="min-h-screen bg-obsidian text-foreground py-12 relative overflow-hidden">
+      <div className="mandala-bg absolute inset-0 opacity-20 pointer-events-none" />
+
+      <div className="relative max-w-2xl mx-auto px-5 lg:px-8">
+        <div className="bg-obsidian-soft border border-gold/25 rounded-3xl p-8 shadow-2xl">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-3 bg-gold/10 text-gold border border-gold/30 rounded-2xl">
+              <Video className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="font-serif text-2xl sm:text-3xl font-bold text-white tracking-tight">Setup Live Broadcast</h1>
+              <p className="text-xs text-stone-400">Configure ritual details before entering studio preview</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Setup Live Broadcast</h1>
-            <p className="text-xs text-stone-400">Configure ritual details before entering studio preview</p>
-          </div>
-        </div>
 
         {/* Devotee Role Warning Banner */}
         {isViewerRole && (
@@ -291,12 +294,13 @@ export default function CreateStreamPage() {
           <button
             type="submit"
             disabled={loading || isViewerRole}
-            className="w-full mt-4 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold rounded-xl text-sm shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full mt-4 py-3.5 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs sm:text-sm shadow-xl shadow-gold/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
             <DiyaIcon size={18} />
             <span>{loading ? 'Entering Studio...' : 'Proceed to Camera & Mic Studio Preview'}</span>
           </button>
         </form>
+      </div>
       </div>
     </div>
   );

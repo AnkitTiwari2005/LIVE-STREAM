@@ -107,24 +107,28 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
-      <div className="max-w-md w-full bg-stone-900 border border-stone-800 rounded-2xl p-8 shadow-2xl">
+    <div className="min-h-[85vh] bg-obsidian flex items-center justify-center px-4 py-12 relative overflow-hidden">
+      <div className="mandala-bg absolute inset-0 opacity-20 pointer-events-none" />
+
+      <div className="relative max-w-md w-full bg-obsidian-soft border border-gold/25 rounded-3xl p-8 shadow-2xl">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-3">
-            <OmIcon size={44} />
+            <span className="relative flex h-12 w-12 items-center justify-center rounded-full border border-gold/40 bg-gradient-to-b from-[#2a1e12] to-obsidian shadow-[0_0_15px_rgba(245,158,11,0.25)]">
+              <OmIcon size={28} />
+            </span>
           </div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">
+          <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white tracking-tight">
             {tempToken ? 'Two-Factor Authentication' : 'Welcome to Shubhdarshan'}
           </h2>
-          <p className="text-stone-400 text-xs mt-1">
+          <p className="text-stone-400 text-xs mt-1.5 leading-relaxed">
             {tempToken
               ? 'Enter the 6-digit code from your Authenticator app'
-              : 'Sign in to participate in sacred poojas, darshan, and live chat'}
+              : 'Sign in to participate in sacred poojas, live darshan, and chat'}
           </p>
         </div>
 
         {error && (
-          <div className="mb-6 p-3 rounded-xl bg-red-950/80 border border-red-800 text-red-200 text-xs flex items-center gap-2">
+          <div className="mb-6 p-3.5 rounded-xl bg-red-950/80 border border-red-800 text-red-200 text-xs flex items-center gap-2">
             <ShieldAlert className="w-4 h-4 text-red-400 shrink-0" />
             <span>{error}</span>
           </div>
@@ -137,14 +141,14 @@ export default function LoginPage() {
                 Email Address
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-stone-500 absolute left-3 top-3" />
+                <Mail className="w-4 h-4 text-gold-soft absolute left-3.5 top-3.5" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="devotee@example.com"
-                  className="w-full pl-9 pr-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-sm text-white focus:outline-none focus:border-orange-500"
+                  className="w-full pl-10 pr-3 py-2.5 bg-obsidian border border-gold/20 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-gold transition"
                 />
               </div>
             </div>
@@ -156,20 +160,20 @@ export default function LoginPage() {
                 </label>
                 <Link
                   href="/forgot-password"
-                  className="text-xs text-orange-400 hover:text-orange-300 transition"
+                  className="text-xs text-gold hover:text-gold-pale transition"
                 >
                   Forgot Password?
                 </Link>
               </div>
               <div className="relative">
-                <Lock className="w-4 h-4 text-stone-500 absolute left-3 top-3" />
+                <Lock className="w-4 h-4 text-gold-soft absolute left-3.5 top-3.5" />
                 <input
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-9 pr-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-sm text-white focus:outline-none focus:border-orange-500"
+                  className="w-full pl-10 pr-3 py-2.5 bg-obsidian border border-gold/20 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-gold transition"
                 />
               </div>
             </div>
@@ -177,7 +181,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-semibold rounded-xl text-sm shadow-md transition-all disabled:opacity-50"
+              className="w-full mt-2 py-3 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs sm:text-sm shadow-lg shadow-gold/20 transition-all disabled:opacity-50"
             >
               {loading ? 'Authenticating...' : 'Sign In'}
             </button>
@@ -189,7 +193,7 @@ export default function LoginPage() {
                 6-Digit Security Code
               </label>
               <div className="relative">
-                <KeyRound className="w-4 h-4 text-stone-500 absolute left-3 top-3" />
+                <KeyRound className="w-4 h-4 text-gold-soft absolute left-3.5 top-3.5" />
                 <input
                   type="text"
                   required
@@ -197,7 +201,7 @@ export default function LoginPage() {
                   value={totpToken}
                   onChange={(e) => setTotpToken(e.target.value)}
                   placeholder="123456"
-                  className="w-full pl-9 pr-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-sm text-white font-mono tracking-widest focus:outline-none focus:border-orange-500"
+                  className="w-full pl-10 pr-3 py-2.5 bg-obsidian border border-gold/20 rounded-xl text-xs sm:text-sm text-white font-mono tracking-widest focus:outline-none focus:border-gold transition"
                 />
               </div>
             </div>
@@ -205,7 +209,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 bg-orange-600 hover:bg-orange-500 text-white font-semibold rounded-xl text-sm transition-all"
+              className="w-full py-3 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs sm:text-sm shadow-lg shadow-gold/20 transition-all disabled:opacity-50"
             >
               {loading ? 'Verifying...' : 'Verify 2FA'}
             </button>
@@ -214,8 +218,8 @@ export default function LoginPage() {
 
         <div className="mt-6 text-center text-xs text-stone-400">
           Do not have an account?{' '}
-          <Link href="/register" className="text-orange-400 hover:underline font-semibold">
-            Register Free
+          <Link href="/register" className="text-gold hover:underline font-bold">
+            Register Free (+100 Coins)
           </Link>
         </div>
       </div>
