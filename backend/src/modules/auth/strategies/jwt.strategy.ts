@@ -61,6 +61,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Your account is temporarily suspended');
     }
 
+    if (user.status === UserStatus.DELETION_REQUESTED) {
+      throw new UnauthorizedException('This account has been scheduled for deletion');
+    }
+
     return user;
   }
 }

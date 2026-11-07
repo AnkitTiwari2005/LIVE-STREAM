@@ -264,16 +264,18 @@ Sitemap: https://darkturquoise-louse-359917.hostingersite.com/sitemap.xml
     }),
   );
 
-  // Swagger OpenAPI Documentation
-  const config = new DocumentBuilder()
-    .setTitle('Shubhdarshan Live Streaming Platform API')
-    .setDescription('Self-hosted WebRTC & Live Chat Platform API for Sacred Spiritual Broadcasts')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
+  // Swagger OpenAPI Documentation (Secured in Production)
+  if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_SWAGGER === 'true') {
+    const config = new DocumentBuilder()
+      .setTitle('Shubhdarshan Live Streaming Platform API')
+      .setDescription('Self-hosted WebRTC & Live Chat Platform API for Sacred Spiritual Broadcasts')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+  }
 
   const port = process.env.PORT || 4000;
   await app.listen(port, '0.0.0.0');

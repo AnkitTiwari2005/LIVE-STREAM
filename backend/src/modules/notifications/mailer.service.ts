@@ -64,13 +64,34 @@ export class MailerService {
       subject: 'Verify your email address - Shubhdarshan Live',
       htmlContent: `
         <div style="font-family: Arial, sans-serif; color: #222; max-width: 600px; margin: auto;">
-          <h2 style="color: #c2410c;">🙏 Namaste ${name},</h2>
+          <h2 style="color: #c2410c;">Namaste ${name},</h2>
           <p>Thank you for joining our spiritual live streaming platform.</p>
-          <p>Please click the button below to verify your email address and unlock live chat and reminders:</p>
+          <p>Please click the button below to verify your email address, receive your 100 bonus coins, and unlock live chat and reminders:</p>
           <div style="margin: 25px 0;">
             <a href="${link}" style="background-color: #ea580c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Verify Email Address</a>
           </div>
           <p style="color: #666; font-size: 13px;">If you did not register on our platform, you can safely ignore this email.</p>
+        </div>
+      `,
+    });
+  }
+
+  async sendPasswordResetEmail(to: string, name: string, token: string) {
+    const origin = process.env.FRONTEND_ORIGIN || 'https://platform-domain.com';
+    const link = `${origin}/reset-password?token=${token}`;
+    return this.sendEmail({
+      to,
+      toName: name,
+      subject: 'Reset your password - Shubhdarshan Live',
+      htmlContent: `
+        <div style="font-family: Arial, sans-serif; color: #222; max-width: 600px; margin: auto;">
+          <h2 style="color: #c2410c;">Namaste ${name},</h2>
+          <p>We received a request to reset your password on the Shubhdarshan Live platform.</p>
+          <p>Click the button below to choose a new password. This link is valid for 1 hour:</p>
+          <div style="margin: 25px 0;">
+            <a href="${link}" style="background-color: #ea580c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Reset Password</a>
+          </div>
+          <p style="color: #666; font-size: 13px;">If you did not request this, you can safely ignore this email. Your account remains secure.</p>
         </div>
       `,
     });

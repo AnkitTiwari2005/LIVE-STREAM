@@ -89,16 +89,16 @@ export default function RootLayout({
           'Premier platform for live Hindu devotional broadcasts, temple pooja streaming, and Vedic astrological consultations worldwide.',
         address: {
           '@type': 'PostalAddress',
-          streetAddress: 'Level 5, Lotus Spiritual Tower, Andheri East',
-          addressLocality: 'Mumbai',
-          addressRegion: 'Maharashtra',
-          postalCode: '400069',
+          streetAddress: 'Suite 402, Sacred Heights, Barakhamba Road, Connaught Place',
+          addressLocality: 'New Delhi',
+          addressRegion: 'Delhi',
+          postalCode: '110001',
           addressCountry: 'IN',
         },
         contactPoint: [
           {
             '@type': 'ContactPoint',
-            telephone: '+91-98765-43210',
+            telephone: '+91-11-4019-7800',
             contactType: 'customer support',
             email: 'support@shubhdarshan.com',
             areaServed: 'IN',

@@ -15,6 +15,7 @@ FROM base AS builder
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV BUILD_STANDALONE=true
 RUN npm run build
 
 # --- Runner Stage ---

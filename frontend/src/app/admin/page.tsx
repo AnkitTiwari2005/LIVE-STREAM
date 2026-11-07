@@ -13,6 +13,7 @@ import {
   Check,
   X,
   Search,
+  FileText,
   Sparkles,
   Lock,
 } from 'lucide-react';
@@ -150,6 +151,28 @@ export default function AdminConsolePage() {
     }
   };
 
+  const handleResolveReport = async (reportId: string, status: 'ACTION_TAKEN' | 'DISMISSED') => {
+    const token = localStorage.getItem('pooja_token');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    try {
+      const res = await fetch(`${apiUrl}/reports/${reportId}/resolve`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status, notes: `Resolved via admin console as ${status}` }),
+      });
+      if (res.ok) {
+        setReports((prev) => prev.filter((r) => r.id !== reportId));
+      } else {
+        alert('Failed to resolve report.');
+      }
+    } catch {
+      alert('Network error while resolving report.');
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between mb-8 pb-4 border-b border-stone-800">
@@ -231,11 +254,27 @@ export default function AdminConsolePage() {
           ) : (
             kycList.map((app) => (
               <div key={app.id} className="bg-stone-900 border border-stone-800 p-5 rounded-2xl flex flex-col sm:flex-row justify-between gap-4">
-                <div>
+                <div className="flex-1">
                   <h3 className="font-bold text-white text-base">{app.user.name} ({app.user.email})</h3>
                   <p className="text-xs text-stone-400 mt-1"><strong>Languages:</strong> {app.languages.join(', ')}</p>
                   <p className="text-xs text-stone-400"><strong>Specialties:</strong> {app.specialties.join(', ')}</p>
                   <p className="text-xs text-stone-300 mt-2 bg-stone-950 p-2.5 rounded-xl border border-stone-800">{app.bio}</p>
+                  {app.kycDocuments && Array.isArray(app.kycDocuments) && app.kycDocuments.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {app.kycDocuments.map((doc: any, i: number) => (
+                        <a
+                          key={i}
+                          href={doc.publicUrl || doc.storageKey}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1 bg-stone-800 hover:bg-stone-700 text-orange-400 rounded-lg text-xs font-semibold border border-stone-700 transition"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          View Credentials Document ({doc.documentType || 'KYC'})
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="flex sm:flex-col gap-2 shrink-0 justify-center">
                   <button
@@ -289,17 +328,35 @@ export default function AdminConsolePage() {
             <p className="text-stone-400 text-sm">No safety reports pending.</p>
           ) : (
             reports.map((r) => (
-              <div key={r.id} className="bg-stone-900 border border-stone-800 p-5 rounded-2xl">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">{r.targetType} REPORT: {r.status}</span>
-                  <span className="text-xs text-stone-400">By {r.reporter.name}</span>
+              <div key={r.id} className="bg-stone-900 border border-stone-800 p-5 rounded-2xl flex flex-col sm:flex-row justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">{r.targetType} REPORT: {r.status}</span>
+                    <span className="text-xs text-stone-400">By {r.reporter?.name || 'Anonymous Devotee'}</span>
+                  </div>
+                  <h4 className="font-semibold text-white text-sm">{r.reason}</h4>
+                  {r.details && <p className="text-xs text-stone-400 mt-1">{r.details}</p>}
+                  {r.chatMessage && (
+                    <p className="text-xs text-red-300 mt-2 bg-stone-950 p-2.5 rounded-xl border border-stone-800 font-mono">
+                      Flagged message: "{r.chatMessage.message}"
+                    </p>
+                  )}
                 </div>
-                <h4 className="font-semibold text-white text-sm">{r.reason}</h4>
-                {r.details && <p className="text-xs text-stone-400 mt-1">{r.details}</p>}
-                {r.chatMessage && (
-                  <p className="text-xs text-red-300 mt-2 bg-stone-950 p-2 rounded border border-stone-800 font-mono">
-                    Flagged message: "{r.chatMessage.message}"
-                  </p>
+                {r.status === 'OPEN' && (
+                  <div className="flex sm:flex-col gap-2 shrink-0 justify-center">
+                    <button
+                      onClick={() => handleResolveReport(r.id, 'ACTION_TAKEN')}
+                      className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-semibold shadow transition"
+                    >
+                      Resolve & Action
+                    </button>
+                    <button
+                      onClick={() => handleResolveReport(r.id, 'DISMISSED')}
+                      className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-xl text-xs font-semibold border border-stone-700 transition"
+                    >
+                      Dismiss Report
+                    </button>
+                  </div>
                 )}
               </div>
             ))

@@ -310,7 +310,7 @@ export class StreamsService {
     });
   }
 
-  async getStreamById(id: string) {
+  async getStreamById(id: string, caller?: any) {
     const stream = await this.prisma.stream.findUnique({
       where: { id },
       include: {
@@ -326,6 +326,16 @@ export class StreamsService {
       },
     });
     if (!stream) throw new NotFoundException('Stream not found');
+
+    // S-02: Private streams are invisible to general queries without ownership or admin role
+    if (stream.visibility === StreamVisibility.PRIVATE) {
+      const isOwner = caller && caller.id === stream.streamerId;
+      const isAdmin = caller && caller.role === 'ADMIN';
+      if (!isOwner && !isAdmin) {
+        throw new NotFoundException('Stream not found');
+      }
+    }
+
     return stream;
   }
 }

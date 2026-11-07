@@ -6,14 +6,37 @@ import { OmIcon } from '@/components/icons/SpiritualIcons';
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('Pooja Streaming Help');
   const [message, setMessage] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setError(null);
+    setLoading(true);
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const res = await fetch(`${apiUrl}/notifications/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, subject, message }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to submit support inquiry');
+      }
+
+      setSubmitted(true);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -51,10 +74,10 @@ export default function ContactPage() {
             <div className="w-10 h-10 rounded-xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center mb-3">
               <Phone className="w-5 h-5" />
             </div>
-            <h3 className="text-sm font-bold text-white mb-1">WhatsApp Darshan Desk</h3>
+            <h3 className="text-sm font-bold text-white mb-1">Devotee Support Desk</h3>
             <p className="text-xs text-stone-400 mb-2">Instant assistance during live streams & rituals:</p>
             <span className="text-xs font-semibold text-emerald-400">
-              +91 98765 43210
+              +91 11 4019 7800
             </span>
           </div>
 
@@ -65,8 +88,8 @@ export default function ContactPage() {
             <h3 className="text-sm font-bold text-white mb-1">Registered Office</h3>
             <p className="text-xs text-stone-400">
               Shubhdarshan Devotional Media Pvt. Ltd.<br />
-              Level 5, Lotus Spiritual Tower, Andheri East,<br />
-              Mumbai, Maharashtra 400069, India
+              Suite 402, Sacred Heights, Barakhamba Road, Connaught Place,<br />
+              New Delhi 110001, India
             </p>
           </div>
         </div>
@@ -140,12 +163,19 @@ export default function ContactPage() {
                   />
                 </div>
 
+                {error && (
+                  <div className="p-3 bg-red-950/50 border border-red-500/30 rounded-xl text-xs text-red-400">
+                    {error}
+                  </div>
+                )}
+
                 <button
                   type="submit"
-                  className="w-full py-3.5 px-6 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold rounded-2xl shadow-xl shadow-orange-950/50 flex items-center justify-center gap-2 text-sm transition-all"
+                  disabled={loading}
+                  className="w-full py-3.5 px-6 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold rounded-2xl shadow-xl shadow-orange-950/50 flex items-center justify-center gap-2 text-sm transition-all disabled:opacity-50"
                 >
                   <Send className="w-4 h-4" />
-                  <span>Deliver Message to Support</span>
+                  <span>{loading ? 'Dispatching Message...' : 'Deliver Message to Support'}</span>
                 </button>
               </form>
             )}

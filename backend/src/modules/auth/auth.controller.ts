@@ -77,6 +77,41 @@ export class AuthController {
     return this.authService.setupAdmin2FA(userId);
   }
 
+  @Post('confirm-2fa')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify code and confirm TOTP 2FA activation' })
+  async confirm2FA(
+    @CurrentUser('id') userId: string,
+    @Body('token') token: string,
+  ) {
+    return this.authService.confirm2FA(userId, token);
+  }
+
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Resend email verification token' })
+  async resendVerification(@CurrentUser('id') userId: string) {
+    return this.authService.resendVerification(userId);
+  }
+
+  @Public()
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Refresh access token using HTTP-only refresh cookie or payload' })
+  async refresh(
+    @Req() req: Request,
+    @Body('refreshToken') bodyRefreshToken: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const refreshToken = req.cookies?.refresh_token || bodyRefreshToken;
+    const result = await this.authService.refreshSession(refreshToken);
+    this.setAuthCookies(res, result.accessToken, result.refreshToken);
+    return {
+      accessToken: result.accessToken,
+      user: result.user,
+    };
+  }
+
   @Public()
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)

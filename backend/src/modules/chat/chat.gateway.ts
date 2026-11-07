@@ -129,6 +129,30 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const stream = await this.prisma.stream.findUnique({ where: { id: streamId } });
     if (!stream) return;
 
+    // S-01/S-02: Private stream chat requires authorized streamer/admin or active session
+    if (stream.visibility === 'PRIVATE') {
+      const userId = client.data.user?.sub;
+      const isStreamer = userId && userId === stream.streamerId;
+      const isAdmin = client.data.user?.role === 'ADMIN';
+      if (!isStreamer && !isAdmin) {
+        const session = await this.prisma.viewerSession.findFirst({
+          where: {
+            streamId,
+            OR: [
+              ...(userId ? [{ userId }] : []),
+              { ipAddress: client.handshake.address },
+            ],
+            leftAt: null,
+            isRemoved: false,
+          },
+        });
+        if (!session) {
+          client.emit('chat:error', { message: 'Unauthorized: Private pooja chat requires an active consultation pass' });
+          return;
+        }
+      }
+    }
+
     // Check if user is blocked from this stream
     if (client.data.user?.sub) {
       const blocked = await this.prisma.blockedViewer.findFirst({

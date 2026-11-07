@@ -35,6 +35,8 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
+RUN mkdir -p /app/public/uploads /app/public/client && chown -R node:node /app
+
 USER node
 EXPOSE 4000
 CMD ["node", "dist/main.js"]

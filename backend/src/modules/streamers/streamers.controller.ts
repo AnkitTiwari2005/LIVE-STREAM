@@ -27,6 +27,13 @@ export class StreamersController {
     return this.streamersService.apply(userId, dto);
   }
 
+  @Roles(UserRole.STREAMER)
+  @Get('earnings')
+  @ApiOperation({ summary: 'Get streamer earnings ledger and Dakshina performance (B-13)' })
+  async getEarnings(@CurrentUser('id') userId: string) {
+    return this.streamersService.getStreamerEarnings(userId);
+  }
+
   @Roles(UserRole.ADMIN)
   @Get('admin/applications')
   @ApiOperation({ summary: 'Admin queue of pending streamer applications (FR-S2, FR-M2)' })

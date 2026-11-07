@@ -225,6 +225,16 @@ export class PrivateLinksService {
       }
     }
 
+    // Check if IP is blocked (B-11 / S-01)
+    if (ip) {
+      const blockedIp = await this.prisma.blockedViewer.findFirst({
+        where: { streamId: link.streamId, sessionFingerprint: ip },
+      });
+      if (blockedIp) {
+        throw new ForbiddenException('You have been removed and blocked from this private session');
+      }
+    }
+
     // Check max viewer limit
     if (link.maxViewers) {
       const activeSessionsCount = await this.prisma.viewerSession.count({
@@ -240,10 +250,9 @@ export class PrivateLinksService {
       }
     }
 
-    const participantId = verifiedUser ? verifiedUser.id : `priv_guest_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     const participantName = dto.guestName || verifiedUser?.name || 'Private Devotee';
 
-    // Create session record
+    // Create session record first to get consistent identity (B-11 / S-01)
     const session = await this.prisma.viewerSession.create({
       data: {
         streamId: link.streamId,
@@ -254,13 +263,17 @@ export class PrivateLinksService {
       },
     });
 
-    // Generate LiveKit token for private interactive pooja consultation (60 minutes TTL, with publish grant)
+    const participantId = verifiedUser ? verifiedUser.id : `priv_guest_${session.id}`;
+    // If approval is required, viewer joins muted until streamer approves (B-11)
+    const canPublish = !link.requireApproval;
+
+    // Generate LiveKit token for private pooja consultation (60 minutes TTL)
     const token = await this.videoProvider.generateToken({
       roomName: link.stream.id,
       participantId,
       participantName,
       isPublisher: false,
-      canPublish: true, // Allow devotee to speak & show camera during private consultation
+      canPublish,
       canSubscribe: true,
       ttlMinutes: 60,
       metadata: { role: 'private_viewer', sessionId: session.id, linkId: link.id },
@@ -323,12 +336,24 @@ export class PrivateLinksService {
       throw new ForbiddenException('Only the streamer can moderate attendees in this stream');
     }
 
+    let sessionIp: string | null = null;
+    if (targetSessionId) {
+      const session = await this.prisma.viewerSession.findUnique({ where: { id: targetSessionId } });
+      if (session) {
+        sessionIp = session.ipAddress;
+        await this.prisma.viewerSession.update({
+          where: { id: session.id },
+          data: { isRemoved: true, leftAt: new Date() },
+        });
+      }
+    }
+
     // Add to BlockedViewer table (FR-P7)
     await this.prisma.blockedViewer.create({
       data: {
         streamId,
         userId: targetUserId || null,
-        sessionFingerprint: targetSessionId || null,
+        sessionFingerprint: sessionIp || targetSessionId || null,
         reason: reason || 'Removed by streamer',
       },
     });

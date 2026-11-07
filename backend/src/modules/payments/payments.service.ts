@@ -272,16 +272,23 @@ export class PaymentsService {
           });
 
           if (claimed.count > 0) {
+            const purchasedCoins = topupOrder.package?.coins || topupOrder.coinsToCredit;
+            const bonusCoins = topupOrder.package?.bonusCoins || 0;
+
             const wallet = await tx.userWallet.upsert({
               where: { userId: topupOrder.userId },
               create: {
                 userId: topupOrder.userId,
                 balanceCoins: topupOrder.coinsToCredit,
-                purchasedCoins: topupOrder.coinsToCredit,
+                purchasedCoins,
+                bonusCoins,
+                lifetimeEarned: topupOrder.coinsToCredit,
               },
               update: {
                 balanceCoins: { increment: topupOrder.coinsToCredit },
-                purchasedCoins: { increment: topupOrder.coinsToCredit },
+                purchasedCoins: { increment: purchasedCoins },
+                bonusCoins: { increment: bonusCoins },
+                lifetimeEarned: { increment: topupOrder.coinsToCredit },
               },
             });
 

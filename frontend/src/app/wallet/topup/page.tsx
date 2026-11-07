@@ -47,13 +47,33 @@ const PACKAGES = [
 ];
 
 export default function WalletTopupPage() {
+  const [packages, setPackages] = useState(PACKAGES);
   const [modalOpen, setModalOpen] = useState(false);
   const [balance, setBalance] = useState<number | null>(null);
 
   useEffect(() => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    fetch(`${apiUrl}/wallet/packages`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setPackages(
+            data.map((pkg: any) => ({
+              sku: pkg.sku,
+              title: pkg.name,
+              coins: pkg.coins,
+              priceInr: pkg.priceInr,
+              bonusCoins: pkg.bonusCoins || 0,
+              minutesDarshan: Math.floor((pkg.totalCoins || pkg.coins) / 5),
+              badge: pkg.badgeText || (pkg.bonusCoins > 0 ? `+${pkg.bonusCoins} Bonus` : 'Sacred Pack'),
+            })),
+          );
+        }
+      })
+      .catch(() => {});
+
     const token = localStorage.getItem('pooja_token');
     if (token) {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
       fetch(`${apiUrl}/wallet/balance`, {
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -102,7 +122,7 @@ export default function WalletTopupPage() {
 
         {/* Package Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {PACKAGES.map((pkg) => (
+          {packages.map((pkg) => (
             <div
               key={pkg.sku}
               className="bg-stone-900 border border-stone-800 hover:border-orange-500/80 rounded-3xl p-6 shadow-xl flex flex-col justify-between transition-all hover:scale-[1.02] relative group overflow-hidden"

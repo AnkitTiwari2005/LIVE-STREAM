@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { ApplyStreamerDto, ReviewKycDto } from './dto/apply-streamer.dto';
-import { KycStatus, UserRole, StreamStatus } from '@prisma/client';
+import { KycStatus, UserRole, StreamStatus, PaymentStatus } from '@prisma/client';
 
 @Injectable()
 export class StreamersService {
@@ -226,5 +226,58 @@ export class StreamersService {
     } catch {
       return { following: false };
     }
+  }
+
+  async getStreamerEarnings(userId: string) {
+    const streams = await this.prisma.stream.findMany({
+      where: { streamerId: userId },
+      select: { id: true, title: true, startedAt: true, durationSeconds: true },
+    });
+    const streamIds = streams.map((s) => s.id);
+
+    const dakshinaOfferings = await this.prisma.dakshinaOffering.findMany({
+      where: {
+        streamId: { in: streamIds },
+        status: PaymentStatus.SUCCESS,
+      },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        amount: true,
+        devoteeName: true,
+        createdAt: true,
+        streamId: true,
+      },
+    });
+
+    const totalDakshinaInr = dakshinaOfferings.reduce((sum, d) => sum + Number(d.amount), 0);
+    const panditSharePercentage = 85;
+    const netEarningsInr = (totalDakshinaInr * panditSharePercentage) / 100;
+    const platformFeeInr = totalDakshinaInr - netEarningsInr;
+
+    const viewingSessions = await this.prisma.streamViewingSession.findMany({
+      where: { streamId: { in: streamIds } },
+      select: { totalMinutesWatched: true, totalCoinsDebited: true },
+    });
+
+    const totalWatchMinutes = viewingSessions.reduce((sum, v) => sum + v.totalMinutesWatched, 0);
+    const totalCoinsConsumed = viewingSessions.reduce((sum, v) => sum + v.totalCoinsDebited, 0);
+
+    return {
+      totalStreams: streams.length,
+      totalDakshinaInr,
+      netEarningsInr,
+      platformFeeInr,
+      panditSharePercentage,
+      totalWatchMinutes,
+      totalCoinsConsumed,
+      recentDakshina: dakshinaOfferings.slice(0, 30).map((d) => ({
+        id: d.id,
+        amount: Number(d.amount),
+        devoteeName: d.devoteeName,
+        createdAt: d.createdAt,
+        streamTitle: streams.find((s) => s.id === d.streamId)?.title || 'Sacred Darshan',
+      })),
+    };
   }
 }

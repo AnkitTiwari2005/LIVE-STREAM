@@ -62,7 +62,7 @@ export default function GrievancePage() {
                   <MapPin className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
                   <div>
                     <span className="text-stone-400 block font-medium">Physical Postal Address</span>
-                    <span>Level 5, Lotus Spiritual Tower, Andheri East, Mumbai 400069, MH, India</span>
+                    <span>Suite 402, Sacred Heights, Barakhamba Road, Connaught Place, New Delhi 110001, India</span>
                   </div>
                 </div>
               </div>

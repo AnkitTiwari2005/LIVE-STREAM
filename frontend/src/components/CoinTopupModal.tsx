@@ -60,10 +60,33 @@ function loadRazorpayScript(): Promise<boolean> {
 }
 
 export function CoinTopupModal({ isOpen, onClose, onSuccess }: CoinTopupModalProps) {
+  const [packages, setPackages] = useState(PACKAGES);
   const [selectedSku, setSelectedSku] = useState('siddhi_600');
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    fetch(`${apiUrl}/wallet/packages`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setPackages(
+            data.map((pkg: any) => ({
+              sku: pkg.sku,
+              name: pkg.name,
+              coins: pkg.totalCoins || pkg.coins,
+              priceInr: pkg.priceInr,
+              watchTime: `${Math.floor((pkg.totalCoins || pkg.coins) / 5)} Mins Live Darshan`,
+              badge: pkg.badgeText || null,
+              highlight: pkg.sku === 'siddhi_600',
+            })),
+          );
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   if (!isOpen) return null;
 
@@ -220,7 +243,7 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess }: CoinTopupModalPro
         ) : (
           <div className="mt-5 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {PACKAGES.map((pkg) => {
+              {packages.map((pkg) => {
                 const isSelected = selectedSku === pkg.sku;
                 return (
                   <div

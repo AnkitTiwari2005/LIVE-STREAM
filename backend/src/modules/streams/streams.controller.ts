@@ -90,7 +90,7 @@ export class StreamsController {
   @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Get stream details by ID' })
-  async getStreamById(@Param('id') id: string) {
-    return this.streamsService.getStreamById(id);
+  async getStreamById(@Param('id') id: string, @CurrentUser() caller?: any) {
+    return this.streamsService.getStreamById(id, caller);
   }
 }

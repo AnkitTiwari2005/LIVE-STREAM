@@ -66,7 +66,16 @@ export function Navbar() {
     }
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      await fetch(`${apiUrl}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch {
+      // Proceed with local cleanup regardless of network error
+    }
     localStorage.removeItem('pooja_user');
     localStorage.removeItem('pooja_token');
     setUser(null);
@@ -148,10 +157,14 @@ export function Navbar() {
                   <PlusCircle className="w-3.5 h-3.5 text-amber-400 ml-0.5 group-hover:text-amber-300" />
                 </button>
 
-                <div className="flex items-center gap-1.5 text-sm font-medium text-stone-200">
+                <Link
+                  href="/account"
+                  className="flex items-center gap-1.5 text-sm font-medium text-stone-200 hover:text-orange-400 transition"
+                  title="My Account Settings"
+                >
                   <PranamIcon size={18} />
                   <span>{user.name}</span>
-                </div>
+                </Link>
                 <button
                   onClick={handleLogout}
                   className="p-2 rounded-lg text-stone-400 hover:text-red-400 hover:bg-stone-900 transition-colors"

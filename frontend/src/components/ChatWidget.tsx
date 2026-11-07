@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Socket } from 'socket.io-client';
-import { Send, Pin, Trash2, VolumeX, ShieldAlert, Sparkles } from 'lucide-react';
+import { Send, Pin, Trash2, VolumeX, ShieldAlert, Sparkles, Flag } from 'lucide-react';
 import { OmIcon, DiyaIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
 
 interface ChatMessage {
@@ -172,6 +172,39 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser }: ChatWi
     socket.emit('chat:mute', { streamId, targetUserId, durationMinutes: 15 });
   };
 
+  const handleReportMessage = async (msg: ChatMessage) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('pooja_token') : null;
+    if (!token) {
+      setErrorBanner('Please sign in to report a message');
+      setTimeout(() => setErrorBanner(null), 3000);
+      return;
+    }
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      await fetch(`${apiUrl}/reports`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          targetType: 'CHAT_MESSAGE',
+          streamId,
+          chatMessageId: msg.id,
+          targetUserId: msg.user?.id,
+          reason: 'Inappropriate or offensive message',
+          details: msg.message,
+        }),
+      });
+      setErrorBanner('Report submitted for moderation 🙏');
+      setTimeout(() => setErrorBanner(null), 3000);
+    } catch {
+      setErrorBanner('Failed to submit report');
+      setTimeout(() => setErrorBanner(null), 3000);
+    }
+  };
+
   const isLoggedIn = Boolean(activeUser);
 
   return (
@@ -265,34 +298,44 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser }: ChatWi
                 <span className="text-stone-100 break-words">{msg.message}</span>
               </div>
 
-              {/* Moderation Controls (Streamer / Admin only) */}
-              {isStreamer && (
-                <div className="hidden group-hover:flex items-center gap-1 shrink-0 opacity-80">
-                  <button
-                    onClick={() => handlePin(msg.id)}
-                    title="Pin message"
-                    className="p-1 hover:text-amber-400"
-                  >
-                    <Pin className="w-3 h-3" />
-                  </button>
-                  {msg.user.id && (
+              <div className="hidden group-hover:flex items-center gap-1 shrink-0 opacity-80">
+                {/* Moderation Controls (Streamer / Admin only) */}
+                {isStreamer && (
+                  <>
                     <button
-                      onClick={() => handleMute(msg.user.id)}
-                      title="Mute user for 15 mins"
+                      onClick={() => handlePin(msg.id)}
+                      title="Pin message"
+                      className="p-1 hover:text-amber-400"
+                    >
+                      <Pin className="w-3 h-3" />
+                    </button>
+                    {msg.user.id && (
+                      <button
+                        onClick={() => handleMute(msg.user.id)}
+                        title="Mute user for 15 mins"
+                        className="p-1 hover:text-red-400"
+                      >
+                        <VolumeX className="w-3 h-3" />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleDelete(msg.id)}
+                      title="Delete message"
                       className="p-1 hover:text-red-400"
                     >
-                      <VolumeX className="w-3 h-3" />
+                      <Trash2 className="w-3 h-3" />
                     </button>
-                  )}
-                  <button
-                    onClick={() => handleDelete(msg.id)}
-                    title="Delete message"
-                    className="p-1 hover:text-red-400"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
+                  </>
+                )}
+                {/* Report button for all participants */}
+                <button
+                  onClick={() => handleReportMessage(msg)}
+                  title="Report inappropriate message"
+                  className="p-1 hover:text-amber-400 text-stone-500"
+                >
+                  <Flag className="w-3 h-3" />
+                </button>
+              </div>
             </div>
           );
         })}

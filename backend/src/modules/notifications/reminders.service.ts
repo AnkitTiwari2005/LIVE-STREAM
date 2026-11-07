@@ -54,6 +54,87 @@ export class RemindersService {
     }
   }
 
+  async submitContactInquiry(dto: { name: string; email: string; subject: string; message: string; ip?: string }) {
+    await this.prisma.auditLog.create({
+      data: {
+        actorEmail: dto.email,
+        action: 'CONTACT_FORM_SUBMITTED',
+        targetResource: `Inquiry:${dto.email}`,
+        details: { name: dto.name, subject: dto.subject, message: dto.message },
+        ipAddress: dto.ip || null,
+      },
+    });
+
+    try {
+      await this.mailer.sendEmail({
+        to: dto.email,
+        toName: dto.name,
+        subject: `Inquiry Received: ${dto.subject} - Shubhdarshan Support`,
+        htmlContent: `
+          <div style="font-family: Arial, sans-serif; color: #222; max-width: 600px; margin: auto;">
+            <h2 style="color: #c2410c;">Namaste ${dto.name},</h2>
+            <p>Thank you for reaching out to Shubhdarshan Devotee Support.</p>
+            <p>We have logged your query regarding: <strong>${dto.subject}</strong></p>
+            <blockquote style="background: #f9f9f9; padding: 12px; border-left: 4px solid #ea580c; font-style: italic;">${dto.message}</blockquote>
+            <p>Our devotee assistance team will inspect and respond to your email within 2 to 4 hours.</p>
+            <p style="color: #666; font-size: 13px;">Shubhdarshan Devotional Media Private Limited</p>
+          </div>
+        `,
+      });
+    } catch (err: any) {
+      this.logger.error(`Failed to dispatch contact acknowledgment email: ${err.message}`);
+    }
+
+    return { success: true, message: 'Your support message has been received by our spiritual desk.' };
+  }
+
+  async submitGrievance(dto: { name: string; email: string; phone?: string; complaintType: string; details: string; ip?: string }) {
+    const ticketId = `GRV-${Date.now().toString(36).toUpperCase()}`;
+
+    await this.prisma.auditLog.create({
+      data: {
+        actorEmail: dto.email,
+        action: 'IT_RULES_GRIEVANCE_SUBMITTED',
+        targetResource: `Grievance:${ticketId}`,
+        details: {
+          ticketId,
+          name: dto.name,
+          phone: dto.phone,
+          complaintType: dto.complaintType,
+          details: dto.details,
+        },
+        ipAddress: dto.ip || null,
+      },
+    });
+
+    try {
+      await this.mailer.sendEmail({
+        to: dto.email,
+        toName: dto.name,
+        subject: `Formal Grievance Registered [${ticketId}] - Rule 3(2) IT Rules 2021`,
+        htmlContent: `
+          <div style="font-family: Arial, sans-serif; color: #222; max-width: 600px; margin: auto;">
+            <h2 style="color: #c2410c;">Formal Acknowledgment of Grievance</h2>
+            <p>Dear ${dto.name},</p>
+            <p>Your grievance submitted under Rule 3(2) of the Information Technology (Intermediary Guidelines) Rules, 2021 has been registered with Ticket Reference: <strong style="color: #ea580c;">${ticketId}</strong>.</p>
+            <p><strong>Complaint Type:</strong> ${dto.complaintType}</p>
+            <blockquote style="background: #f9f9f9; padding: 12px; border-left: 4px solid #ea580c;">${dto.details}</blockquote>
+            <p>The designated Resident Grievance Officer will investigate the matter and provide a reasoned decision within statutory timelines (within 15 calendar days).</p>
+            <p style="color: #666; font-size: 13px;">Resident Grievance Officer, Shubhdarshan Devotional Media Private Limited</p>
+          </div>
+        `,
+      });
+    } catch (err: any) {
+      this.logger.error(`Failed to dispatch grievance acknowledgment email: ${err.message}`);
+    }
+
+    return {
+      success: true,
+      ticketId,
+      message: `Your grievance has been officially registered with Ticket ID ${ticketId}. Formal acknowledgment sent via email.`,
+    };
+  }
+
   /**
    * Scans for scheduled streams starting in the next 15 minutes and dispatches reminder emails (FR-N3)
    */

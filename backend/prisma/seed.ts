@@ -119,7 +119,64 @@ async function main() {
   }
   console.log(`Seeded ${staticPages.length} CMS static pages.`);
 
-  // 4. Default Platform Admin User (FR-A4)
+  // 4. Coin Packages (B-08: Unified Package Seed)
+  const packages = [
+    {
+      sku: 'shubh_100',
+      name: 'Shubh Starter',
+      coins: 100,
+      bonusCoins: 0,
+      totalCoins: 100,
+      priceInr: 200.0,
+      badgeText: 'Quick Darshan',
+      displayOrder: 1,
+      isActive: true,
+    },
+    {
+      sku: 'bhakti_275',
+      name: 'Bhakti Pack',
+      coins: 250,
+      bonusCoins: 25,
+      totalCoins: 275,
+      priceInr: 500.0,
+      badgeText: '+10% Bonus',
+      displayOrder: 2,
+      isActive: true,
+    },
+    {
+      sku: 'siddhi_600',
+      name: 'Siddhi Pack',
+      coins: 500,
+      bonusCoins: 100,
+      totalCoins: 600,
+      priceInr: 1000.0,
+      badgeText: 'Most Popular (+20% Bonus)',
+      displayOrder: 3,
+      isActive: true,
+    },
+    {
+      sku: 'mahodadhi_1500',
+      name: 'Mahodadhi Pack',
+      coins: 1200,
+      bonusCoins: 300,
+      totalCoins: 1500,
+      priceInr: 2100.0,
+      badgeText: 'Best Value (+25% Bonus)',
+      displayOrder: 4,
+      isActive: true,
+    },
+  ];
+
+  for (const pkg of packages) {
+    await prisma.coinPackage.upsert({
+      where: { sku: pkg.sku },
+      update: pkg,
+      create: pkg,
+    });
+  }
+  console.log(`Seeded ${packages.length} coin packages.`);
+
+  // 5. Default Platform Admin User (FR-A4)
   const adminEmail = process.env.ADMIN_EMAIL || 'admin@platform-domain.com';
   const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
 

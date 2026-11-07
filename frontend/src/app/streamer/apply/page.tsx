@@ -9,7 +9,7 @@ export default function StreamerApplyPage() {
   const [bio, setBio] = useState('');
   const [languages, setLanguages] = useState('Hindi, Sanskrit, English');
   const [specialties, setSpecialties] = useState('Vedic Pooja, Kundli Matching, Vastu Consultation');
-  const [documentKey, setDocumentKey] = useState('kyc_demo_certificate.pdf');
+  const [documentKey, setDocumentKey] = useState<string | null>(null);
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -23,13 +23,23 @@ export default function StreamerApplyPage() {
     setError(null);
     setUploadingDoc(true);
 
+    const token = localStorage.getItem('pooja_token');
+    if (!token) {
+      setError('Please sign in before uploading verification documents');
+      setUploadingDoc(false);
+      return;
+    }
+
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
-      // 1. Get presigned upload URL
+      // 1. Get presigned upload URL with Bearer token (B-12)
       const preRes = await fetch(`${apiUrl}/storage/presigned-url`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           filename: file.name,
           contentType: file.type || 'application/octet-stream',
@@ -60,6 +70,12 @@ export default function StreamerApplyPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!documentKey) {
+      setError('Please upload your Vedic certification or government ID document for KYC verification');
+      return;
+    }
+
     setLoading(true);
 
     const token = localStorage.getItem('pooja_token');

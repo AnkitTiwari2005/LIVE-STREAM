@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../database/prisma.service';
+import { MailerService } from '../notifications/mailer.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto, ResetPasswordDto, VerifyTotpDto } from './dto/login.dto';
 import { CryptoUtil } from '../../common/crypto.util';
@@ -23,6 +24,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly mailerService: MailerService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -37,6 +39,7 @@ export class AuthService {
     const rawVerifyToken = CryptoUtil.generate128BitToken();
     const emailVerifyTokenHash = CryptoUtil.hashSha256(rawVerifyToken);
 
+    // Initial wallet has 0 balance. Welcome bonus is credited upon verified email (B-10 Anti-Abuse)
     const user = await this.prisma.user.create({
       data: {
         email: dto.email.toLowerCase(),
@@ -51,42 +54,54 @@ export class AuthService {
         termsVersionAccepted: 'v1.0',
         wallet: {
           create: {
-            balanceCoins: 100,
-            bonusCoins: 100,
+            balanceCoins: 0,
+            bonusCoins: 0,
             purchasedCoins: 0,
-            lifetimeEarned: 100,
+            lifetimeEarned: 0,
             lifetimeSpent: 0,
-            transactions: {
-              create: {
-                type: WalletTxType.CREDIT,
-                category: WalletTxCategory.JOINING_BONUS,
-                amountCoins: 100,
-                balanceBefore: 0,
-                balanceAfter: 100,
-                referenceId: `signup_bonus_${dto.email.toLowerCase()}`,
-                metadata: { note: 'Auspicious Welcome Darshan Bonus' },
-              },
-            },
           },
         },
       },
       include: { wallet: true },
     });
 
-    this.logger.log(`New user registered: ${user.email}. Verification token: ${rawVerifyToken}`);
-    // In production, mailerService sends rawVerifyToken in link https://domain/verify-email?token=...
+    try {
+      await this.mailerService.sendVerificationEmail(user.email, user.name, rawVerifyToken);
+      this.logger.log(`Verification email sent to: ${user.email}`);
+    } catch (err: any) {
+      this.logger.error(`Failed to send verification email: ${err.message}`);
+    }
+
     return {
-      message: 'Registration successful. Please verify your email to unlock live chat and following.',
+      message: 'Registration successful. Please check your email to verify your account and claim your 100 welcome darshan coins.',
       userId: user.id,
       email: user.email,
       debugVerifyToken: process.env.NODE_ENV !== 'production' ? rawVerifyToken : undefined,
     };
   }
 
+  async resendVerification(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+    if (user.isEmailVerified) throw new BadRequestException('Email is already verified');
+
+    const rawVerifyToken = CryptoUtil.generate128BitToken();
+    const emailVerifyTokenHash = CryptoUtil.hashSha256(rawVerifyToken);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { emailVerifyTokenHash },
+    });
+
+    await this.mailerService.sendVerificationEmail(user.email, user.name, rawVerifyToken);
+    return { message: 'A fresh verification email has been dispatched to your inbox.' };
+  }
+
   async verifyEmail(rawToken: string) {
     const tokenHash = CryptoUtil.hashSha256(rawToken);
     const user = await this.prisma.user.findFirst({
       where: { emailVerifyTokenHash: tokenHash },
+      include: { wallet: true },
     });
 
     if (!user) {
@@ -101,7 +116,41 @@ export class AuthService {
       },
     });
 
-    return { message: 'Email successfully verified. You may now participate in live chat and follow pandits.' };
+    // Credit 100 Welcome Bonus Coins safely if not already awarded
+    const existingBonus = await this.prisma.walletTransaction.findFirst({
+      where: {
+        wallet: { userId: user.id },
+        category: WalletTxCategory.JOINING_BONUS,
+      },
+    });
+
+    if (!existingBonus && user.wallet) {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.userWallet.update({
+          where: { id: user.wallet!.id },
+          data: {
+            balanceCoins: { increment: 100 },
+            bonusCoins: { increment: 100 },
+            lifetimeEarned: { increment: 100 },
+          },
+        });
+        await tx.walletTransaction.create({
+          data: {
+            walletId: user.wallet!.id,
+            type: WalletTxType.CREDIT,
+            category: WalletTxCategory.JOINING_BONUS,
+            amountCoins: 100,
+            balanceBefore: user.wallet!.balanceCoins,
+            balanceAfter: user.wallet!.balanceCoins + 100,
+            referenceId: `signup_bonus_${user.id}`,
+            metadata: { note: 'Auspicious Welcome Darshan Bonus' },
+          },
+        });
+      });
+      this.logger.log(`Credited 100 welcome bonus coins to verified user ${user.email}`);
+    }
+
+    return { message: 'Email successfully verified! 100 welcome darshan coins have been added to your sacred wallet.' };
   }
 
   async login(dto: LoginDto) {
@@ -205,20 +254,42 @@ export class AuthService {
     const backupCodes = Array.from({ length: 4 }, () => CryptoUtil.generate128BitToken().slice(0, 8));
     const hashedBackupCodes = backupCodes.map((code) => CryptoUtil.hashSha256(code));
 
+    // Save secret without activating yet (S-04: require confirmation with valid code first)
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
         twoFactorSecretEnc: encryptedSecret,
         twoFactorBackupCodes: hashedBackupCodes,
-        isTwoFactorEnabled: true,
+        isTwoFactorEnabled: false,
       },
     });
 
     return {
       qrCode: qrCodeDataUrl,
       backupCodes,
-      message: 'Scan the QR code in Google Authenticator or 1Password, and save your backup codes safely.',
+      message: 'Scan the QR code in your authenticator app and enter the 6-digit code to activate 2FA.',
     };
+  }
+
+  async confirm2FA(userId: string, token: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.twoFactorSecretEnc) {
+      throw new BadRequestException('2FA setup has not been initiated');
+    }
+
+    const totpSecret = CryptoUtil.decryptAesGcm(user.twoFactorSecretEnc);
+    const isValid = authenticator.verify({ token, secret: totpSecret });
+
+    if (!isValid) {
+      throw new BadRequestException('Invalid authentication code. Please check your authenticator app and try again.');
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { isTwoFactorEnabled: true },
+    });
+
+    return { message: 'Two-factor authentication has been successfully activated for your account.' };
   }
 
   async forgotPassword(email: string) {
@@ -237,11 +308,43 @@ export class AuthService {
       data: { resetTokenHash, resetTokenExpiry },
     });
 
-    this.logger.log(`Password reset requested for ${user.email}. Token: ${rawResetToken}`);
+    try {
+      await this.mailerService.sendPasswordResetEmail(user.email, user.name, rawResetToken);
+      this.logger.log(`Password reset link dispatched for ${user.email}`);
+    } catch (err: any) {
+      this.logger.error(`Failed to send password reset email: ${err.message}`);
+    }
+
     return {
       message: 'If an account with that email exists, a password reset link has been dispatched.',
       debugResetToken: process.env.NODE_ENV !== 'production' ? rawResetToken : undefined,
     };
+  }
+
+  async refreshSession(refreshToken: string) {
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token is required');
+    }
+
+    let payload: any;
+    try {
+      payload = this.jwtService.verify(refreshToken, {
+        secret: process.env.JWT_REFRESH_SECRET || 'jwt_default_insecure_refresh_secret_key',
+      });
+    } catch {
+      throw new UnauthorizedException('Session expired or invalid. Please log in again.');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      include: { streamerProfile: true, wallet: true },
+    });
+
+    if (!user || user.status === UserStatus.BANNED || user.status === UserStatus.DELETION_REQUESTED) {
+      throw new UnauthorizedException('User account is no longer active');
+    }
+
+    return this.generateTokens(user);
   }
 
   async resetPassword(dto: ResetPasswordDto) {
