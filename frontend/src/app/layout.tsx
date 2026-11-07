@@ -3,6 +3,7 @@ import './globals.css';
 import '@livekit/components-styles';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { FestivalBanner } from '@/components/FestivalBanner';
 
 const SITE_URL = 'https://darkturquoise-louse-359917.hostingersite.com';
 
@@ -177,6 +178,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen flex flex-col bg-stone-950 text-stone-100 antialiased selection:bg-orange-500 selection:text-white">
+        <FestivalBanner />
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />

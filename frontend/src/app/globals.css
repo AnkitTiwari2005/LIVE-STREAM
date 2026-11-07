@@ -114,3 +114,79 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #f59e0b;
 }
+
+/* Micro-Typography & Editorial Balance */
+h1, h2, h3 {
+  text-wrap: balance;
+}
+p {
+  text-wrap: pretty;
+}
+
+/* Authentic Devotional Shadows (Non-neon) */
+[class*="shadow-[0_0_"] {
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.18), 0 6px 14px -8px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Photo Overlay Protection (Keeps text crisp & legible on imagery in all themes) */
+html .on-photo .text-white,
+html .on-photo .text-stone-100,
+html .on-photo .text-gold-pale {
+  color: #ffffff !important;
+}
+html .on-photo .text-stone-300,
+html .on-photo .text-stone-200 {
+  color: #e7e2dc !important;
+}
+html .on-photo .text-stone-400 {
+  color: #c8c0b8 !important;
+}
+
+/* Light / Day Theme Layer */
+html[data-theme="light"] {
+  color-scheme: light;
+  --background: #fbf8f8;
+  --foreground: #1c1414;
+}
+html[data-theme="light"] body {
+  background-color: #fbf8f8;
+  color: #1c1414;
+}
+html[data-theme="light"] .bg-obsidian {
+  background-color: #fbf8f8 !important;
+}
+html[data-theme="light"] .bg-obsidian-deep {
+  background-color: #f7f1f1 !important;
+}
+html[data-theme="light"] .bg-obsidian-soft {
+  background-color: #ffffff !important;
+}
+html[data-theme="light"] .text-white,
+html[data-theme="light"] .text-stone-100,
+html[data-theme="light"] .text-gold-pale {
+  color: #1c1414 !important;
+}
+html[data-theme="light"] .text-stone-300,
+html[data-theme="light"] .text-stone-400 {
+  color: #4a3e3e !important;
+}
+html[data-theme="light"] .text-gold,
+html[data-theme="light"] .text-gold-soft {
+  color: #c8102e !important;
+}
+html[data-theme="light"] .border-gold\/15,
+html[data-theme="light"] .border-gold\/20,
+html[data-theme="light"] .border-gold\/25,
+html[data-theme="light"] .border-gold\/30 {
+  border-color: #f0a9ae !important;
+}
+html[data-theme="light"] .bg-gold {
+  background-image: linear-gradient(135deg, #e70d1b 0%, #81070f 100%) !important;
+  color: #ffffff !important;
+}
+html[data-theme="light"] header {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-top: 3px solid #e70d1b !important;
+  border-bottom: 1px solid #eadada !important;
+  box-shadow: 0 6px 24px rgba(129, 7, 15, 0.08) !important;
+}

@@ -16,8 +16,11 @@ import {
   Calendar,
   ChevronDown,
   User,
+  Search,
 } from 'lucide-react';
 import { CoinTopupModal } from './CoinTopupModal';
+import { SearchPalette } from './SearchPalette';
+import { ThemeToggle } from './ThemeToggle';
 import { OmIcon, CoinIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
 
 export function Navbar() {
@@ -26,6 +29,7 @@ export function Navbar() {
   const [topupModalOpen, setTopupModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     // Check session
@@ -153,6 +157,21 @@ export function Navbar() {
 
           {/* 3. User Controls & Role Actions (Never Crowded) */}
           <div className="hidden lg:flex items-center gap-2 xl:gap-2.5 shrink-0">
+            {/* Search Palette Trigger */}
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className="flex items-center gap-2 h-9 px-3 rounded-full border border-gold/25 bg-obsidian-soft/70 hover:bg-stone-900 text-stone-400 hover:text-stone-200 text-xs font-medium transition shadow-sm"
+              aria-label="Search pooja and aarti"
+            >
+              <Search className="w-3.5 h-3.5 text-gold-soft" />
+              <span className="hidden xl:inline">Search aarti, pooja...</span>
+              <kbd className="px-1.5 py-0.5 rounded text-[10px] bg-stone-800 text-stone-400 border border-stone-700 font-mono">/</kbd>
+            </button>
+
+            {/* Theme Toggle (Sun/Moon) */}
+            <ThemeToggle />
+
             {/* Streamer Role Pill */}
             {user?.role === 'STREAMER' && (
               <div className="flex items-center gap-1 rounded-full border border-gold/30 bg-gold/10 p-0.5 shadow-sm">
@@ -312,8 +331,17 @@ export function Navbar() {
             )}
           </div>
 
-          {/* 4. Mobile Menu Toggle Button */}
-          <div className="flex items-center gap-2 lg:hidden">
+          {/* 4. Mobile Menu & Search Toggle Buttons */}
+          <div className="flex items-center gap-1.5 sm:gap-2 lg:hidden">
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className="p-1.5 text-stone-300 hover:text-white rounded-full hover:bg-white/5 transition"
+              aria-label="Search pooja and darshan"
+            >
+              <Search className="w-4 h-4 text-gold-soft" />
+            </button>
+            <ThemeToggle className="w-8 h-8" />
             {user && (
               <button
                 onClick={() => setTopupModalOpen(true)}
@@ -474,6 +502,12 @@ export function Navbar() {
         isOpen={topupModalOpen}
         onClose={() => setTopupModalOpen(false)}
         onSuccess={(newBal) => setCoinBalance(newBal)}
+      />
+
+      {/* Global Instant Search Command Palette */}
+      <SearchPalette
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
       />
     </>
   );
