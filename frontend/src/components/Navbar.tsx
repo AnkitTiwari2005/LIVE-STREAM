@@ -2,7 +2,19 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Video, ShieldCheck, LogOut, Sparkles, Menu, X, PlusCircle, HelpCircle, Flame, Users, Calendar } from 'lucide-react';
+import {
+  Video,
+  ShieldCheck,
+  LogOut,
+  Sparkles,
+  Menu,
+  X,
+  PlusCircle,
+  HelpCircle,
+  Flame,
+  Users,
+  Calendar,
+} from 'lucide-react';
 import { CoinTopupModal } from './CoinTopupModal';
 import { OmIcon, CoinIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
 
@@ -82,16 +94,16 @@ export function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 glass-strong border-b border-gold/15 py-2.5 shadow-[0_8px_40px_rgba(0,0,0,0.45)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
-          {/* Sacred Brand Logo with Diya & Sanskrit Typography */}
-          <Link href="/" className="group flex items-center gap-3">
-            <span className="relative flex h-10 w-10 items-center justify-center rounded-full border border-gold/40 bg-gradient-to-b from-[#2a1e12] to-obsidian shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+      <header className="sticky top-0 z-50 glass-strong border-b border-gold/15 py-3 shadow-[0_8px_40px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+          {/* 1. Sacred Brand Logo with Diya & Sanskrit Typography */}
+          <Link href="/" className="group flex items-center gap-3 shrink-0">
+            <span className="relative flex h-10 w-10 items-center justify-center rounded-full border border-gold/40 bg-gradient-to-b from-[#2a1e12] to-obsidian shadow-[0_0_18px_rgba(245,158,11,0.25)] transition group-hover:border-gold/70">
               <Flame className="h-5 w-5 text-gold animate-flame" />
-              <span className="absolute inset-0 rounded-full bg-gold/10 blur-md transition group-hover:bg-gold/25" />
+              <span className="absolute inset-0 rounded-full bg-gold/15 blur-md transition group-hover:bg-gold/30" />
             </span>
             <span className="leading-tight">
-              <span className="block font-serif text-xl sm:text-2xl font-bold tracking-wide text-gold-pale">
+              <span className="block font-serif text-xl sm:text-2xl font-bold tracking-wide text-gold-pale group-hover:text-gold transition">
                 Shubhdarshan
               </span>
               <span className="block text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.28em] text-gold-soft/80">
@@ -100,123 +112,135 @@ export function Navbar() {
             </span>
           </Link>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-1 text-sm font-medium">
+          {/* 2. Center Navigation Links (Clean, Curated, Always Single Line) */}
+          <nav className="hidden lg:flex items-center gap-1 xl:gap-2 text-xs xl:text-sm font-semibold tracking-wide text-stone-300">
             <Link
               href="/"
-              className="relative rounded-full px-3.5 py-1.5 text-stone-300 hover:text-gold-pale transition flex items-center gap-1.5 hover:bg-gold/5"
+              className="whitespace-nowrap shrink-0 rounded-full px-3 xl:px-3.5 py-1.5 transition text-gold-pale hover:text-white flex items-center gap-1.5 hover:bg-gold/10"
             >
               <span>Live Darshan</span>
-              <span className="live-dot" />
+              <span className="live-dot shrink-0" />
             </Link>
             <Link
               href="/#upcoming"
-              className="rounded-full px-3.5 py-1.5 text-stone-300 hover:text-gold-pale transition hover:bg-gold/5"
+              className="whitespace-nowrap shrink-0 rounded-full px-2.5 xl:px-3.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5"
             >
               Schedule
             </Link>
             <Link
               href="/#pandits"
-              className="rounded-full px-3.5 py-1.5 text-stone-300 hover:text-gold-pale transition hover:bg-gold/5"
+              className="whitespace-nowrap shrink-0 rounded-full px-2.5 xl:px-3.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5"
             >
               Verified Pandits
             </Link>
             <Link
               href="/about"
-              className="rounded-full px-3.5 py-1.5 text-stone-300 hover:text-gold-pale transition hover:bg-gold/5"
+              className="whitespace-nowrap shrink-0 rounded-full px-2.5 xl:px-3.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5"
             >
               About
             </Link>
             <Link
               href="/faq"
-              className="rounded-full px-3.5 py-1.5 text-stone-300 hover:text-gold-pale transition hover:bg-gold/5 flex items-center gap-1"
+              className="whitespace-nowrap shrink-0 rounded-full px-2.5 xl:px-3.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5 flex items-center gap-1"
             >
-              <HelpCircle className="w-3.5 h-3.5 text-gold-soft/80" /> FAQ
+              <HelpCircle className="w-3.5 h-3.5 text-gold-soft/80 shrink-0" />
+              <span>FAQ</span>
             </Link>
+          </nav>
 
+          {/* 3. User Controls & Role Actions (Never Crowded) */}
+          <div className="hidden lg:flex items-center gap-2 xl:gap-2.5 shrink-0">
+            {/* Streamer Role Pill */}
             {user?.role === 'STREAMER' && (
-              <>
+              <div className="flex items-center gap-1 rounded-full border border-gold/30 bg-gold/10 p-0.5 shadow-sm">
                 <Link
                   href="/studio/create"
-                  className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-gold font-semibold hover:bg-gold/10 transition"
+                  className="whitespace-nowrap shrink-0 flex items-center gap-1.5 rounded-full bg-gold/20 hover:bg-gold/30 px-3 py-1 text-xs font-bold text-gold-pale transition"
+                  title="Broadcaster Studio"
                 >
-                  <Video className="w-4 h-4" /> Studio
+                  <Video className="w-3.5 h-3.5 text-gold shrink-0" />
+                  <span>Studio</span>
                 </Link>
                 <Link
                   href="/streamer/earnings"
-                  className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-gold-pale font-semibold hover:bg-gold/10 transition"
+                  className="hidden xl:flex whitespace-nowrap shrink-0 items-center gap-1 rounded-full hover:bg-gold/20 px-2.5 py-1 text-xs font-semibold text-gold-soft transition"
+                  title="Pandit Earnings & Dakshina"
                 >
-                  <CoinIcon size={16} /> Earnings
+                  <CoinIcon size={14} className="shrink-0" />
+                  <span>Earnings</span>
                 </Link>
-              </>
+              </div>
             )}
 
+            {/* Admin Role Pill */}
             {user?.role === 'ADMIN' && (
               <Link
                 href="/admin"
-                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-amber-300 font-semibold hover:bg-amber-950/40 transition"
+                className="whitespace-nowrap shrink-0 flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-950/60 px-3 py-1.5 text-xs font-bold text-amber-300 hover:bg-amber-900/60 transition"
               >
-                <ShieldCheck className="w-4 h-4" /> Admin Console
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>Admin Console</span>
               </Link>
             )}
 
+            {/* Viewer Apply CTA */}
             {user?.role === 'VIEWER' && (
               <Link
                 href="/streamer/apply"
-                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-stone-300 hover:text-gold-pale transition hover:bg-gold/5 text-xs font-semibold"
+                className="whitespace-nowrap shrink-0 flex items-center gap-1.5 rounded-full border border-gold/25 bg-gold/5 px-3 py-1.5 text-xs font-semibold text-stone-300 hover:text-gold-pale hover:border-gold/40 transition"
               >
-                <Sparkles className="w-3.5 h-3.5 text-gold" /> Become a Pandit
+                <Sparkles className="w-3.5 h-3.5 text-gold shrink-0" />
+                <span>Become a Pandit</span>
               </Link>
             )}
-          </nav>
 
-          {/* User Account Controls */}
-          <div className="hidden lg:flex items-center gap-3">
             {user ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 xl:gap-2.5">
                 {/* Gold Coin Wallet Pill */}
                 <button
                   onClick={() => setTopupModalOpen(true)}
-                  className="group flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3.5 py-1.5 text-xs font-semibold text-gold-pale transition hover:border-gold/60 hover:bg-gold/15 shadow-sm"
+                  className="whitespace-nowrap shrink-0 group flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold/10 px-3 py-1.5 text-xs font-bold text-gold-pale transition hover:border-gold/60 hover:bg-gold/20 shadow-sm"
                   title="Your Sacred Coins (Click to Recharge)"
                 >
-                  <CoinIcon size={18} className="text-gold group-hover:scale-110 transition-transform" />
+                  <CoinIcon size={15} className="text-gold shrink-0 group-hover:scale-110 transition-transform" />
                   <span className="font-extrabold text-gold">{coinBalance !== null ? coinBalance : 100}</span>
-                  <span className="text-[11px] text-stone-300 font-medium">Coins</span>
-                  <PlusCircle className="w-3.5 h-3.5 text-gold ml-0.5 group-hover:text-gold-soft" />
+                  <span className="text-[10px] text-stone-300 font-medium">Coins</span>
+                  <PlusCircle className="w-3.5 h-3.5 text-gold ml-0.5 shrink-0 group-hover:text-gold-soft" />
                 </button>
 
+                {/* Devotee / Pandit Profile Pill */}
                 <Link
                   href="/account"
-                  className="flex items-center gap-1.5 text-xs font-semibold text-stone-200 hover:text-gold-pale transition px-3 py-1.5 rounded-full hover:bg-stone-900 border border-transparent hover:border-stone-800"
+                  className="whitespace-nowrap shrink-0 flex items-center gap-1.5 text-xs font-semibold text-stone-200 hover:text-gold-pale transition px-3 py-1.5 rounded-full bg-obsidian-soft border border-gold/20 hover:border-gold/40 max-w-[130px] xl:max-w-[170px]"
                   title="My Account Settings"
                 >
-                  <PranamIcon size={16} />
-                  <span>{user.name}</span>
+                  <PranamIcon size={14} className="text-gold shrink-0" />
+                  <span className="truncate">{user.name}</span>
                 </Link>
 
+                {/* Sign Out Icon */}
                 <button
                   onClick={handleLogout}
-                  className="p-2 rounded-full text-stone-400 hover:text-red-400 hover:bg-stone-900 transition-colors"
+                  className="p-1.5 rounded-full text-stone-400 hover:text-red-400 hover:bg-stone-900 transition-colors shrink-0"
                   title="Log Out"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-4 h-4 shrink-0" />
                 </button>
               </div>
             ) : (
               <div className="flex items-center gap-2.5">
                 <Link
                   href="/login"
-                  className="rounded-full px-4 py-2 text-xs font-bold text-stone-300 hover:text-gold-pale transition"
+                  className="whitespace-nowrap shrink-0 rounded-full px-4 py-2 text-xs font-bold text-stone-300 hover:text-gold-pale transition"
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/register"
-                  className="group inline-flex items-center gap-2 rounded-full bg-gold px-4 py-2 text-xs font-bold text-obsidian shadow-[0_0_24px_rgba(245,158,11,0.25)] transition hover:bg-gold-deep"
+                  className="whitespace-nowrap shrink-0 group inline-flex items-center gap-2 rounded-full bg-gold px-4 py-2 text-xs font-bold text-obsidian shadow-[0_0_24px_rgba(245,158,11,0.25)] transition hover:bg-gold-deep"
                 >
                   <span>Join Free</span>
-                  <span className="rounded-full bg-obsidian/20 px-2 py-0.5 text-[10px] font-extrabold text-obsidian">
+                  <span className="rounded-full bg-obsidian/20 px-2 py-0.5 text-[10px] font-extrabold text-obsidian shrink-0">
                     +100 Coins
                   </span>
                 </Link>
@@ -224,7 +248,7 @@ export function Navbar() {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* 4. Mobile Menu Toggle Button */}
           <div className="flex items-center gap-2 lg:hidden">
             {user && (
               <button
@@ -237,10 +261,10 @@ export function Navbar() {
             )}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-xl text-stone-300 hover:text-white hover:bg-stone-900"
+              className="p-2 rounded-full border border-gold/20 text-gold-pale hover:bg-stone-900 transition"
               aria-label="Toggle navigation menu"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
@@ -252,38 +276,38 @@ export function Navbar() {
               <Link
                 href="/"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between text-stone-200 hover:text-gold-pale font-medium py-1 border-b border-stone-800/60"
+                className="flex items-center justify-between text-stone-200 hover:text-gold-pale font-medium py-1.5 border-b border-stone-800/60"
               >
-                <span className="flex items-center gap-2">Live Darshan</span>
+                <span className="flex items-center gap-2 font-semibold text-white">Live Darshan</span>
                 <span className="live-dot" />
               </Link>
               <Link
                 href="/#upcoming"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-stone-200 hover:text-gold-pale font-medium py-1 border-b border-stone-800/60"
+                className="text-stone-200 hover:text-gold-pale font-medium py-1.5 border-b border-stone-800/60"
               >
-                Schedule
+                Pooja Schedule
               </Link>
               <Link
                 href="/#pandits"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-stone-200 hover:text-gold-pale font-medium py-1 border-b border-stone-800/60"
+                className="text-stone-200 hover:text-gold-pale font-medium py-1.5 border-b border-stone-800/60"
               >
-                Verified Pandits
+                Verified Pandits Directory
               </Link>
               <Link
                 href="/about"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-stone-200 hover:text-gold-pale font-medium py-1 border-b border-stone-800/60"
+                className="text-stone-200 hover:text-gold-pale font-medium py-1.5 border-b border-stone-800/60"
               >
-                About Us
+                About Our Heritage
               </Link>
               <Link
                 href="/faq"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-stone-200 hover:text-gold-pale font-medium py-1 border-b border-stone-800/60"
+                className="text-stone-200 hover:text-gold-pale font-medium py-1.5 border-b border-stone-800/60"
               >
-                FAQ & Support
+                FAQ &amp; Support
               </Link>
 
               {user?.role === 'STREAMER' && (
@@ -291,16 +315,16 @@ export function Navbar() {
                   <Link
                     href="/studio/create"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-gold font-semibold py-1 flex items-center gap-2"
+                    className="text-gold font-bold py-1.5 flex items-center gap-2"
                   >
                     <Video className="w-4 h-4" /> Broadcaster Studio
                   </Link>
                   <Link
                     href="/streamer/earnings"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-gold-pale font-semibold py-1 flex items-center gap-2"
+                    className="text-gold-pale font-bold py-1.5 flex items-center gap-2"
                   >
-                    <CoinIcon size={16} /> Pandit Earnings & Dakshina
+                    <CoinIcon size={16} /> Pandit Earnings &amp; Dakshina
                   </Link>
                 </>
               )}
@@ -309,7 +333,7 @@ export function Navbar() {
                 <Link
                   href="/admin"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-amber-300 font-semibold py-1 flex items-center gap-2"
+                  className="text-amber-300 font-bold py-1.5 flex items-center gap-2"
                 >
                   <ShieldCheck className="w-4 h-4" /> Admin Console
                 </Link>
@@ -319,7 +343,7 @@ export function Navbar() {
                 <Link
                   href="/streamer/apply"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-gold-pale font-medium py-1 flex items-center gap-2"
+                  className="text-gold-pale font-medium py-1.5 flex items-center gap-2"
                 >
                   <Sparkles className="w-4 h-4 text-gold" /> Become a Pandit
                 </Link>
@@ -346,9 +370,9 @@ export function Navbar() {
                     <Link
                       href="/account"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="px-3 py-2 bg-stone-900 border border-stone-800 text-stone-200 text-xs font-semibold rounded-xl text-center"
+                      className="px-3 py-2 bg-obsidian-soft border border-gold/20 text-stone-200 text-xs font-semibold rounded-xl text-center"
                     >
-                      Account
+                      Account Settings
                     </Link>
                   </div>
                   <button

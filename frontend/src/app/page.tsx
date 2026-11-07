@@ -207,34 +207,43 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-obsidian text-foreground">
       {/* 1. Sacred Hero Section */}
-      <section className="relative overflow-hidden pt-8 pb-16 lg:pt-14 lg:pb-24 border-b border-gold/15">
+      <section className="relative overflow-hidden pt-12 pb-16 lg:pt-16 lg:pb-24 border-b border-gold/15">
         {/* Background Image with Ambient Saffron Glow */}
-        <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {/* Ambient Warm Golden Saffron Radial Glow */}
+          <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1000px] h-[550px] bg-[radial-gradient(ellipse_at_center,rgba(245,158,11,0.22),rgba(234,88,12,0.08)_50%,transparent_75%)] blur-2xl" />
+
+          {/* Sacred Temple Photography Backdrop */}
           <img
             src="/images/photo-1681797849099-0053b1567d95.webp"
-            alt="Sandhya Ganga Aarti"
-            className="h-full w-full object-cover opacity-25 scale-105 blur-[3px]"
+            alt="Sandhya Ganga Aarti Haridwar Sanctum"
+            className="h-full w-full object-cover opacity-45 scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-obsidian/80 via-obsidian/90 to-obsidian" />
-          <div className="mandala-bg absolute inset-0 opacity-40 [mask-image:radial-gradient(700px_500px_at_70%_25%,black,transparent)]" />
+
+          {/* Smooth Gradient Vignette */}
+          <div className="absolute inset-0 bg-gradient-to-b from-obsidian/60 via-obsidian/80 to-obsidian" />
+          <div className="absolute inset-0 bg-gradient-to-r from-obsidian/90 via-transparent to-obsidian/80" />
+
+          {/* Mandala Background Pattern */}
+          <div className="mandala-bg absolute inset-0 opacity-40 [mask-image:radial-gradient(800px_500px_at_50%_30%,black,transparent)]" />
         </div>
 
         <div className="relative mx-auto grid max-w-7xl gap-12 px-5 lg:grid-cols-12 lg:gap-8 lg:px-8 items-center">
           {/* Left Column: Sacred Copy & Value Props */}
           <div className="flex flex-col justify-center lg:col-span-7">
             <div>
-              <p className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.24em] text-gold-pale shadow-sm">
+              <p className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.24em] text-gold-pale shadow-[0_0_20px_rgba(245,158,11,0.15)]">
                 <span className="live-dot" />
                 Live from Bharat&apos;s sacred sanctums
               </p>
             </div>
 
-            <h1 className="mt-6 max-w-2xl font-serif text-4xl sm:text-6xl lg:text-7xl font-bold leading-[1.06] tracking-tight">
-              The sanctum is now{' '}
-              <span className="gold-text italic block sm:inline font-serif">one tap away</span>
+            <h1 className="mt-6 max-w-2xl font-serif text-4xl sm:text-6xl lg:text-7xl font-bold leading-[1.08] tracking-tight">
+              The sanctum is now <br className="hidden sm:inline" />
+              <span className="gold-text italic font-serif">one tap away</span>
             </h1>
 
-            <p className="mt-6 max-w-xl text-stone-300 text-sm sm:text-base lg:text-lg leading-relaxed">
+            <p className="mt-6 max-w-xl text-stone-300 text-base sm:text-lg leading-relaxed">
               Shubhdarshan brings real-time temple Darshan, personalized Vedic poojas, and Gurukul-verified astrologers to devotees in 62 countries — in sub-second 4K, from the sacred ghats of Kashi to your living room.
             </p>
 
@@ -242,7 +251,7 @@ export default function HomePage() {
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Link
                 href={featuredStream ? `/stream/${featuredStream.id}` : '#live-section'}
-                className="group inline-flex items-center gap-3 rounded-full bg-gold px-7 py-3.5 text-sm font-bold text-obsidian shadow-[0_0_36px_rgba(245,158,11,0.35)] transition hover:bg-gold-deep hover:shadow-[0_0_48px_rgba(245,158,11,0.5)]"
+                className="group inline-flex items-center gap-3 rounded-full bg-gold px-8 py-3.5 text-sm font-bold text-obsidian shadow-[0_0_36px_rgba(245,158,11,0.4)] transition hover:bg-gold-deep hover:shadow-[0_0_48px_rgba(245,158,11,0.6)] hover:scale-[1.02]"
               >
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-obsidian/20">
                   <Play className="h-3.5 w-3.5 fill-obsidian text-obsidian ml-0.5" />
@@ -253,7 +262,7 @@ export default function HomePage() {
               {user ? (
                 <button
                   onClick={() => setTopupModalOpen(true)}
-                  className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-6 py-3.5 text-sm font-bold text-gold-pale transition hover:border-gold hover:bg-gold/20"
+                  className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-7 py-3.5 text-sm font-bold text-gold-pale transition hover:border-gold hover:bg-gold/20"
                 >
                   <CoinIcon size={18} />
                   <span>Recharge Coins</span>
@@ -261,7 +270,7 @@ export default function HomePage() {
               ) : (
                 <Link
                   href="/register"
-                  className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-6 py-3.5 text-sm font-bold text-gold-pale transition hover:border-gold hover:bg-gold/20"
+                  className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-7 py-3.5 text-sm font-bold text-gold-pale transition hover:border-gold hover:bg-gold/20"
                 >
                   <Sparkles className="w-4 h-4 text-gold" />
                   <span>Claim 100 Free Coins</span>
@@ -269,86 +278,86 @@ export default function HomePage() {
               )}
             </div>
 
-            {/* Platform Stats Row */}
-            <dl className="mt-12 grid grid-cols-2 gap-x-6 gap-y-6 border-t border-stone-800/80 pt-6 sm:grid-cols-4">
+            {/* Platform Stats Row with Grand Gold Serif Numbers */}
+            <dl className="mt-12 grid grid-cols-2 gap-x-6 gap-y-6 border-t border-gold/15 pt-8 sm:grid-cols-4">
               <div>
-                <dt className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400">
+                <dd className="font-serif text-3xl sm:text-4xl font-bold text-gold-pale">85+</dd>
+                <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400">
                   Verified Pandits
                 </dt>
-                <dd className="font-serif text-2xl sm:text-3xl font-bold text-gold-pale">85+</dd>
               </div>
               <div>
-                <dt className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400">
-                  Devotee Rating
+                <dd className="font-serif text-3xl sm:text-4xl font-bold text-gold-pale">40+</dd>
+                <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400">
+                  Partner Temples
                 </dt>
-                <dd className="font-serif text-2xl sm:text-3xl font-bold text-gold-pale">4.98 / 5</dd>
               </div>
               <div>
-                <dt className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400">
+                <dd className="font-serif text-3xl sm:text-4xl font-bold text-gold-pale">62+</dd>
+                <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400">
                   Countries Reached
                 </dt>
-                <dd className="font-serif text-2xl sm:text-3xl font-bold text-gold-pale">62+</dd>
               </div>
               <div>
-                <dt className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400">
-                  Compliance
+                <dd className="font-serif text-3xl sm:text-4xl font-bold text-gold-pale">4.9 ★</dd>
+                <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400">
+                  Devotee Rating
                 </dt>
-                <dd className="font-serif text-xl sm:text-2xl font-bold text-emerald-400">DPDP 2023</dd>
               </div>
             </dl>
           </div>
 
           {/* Right Column: Hero Featured Live Stream Card */}
           <div className="lg:col-span-5">
-            <div className="relative rounded-3xl border border-gold/30 bg-gradient-to-b from-[#1f1710] to-obsidian p-3 shadow-[0_20px_60px_rgba(0,0,0,0.7)] group">
-              <div className="relative aspect-video sm:aspect-[4/3] rounded-2xl overflow-hidden bg-black">
+            <div className="relative rounded-3xl border border-gold/30 bg-gradient-to-b from-[#221810] to-obsidian p-3 shadow-[0_25px_70px_rgba(0,0,0,0.85)] group transition hover:border-gold/60">
+              <div className="relative aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden bg-black">
                 <img
                   src={
                     featuredStream?.thumbnailUrl ||
                     '/images/photo-1678593628844-6ea49dee8ce3.webp'
                   }
                   alt={featuredStream?.title || 'Kashi Vishwanath Mangala Aarti'}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-90" />
+                <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/40 to-transparent opacity-95" />
 
                 {/* Top Overlay Badges */}
-                <div className="absolute top-3 left-3 flex items-center gap-2">
-                  <span className="flex items-center gap-1.5 rounded-full bg-red-600/90 backdrop-blur-md px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white">
-                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                <div className="absolute top-3.5 left-3.5 flex items-center gap-2">
+                  <span className="flex items-center gap-1.5 rounded-full bg-vermillion-deep/95 backdrop-blur-md px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-md">
+                    <span className="live-dot" style={{ width: '6px', height: '6px' }} />
                     LIVE
                   </span>
-                  <span className="rounded-full bg-black/60 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-gold-pale border border-gold/20">
+                  <span className="rounded-full bg-black/70 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-gold-pale border border-gold/20">
                     Sub-second 4K
                   </span>
                 </div>
 
-                <div className="absolute top-3 right-3 rounded-full bg-black/60 backdrop-blur-md px-2.5 py-1 text-[11px] font-semibold text-stone-300 flex items-center gap-1 border border-stone-800">
+                <div className="absolute top-3.5 right-3.5 rounded-full bg-black/70 backdrop-blur-md px-3 py-1 text-[11px] font-semibold text-stone-300 flex items-center gap-1.5 border border-stone-800">
                   <Users className="w-3.5 h-3.5 text-gold" />
                   <span>{featuredStream?.peakViewers || 248} watching</span>
                 </div>
 
                 {/* Bottom Overlay Title & Join CTA */}
                 <div className="absolute bottom-4 left-4 right-4">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-soft">
-                    {featuredStream?.category.name || 'Mangala Aarti'}
+                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-soft block mb-1">
+                    {featuredStream?.category?.name || 'Mangala Aarti'}
                   </span>
-                  <h3 className="font-serif text-xl sm:text-2xl font-bold text-white line-clamp-1 mt-0.5">
+                  <h3 className="font-serif text-xl sm:text-2xl font-bold text-white line-clamp-2 leading-snug">
                     {featuredStream?.title || 'Mangala Aarti — Kashi Vishwanath'}
                   </h3>
-                  <div className="mt-3 flex items-center justify-between">
+                  <div className="mt-3.5 flex items-center justify-between pt-2 border-t border-stone-800/60">
                     <div className="flex items-center gap-2">
                       <PranamIcon size={16} />
                       <span className="text-xs font-semibold text-stone-200">
-                        {featuredStream?.streamer.name || 'Pandit Aarav Sharma'}
+                        {featuredStream?.streamer?.name || 'Pandit Aarav Sharma'}
                       </span>
                       <VerifiedPanditBadge size={14} />
                     </div>
                     <Link
                       href={featuredStream ? `/stream/${featuredStream.id}` : '#live-section'}
-                      className="rounded-full bg-gold px-4 py-1.5 text-xs font-bold text-obsidian shadow hover:bg-gold-deep transition"
+                      className="rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold px-4 py-2 text-xs shadow-lg transition-transform hover:scale-105 flex items-center gap-1"
                     >
-                      Join Darshan
+                      <span>Join Darshan</span>
                     </Link>
                   </div>
                 </div>
