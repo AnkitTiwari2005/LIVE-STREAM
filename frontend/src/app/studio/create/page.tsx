@@ -19,6 +19,8 @@ export default function CreateStreamPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isViewerRole, setIsViewerRole] = useState(false);
+  const [activeLiveStream, setActiveLiveStream] = useState<any>(null);
+  const [endingActive, setEndingActive] = useState(false);
 
   useEffect(() => {
     // Check logged in user state
@@ -40,6 +42,23 @@ export default function CreateStreamPage() {
       } catch {}
     }
 
+    async function checkActiveLiveStream() {
+      const storedToken = localStorage.getItem('pooja_token');
+      if (!storedToken) return;
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      try {
+        const res = await fetch(`${apiUrl}/streams/streamer/active-live`, {
+          headers: { Authorization: `Bearer ${storedToken}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.id) {
+            setActiveLiveStream(data);
+          }
+        }
+      } catch {}
+    }
+
     async function loadCategories() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
       try {
@@ -54,7 +73,24 @@ export default function CreateStreamPage() {
       }
     }
     loadCategories();
+    checkActiveLiveStream();
   }, []);
+
+  const handleEndActiveLive = async () => {
+    setEndingActive(true);
+    const token = localStorage.getItem('pooja_token');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    try {
+      const res = await fetch(`${apiUrl}/streams/streamer/end-all-active`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setActiveLiveStream(null);
+      }
+    } catch {}
+    setEndingActive(false);
+  };
 
   const handleSwitchAccount = () => {
     localStorage.removeItem('pooja_token');
@@ -135,6 +171,37 @@ export default function CreateStreamPage() {
               <p className="text-xs text-stone-400">Configure ritual details before entering studio preview</p>
             </div>
           </div>
+
+        {/* Active Live Stream Notification & Action Banner */}
+        {activeLiveStream && (
+          <div className="mb-6 p-4 rounded-2xl bg-amber-950/70 border border-amber-500/60 text-amber-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+            <div className="flex items-center gap-3">
+              <DiyaIcon size={24} className="text-amber-400 shrink-0" />
+              <div>
+                <span className="font-bold text-amber-300 block text-sm">
+                  Active Live Stream Running: &ldquo;{activeLiveStream.title}&rdquo;
+                </span>
+                <span>You already have an ongoing broadcast. Resume it directly or conclude it to start a new pooja session.</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Link
+                href={`/studio/${activeLiveStream.id}`}
+                className="px-4 py-2 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-xl text-xs transition shadow-md"
+              >
+                Resume Broadcast
+              </Link>
+              <button
+                type="button"
+                onClick={handleEndActiveLive}
+                disabled={endingActive}
+                className="px-3.5 py-2 bg-stone-900 border border-amber-600/60 hover:bg-red-950/60 text-stone-200 hover:text-red-300 font-semibold rounded-xl text-xs transition"
+              >
+                {endingActive ? 'Ending...' : 'End Previous Stream'}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Devotee Role Warning Banner */}
         {isViewerRole && (

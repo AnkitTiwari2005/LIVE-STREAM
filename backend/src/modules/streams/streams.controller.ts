@@ -34,14 +34,30 @@ export class StreamsController {
   }
 
   @Roles(UserRole.STREAMER)
+  @Get('streamer/active-live')
+  @ApiOperation({ summary: 'Get streamer active live stream if any' })
+  async getActiveLiveStream(@CurrentUser('id') streamerId: string) {
+    return this.streamsService.getActiveLiveStreamForStreamer(streamerId);
+  }
+
+  @Roles(UserRole.STREAMER)
+  @Post('streamer/end-all-active')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Force-end all orphaned active streams for streamer' })
+  async endAllActiveStreams(@CurrentUser('id') streamerId: string) {
+    return this.streamsService.endAllActiveLiveStreamsForStreamer(streamerId);
+  }
+
+  @Roles(UserRole.STREAMER)
   @Post(':id/go-live')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Start broadcasting live and get LiveKit publisher token (FR-L2)' })
   async goLive(
     @Param('id') streamId: string,
     @CurrentUser('id') streamerId: string,
+    @Body('forceEndPrevious') forceEndPrevious?: boolean,
   ) {
-    return this.streamsService.goLive(streamId, streamerId);
+    return this.streamsService.goLive(streamId, streamerId, !!forceEndPrevious);
   }
 
   @Post(':id/end')

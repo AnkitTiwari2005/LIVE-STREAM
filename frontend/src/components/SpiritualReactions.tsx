@@ -2,69 +2,66 @@
 
 import React, { useState, useEffect } from 'react';
 import { Socket } from 'socket.io-client';
-import {
-  DiyaIcon,
-  LotusIcon,
-  PranamIcon,
-  BellIcon,
-  OmIcon,
-  ConchIcon,
-} from '@/components/icons/SpiritualIcons';
 
 interface ReactionItem {
   id: string;
-  type: string;
+  emoji: string;
   left: number;
 }
 
-interface SpiritualReactionsProps {
-  socket: Socket | null;
-  streamId: string;
-}
-
-const REACTION_TYPES = [
-  { id: 'diya', name: 'Arpan Diya', Component: DiyaIcon },
-  { id: 'lotus', name: 'Offer Pushpa', Component: LotusIcon },
-  { id: 'pranam', name: 'Sacred Pranam', Component: PranamIcon },
-  { id: 'bell', name: 'Ring Ghanti', Component: BellIcon },
-  { id: 'om', name: 'Aum Chant', Component: OmIcon },
-  { id: 'conch', name: 'Blow Shankha', Component: ConchIcon },
+export const SACRED_EMOJIS = [
+  { emoji: '🙏', name: 'Pranam Vandana' },
+  { emoji: '🪔', name: 'Aarti Diya' },
+  { emoji: '🌸', name: 'Pushpa Arpan' },
+  { emoji: '🔔', name: 'Maha Ghanti' },
+  { emoji: '🕉️', name: 'Om Dhwani' },
+  { emoji: '🥥', name: 'Shriphal Prasad' },
+  { emoji: '❤️', name: 'Bhakti Prem' },
+  { emoji: '✨', name: 'Divya Kripa' },
 ];
 
-function renderReactionIcon(type: string, size = 32) {
-  switch (type) {
+export function mapToEmoji(typeOrEmoji: string): string {
+  switch (typeOrEmoji) {
     case 'diya':
     case '🪔':
-      return <DiyaIcon size={size} />;
+      return '🪔';
     case 'lotus':
     case '🌸':
     case '🌺':
-      return <LotusIcon size={size} />;
+      return '🌸';
     case 'pranam':
     case '🙏':
-      return <PranamIcon size={size} />;
+      return '🙏';
     case 'bell':
     case '🔔':
-      return <BellIcon size={size} />;
+      return '🔔';
     case 'om':
     case '🕉️':
-      return <OmIcon size={size} />;
+      return '🕉️';
     case 'conch':
     case '🐚':
-      return <ConchIcon size={size} />;
+      return '🥥';
+    case 'heart':
+    case '❤️':
+      return '❤️';
+    case 'sparkles':
+    case '✨':
+      return '✨';
     default:
-      return <DiyaIcon size={size} />;
+      return typeOrEmoji.length <= 4 ? typeOrEmoji : '🪔';
   }
 }
 
-export function SpiritualReactions({ socket, streamId }: SpiritualReactionsProps) {
+// 1. Floating Reactions Overlay (Placed inside the video container, 100% non-interactive, zero obstruction)
+export function FloatingReactionsOverlay({ socket, streamId }: { socket: Socket | null; streamId: string }) {
   const [activeReactions, setActiveReactions] = useState<ReactionItem[]>([]);
 
-  const triggerReactionAnimation = (type: string) => {
+  const triggerReactionAnimation = (typeOrEmoji: string) => {
+    const emoji = mapToEmoji(typeOrEmoji);
     const newReaction: ReactionItem = {
       id: `${Date.now()}_${Math.random()}`,
-      type,
-      left: 15 + Math.random() * 70, // random horizontal offset 15% to 85%
+      emoji,
+      left: 70 + Math.random() * 22, // Floating up the right side (70% - 92%) so video center is completely open!
     };
 
     setActiveReactions((prev) => [...prev.slice(-25), newReaction]);
@@ -88,48 +85,20 @@ export function SpiritualReactions({ socket, streamId }: SpiritualReactionsProps
     };
   }, [socket, streamId]);
 
-  const sendReaction = (type: string) => {
-    // 1. Instant local optimistic feedback for user
-    triggerReactionAnimation(type);
-
-    // 2. Broadcast via socket to all other room attendees
-    if (socket && streamId) {
-      socket.emit('chat:reaction', { streamId, emoji: type });
-    }
-  };
-
   return (
-    <div className="relative">
-      {/* Floating particles container */}
-      <div className="absolute bottom-16 right-0 w-64 h-80 pointer-events-none overflow-hidden z-40">
-        {activeReactions.map((r) => (
-          <div
-            key={r.id}
-            className="absolute bottom-0 select-none filter drop-shadow-[0_4px_12px_rgba(234,88,12,0.6)]"
-            style={{
-              left: `${r.left}%`,
-              animation: 'floatUpSway 2.4s ease-out forwards',
-            }}
-          >
-            {renderReactionIcon(r.type, 38)}
-          </div>
-        ))}
-      </div>
-
-      {/* Pure SVG Spiritual Reaction Trigger Bar */}
-      <div className="flex items-center gap-1 sm:gap-2 bg-stone-900/90 border border-stone-800 rounded-full px-3 py-1.5 backdrop-blur-md shadow-2xl">
-        {REACTION_TYPES.map(({ id, name, Component }) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => sendReaction(id)}
-            className="hover:scale-125 active:scale-95 transition-transform p-1.5 rounded-full hover:bg-stone-800/80 group"
-            title={name}
-          >
-            <Component size={22} className="group-hover:brightness-110" />
-          </button>
-        ))}
-      </div>
+    <div className="pointer-events-none absolute inset-0 overflow-hidden z-20">
+      {activeReactions.map((r) => (
+        <div
+          key={r.id}
+          className="absolute bottom-4 select-none text-2xl sm:text-3xl filter drop-shadow-[0_4px_12px_rgba(245,158,11,0.6)]"
+          style={{
+            left: `${r.left}%`,
+            animation: 'floatUpSway 2.4s ease-out forwards',
+          }}
+        >
+          {r.emoji}
+        </div>
+      ))}
 
       <style jsx global>{`
         @keyframes floatUpSway {
@@ -138,15 +107,65 @@ export function SpiritualReactions({ socket, streamId }: SpiritualReactionsProps
             opacity: 1;
           }
           50% {
-            transform: translateY(-120px) scale(1.1) rotate(8deg);
+            transform: translateY(-120px) scale(1.2) rotate(10deg);
             opacity: 0.95;
           }
           100% {
-            transform: translateY(-240px) scale(0.9) rotate(-8deg);
+            transform: translateY(-260px) scale(0.85) rotate(-10deg);
             opacity: 0;
           }
         }
       `}</style>
     </div>
+  );
+}
+
+// 2. Devotional Emoji Bar (Placed BELOW the video player, in the devotee interaction card)
+export function DevotionalEmojiBar({
+  socket,
+  streamId,
+  onReact,
+}: {
+  socket: Socket | null;
+  streamId: string;
+  onReact?: (emoji: string) => void;
+}) {
+  const sendReaction = (emoji: string) => {
+    if (onReact) onReact(emoji);
+    if (socket && streamId) {
+      socket.emit('chat:reaction', { streamId, emoji });
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-between gap-1 sm:gap-2 bg-obsidian-deep/80 border border-gold/20 rounded-2xl px-3 py-2 shadow-lg backdrop-blur-md">
+      <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-wider text-gold-soft mr-1">
+        Bhav Arpan:
+      </span>
+      <div className="flex items-center justify-between flex-1 gap-1">
+        {SACRED_EMOJIS.map(({ emoji, name }) => (
+          <button
+            key={emoji}
+            type="button"
+            onClick={() => sendReaction(emoji)}
+            className="flex-1 flex items-center justify-center text-xl sm:text-2xl p-1.5 rounded-xl hover:bg-gold/15 active:scale-130 transition transform hover:scale-115"
+            title={name}
+            aria-label={name}
+          >
+            {emoji}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Backwards compatibility export
+export function SpiritualReactions(props: { socket: Socket | null; streamId: string }) {
+  return (
+    <>
+      <FloatingReactionsOverlay {...props} />
+      <DevotionalEmojiBar {...props} />
+    </>
   );
 }

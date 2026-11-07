@@ -14,6 +14,8 @@ import {
   Flame,
   Users,
   Calendar,
+  ChevronDown,
+  User,
 } from 'lucide-react';
 import { CoinTopupModal } from './CoinTopupModal';
 import { OmIcon, CoinIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
@@ -23,6 +25,7 @@ export function Navbar() {
   const [coinBalance, setCoinBalance] = useState<number | null>(null);
   const [topupModalOpen, setTopupModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   useEffect(() => {
     // Check session
@@ -95,7 +98,7 @@ export function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-50 glass-strong border-b border-gold/15 py-3 shadow-[0_8px_40px_rgba(0,0,0,0.55)] backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-2 sm:gap-4">
           {/* 1. Sacred Brand Logo with Diya & Sanskrit Typography */}
           <Link href="/" className="group flex items-center gap-3 shrink-0">
             <span className="relative flex h-10 w-10 items-center justify-center rounded-full border border-gold/40 bg-gradient-to-b from-[#2a1e12] to-obsidian shadow-[0_0_18px_rgba(245,158,11,0.25)] transition group-hover:border-gold/70">
@@ -208,23 +211,84 @@ export function Navbar() {
                   <PlusCircle className="w-3.5 h-3.5 text-gold ml-0.5 shrink-0 group-hover:text-gold-soft" />
                 </button>
 
-                {/* Devotee / Pandit Profile Pill */}
-                <Link
-                  href="/account"
-                  className="whitespace-nowrap shrink-0 flex items-center gap-1.5 text-xs font-semibold text-stone-200 hover:text-gold-pale transition px-3 py-1.5 rounded-full bg-obsidian-soft border border-gold/20 hover:border-gold/40 max-w-[130px] xl:max-w-[170px]"
-                  title="My Account Settings"
-                >
-                  <PranamIcon size={14} className="text-gold shrink-0" />
-                  <span className="truncate">{user.name}</span>
-                </Link>
+                {/* Devotee / Pandit Profile with Sacred Dropdown */}
+                <div className="relative shrink-0">
+                  <button
+                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                    className="whitespace-nowrap shrink-0 flex items-center gap-1.5 text-xs font-semibold text-stone-200 hover:text-gold-pale transition px-3 py-1.5 rounded-full bg-obsidian-soft border border-gold/20 hover:border-gold/40 max-w-[110px] xl:max-w-[150px]"
+                    title="Devotee & Broadcaster Menu"
+                  >
+                    <PranamIcon size={14} className="text-gold shrink-0" />
+                    <span className="truncate">{user.name}</span>
+                    <ChevronDown className="w-3 h-3 text-gold-soft shrink-0" />
+                  </button>
 
-                {/* Sign Out Icon */}
+                  {userDropdownOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-gold/30 bg-obsidian-deep/95 backdrop-blur-xl p-2 shadow-2xl z-50 text-xs">
+                      <div className="px-3 py-2 border-b border-gold/15 mb-1">
+                        <div className="font-bold text-white truncate">{user.name}</div>
+                        <div className="text-[10px] text-gold-soft uppercase tracking-wider">{user.role || 'DEVOTEE'}</div>
+                      </div>
+                      {user.role === 'STREAMER' && (
+                        <>
+                          <Link
+                            href="/studio/create"
+                            onClick={() => setUserDropdownOpen(false)}
+                            className="flex items-center gap-2 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/10 rounded-xl transition"
+                          >
+                            <Video className="w-3.5 h-3.5 text-gold" />
+                            <span>Broadcaster Studio</span>
+                          </Link>
+                          <Link
+                            href="/streamer/earnings"
+                            onClick={() => setUserDropdownOpen(false)}
+                            className="flex items-center gap-2 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/10 rounded-xl transition"
+                          >
+                            <CoinIcon size={14} />
+                            <span>Earnings & Dakshina</span>
+                          </Link>
+                        </>
+                      )}
+                      {user.role === 'ADMIN' && (
+                        <Link
+                          href="/admin"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2 text-amber-300 hover:bg-amber-950/40 rounded-xl transition"
+                        >
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          <span>Admin Console</span>
+                        </Link>
+                      )}
+                      <Link
+                        href="/account"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/10 rounded-xl transition"
+                      >
+                        <User className="w-3.5 h-3.5 text-stone-400" />
+                        <span>Account Settings</span>
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          handleLogout();
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-red-400 hover:bg-red-950/30 rounded-xl transition mt-1 border-t border-stone-800/60"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>Log Out</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Direct Visible Logout Icon Button (Never Out of Screen) */}
                 <button
                   onClick={handleLogout}
-                  className="p-1.5 rounded-full text-stone-400 hover:text-red-400 hover:bg-stone-900 transition-colors shrink-0"
-                  title="Log Out"
+                  className="whitespace-nowrap shrink-0 flex items-center justify-center p-1.5 rounded-full border border-red-900/40 bg-red-950/30 text-stone-300 hover:text-red-400 hover:bg-red-950/60 hover:border-red-700 transition shadow-sm"
+                  title="Log Out from Session"
+                  aria-label="Log Out"
                 >
-                  <LogOut className="w-4 h-4 shrink-0" />
+                  <LogOut className="w-3.5 h-3.5 text-stone-300 hover:text-red-400 shrink-0" />
                 </button>
               </div>
             ) : (

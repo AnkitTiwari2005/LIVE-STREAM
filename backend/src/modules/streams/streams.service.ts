@@ -59,7 +59,42 @@ export class StreamsService {
     return stream;
   }
 
-  async goLive(streamId: string, streamerId: string) {
+  async getActiveLiveStreamForStreamer(streamerId: string) {
+    return this.prisma.stream.findFirst({
+      where: {
+        streamerId,
+        status: StreamStatus.LIVE,
+      },
+      include: { category: true },
+    });
+  }
+
+  async endAllActiveLiveStreamsForStreamer(streamerId: string) {
+    const activeStreams = await this.prisma.stream.findMany({
+      where: {
+        streamerId,
+        status: StreamStatus.LIVE,
+      },
+    });
+
+    for (const s of activeStreams) {
+      try {
+        await this.videoProvider.endRoom(s.id);
+      } catch {}
+      await this.prisma.stream.update({
+        where: { id: s.id },
+        data: {
+          status: StreamStatus.ENDED,
+          endedAt: new Date(),
+        },
+      });
+      this.logger.log(`Force-ended active live stream [${s.id}] for streamer [${streamerId}]`);
+    }
+
+    return { message: 'All active streams have been concluded', count: activeStreams.length };
+  }
+
+  async goLive(streamId: string, streamerId: string, forceEndPrevious: boolean = false) {
     const stream = await this.prisma.stream.findUnique({
       where: { id: streamId },
       include: { streamer: true },
@@ -80,7 +115,21 @@ export class StreamsService {
       },
     });
     if (activeStreamForUser) {
-      throw new BadRequestException('You already have another live broadcast in progress.');
+      if (forceEndPrevious) {
+        try {
+          await this.videoProvider.endRoom(activeStreamForUser.id);
+        } catch {}
+        await this.prisma.stream.update({
+          where: { id: activeStreamForUser.id },
+          data: {
+            status: StreamStatus.ENDED,
+            endedAt: new Date(),
+          },
+        });
+        this.logger.log(`Auto-ended previous live stream [${activeStreamForUser.id}] for streamer [${streamerId}]`);
+      } else {
+        throw new BadRequestException('You already have another live broadcast in progress.');
+      }
     }
 
     // Capacity Gate 2: Check global concurrent live streams limit (max 3 for single VPS NFR-P1)

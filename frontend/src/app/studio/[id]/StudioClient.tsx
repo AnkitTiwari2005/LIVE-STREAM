@@ -70,7 +70,9 @@ export default function StudioClient() {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [privateLinkData, setPrivateLinkData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [activeConflict, setActiveConflict] = useState(false);
   const [loading, setLoading] = useState(false);
+  const devicesLoadedRef = useRef(false);
 
   // Ensure streamId updates if URL changes
   useEffect(() => {
@@ -165,19 +167,33 @@ export default function StudioClient() {
     };
   }, [streamId, router]);
 
-  // Stage 1: Hardware preview using local tracks
+  // Stage 1: Hardware preview using local tracks with robust fallback
   useEffect(() => {
     if (isLive) return;
 
     let localVideo: LocalVideoTrack | undefined;
     let localAudio: LocalAudioTrack | undefined;
+    let isCancelled = false;
 
     async function startPreview() {
       try {
-        const tracks = await createLocalTracks({
-          video: selectedVideo ? { deviceId: { exact: selectedVideo }, resolution: { width: 640, height: 480, frameRate: 24 } } : true,
-          audio: selectedAudio ? { deviceId: { exact: selectedAudio } } : true,
-        });
+        let tracks: any[] = [];
+        try {
+          // Attempt acquire with user preferences (ideal constraints prevent OverconstrainedError)
+          tracks = await createLocalTracks({
+            video: selectedVideo ? { deviceId: { ideal: selectedVideo } } : true,
+            audio: selectedAudio ? { deviceId: { ideal: selectedAudio } } : true,
+          });
+        } catch (constraintErr) {
+          console.warn('Constrained track acquire failed, falling back to basic tracks:', constraintErr);
+          // Resilient fallback: acquire default video and audio without constraints
+          tracks = await createLocalTracks({ video: true, audio: true });
+        }
+
+        if (isCancelled) {
+          tracks.forEach((t) => t.stop());
+          return;
+        }
 
         localVideo = tracks.find((t) => t.kind === 'video') as LocalVideoTrack;
         localAudio = tracks.find((t) => t.kind === 'audio') as LocalAudioTrack;
@@ -188,17 +204,22 @@ export default function StudioClient() {
           previewRef.current.innerHTML = '';
           const videoEl = localVideo.attach();
           videoEl.className = 'w-full h-full object-cover';
+          videoEl.muted = true;
+          videoEl.autoplay = true;
+          videoEl.setAttribute('playsinline', 'true');
+          videoEl.setAttribute('muted', 'true');
+          videoEl.play().catch(() => {});
           previewRef.current.appendChild(videoEl);
         }
 
-        if (navigator.mediaDevices?.enumerateDevices) {
+        // Enumerate devices once
+        if (!devicesLoadedRef.current && navigator.mediaDevices?.enumerateDevices) {
           const devices = await navigator.mediaDevices.enumerateDevices();
           const vInputs = devices.filter((d) => d.kind === 'videoinput');
           const aInputs = devices.filter((d) => d.kind === 'audioinput');
           setVideoDevices(vInputs);
           setAudioDevices(aInputs);
-          if (!selectedVideo && vInputs.length > 0) setSelectedVideo(vInputs[0].deviceId);
-          if (!selectedAudio && aInputs.length > 0) setSelectedAudio(aInputs[0].deviceId);
+          devicesLoadedRef.current = true;
         }
       } catch (err: any) {
         console.warn('Camera preview acquire error:', err.message);
@@ -208,14 +229,16 @@ export default function StudioClient() {
     startPreview();
 
     return () => {
+      isCancelled = true;
       localVideo?.stop();
       localAudio?.stop();
     };
   }, [selectedVideo, selectedAudio, isLive]);
 
-  // Stage 2: Transition to LIVE
-  const handleGoLive = async () => {
+  // Stage 2: Transition to LIVE with conflict resolution
+  const handleGoLive = async (forceEndPrevious = false) => {
     setError(null);
+    setActiveConflict(false);
     setLoading(true);
 
     const storedToken = localStorage.getItem('pooja_token');
@@ -224,11 +247,20 @@ export default function StudioClient() {
     try {
       const res = await fetch(`${apiUrl}/streams/${streamId}/go-live`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${storedToken}` },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${storedToken}`,
+        },
+        body: JSON.stringify({ forceEndPrevious }),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Could not start live stream');
+      if (!res.ok) {
+        if (data.message && data.message.includes('already have another live broadcast')) {
+          setActiveConflict(true);
+        }
+        throw new Error(data.message || 'Could not start live stream');
+      }
 
       // Stop local preview tracks so LiveKit can capture the device
       previewTracks.video?.stop();
@@ -313,6 +345,25 @@ export default function StudioClient() {
         </div>
       )}
 
+      {activeConflict && (
+        <div className="mb-6 p-4 rounded-2xl bg-amber-950/80 border border-amber-600 text-amber-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+          <div className="flex items-center gap-2.5">
+            <AlertCircle className="w-5 h-5 text-amber-400 shrink-0" />
+            <div>
+              <span className="font-bold text-amber-300 block text-sm">Previous Live Session Still Active</span>
+              <span>You have another live broadcast running. Would you like to end the previous broadcast and go live with this session now?</span>
+            </div>
+          </div>
+          <button
+            onClick={() => handleGoLive(true)}
+            disabled={loading}
+            className="px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold rounded-xl text-xs transition shadow-md shrink-0"
+          >
+            {loading ? 'Starting...' : 'End Previous & Start Live Now'}
+          </button>
+        </div>
+      )}
+
       {stream?.status === 'ENDED' && (
         <div className="mb-6 p-4 rounded-2xl bg-amber-950/70 border border-amber-700/60 text-amber-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -338,11 +389,40 @@ export default function StudioClient() {
           <div className="relative aspect-video bg-black rounded-2xl overflow-hidden border border-stone-800 shadow-2xl flex items-center justify-center">
             {!isLive ? (
               // Stage 1: Local Device Preview
-              <div className="relative w-full h-full flex items-center justify-center">
+              <div className="relative w-full h-full flex items-center justify-center bg-stone-950">
                 <div ref={previewRef} className="w-full h-full object-cover" />
-                <div className="absolute top-4 left-4 bg-amber-500/90 text-black text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider backdrop-blur-sm">
+                <div className="absolute top-4 left-4 bg-amber-500/90 text-black text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider backdrop-blur-sm z-10">
                   STUDIO PREVIEW (OFF AIR)
                 </div>
+                {!previewTracks.video && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 bg-black/75">
+                    <Camera className="w-10 h-10 text-amber-400 mb-3 animate-pulse" />
+                    <p className="text-stone-300 text-xs sm:text-sm font-semibold mb-3">
+                      Camera preview initializing or access needed
+                    </p>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          const s = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                          s.getTracks().forEach((t) => t.stop());
+                          const devices = await navigator.mediaDevices.enumerateDevices();
+                          const v = devices.filter((d) => d.kind === 'videoinput');
+                          const a = devices.filter((d) => d.kind === 'audioinput');
+                          setVideoDevices(v);
+                          setAudioDevices(a);
+                          if (v.length > 0) setSelectedVideo(v[0].deviceId);
+                          if (a.length > 0) setSelectedAudio(a[0].deviceId);
+                        } catch (e: any) {
+                          setError('Please allow camera and mic permissions in your browser address bar.');
+                        }
+                      }}
+                      className="px-4 py-2 bg-gold hover:bg-gold-deep text-obsidian font-bold text-xs rounded-xl shadow-lg transition"
+                    >
+                      Connect Camera &amp; Mic
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               // Stage 2: LiveKit Publishing Room with Simulcast
@@ -445,7 +525,7 @@ export default function StudioClient() {
                 </Link>
               ) : (
                 <button
-                  onClick={handleGoLive}
+                  onClick={() => handleGoLive(false)}
                   disabled={loading}
                   className="w-full py-3.5 bg-gradient-to-r from-orange-600 via-red-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold rounded-xl text-base shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >

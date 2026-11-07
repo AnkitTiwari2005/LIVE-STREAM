@@ -13,7 +13,7 @@ import {
 import { Track } from 'livekit-client';
 import { io, Socket } from 'socket.io-client';
 import { ChatWidget } from '@/components/ChatWidget';
-import { SpiritualReactions } from '@/components/SpiritualReactions';
+import { FloatingReactionsOverlay, DevotionalEmojiBar } from '@/components/SpiritualReactions';
 import { DakshinaModal } from '@/components/DakshinaModal';
 import { CoinTopupModal } from '@/components/CoinTopupModal';
 import { Users, AlertCircle, Share2, Sparkles, Zap, Calendar, Bell, CheckCircle2, Clock } from 'lucide-react';
@@ -285,28 +285,26 @@ export default function StreamPlayerClient() {
         </div>
       )}
 
-      {/* Login Required Notice */}
+      {/* Devotee Guest Notification Banner */}
       {loginRequired && (
-        <div className="mb-6 p-6 bg-stone-900 border border-orange-500/40 rounded-3xl text-center max-w-xl mx-auto shadow-2xl">
-          <OmIcon size={44} className="mb-3 mx-auto" />
-          <h2 className="text-xl font-bold text-white mb-2">Devotee Sign In Required</h2>
-          <p className="text-stone-300 text-xs sm:text-sm mb-4">
-            Join thousands of devotees receiving live blessings. Create your free account now and get{' '}
-            <span className="text-amber-400 font-extrabold inline-flex items-center gap-1">
-              <CoinIcon size={16} /> 100 Free Sacred Coins
-            </span>{' '}
-            (= 20 minutes complimentary live darshan)!
-          </p>
-          <div className="flex items-center justify-center gap-3">
+        <div className="mb-4 p-3 sm:p-4 bg-gradient-to-r from-obsidian-soft via-obsidian to-obsidian-soft border border-gold/30 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
+          <div className="flex items-center gap-2.5 text-center sm:text-left">
+            <OmIcon size={24} className="shrink-0 text-gold" />
+            <div className="text-xs">
+              <span className="font-bold text-white block sm:inline mr-1">Devotee Sign-in:</span>
+              <span className="text-stone-300">Join to claim <span className="text-gold font-bold">100 Free Coins</span> for complimentary live darshan!</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
             <Link
               href="/register"
-              className="px-5 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white font-bold rounded-xl text-sm shadow-md"
+              className="px-3.5 py-1.5 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs transition shadow"
             >
-              Register & Claim 100 Free Coins
+              Claim 100 Coins
             </Link>
             <Link
               href="/login"
-              className="px-4 py-2.5 bg-stone-800 text-stone-300 hover:text-white rounded-xl text-sm"
+              className="px-3 py-1.5 bg-obsidian-soft border border-gold/20 text-stone-300 hover:text-white rounded-full text-xs transition"
             >
               Sign In
             </Link>
@@ -464,18 +462,17 @@ export default function StreamPlayerClient() {
                 </div>
               )}
 
-              {/* Floating Spiritual Reactions Overlay */}
-              <div className="absolute bottom-4 left-4 z-20">
-                <SpiritualReactions socket={socket} streamId={id} />
-              </div>
+              {/* Floating Spiritual Reactions Overlay (100% clean, non-obstructive) */}
+              <FloatingReactionsOverlay socket={socket} streamId={id} />
             </div>
 
             {/* Stream Metadata & Pandit Info */}
             {stream && (
-              <div className="bg-obsidian-soft border border-gold/15 rounded-2xl p-5 shadow-lg">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
+              <div className="bg-obsidian-soft border border-gold/15 rounded-2xl p-4 sm:p-5 shadow-lg space-y-4">
+                {/* Title & Badges */}
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
                       {stream.status === 'LIVE' ? (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-950/80 text-red-400 border border-red-800">
                           <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
@@ -500,14 +497,17 @@ export default function StreamPlayerClient() {
                         </span>
                       )}
                     </div>
-                    <h1 className="font-serif text-2xl font-bold text-white tracking-tight">{stream.title}</h1>
-                    <p className="text-xs sm:text-sm text-stone-400 mt-1 line-clamp-2 leading-relaxed">{stream.description}</p>
+                    <h1 className="font-serif text-xl sm:text-2xl font-bold text-white tracking-tight leading-snug">{stream.title}</h1>
+                    {stream.description && (
+                      <p className="text-xs sm:text-sm text-stone-400 mt-1 line-clamp-2 leading-relaxed">{stream.description}</p>
+                    )}
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  {/* Devotee Action CTAs (Arpan Dakshina + Share) */}
+                  <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
                     <button
                       onClick={() => setDakshinaModalOpen(true)}
-                      className="flex items-center gap-2 px-4 py-2.5 bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold rounded-full transition-all shadow-[0_0_24px_rgba(245,158,11,0.25)]"
+                      className="flex items-center gap-2 px-4 py-2.5 bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold rounded-full transition-all shadow-[0_0_24px_rgba(245,158,11,0.25)] hover:scale-105"
                     >
                       <DiyaIcon size={16} />
                       <span>Arpan Dakshina</span>
@@ -521,7 +521,11 @@ export default function StreamPlayerClient() {
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3.5 border-t border-stone-800/80 flex items-center justify-between text-xs text-stone-300">
+                {/* Devotional Emoji Reactions Bar (Below the video, never obstructing the sanctum!) */}
+                <DevotionalEmojiBar socket={socket} streamId={id} />
+
+                {/* Pandit Info & Devotee Counters */}
+                <div className="pt-3 border-t border-stone-800/80 flex items-center justify-between text-xs text-stone-300">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-stone-100 text-sm flex items-center gap-1.5">
                       <PranamIcon size={16} /> {stream.streamer?.name}

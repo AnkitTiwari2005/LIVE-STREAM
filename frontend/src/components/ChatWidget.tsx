@@ -31,7 +31,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser }: ChatWi
   const [input, setInput] = useState('');
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
   const [activeUser, setActiveUser] = useState<any>(currentUser || null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (currentUser) {
@@ -121,7 +121,9 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser }: ChatWi
   }, [socket, streamId]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   }, [messages]);
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -250,7 +252,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser }: ChatWi
       )}
 
       {/* Message List */}
-      <div className="flex-1 p-3 overflow-y-auto space-y-2.5 text-xs">
+      <div ref={chatContainerRef} className="flex-1 p-3 overflow-y-auto space-y-2.5 text-xs">
         {messages.length === 0 && (
           <div className="h-full flex flex-col items-center justify-center text-stone-500 text-center px-4">
             <PranamIcon size={32} className="mb-2" />
@@ -351,7 +353,6 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser }: ChatWi
             </div>
           );
         })}
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Input Form */}
