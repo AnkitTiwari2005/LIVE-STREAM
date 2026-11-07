@@ -143,6 +143,7 @@ export class AuthService {
             balanceBefore: user.wallet!.balanceCoins,
             balanceAfter: user.wallet!.balanceCoins + 100,
             referenceId: `signup_bonus_${user.id}`,
+            idempotencyKey: `signup_bonus_${user.id}`,
             metadata: { note: 'Auspicious Welcome Darshan Bonus' },
           },
         });

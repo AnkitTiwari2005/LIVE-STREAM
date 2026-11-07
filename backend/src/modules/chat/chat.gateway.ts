@@ -8,7 +8,7 @@ import {
   MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Logger } from '@nestjs/common';
+import { Logger, UnauthorizedException } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../database/prisma.service';
@@ -105,6 +105,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const payload = this.jwtService.verify(token, {
           secret: process.env.JWT_ACCESS_SECRET || 'jwt_default_insecure_access_secret_key',
         });
+        if (payload?.purpose === '2fa_challenge' || payload?.is2FAChallenge) {
+          throw new UnauthorizedException('2FA challenge token rejected for chat session');
+        }
         client.data.user = payload;
       }
     } catch {
@@ -120,7 +123,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('chat:join')
   async handleJoinStream(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { streamId: string },
+    @MessageBody() data: { streamId: string; sessionId?: string },
   ) {
     const { streamId } = data;
     if (!streamId) return;
@@ -129,21 +132,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const stream = await this.prisma.stream.findUnique({ where: { id: streamId } });
     if (!stream) return;
 
-    // S-01/S-02: Private stream chat requires authorized streamer/admin or active session
+    // S-01/S-02 / B-17: Private stream chat requires authorized streamer/admin or active session token/ID
     if (stream.visibility === 'PRIVATE') {
       const userId = client.data.user?.sub;
       const isStreamer = userId && userId === stream.streamerId;
       const isAdmin = client.data.user?.role === 'ADMIN';
       if (!isStreamer && !isAdmin) {
+        const sessionId = data.sessionId || client.handshake.auth?.sessionId;
         const session = await this.prisma.viewerSession.findFirst({
           where: {
             streamId,
-            OR: [
-              ...(userId ? [{ userId }] : []),
-              { ipAddress: client.handshake.address },
-            ],
             leftAt: null,
             isRemoved: false,
+            OR: [
+              ...(userId ? [{ userId }] : []),
+              ...(sessionId ? [{ id: sessionId }] : []),
+            ],
           },
         });
         if (!session) {
@@ -326,6 +330,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const isModerator = stream.streamerId === user.sub || user.role === UserRole.ADMIN;
     if (!isModerator) return;
 
+    const msg = await this.prisma.chatMessage.findUnique({ where: { id: data.messageId } });
+    if (!msg || msg.streamId !== data.streamId) return;
+
     await this.chatService.deleteMessage(data.messageId);
     this.server.to(`stream:${data.streamId}`).emit('chat:message_deleted', {
       messageId: data.messageId,
@@ -345,6 +352,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const isModerator = stream.streamerId === user.sub || user.role === UserRole.ADMIN;
     if (!isModerator) return;
+
+    const msg = await this.prisma.chatMessage.findUnique({ where: { id: data.messageId } });
+    if (!msg || msg.streamId !== data.streamId) return;
 
     const pinned = await this.chatService.pinMessage(data.streamId, data.messageId);
     this.server.to(`stream:${data.streamId}`).emit('chat:message_pinned', {
@@ -367,7 +377,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const isModerator = stream.streamerId === user.sub || user.role === UserRole.ADMIN;
     if (!isModerator) return;
 
-    const minutes = data.durationMinutes || 15;
+    const minutes = Math.min(Math.max(data.durationMinutes || 15, 1), 1440);
     const muteKey = `mute:${data.streamId}:${data.targetUserId}`;
     this.memoryCache.mute(muteKey, minutes);
     try {

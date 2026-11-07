@@ -43,4 +43,9 @@ export class ResolveReportDto {
   @IsOptional()
   @IsString()
   adminNotes?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  notes?: string;
 }

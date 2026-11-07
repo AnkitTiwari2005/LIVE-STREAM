@@ -47,29 +47,35 @@ export class WalletService {
     });
 
     if (!wallet) {
-      wallet = await this.prisma.userWallet.create({
-        data: {
-          userId,
-          balanceCoins: 100,
-          bonusCoins: 100,
-          purchasedCoins: 0,
-          lifetimeEarned: 100,
-          lifetimeSpent: 0,
-        },
-      });
+      try {
+        wallet = await this.prisma.userWallet.create({
+          data: {
+            userId,
+            balanceCoins: 100,
+            bonusCoins: 100,
+            purchasedCoins: 0,
+            lifetimeEarned: 100,
+            lifetimeSpent: 0,
+          },
+        });
 
-      await this.prisma.walletTransaction.create({
-        data: {
-          walletId: wallet.id,
-          type: WalletTxType.CREDIT,
-          category: WalletTxCategory.JOINING_BONUS,
-          amountCoins: 100,
-          balanceBefore: 0,
-          balanceAfter: 100,
-          referenceId: `signup_bonus_${userId}`,
-          metadata: { note: 'Auspicious Welcome Darshan Bonus' },
-        },
-      });
+        await this.prisma.walletTransaction.create({
+          data: {
+            walletId: wallet.id,
+            type: WalletTxType.CREDIT,
+            category: WalletTxCategory.JOINING_BONUS,
+            amountCoins: 100,
+            balanceBefore: 0,
+            balanceAfter: 100,
+            referenceId: `signup_bonus_${userId}`,
+            idempotencyKey: `signup_bonus_${userId}`,
+            metadata: { note: 'Auspicious Welcome Darshan Bonus' },
+          },
+        });
+      } catch {
+        // B-21: Concurrently created wallet safely fetched
+        wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
+      }
     }
 
     return {
@@ -94,6 +100,27 @@ export class WalletService {
   ) {
     const wallet = await this.getWalletBalance(userId);
 
+    // B-09: Check if active session already exists for this user and stream (e.g. reload or reconnect)
+    const existingActive = await this.prisma.streamViewingSession.findFirst({
+      where: {
+        userId,
+        streamId,
+        status: ViewingSessionStatus.ACTIVE,
+      },
+      orderBy: { startedAt: 'desc' },
+    });
+
+    if (existingActive) {
+      const availableMinutes = Math.floor(wallet.balanceCoins / WalletService.COINS_PER_MINUTE);
+      this.logger.log(`Devotee [${userId}] reconnecting to stream [${streamId}], reusing active session.`);
+      return {
+        sessionToken: existingActive.sessionToken,
+        remainingCoins: wallet.balanceCoins,
+        availableMinutes,
+        sessionId: existingActive.id,
+      };
+    }
+
     // B-16: True HTTP 402 Payment Required for insufficient coins
     if (wallet.balanceCoins < WalletService.COINS_PER_MINUTE) {
       throw new HttpException(
@@ -108,10 +135,11 @@ export class WalletService {
       );
     }
 
-    // Terminate any previous active session for this user to enforce single-tab rule
+    // Terminate any previous active session on OTHER streams to enforce single-tab rule
     await this.prisma.streamViewingSession.updateMany({
       where: {
         userId,
+        streamId: { not: streamId },
         status: ViewingSessionStatus.ACTIVE,
       },
       data: {
@@ -120,79 +148,88 @@ export class WalletService {
       },
     });
 
-    // Atomic SQL decrement for Minute 1
-    const rawResult: any = await this.prisma.$queryRawUnsafe(
-      `UPDATE "UserWallet"
-       SET "balanceCoins" = "balanceCoins" - ${WalletService.COINS_PER_MINUTE},
-           "lifetimeSpent" = "lifetimeSpent" + ${WalletService.COINS_PER_MINUTE},
-           "updatedAt" = NOW()
-       WHERE "userId" = $1 AND "balanceCoins" >= ${WalletService.COINS_PER_MINUTE}
-       RETURNING "id", "balanceCoins"`,
-      userId,
-    );
-
-    if (!rawResult || rawResult.length === 0) {
-      throw new HttpException(
-        {
-          statusCode: HttpStatus.PAYMENT_REQUIRED,
-          error: 'INSUFFICIENT_COINS',
-          message: 'Insufficient coin balance to enter live darshan.',
-          requiredCoins: WalletService.COINS_PER_MINUTE,
-          currentBalance: wallet.balanceCoins,
-        },
-        HttpStatus.PAYMENT_REQUIRED,
-      );
-    }
-
-    const walletId = rawResult[0].id;
-    const balanceAfter = rawResult[0].balanceCoins;
-    const sessionToken = `ses_${crypto.randomBytes(16).toString('hex')}`;
-
-    // Create viewing session
-    const session = await this.prisma.streamViewingSession.create({
-      data: {
-        streamId,
+    // B-09: Wrap debit, session creation, minute 1 tick, and ledger entry in a single atomic transaction
+    const startResult = await this.prisma.$transaction(async (tx) => {
+      const rawResult: any = await tx.$queryRawUnsafe(
+        `UPDATE "UserWallet"
+         SET "balanceCoins" = "balanceCoins" - ${WalletService.COINS_PER_MINUTE},
+             "lifetimeSpent" = "lifetimeSpent" + ${WalletService.COINS_PER_MINUTE},
+             "updatedAt" = NOW()
+         WHERE "userId" = $1 AND "balanceCoins" >= ${WalletService.COINS_PER_MINUTE}
+         RETURNING "id", "balanceCoins"`,
         userId,
-        sessionToken,
-        status: ViewingSessionStatus.ACTIVE,
-        totalMinutesWatched: 1,
-        totalCoinsDebited: WalletService.COINS_PER_MINUTE,
-        ipAddress: ip || null,
-        userAgent: userAgent || null,
-        meterTicks: {
-          create: {
-            minuteIndex: 1,
-            coinsCharged: WalletService.COINS_PER_MINUTE,
-            balanceAfter,
+      );
+
+      if (!rawResult || rawResult.length === 0) {
+        throw new HttpException(
+          {
+            statusCode: HttpStatus.PAYMENT_REQUIRED,
+            error: 'INSUFFICIENT_COINS',
+            message: 'Insufficient coin balance to enter live darshan.',
+            requiredCoins: WalletService.COINS_PER_MINUTE,
+            currentBalance: wallet.balanceCoins,
+          },
+          HttpStatus.PAYMENT_REQUIRED,
+        );
+      }
+
+      const walletId = rawResult[0].id;
+      const balanceAfter = rawResult[0].balanceCoins;
+      const sessionToken = `ses_${crypto.randomBytes(16).toString('hex')}`;
+
+      // Create viewing session
+      const session = await tx.streamViewingSession.create({
+        data: {
+          streamId,
+          userId,
+          sessionToken,
+          status: ViewingSessionStatus.ACTIVE,
+          totalMinutesWatched: 1,
+          totalCoinsDebited: WalletService.COINS_PER_MINUTE,
+          ipAddress: ip || null,
+          userAgent: userAgent || null,
+          meterTicks: {
+            create: {
+              minuteIndex: 1,
+              coinsCharged: WalletService.COINS_PER_MINUTE,
+              balanceAfter,
+            },
           },
         },
-      },
-    });
+      });
 
-    // Log transaction
-    await this.prisma.walletTransaction.create({
-      data: {
-        walletId,
-        type: WalletTxType.DEBIT,
-        category: WalletTxCategory.STREAM_METERED_VIEW,
-        amountCoins: WalletService.COINS_PER_MINUTE,
-        balanceBefore: balanceAfter + WalletService.COINS_PER_MINUTE,
+      // Log transaction
+      await tx.walletTransaction.create({
+        data: {
+          walletId,
+          type: WalletTxType.DEBIT,
+          category: WalletTxCategory.STREAM_METERED_VIEW,
+          amountCoins: WalletService.COINS_PER_MINUTE,
+          balanceBefore: balanceAfter + WalletService.COINS_PER_MINUTE,
+          balanceAfter,
+          streamId,
+          referenceId: session.id,
+          idempotencyKey: `tick_${session.id}_1`,
+          metadata: { minuteIndex: 1, sessionToken },
+        },
+      });
+
+      return {
+        sessionToken,
         balanceAfter,
-        streamId,
-        referenceId: session.id,
-        idempotencyKey: `tick_${session.id}_1`,
-        metadata: { minuteIndex: 1, sessionToken },
-      },
+        sessionId: session.id,
+      };
     });
 
     this.logger.log(
-      `Devotee [${userId}] entered stream [${streamId}]. Minute 1 debited. Balance: ${balanceAfter} coins.`,
+      `Devotee [${userId}] entered stream [${streamId}]. Minute 1 debited atomically. Balance: ${startResult.balanceAfter} coins.`,
     );
 
     return {
-      sessionToken,
-      remainingCoins: balanceAfter,
-      availableMinutes: Math.floor(balanceAfter / WalletService.COINS_PER_MINUTE),
+      sessionToken: startResult.sessionToken,
+      remainingCoins: startResult.balanceAfter,
+      availableMinutes: Math.floor(startResult.balanceAfter / WalletService.COINS_PER_MINUTE),
+      sessionId: startResult.sessionId,
     };
   }
 
@@ -218,67 +255,91 @@ export class WalletService {
       };
     }
 
-    // W-01: Wrap atomic balance decrement, session stats, meter tick log & transaction ledger in a single transaction
-    const tickResult = await this.prisma.$transaction(async (tx) => {
-      const rawResult: any = await tx.$queryRawUnsafe(
-        `UPDATE "UserWallet"
-         SET "balanceCoins" = "balanceCoins" - ${WalletService.COINS_PER_MINUTE},
-             "lifetimeSpent" = "lifetimeSpent" + ${WalletService.COINS_PER_MINUTE},
-             "updatedAt" = NOW()
-         WHERE "userId" = $1 AND "balanceCoins" >= ${WalletService.COINS_PER_MINUTE}
-         RETURNING "id", "balanceCoins"`,
-        userId,
-      );
-
-      if (!rawResult || rawResult.length === 0) {
-        return null;
-      }
-
-      const walletId = rawResult[0].id;
-      const balanceAfter = rawResult[0].balanceCoins;
-      const nextMinuteIndex = session.totalMinutesWatched + 1;
-
-      // Update session stats
-      await tx.streamViewingSession.update({
-        where: { id: session.id },
-        data: {
-          lastTickAt: new Date(),
-          totalMinutesWatched: nextMinuteIndex,
-          totalCoinsDebited: { increment: WalletService.COINS_PER_MINUTE },
-        },
-      });
-
-      // Create meter tick log
-      await tx.meterTickLog.create({
-        data: {
-          sessionId: session.id,
-          minuteIndex: nextMinuteIndex,
-          coinsCharged: WalletService.COINS_PER_MINUTE,
-          balanceAfter,
-        },
-      });
-
-      // Create wallet transaction ledger entry
-      await tx.walletTransaction.create({
-        data: {
-          walletId,
-          type: WalletTxType.DEBIT,
-          category: WalletTxCategory.STREAM_METERED_VIEW,
-          amountCoins: WalletService.COINS_PER_MINUTE,
-          balanceBefore: balanceAfter + WalletService.COINS_PER_MINUTE,
-          balanceAfter,
-          streamId: dto.streamId,
-          referenceId: session.id,
-          idempotencyKey: `tick_${session.id}_${nextMinuteIndex}`,
-          metadata: { minuteIndex: nextMinuteIndex, sessionToken: dto.sessionToken },
-        },
-      });
-
+    // B-10: Reject ticks sooner than ~55 seconds to prevent wallet drain and race conditions
+    if (session.lastTickAt && Date.now() - session.lastTickAt.getTime() < 55_000) {
+      const wallet = await this.getWalletBalance(userId);
       return {
-        balanceAfter,
-        nextMinuteIndex,
+        canContinue: true,
+        remainingCoins: wallet.balanceCoins,
+        nextTickInSeconds: 60,
       };
-    });
+    }
+
+    // W-01: Wrap atomic balance decrement, session stats, meter tick log & transaction ledger in a single transaction
+    let tickResult: any;
+    try {
+      tickResult = await this.prisma.$transaction(async (tx) => {
+        const rawResult: any = await tx.$queryRawUnsafe(
+          `UPDATE "UserWallet"
+           SET "balanceCoins" = "balanceCoins" - ${WalletService.COINS_PER_MINUTE},
+               "lifetimeSpent" = "lifetimeSpent" + ${WalletService.COINS_PER_MINUTE},
+               "updatedAt" = NOW()
+           WHERE "userId" = $1 AND "balanceCoins" >= ${WalletService.COINS_PER_MINUTE}
+           RETURNING "id", "balanceCoins"`,
+          userId,
+        );
+
+        if (!rawResult || rawResult.length === 0) {
+          return null;
+        }
+
+        const walletId = rawResult[0].id;
+        const balanceAfter = rawResult[0].balanceCoins;
+        const nextMinuteIndex = session.totalMinutesWatched + 1;
+
+        // Update session stats
+        await tx.streamViewingSession.update({
+          where: { id: session.id },
+          data: {
+            lastTickAt: new Date(),
+            totalMinutesWatched: nextMinuteIndex,
+            totalCoinsDebited: { increment: WalletService.COINS_PER_MINUTE },
+          },
+        });
+
+        // Create meter tick log
+        await tx.meterTickLog.create({
+          data: {
+            sessionId: session.id,
+            minuteIndex: nextMinuteIndex,
+            coinsCharged: WalletService.COINS_PER_MINUTE,
+            balanceAfter,
+          },
+        });
+
+        // Create wallet transaction ledger entry
+        await tx.walletTransaction.create({
+          data: {
+            walletId,
+            type: WalletTxType.DEBIT,
+            category: WalletTxCategory.STREAM_METERED_VIEW,
+            amountCoins: WalletService.COINS_PER_MINUTE,
+            balanceBefore: balanceAfter + WalletService.COINS_PER_MINUTE,
+            balanceAfter,
+            streamId: dto.streamId,
+            referenceId: session.id,
+            idempotencyKey: `tick_${session.id}_${nextMinuteIndex}`,
+            metadata: { minuteIndex: nextMinuteIndex, sessionToken: dto.sessionToken },
+          },
+        });
+
+        return {
+          balanceAfter,
+          nextMinuteIndex,
+        };
+      });
+    } catch (err: any) {
+      // B-10: Idempotent success on concurrent duplicate meter tick key
+      if (err.code === 'P2002' || err.message?.includes('Unique constraint')) {
+        const wallet = await this.getWalletBalance(userId);
+        return {
+          canContinue: true,
+          remainingCoins: wallet.balanceCoins,
+          nextTickInSeconds: 60,
+        };
+      }
+      throw err;
+    }
 
     // If balance was insufficient
     if (!tickResult) {

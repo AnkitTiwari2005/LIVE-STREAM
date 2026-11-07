@@ -13,6 +13,12 @@ export class ChatService implements OnModuleInit {
 
   async onModuleInit() {
     await this.reloadWordFilter();
+    // B-05: 60-second periodic poll so multiple instances/workers sync
+    setInterval(() => {
+      this.reloadWordFilter().catch((err) =>
+        this.logger.error(`Periodic word filter reload failed: ${err.message}`),
+      );
+    }, 60_000);
   }
 
   async reloadWordFilter() {

@@ -21,6 +21,12 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 export class StreamersController {
   constructor(private readonly streamersService: StreamersService) {}
 
+  @Get('me')
+  @ApiOperation({ summary: 'Retrieve current authenticated applicant/streamer profile and KYC status (B-15)' })
+  async getMyProfile(@CurrentUser('id') userId: string) {
+    return this.streamersService.getMyProfile(userId);
+  }
+
   @Post('apply')
   @ApiOperation({ summary: 'Submit streamer KYC profile application (FR-S1)' })
   async apply(@CurrentUser('id') userId: string, @Body() dto: ApplyStreamerDto) {

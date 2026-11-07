@@ -49,7 +49,7 @@ export function FestivalBanner() {
       </div>
 
       <Link
-        href="/stream/demo"
+        href="/#live-section"
         className="inline-flex items-center h-6 sm:h-7 px-3 sm:px-3.5 rounded-full bg-gold hover:bg-gold-deep text-obsidian font-extrabold text-[11px] sm:text-xs transition-transform hover:scale-105 shadow-sm"
       >
         Watch Live Aarti

@@ -97,12 +97,33 @@ export class LiveKitWebhookController {
       }
 
       case 'participant_left': {
-        // Check if publisher/streamer dropped
-        if (participant?.identity === stream.streamerId && stream.status === StreamStatus.LIVE) {
+        // Check if publisher/streamer dropped (B-13: Do not enter grace period if stream was already ended)
+        if (
+          participant?.identity === stream.streamerId &&
+          stream.status === StreamStatus.LIVE &&
+          !stream.endedAt
+        ) {
           this.logger.warn(`Streamer disconnected from [${stream.id}]. Entering 2-minute RECONNECTING_GRACE_PERIOD.`);
           await this.prisma.stream.update({
             where: { id: stream.id },
             data: { status: StreamStatus.RECONNECTING_GRACE_PERIOD },
+          });
+        }
+
+        // B-16: Record leftAt for private viewer session if a participant disconnects
+        if (participant?.identity) {
+          const isGuest = participant.identity.startsWith('priv_guest_');
+          const sessionId = isGuest ? participant.identity.replace('priv_guest_', '') : null;
+          await this.prisma.viewerSession.updateMany({
+            where: {
+              streamId: stream.id,
+              leftAt: null,
+              OR: [
+                ...(participant.identity ? [{ userId: participant.identity }] : []),
+                ...(sessionId ? [{ id: sessionId }] : []),
+              ],
+            },
+            data: { leftAt: new Date() },
           });
         }
         break;
@@ -122,6 +143,13 @@ export class LiveKitWebhookController {
               durationSeconds: duration > 0 ? duration : 0,
             },
           });
+
+          // B-13: Close all active viewing sessions
+          await this.prisma.streamViewingSession.updateMany({
+            where: { streamId: stream.id, status: 'ACTIVE' },
+            data: { status: 'DISCONNECTED_TIMEOUT', endedAt },
+          });
+
           this.logger.log(`Room finished. Stream [${stream.id}] marked as ENDED.`);
         }
         break;

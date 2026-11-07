@@ -170,7 +170,11 @@ export default function AdminConsolePage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ status, notes: `Resolved via admin console as ${status}` }),
+        body: JSON.stringify({
+          status,
+          adminNotes: `Resolved via admin console as ${status}`,
+          notes: `Resolved via admin console as ${status}`,
+        }),
       });
       if (res.ok) {
         setReports((prev) => prev.filter((r) => r.id !== reportId));

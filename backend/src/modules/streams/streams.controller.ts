@@ -3,6 +3,8 @@ import {
   Post,
   Body,
   Get,
+  Patch,
+  Delete,
   Param,
   Query,
   Req,
@@ -97,6 +99,13 @@ export class StreamsController {
   }
 
   @Roles(UserRole.STREAMER)
+  @Get('streamer/mine')
+  @ApiOperation({ summary: 'List all draft, scheduled, and active streams for current streamer (B-14)' })
+  async getStreamerMine(@CurrentUser('id') streamerId: string) {
+    return this.streamsService.getStreamerMine(streamerId);
+  }
+
+  @Roles(UserRole.STREAMER)
   @Get('streamer/past')
   @ApiOperation({ summary: 'Streamer dashboard past streams and stats (FR-L10)' })
   async getStreamerPastStreams(@CurrentUser('id') streamerId: string) {
@@ -108,5 +117,26 @@ export class StreamsController {
   @ApiOperation({ summary: 'Get stream details by ID' })
   async getStreamById(@Param('id') id: string, @CurrentUser() caller?: any) {
     return this.streamsService.getStreamById(id, caller);
+  }
+
+  @Roles(UserRole.STREAMER)
+  @Patch(':id')
+  @ApiOperation({ summary: 'Edit draft or scheduled stream (B-14)' })
+  async updateStream(
+    @Param('id') id: string,
+    @CurrentUser('id') streamerId: string,
+    @Body() dto: Partial<CreateStreamDto>,
+  ) {
+    return this.streamsService.updateStream(id, streamerId, dto);
+  }
+
+  @Roles(UserRole.STREAMER)
+  @Delete(':id')
+  @ApiOperation({ summary: 'Cancel/delete draft or scheduled stream (B-14)' })
+  async deleteStream(
+    @Param('id') id: string,
+    @CurrentUser('id') streamerId: string,
+  ) {
+    return this.streamsService.deleteStream(id, streamerId);
   }
 }

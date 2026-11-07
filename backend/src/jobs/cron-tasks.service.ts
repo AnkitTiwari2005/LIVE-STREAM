@@ -52,6 +52,12 @@ export class CronTasksService {
           durationSeconds: duration > 0 ? duration : 0,
         },
       });
+
+      // B-13: Close active viewing sessions when stream auto-ends
+      await this.prisma.streamViewingSession.updateMany({
+        where: { streamId: stream.id, status: ViewingSessionStatus.ACTIVE },
+        data: { status: ViewingSessionStatus.DISCONNECTED_TIMEOUT, endedAt },
+      });
     }
   }
 
@@ -91,8 +97,22 @@ export class CronTasksService {
             endedAt: new Date(),
           },
         });
+        await this.prisma.streamViewingSession.updateMany({
+          where: { streamId: stream.id, status: ViewingSessionStatus.ACTIVE },
+          data: { status: ViewingSessionStatus.DISCONNECTED_TIMEOUT, endedAt: new Date() },
+        });
       }
     }
+
+    // B-14: Cancel stale SCHEDULED streams older than 48 hours that never went live
+    const twoDaysAgo = new Date(Date.now() - 48 * 3600 * 1000);
+    await this.prisma.stream.updateMany({
+      where: {
+        status: StreamStatus.SCHEDULED,
+        scheduledAt: { lte: twoDaysAgo },
+      },
+      data: { status: StreamStatus.CANCELLED },
+    });
   }
 
   /**
@@ -129,7 +149,7 @@ export class CronTasksService {
       await this.prisma.streamViewingSession.update({
         where: { id: session.id },
         data: {
-          status: ViewingSessionStatus.EVICTED_ZERO_BALANCE,
+          status: ViewingSessionStatus.DISCONNECTED_TIMEOUT,
           endedAt: new Date(),
         },
       });

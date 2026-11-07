@@ -17,15 +17,19 @@ const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
 export class StorageService {
   private readonly logger = new Logger(StorageService.name);
   private readonly uploadDir = path.join(process.cwd(), 'public', 'uploads');
+  private readonly privateKycDir = path.join(process.cwd(), 'storage', 'kyc');
 
   constructor() {
     if (!fs.existsSync(this.uploadDir)) {
       fs.mkdirSync(this.uploadDir, { recursive: true });
     }
+    if (!fs.existsSync(this.privateKycDir)) {
+      fs.mkdirSync(this.privateKycDir, { recursive: true });
+    }
   }
 
   /**
-   * Generates a signed or direct upload token and target URL for authenticated media assets (C-07)
+   * Generates a signed or direct upload token and target URL for authenticated media assets (C-07, B-06)
    */
   async getPresignedUploadUrl(filename: string, contentType: string, folder = 'general') {
     if (!ALLOWED_CONTENT_TYPES.has(contentType.toLowerCase())) {
@@ -42,9 +46,12 @@ export class StorageService {
     const uniqueId = crypto.randomBytes(16).toString('hex');
     const storageKey = `${safeFolder}/${uniqueId}${ext}`;
 
-    const r2PublicUrl = process.env.R2_PUBLIC_URL;
     const uploadUrl = `/api/v1/storage/upload?key=${encodeURIComponent(storageKey)}`;
-    const publicUrl = r2PublicUrl ? `${r2PublicUrl}/${storageKey}` : `/uploads/${storageKey}`;
+    // B-06: KYC documents are served strictly through the protected route to prevent DPDP exposure
+    const publicUrl =
+      safeFolder === 'kyc'
+        ? `/api/v1/storage/kyc-document?key=${encodeURIComponent(storageKey)}`
+        : `/uploads/${storageKey}`;
 
     return {
       storageKey,
@@ -82,9 +89,12 @@ export class StorageService {
 
     // Sanitize against directory traversal
     const safeKey = storageKey.replace(/\\/g, '/').replace(/\.\./g, '').replace(/^\/+/, '');
-    const targetPath = path.resolve(this.uploadDir, safeKey);
+    const isKyc = safeKey.startsWith('kyc/');
+    const baseDir = isKyc ? this.privateKycDir : this.uploadDir;
+    const relativeKey = isKyc ? safeKey.replace(/^kyc\//, '') : safeKey;
+    const targetPath = path.resolve(baseDir, relativeKey);
 
-    if (!targetPath.startsWith(this.uploadDir)) {
+    if (!targetPath.startsWith(baseDir)) {
       throw new BadRequestException('Invalid storage key traversal');
     }
 
@@ -94,8 +104,32 @@ export class StorageService {
     }
 
     await fs.promises.writeFile(targetPath, buffer);
-    this.logger.log(`File saved securely: ${safeKey} (${buffer.length} bytes)`);
+    this.logger.log(`File saved securely: ${safeKey} (${buffer.length} bytes) to ${isKyc ? 'private KYC' : 'public uploads'}`);
 
-    return `/uploads/${safeKey}`;
+    return isKyc
+      ? `/api/v1/storage/kyc-document?key=${encodeURIComponent(safeKey)}`
+      : `/uploads/${safeKey}`;
+  }
+
+  /**
+   * Retrieve a private KYC document with strict boundary check (B-06)
+   */
+  getKycFile(storageKey: string): { filePath: string; contentType: string } {
+    const safeKey = storageKey.replace(/\\/g, '/').replace(/\.\./g, '').replace(/^\/+/, '');
+    const relativeKey = safeKey.replace(/^kyc\//, '');
+    const targetPath = path.resolve(this.privateKycDir, relativeKey);
+
+    if (!targetPath.startsWith(this.privateKycDir) || !fs.existsSync(targetPath)) {
+      throw new BadRequestException('Document not found or invalid path');
+    }
+
+    const ext = path.extname(targetPath).toLowerCase();
+    let contentType = 'application/octet-stream';
+    if (ext === '.pdf') contentType = 'application/pdf';
+    else if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
+    else if (ext === '.png') contentType = 'image/png';
+    else if (ext === '.webp') contentType = 'image/webp';
+
+    return { filePath: targetPath, contentType };
   }
 }

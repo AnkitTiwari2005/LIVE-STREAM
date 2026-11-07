@@ -5,6 +5,7 @@ import {
   IVideoProviderService,
   VIDEO_PROVIDER_TOKEN,
 } from '../video/interfaces/video-provider.interface';
+import { ChatService } from '../chat/chat.service';
 
 @Injectable()
 export class AdminService {
@@ -12,6 +13,7 @@ export class AdminService {
     private readonly prisma: PrismaService,
     @Inject(VIDEO_PROVIDER_TOKEN)
     private readonly videoProvider: IVideoProviderService,
+    private readonly chatService: ChatService,
   ) {}
 
   async getDashboardOverview() {
@@ -174,15 +176,19 @@ export class AdminService {
   }
 
   async addWordFilter(word: string, severity = 'HIGH') {
-    return this.prisma.chatWordFilter.upsert({
+    const row = await this.prisma.chatWordFilter.upsert({
       where: { word: word.toLowerCase().trim() },
       update: { isActive: true, severity },
       create: { word: word.toLowerCase().trim(), severity, isActive: true },
     });
+    await this.chatService.reloadWordFilter();
+    return row;
   }
 
   async removeWordFilter(id: string) {
-    return this.prisma.chatWordFilter.delete({ where: { id } });
+    const row = await this.prisma.chatWordFilter.delete({ where: { id } });
+    await this.chatService.reloadWordFilter();
+    return row;
   }
 
   // --- CMS Static Pages ---

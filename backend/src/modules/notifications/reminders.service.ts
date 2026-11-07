@@ -1,7 +1,18 @@
 import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
+import * as crypto from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { MailerService } from './mailer.service';
 import { StreamStatus } from '@prisma/client';
+
+function escapeHtml(str: string): string {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 
 @Injectable()
 export class RemindersService {
@@ -66,16 +77,20 @@ export class RemindersService {
     });
 
     try {
+      const safeName = escapeHtml(dto.name);
+      const safeSubject = escapeHtml(dto.subject);
+      const safeMessage = escapeHtml(dto.message);
+
       await this.mailer.sendEmail({
         to: dto.email,
         toName: dto.name,
         subject: `Inquiry Received: ${dto.subject} - Shubhdarshan Support`,
         htmlContent: `
           <div style="font-family: Arial, sans-serif; color: #222; max-width: 600px; margin: auto;">
-            <h2 style="color: #c2410c;">Namaste ${dto.name},</h2>
+            <h2 style="color: #c2410c;">Namaste ${safeName},</h2>
             <p>Thank you for reaching out to Shubhdarshan Devotee Support.</p>
-            <p>We have logged your query regarding: <strong>${dto.subject}</strong></p>
-            <blockquote style="background: #f9f9f9; padding: 12px; border-left: 4px solid #ea580c; font-style: italic;">${dto.message}</blockquote>
+            <p>We have logged your query regarding: <strong>${safeSubject}</strong></p>
+            <blockquote style="background: #f9f9f9; padding: 12px; border-left: 4px solid #ea580c; font-style: italic;">${safeMessage}</blockquote>
             <p>Our devotee assistance team will inspect and respond to your email within 2 to 4 hours.</p>
             <p style="color: #666; font-size: 13px;">Shubhdarshan Devotional Media Private Limited</p>
           </div>
@@ -89,7 +104,8 @@ export class RemindersService {
   }
 
   async submitGrievance(dto: { name: string; email: string; phone?: string; complaintType: string; details: string; ip?: string }) {
-    const ticketId = `GRV-${Date.now().toString(36).toUpperCase()}`;
+    const randomSuffix = crypto.randomBytes(4).toString('hex').toUpperCase();
+    const ticketId = `GRV-${Date.now().toString(36).toUpperCase()}-${randomSuffix}`;
 
     await this.prisma.auditLog.create({
       data: {
@@ -108,6 +124,10 @@ export class RemindersService {
     });
 
     try {
+      const safeName = escapeHtml(dto.name);
+      const safeType = escapeHtml(dto.complaintType);
+      const safeDetails = escapeHtml(dto.details);
+
       await this.mailer.sendEmail({
         to: dto.email,
         toName: dto.name,
@@ -115,10 +135,10 @@ export class RemindersService {
         htmlContent: `
           <div style="font-family: Arial, sans-serif; color: #222; max-width: 600px; margin: auto;">
             <h2 style="color: #c2410c;">Formal Acknowledgment of Grievance</h2>
-            <p>Dear ${dto.name},</p>
+            <p>Dear ${safeName},</p>
             <p>Your grievance submitted under Rule 3(2) of the Information Technology (Intermediary Guidelines) Rules, 2021 has been registered with Ticket Reference: <strong style="color: #ea580c;">${ticketId}</strong>.</p>
-            <p><strong>Complaint Type:</strong> ${dto.complaintType}</p>
-            <blockquote style="background: #f9f9f9; padding: 12px; border-left: 4px solid #ea580c;">${dto.details}</blockquote>
+            <p><strong>Complaint Type:</strong> ${safeType}</p>
+            <blockquote style="background: #f9f9f9; padding: 12px; border-left: 4px solid #ea580c;">${safeDetails}</blockquote>
             <p>The designated Resident Grievance Officer will investigate the matter and provide a reasoned decision within statutory timelines (within 15 calendar days).</p>
             <p style="color: #666; font-size: 13px;">Resident Grievance Officer, Shubhdarshan Devotional Media Private Limited</p>
           </div>

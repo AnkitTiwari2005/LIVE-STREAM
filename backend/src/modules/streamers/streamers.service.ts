@@ -60,7 +60,7 @@ export class StreamersService {
 
   async getPendingApplications() {
     return this.prisma.streamerProfile.findMany({
-      where: { kycStatus: KycStatus.PENDING },
+      where: { kycStatus: { in: [KycStatus.PENDING, KycStatus.MORE_INFO_NEEDED] } },
       include: {
         user: {
           select: { id: true, name: true, email: true, avatarUrl: true, createdAt: true },
@@ -70,7 +70,20 @@ export class StreamersService {
     });
   }
 
+  async getMyProfile(userId: string) {
+    return this.prisma.streamerProfile.findUnique({
+      where: { userId },
+      include: {
+        user: { select: { id: true, name: true, email: true, avatarUrl: true, role: true } },
+      },
+    });
+  }
+
   async reviewKyc(profileId: string, adminId: string, adminEmail: string, dto: ReviewKycDto) {
+    if (dto.decision === KycStatus.PENDING) {
+      throw new BadRequestException('Decision must be APPROVED, REJECTED, or MORE_INFO_NEEDED');
+    }
+
     const profile = await this.prisma.streamerProfile.findUnique({
       where: { id: profileId },
       include: { user: true },
@@ -79,7 +92,7 @@ export class StreamersService {
     if (!profile) throw new NotFoundException('Streamer application not found');
 
     if (dto.decision === KycStatus.APPROVED) {
-      await this.prisma.$transaction([
+      const ops: any[] = [
         this.prisma.streamerProfile.update({
           where: { id: profileId },
           data: {
@@ -88,10 +101,6 @@ export class StreamersService {
             kycReviewedAt: new Date(),
             rejectionReason: null,
           },
-        }),
-        this.prisma.user.update({
-          where: { id: profile.userId },
-          data: { role: UserRole.STREAMER },
         }),
         this.prisma.auditLog.create({
           data: {
@@ -102,15 +111,29 @@ export class StreamersService {
             details: { applicantUserId: profile.userId, decision: 'APPROVED' },
           },
         }),
-      ]);
+      ];
+
+      // B-15: Never downgrade an ADMIN to STREAMER
+      if (profile.user.role !== UserRole.ADMIN) {
+        ops.push(
+          this.prisma.user.update({
+            where: { id: profile.userId },
+            data: { role: UserRole.STREAMER },
+          }),
+        );
+      }
+
+      await this.prisma.$transaction(ops);
       return { message: 'Streamer application approved successfully. Verified badge awarded.' };
     }
 
-    await this.prisma.$transaction([
+    // Decision is REJECTED or MORE_INFO_NEEDED
+    const ops: any[] = [
       this.prisma.streamerProfile.update({
         where: { id: profileId },
         data: {
           kycStatus: dto.decision,
+          isVerifiedBadge: false, // B-15: Revoke verified badge on rejection
           rejectionReason: dto.rejectionReason || null,
           kycReviewedAt: new Date(),
         },
@@ -128,8 +151,19 @@ export class StreamersService {
           },
         },
       }),
-    ]);
+    ];
 
+    // B-15: Reset role to VIEWER if a previously approved streamer is rejected or revoked
+    if (profile.user.role === UserRole.STREAMER) {
+      ops.push(
+        this.prisma.user.update({
+          where: { id: profile.userId },
+          data: { role: UserRole.VIEWER },
+        }),
+      );
+    }
+
+    await this.prisma.$transaction(ops);
     return { message: `Streamer application updated with decision: ${dto.decision}` };
   }
 
@@ -250,7 +284,16 @@ export class StreamersService {
       },
     });
 
-    const totalDakshinaInr = dakshinaOfferings.reduce((sum, d) => sum + Number(d.amount), 0);
+    const aggregate = await this.prisma.dakshinaOffering.aggregate({
+      where: {
+        streamId: { in: streamIds },
+        status: PaymentStatus.SUCCESS,
+      },
+      _sum: { amount: true },
+      _count: { id: true },
+    });
+
+    const totalDakshinaInr = Number(aggregate._sum.amount || 0);
     const panditSharePercentage = 85;
     const netEarningsInr = (totalDakshinaInr * panditSharePercentage) / 100;
     const platformFeeInr = totalDakshinaInr - netEarningsInr;

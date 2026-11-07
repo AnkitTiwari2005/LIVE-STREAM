@@ -11,12 +11,13 @@ import {
 import { WalletService } from '../wallet/wallet.service';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateStreamDto } from './dto/create-stream.dto';
-import { StreamStatus, StreamVisibility, UserRole, UserStatus } from '@prisma/client';
+import { StreamStatus, StreamVisibility, UserRole, UserStatus, ViewingSessionStatus } from '@prisma/client';
 import { validateStateTransition } from './state/stream-state-machine';
 import {
   IVideoProviderService,
   VIDEO_PROVIDER_TOKEN,
 } from '../video/interfaces/video-provider.interface';
+import { getLiveKitPublicUrl } from '../../common/livekit-url.util';
 
 @Injectable()
 export class StreamsService {
@@ -106,6 +107,9 @@ export class StreamsService {
       throw new ForbiddenException('Only the designated streamer can start this stream');
     }
 
+    // B-12: Validate state transition first before modifying any stream state
+    validateStateTransition(stream.status, StreamStatus.LIVE);
+
     // Capacity Gate 1: Check if streamer already has another active live stream
     const activeStreamForUser = await this.prisma.stream.findFirst({
       where: {
@@ -114,27 +118,13 @@ export class StreamsService {
         id: { not: streamId },
       },
     });
-    if (activeStreamForUser) {
-      if (forceEndPrevious) {
-        try {
-          await this.videoProvider.endRoom(activeStreamForUser.id);
-        } catch {}
-        await this.prisma.stream.update({
-          where: { id: activeStreamForUser.id },
-          data: {
-            status: StreamStatus.ENDED,
-            endedAt: new Date(),
-          },
-        });
-        this.logger.log(`Auto-ended previous live stream [${activeStreamForUser.id}] for streamer [${streamerId}]`);
-      } else {
-        throw new BadRequestException('You already have another live broadcast in progress.');
-      }
+    if (activeStreamForUser && !forceEndPrevious) {
+      throw new BadRequestException('You already have another live broadcast in progress.');
     }
 
     // Capacity Gate 2: Check global concurrent live streams limit (max 3 for single VPS NFR-P1)
     const totalLiveStreams = await this.prisma.stream.count({
-      where: { status: StreamStatus.LIVE },
+      where: { status: StreamStatus.LIVE, id: { not: activeStreamForUser?.id } },
     });
     if (totalLiveStreams >= 3 && stream.status !== StreamStatus.LIVE) {
       throw new ServiceUnavailableException(
@@ -142,9 +132,7 @@ export class StreamsService {
       );
     }
 
-    validateStateTransition(stream.status, StreamStatus.LIVE);
-
-    // Create room in LiveKit if not already present
+    // B-12: Create media room in LiveKit before ending previous stream or updating DB
     const room = await this.videoProvider.createRoom({
       roomName: stream.id,
       emptyTimeoutSeconds: 600,
@@ -153,13 +141,32 @@ export class StreamsService {
 
     const startedAt = stream.startedAt || new Date();
 
-    const updatedStream = await this.prisma.stream.update({
-      where: { id: stream.id },
-      data: {
-        status: StreamStatus.LIVE,
-        startedAt,
-        livekitRoomSid: room.roomId,
-      },
+    // Now end previous stream and mark new stream LIVE in one transaction
+    const [updatedStream] = await this.prisma.$transaction(async (tx) => {
+      if (activeStreamForUser && forceEndPrevious) {
+        try {
+          await this.videoProvider.endRoom(activeStreamForUser.id);
+        } catch {}
+        await tx.stream.update({
+          where: { id: activeStreamForUser.id },
+          data: { status: StreamStatus.ENDED, endedAt: new Date() },
+        });
+        await tx.streamViewingSession.updateMany({
+          where: { streamId: activeStreamForUser.id, status: ViewingSessionStatus.ACTIVE },
+          data: { status: ViewingSessionStatus.DISCONNECTED_TIMEOUT, endedAt: new Date() },
+        });
+      }
+
+      const newlyLive = await tx.stream.update({
+        where: { id: stream.id },
+        data: {
+          status: StreamStatus.LIVE,
+          startedAt,
+          livekitRoomSid: room.roomId,
+        },
+      });
+
+      return [newlyLive];
     });
 
     // Generate short-lived publisher token (15 mins TTL)
@@ -177,7 +184,7 @@ export class StreamsService {
     return {
       stream: updatedStream,
       publisherToken,
-      serverUrl: process.env.NEXT_PUBLIC_LIVEKIT_URL || process.env.LIVEKIT_URL || 'wss://shubhdarshan-g8vupfey.livekit.cloud',
+      serverUrl: getLiveKitPublicUrl(),
     };
   }
 
@@ -206,6 +213,18 @@ export class StreamsService {
         status: StreamStatus.ENDED,
         endedAt,
         durationSeconds: duration > 0 ? duration : 0,
+      },
+    });
+
+    // B-13: Close all active viewing sessions when stream ends
+    await this.prisma.streamViewingSession.updateMany({
+      where: {
+        streamId: stream.id,
+        status: ViewingSessionStatus.ACTIVE,
+      },
+      data: {
+        status: ViewingSessionStatus.COMPLETED_NATURAL,
+        endedAt,
       },
     });
 
@@ -293,13 +312,13 @@ export class StreamsService {
       participantName,
       isPublisher: false,
       canSubscribe: true,
-      ttlMinutes: 15,
+      ttlMinutes: 2, // B-07: Shorter token refreshed via meter-tick to prevent unmetered viewing
       metadata: { role: 'viewer', isGuest: !userId, sessionToken: viewingSession?.sessionToken },
     });
 
     return {
       token,
-      serverUrl: process.env.NEXT_PUBLIC_LIVEKIT_URL || process.env.LIVEKIT_URL || 'wss://shubhdarshan-g8vupfey.livekit.cloud',
+      serverUrl: getLiveKitPublicUrl(),
       streamTitle: stream.title,
       streamerName: stream.streamer.name,
       quality: stream.videoQuality,
@@ -340,12 +359,57 @@ export class StreamsService {
         },
       },
       orderBy: [
-        { status: 'asc' }, // LIVE sorts before SCHEDULED
         { scheduledAt: 'asc' },
+        { createdAt: 'desc' },
       ],
     });
 
-    return streams;
+    // B-14: Explicitly sort LIVE streams before SCHEDULED streams
+    return streams.sort((a, b) => {
+      if (a.status === StreamStatus.LIVE && b.status !== StreamStatus.LIVE) return -1;
+      if (a.status !== StreamStatus.LIVE && b.status === StreamStatus.LIVE) return 1;
+      return 0;
+    });
+  }
+
+  async getStreamerMine(streamerId: string) {
+    return this.prisma.stream.findMany({
+      where: { streamerId },
+      include: { category: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async updateStream(streamId: string, streamerId: string, dto: Partial<CreateStreamDto>) {
+    const stream = await this.prisma.stream.findUnique({ where: { id: streamId } });
+    if (!stream) throw new NotFoundException('Stream not found');
+    if (stream.streamerId !== streamerId) throw new ForbiddenException('Not your stream');
+    if (stream.status === StreamStatus.LIVE || stream.status === StreamStatus.ENDED) {
+      throw new BadRequestException('Cannot edit an active or concluded stream');
+    }
+    return this.prisma.stream.update({
+      where: { id: streamId },
+      data: {
+        title: dto.title ?? stream.title,
+        description: dto.description ?? stream.description,
+        categoryId: dto.categoryId ?? stream.categoryId,
+        scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : stream.scheduledAt,
+        thumbnailUrl: dto.thumbnailUrl ?? stream.thumbnailUrl,
+      },
+    });
+  }
+
+  async deleteStream(streamId: string, streamerId: string) {
+    const stream = await this.prisma.stream.findUnique({ where: { id: streamId } });
+    if (!stream) throw new NotFoundException('Stream not found');
+    if (stream.streamerId !== streamerId) throw new ForbiddenException('Not your stream');
+    if (stream.status === StreamStatus.LIVE) {
+      throw new BadRequestException('Cannot delete an active live stream. End the stream first.');
+    }
+    return this.prisma.stream.update({
+      where: { id: streamId },
+      data: { status: StreamStatus.CANCELLED },
+    });
   }
 
   async getStreamerPastStreams(streamerId: string) {

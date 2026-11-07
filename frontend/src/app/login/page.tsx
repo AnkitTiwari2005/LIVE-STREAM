@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { Lock, Mail, ShieldAlert, KeyRound, Sparkles } from 'lucide-react';
 import { OmIcon, DiyaIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
 
+import { getSafeRedirect } from '@/lib/api';
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -59,9 +61,9 @@ export default function LoginPage() {
       localStorage.setItem('pooja_token', data.accessToken);
 
       const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-      const redirectUrl = params?.get('redirect');
-      if (redirectUrl && redirectUrl.startsWith('/')) {
-        router.push(redirectUrl);
+      const safeTarget = getSafeRedirect(params?.get('redirect'));
+      if (safeTarget) {
+        router.push(safeTarget);
       } else if (data.user?.role === 'ADMIN') {
         router.push('/admin');
       } else {
@@ -94,9 +96,9 @@ export default function LoginPage() {
       localStorage.setItem('pooja_token', data.accessToken);
 
       const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-      const redirectUrl = params?.get('redirect');
-      if (redirectUrl && redirectUrl.startsWith('/')) {
-        router.push(redirectUrl);
+      const safeTarget = getSafeRedirect(params?.get('redirect'));
+      if (safeTarget) {
+        router.push(safeTarget);
       } else if (data.user?.role === 'ADMIN') {
         router.push('/admin');
       } else if (data.user?.role === 'STREAMER') {

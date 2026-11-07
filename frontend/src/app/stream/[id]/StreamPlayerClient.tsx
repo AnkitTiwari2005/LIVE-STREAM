@@ -199,17 +199,27 @@ export default function StreamPlayerClient() {
           }),
         });
 
-        if (!res.ok) {
+        if (res.status === 402) {
           setIsZeroBalance(true);
+          setTopupModalOpen(true);
+          if (meterIntervalRef.current) clearInterval(meterIntervalRef.current);
+          return;
+        }
+
+        if (!res.ok) {
+          // B-10: Transient network error - don't treat as zero balance, allow retry on next interval
           return;
         }
 
         const data = await res.json();
         if (data.canContinue) {
           setRemainingCoins(data.remainingCoins);
-          setAvailableMinutes(data.availableMinutes);
+          if (typeof data.availableMinutes === 'number') {
+            setAvailableMinutes(data.availableMinutes);
+          }
         } else {
           setIsZeroBalance(true);
+          setTopupModalOpen(true);
           setToken(null);
           if (meterIntervalRef.current) clearInterval(meterIntervalRef.current);
         }

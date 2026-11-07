@@ -58,9 +58,4 @@ export class PaymentsController {
     const user = (req as any).user;
     return this.paymentsService.getRecentOfferings(streamId, user?.id, user?.role);
   }
-
-  @Get('streamer/earnings')
-  async getStreamerEarnings(@CurrentUser('id') streamerId: string) {
-    return this.paymentsService.getStreamerEarnings(streamerId);
-  }
 }

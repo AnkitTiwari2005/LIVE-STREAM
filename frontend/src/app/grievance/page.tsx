@@ -2,6 +2,7 @@ import React from 'react';
 import type { Metadata } from 'next';
 import { ShieldCheck, Mail, MapPin, Clock, ExternalLink } from 'lucide-react';
 import { OmIcon } from '@/components/icons/SpiritualIcons';
+import { GrievanceForm } from '@/components/GrievanceForm';
 
 export const metadata: Metadata = {
   title: 'Grievance Redressal Mechanism',
@@ -92,6 +93,11 @@ export default function GrievancePage() {
                 </p>
               </div>
             </div>
+          </section>
+
+          {/* Section 2.5: Online Grievance Form */}
+          <section className="pt-2">
+            <GrievanceForm />
           </section>
 
           {/* Section 3 */}

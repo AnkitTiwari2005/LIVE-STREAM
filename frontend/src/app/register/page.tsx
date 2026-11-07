@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { Lock, Mail, User, ShieldAlert, CheckCircle2, Sparkles } from 'lucide-react';
 import { OmIcon, CoinIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
 
+import { getSafeRedirect } from '@/lib/api';
+
 export default function RegisterPage() {
   const router = useRouter();
   const [name, setName] = useState('');
@@ -20,9 +22,9 @@ export default function RegisterPage() {
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      const red = params.get('redirect');
-      if (red && red.startsWith('/')) {
-        setRedirectUrl(red);
+      const safe = getSafeRedirect(params.get('redirect'));
+      if (safe) {
+        setRedirectUrl(safe);
       }
     }
   }, []);

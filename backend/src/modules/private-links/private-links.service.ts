@@ -15,6 +15,7 @@ import {
   IVideoProviderService,
   VIDEO_PROVIDER_TOKEN,
 } from '../video/interfaces/video-provider.interface';
+import { getLiveKitPublicUrl } from '../../common/livekit-url.util';
 import { StreamStatus, StreamVisibility, UserStatus } from '@prisma/client';
 
 @Injectable()
@@ -264,8 +265,8 @@ export class PrivateLinksService {
     });
 
     const participantId = verifiedUser ? verifiedUser.id : `priv_guest_${session.id}`;
-    // If approval is required, viewer joins muted until streamer approves (B-11)
-    const canPublish = !link.requireApproval;
+    // B-03: Viewers must never receive publish permissions by default
+    const canPublish = false;
 
     // Generate LiveKit token for private pooja consultation (60 minutes TTL)
     const token = await this.videoProvider.generateToken({
@@ -282,7 +283,7 @@ export class PrivateLinksService {
     return {
       token,
       sessionId: session.id,
-      serverUrl: process.env.NEXT_PUBLIC_LIVEKIT_URL || process.env.LIVEKIT_URL || 'wss://shubhdarshan-g8vupfey.livekit.cloud',
+      serverUrl: getLiveKitPublicUrl(),
       streamId: link.streamId,
       streamTitle: link.stream.title,
       streamDescription: link.stream.description,
@@ -336,11 +337,16 @@ export class PrivateLinksService {
       throw new ForbiddenException('Only the streamer can moderate attendees in this stream');
     }
 
+    let identityToKick = targetUserId || null;
     let sessionIp: string | null = null;
     if (targetSessionId) {
       const session = await this.prisma.viewerSession.findUnique({ where: { id: targetSessionId } });
       if (session) {
         sessionIp = session.ipAddress;
+        // B-16: Resolve real identity from session record (logged-in user or guest)
+        if (!identityToKick) {
+          identityToKick = session.userId || `priv_guest_${session.id}`;
+        }
         await this.prisma.viewerSession.update({
           where: { id: session.id },
           data: { isRemoved: true, leftAt: new Date() },
@@ -359,8 +365,9 @@ export class PrivateLinksService {
     });
 
     // Evict from LiveKit SFU immediately using roomName
-    const identityToKick = targetUserId || `priv_guest_${targetSessionId}`;
-    await this.videoProvider.kickParticipant(streamId, identityToKick);
+    if (identityToKick) {
+      await this.videoProvider.kickParticipant(streamId, identityToKick);
+    }
 
     return { message: 'Viewer removed and permanently blocked from this stream.' };
   }

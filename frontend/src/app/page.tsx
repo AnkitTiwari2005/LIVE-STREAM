@@ -491,7 +491,7 @@ export default function HomePage() {
                       <VerifiedPanditBadge size={14} />
                     </div>
                     <Link
-                      href={featuredStream ? `/stream/${featuredStream.id}` : '/stream/demo'}
+                      href={featuredStream ? `/stream/${featuredStream.id}` : (liveStreams.length > 0 ? `/stream/${liveStreams[0].id}` : '#live-section')}
                       className="rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold px-4 py-2 text-xs shadow-lg transition-transform hover:scale-105 flex items-center gap-1"
                     >
                       <span>Join Darshan</span>
@@ -578,7 +578,13 @@ export default function HomePage() {
                 key={cat.id}
                 onClick={() => {
                   if (isStudio) {
-                    window.location.href = '/studio/demo';
+                    const storedUser = typeof window !== 'undefined' ? localStorage.getItem('pooja_user') : null;
+                    let isStreamer = false;
+                    try {
+                      const parsed = storedUser ? JSON.parse(storedUser) : null;
+                      isStreamer = parsed?.role === 'STREAMER' || parsed?.role === 'ADMIN';
+                    } catch {}
+                    window.location.href = isStreamer ? '/studio/create' : '/streamer/apply';
                     return;
                   }
                   if (cat.id === 'astrology' || cat.id === 'vastu') {
@@ -747,12 +753,11 @@ export default function HomePage() {
             );
           })}
 
-          {/* Supplement with Curated Flagship Sanctum Streams from TEMP2 so devotees always experience full sanctum coverage */}
-          {SANCTUM_STREAMS.slice(0, Math.max(3 - liveStreams.length, 3)).map((item) => (
-            <Link
+          {/* N-01: Display curated sanctum sample cards ONLY when no active live streams are broadcasting */}
+          {liveStreams.length === 0 && SANCTUM_STREAMS.map((item) => (
+            <div
               key={item.id}
-              href={item.streamUrl}
-              className="group rounded-2xl overflow-hidden bg-obsidian-soft border border-gold/15 hover:border-gold/50 transition-all flex flex-col shadow-xl hover:shadow-[0_12px_36px_rgba(245,158,11,0.12)]"
+              className="group rounded-2xl overflow-hidden bg-obsidian-soft border border-gold/15 flex flex-col shadow-xl"
             >
               {/* Thumbnail Container */}
               <div className="relative aspect-video bg-black overflow-hidden">
@@ -763,9 +768,9 @@ export default function HomePage() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-80" />
 
-                {/* LIVE badge */}
-                <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-red-600/90 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
+                {/* Sample Broadcast badge */}
+                <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-amber-600/90 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> Sample Broadcast
                 </div>
 
                 {/* Quality & Coin Meter */}
@@ -815,7 +820,7 @@ export default function HomePage() {
                   </span>
                 </div>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       </section>
