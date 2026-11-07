@@ -14,10 +14,15 @@ export default function LoginPage() {
   const [tempToken, setTempToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
+      const red = params.get('redirect');
+      if (red && red.startsWith('/')) {
+        setRedirectUrl(red);
+      }
       if (params.get('expired') === '1' || params.get('expired') === 'true') {
         setError('Your previous session has expired. Please sign in again.');
       }
@@ -218,7 +223,10 @@ export default function LoginPage() {
 
         <div className="mt-6 text-center text-xs text-stone-400">
           Do not have an account?{' '}
-          <Link href="/register" className="text-gold hover:underline font-bold">
+          <Link
+            href={redirectUrl ? `/register?redirect=${encodeURIComponent(redirectUrl)}` : "/register"}
+            className="text-gold hover:underline font-bold"
+          >
             Register Free (+100 Coins)
           </Link>
         </div>

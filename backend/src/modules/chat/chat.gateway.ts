@@ -280,7 +280,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const { streamId, emoji } = data;
     const allowedEmojis = [
       'diya', 'lotus', 'pranam', 'bell', 'om', 'conch',
-      '🙏', '🪔', '🌸', '🔔', '🕉️', '🌺', '🐚'
+      '🙏', '🪔', '🌸', '🔔', '🕉️', '🌺', '🐚',
+      '🥥', '❤️', '✨', '💐', '🚩', '📿'
     ];
 
     if (!streamId || !allowedEmojis.includes(emoji)) return;

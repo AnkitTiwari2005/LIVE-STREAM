@@ -15,6 +15,17 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const red = params.get('redirect');
+      if (red && red.startsWith('/')) {
+        setRedirectUrl(red);
+      }
+    }
+  }, []);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,7 +99,7 @@ export default function RegisterPage() {
             <h3 className="font-serif text-xl font-bold text-white mb-2">Check Your Inbox</h3>
             <p className="text-xs text-stone-300 mb-6 leading-relaxed">{success}</p>
             <Link
-              href="/login"
+              href={redirectUrl ? `/login?redirect=${encodeURIComponent(redirectUrl)}` : "/login"}
               className="inline-block py-2.5 px-6 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs transition-colors shadow"
             >
               Proceed to Sign In
@@ -180,7 +191,10 @@ export default function RegisterPage() {
 
         <div className="mt-6 text-center text-xs text-stone-400">
           Already have an account?{' '}
-          <Link href="/login" className="text-gold hover:underline font-bold">
+          <Link
+            href={redirectUrl ? `/login?redirect=${encodeURIComponent(redirectUrl)}` : "/login"}
+            className="text-gold hover:underline font-bold"
+          >
             Sign In
           </Link>
         </div>

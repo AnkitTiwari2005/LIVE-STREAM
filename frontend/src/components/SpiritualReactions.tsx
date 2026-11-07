@@ -72,7 +72,22 @@ export function FloatingReactionsOverlay({ socket, streamId }: { socket: Socket 
   };
 
   useEffect(() => {
-    if (!socket || !streamId) return;
+    const handleLocal = (e: any) => {
+      if (e.detail?.emoji) {
+        triggerReactionAnimation(e.detail.emoji);
+      }
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('shubh:local_reaction', handleLocal);
+    }
+
+    if (!socket || !streamId) {
+      return () => {
+        if (typeof window !== 'undefined') {
+          window.removeEventListener('shubh:local_reaction', handleLocal);
+        }
+      };
+    }
 
     const handleReactionReceived = (data: { streamId: string; emoji: string }) => {
       if (data.streamId !== streamId) return;
@@ -81,6 +96,9 @@ export function FloatingReactionsOverlay({ socket, streamId }: { socket: Socket 
 
     socket.on('chat:reaction', handleReactionReceived);
     return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('shubh:local_reaction', handleLocal);
+      }
       socket.off('chat:reaction', handleReactionReceived);
     };
   }, [socket, streamId]);
@@ -131,6 +149,10 @@ export function DevotionalEmojiBar({
   onReact?: (emoji: string) => void;
 }) {
   const sendReaction = (emoji: string) => {
+    // 1. Trigger local optimistic animation immediately!
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('shubh:local_reaction', { detail: { emoji } }));
+    }
     if (onReact) onReact(emoji);
     if (socket && streamId) {
       socket.emit('chat:reaction', { streamId, emoji });

@@ -16,7 +16,7 @@ import { ChatWidget } from '@/components/ChatWidget';
 import { FloatingReactionsOverlay, DevotionalEmojiBar } from '@/components/SpiritualReactions';
 import { DakshinaModal } from '@/components/DakshinaModal';
 import { CoinTopupModal } from '@/components/CoinTopupModal';
-import { Users, AlertCircle, Share2, Sparkles, Zap, Calendar, Bell, CheckCircle2, Clock } from 'lucide-react';
+import { Users, AlertCircle, Share2, Sparkles, Zap, Calendar, Bell, CheckCircle2, Clock, MessageSquare, Info, LogIn, Gift, Flame } from 'lucide-react';
 import {
   OmIcon,
   DiyaIcon,
@@ -52,6 +52,7 @@ export default function StreamPlayerClient() {
   const [dakshinaModalOpen, setDakshinaModalOpen] = useState(false);
   const [topupModalOpen, setTopupModalOpen] = useState(false);
   const [latestDakshina, setLatestDakshina] = useState<any>(null);
+  const [mobileTab, setMobileTab] = useState<'chat' | 'details'>('chat');
 
   // Metered Coin State
   const [sessionToken, setSessionToken] = useState<string | null>(null);
@@ -285,33 +286,6 @@ export default function StreamPlayerClient() {
         </div>
       )}
 
-      {/* Devotee Guest Notification Banner */}
-      {loginRequired && (
-        <div className="mb-4 p-3 sm:p-4 bg-gradient-to-r from-obsidian-soft via-obsidian to-obsidian-soft border border-gold/30 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
-          <div className="flex items-center gap-2.5 text-center sm:text-left">
-            <OmIcon size={24} className="shrink-0 text-gold" />
-            <div className="text-xs">
-              <span className="font-bold text-white block sm:inline mr-1">Devotee Sign-in:</span>
-              <span className="text-stone-300">Join to claim <span className="text-gold font-bold">100 Free Coins</span> for complimentary live darshan!</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Link
-              href="/register"
-              className="px-3.5 py-1.5 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs transition shadow"
-            >
-              Claim 100 Coins
-            </Link>
-            <Link
-              href="/login"
-              className="px-3 py-1.5 bg-obsidian-soft border border-gold/20 text-stone-300 hover:text-white rounded-full text-xs transition"
-            >
-              Sign In
-            </Link>
-          </div>
-        </div>
-      )}
-
       {error && (
         <div className="mb-6 p-4 bg-red-950/80 border border-red-800 rounded-2xl flex items-center gap-3 text-red-200">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
@@ -402,6 +376,42 @@ export default function StreamPlayerClient() {
                     </Link>
                   </div>
                 </div>
+              ) : loginRequired ? (
+                <div className="absolute inset-0 z-40 bg-gradient-to-b from-stone-950/95 via-stone-900/95 to-black/98 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
+                  <div className="relative mb-3">
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-amber-600/30 via-gold/20 to-orange-500/30 flex items-center justify-center border border-gold/40 shadow-[0_0_30px_rgba(245,158,11,0.35)] animate-pulse">
+                      <DiyaIcon size={32} />
+                    </div>
+                  </div>
+                  <span className="text-[11px] uppercase tracking-widest font-extrabold text-gold mb-1">
+                    Live Temple Darshan
+                  </span>
+                  <h3 className="font-serif text-xl sm:text-2xl font-bold text-white mb-2 max-w-md">
+                    Sign in to Receive Live Blessings
+                  </h3>
+                  <p className="text-stone-300 text-xs sm:text-sm max-w-md mb-5 leading-relaxed">
+                    Create a free account to claim <span className="text-gold font-bold">100 Free Sacred Coins</span> (20 mins of complimentary live darshan) and chant prayers in live chat.
+                  </p>
+                  <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto px-4">
+                    <Link
+                      href={`/register?redirect=/stream/${id}`}
+                      className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-amber-500 via-gold to-orange-500 hover:from-amber-400 hover:to-orange-400 text-stone-950 font-extrabold rounded-full shadow-[0_0_24px_rgba(245,158,11,0.4)] flex items-center justify-center gap-2 text-xs sm:text-sm transition-transform active:scale-95"
+                    >
+                      <Gift className="w-4 h-4 text-stone-950" />
+                      <span>Claim 100 Free Coins</span>
+                    </Link>
+                    <Link
+                      href={`/login?redirect=/stream/${id}`}
+                      className="w-full sm:w-auto px-5 py-2.5 bg-stone-900/90 hover:bg-stone-800 text-stone-200 hover:text-white text-xs sm:text-sm font-semibold rounded-full border border-gold/30 flex items-center justify-center gap-2 transition"
+                    >
+                      <LogIn className="w-4 h-4 text-gold" />
+                      <span>Sign In to Watch</span>
+                    </Link>
+                  </div>
+                  <span className="text-[10px] text-stone-500 mt-3 font-medium">
+                    100% Free registration • Instant darshan access
+                  </span>
+                </div>
               ) : token && serverUrl ? (
                 <LiveKitRoom
                   serverUrl={serverUrl}
@@ -466,86 +476,137 @@ export default function StreamPlayerClient() {
               <FloatingReactionsOverlay socket={socket} streamId={id} />
             </div>
 
-            {/* Stream Metadata & Pandit Info */}
+            {/* Stream Metadata & Actions */}
             {stream && (
-              <div className="bg-obsidian-soft border border-gold/15 rounded-2xl p-4 sm:p-5 shadow-lg space-y-4">
-                {/* Title & Badges */}
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <div className="flex flex-wrap items-center gap-2 mb-2">
-                      {stream.status === 'LIVE' ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-950/80 text-red-400 border border-red-800">
-                          <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                          LIVE
+              <>
+                {/* 1. Compact Header Bar with Actions & Reactions (Always visible on mobile & desktop) */}
+                <div className="bg-obsidian-soft border border-gold/15 rounded-2xl p-3 sm:p-5 shadow-lg space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                        {stream.status === 'LIVE' ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-950/80 text-red-400 border border-red-800">
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                            LIVE
+                          </span>
+                        ) : stream.status === 'SCHEDULED' ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gold/10 text-gold-pale border border-gold/30">
+                            <Calendar className="w-3.5 h-3.5 text-gold" />
+                            SCHEDULED
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-stone-900 text-stone-400 border border-stone-800">
+                            CONCLUDED
+                          </span>
+                        )}
+                        <span className="text-xs text-gold-soft font-semibold uppercase tracking-wider">
+                          {stream.category?.name}
                         </span>
-                      ) : stream.status === 'SCHEDULED' ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gold/10 text-gold-pale border border-gold/30">
-                          <Calendar className="w-3.5 h-3.5 text-gold" />
-                          SCHEDULED
+                        {remainingCoins !== null && (
+                          <span className="text-[11px] font-bold text-gold-pale bg-gold/10 border border-gold/25 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <CoinIcon size={12} /> 5 Coins / min
+                          </span>
+                        )}
+                      </div>
+                      <h1 className="font-serif text-lg sm:text-2xl font-bold text-white tracking-tight leading-snug">
+                        {stream.title}
+                      </h1>
+                      {/* Priest info line */}
+                      <div className="flex items-center gap-2 mt-1 text-xs text-stone-300">
+                        <span className="font-semibold text-stone-200 flex items-center gap-1">
+                          <PranamIcon size={14} /> {stream.streamer?.name}
                         </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-stone-900 text-stone-400 border border-stone-800">
-                          CONCLUDED
-                        </span>
-                      )}
-                      <span className="text-xs text-gold-soft font-semibold uppercase tracking-wider">
-                        {stream.category?.name}
+                        {stream.streamer?.streamerProfile?.isVerifiedBadge && (
+                          <span className="inline-flex items-center gap-1 text-gold-soft font-bold text-[11px]" title="Verified Vedic Pandit">
+                            <VerifiedPanditBadge size={14} /> Verified
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Devotee Action CTAs (Arpan Dakshina + Share) */}
+                    <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+                      <button
+                        onClick={() => setDakshinaModalOpen(true)}
+                        className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 sm:py-2.5 bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold rounded-full transition-all shadow-[0_0_24px_rgba(245,158,11,0.25)] hover:scale-105 active:scale-95"
+                      >
+                        <DiyaIcon size={16} />
+                        <span>Arpan Dakshina</span>
+                      </button>
+                      <button
+                        onClick={handleShare}
+                        className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 sm:py-2.5 bg-obsidian border border-gold/20 hover:bg-stone-900 text-stone-200 text-xs font-semibold rounded-full transition-all shadow"
+                      >
+                        <Share2 className="w-3.5 h-3.5 text-gold-soft" /> Share
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Devotional Emoji Reactions Bar */}
+                  <DevotionalEmojiBar socket={socket} streamId={id} />
+                </div>
+
+                {/* 2. Mobile Tab Switcher (Visible only on mobile/tablet < lg) */}
+                <div className="lg:hidden flex items-center bg-stone-900/90 p-1 rounded-2xl border border-gold/20 shadow-inner">
+                  <button
+                    onClick={() => setMobileTab('chat')}
+                    className={`flex-1 py-2 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all ${
+                      mobileTab === 'chat'
+                        ? 'bg-gold text-stone-950 shadow-md font-extrabold'
+                        : 'text-stone-400 hover:text-stone-200'
+                    }`}
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>Sacred Live Chat</span>
+                  </button>
+                  <button
+                    onClick={() => setMobileTab('details')}
+                    className={`flex-1 py-2 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all ${
+                      mobileTab === 'details'
+                        ? 'bg-gold text-stone-950 shadow-md font-extrabold'
+                        : 'text-stone-400 hover:text-stone-200'
+                    }`}
+                  >
+                    <Info className="w-3.5 h-3.5" />
+                    <span>Pooja Details & Pandit</span>
+                  </button>
+                </div>
+
+                {/* 3. Detailed Information Section (Shown on mobile when 'details' tab selected, ALWAYS visible on desktop) */}
+                <div className={`${mobileTab === 'details' ? 'block' : 'hidden lg:block'} bg-obsidian-soft border border-gold/15 rounded-2xl p-4 sm:p-5 shadow-lg space-y-3`}>
+                  <h3 className="font-serif text-base font-bold text-white flex items-center gap-2">
+                    <OmIcon size={18} /> Sacred Pooja Description
+                  </h3>
+                  {stream.description ? (
+                    <p className="text-xs sm:text-sm text-stone-300 leading-relaxed whitespace-pre-line">
+                      {stream.description}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-stone-500 italic">No additional description provided for this pooja.</p>
+                  )}
+
+                  <div className="pt-3 border-t border-stone-800/80 flex items-center justify-between text-xs text-stone-300">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-stone-100 flex items-center gap-1.5">
+                        <PranamIcon size={16} /> Presided by {stream.streamer?.name}
                       </span>
-                      {remainingCoins !== null && (
-                        <span className="text-[11px] font-bold text-gold-pale bg-gold/10 border border-gold/25 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                          <CoinIcon size={12} /> 5 Coins / min
+                      {stream.streamer?.streamerProfile?.isVerifiedBadge && (
+                        <span className="inline-flex items-center gap-1 text-gold-soft font-bold" title="Verified Vedic Pandit">
+                          <VerifiedPanditBadge size={16} /> Verified
                         </span>
                       )}
                     </div>
-                    <h1 className="font-serif text-xl sm:text-2xl font-bold text-white tracking-tight leading-snug">{stream.title}</h1>
-                    {stream.description && (
-                      <p className="text-xs sm:text-sm text-stone-400 mt-1 line-clamp-2 leading-relaxed">{stream.description}</p>
-                    )}
-                  </div>
-
-                  {/* Devotee Action CTAs (Arpan Dakshina + Share) */}
-                  <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-                    <button
-                      onClick={() => setDakshinaModalOpen(true)}
-                      className="flex items-center gap-2 px-4 py-2.5 bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold rounded-full transition-all shadow-[0_0_24px_rgba(245,158,11,0.25)] hover:scale-105"
-                    >
-                      <DiyaIcon size={16} />
-                      <span>Arpan Dakshina</span>
-                    </button>
-                    <button
-                      onClick={handleShare}
-                      className="flex items-center gap-1.5 px-3.5 py-2.5 bg-obsidian border border-gold/20 hover:bg-stone-900 text-stone-200 text-xs font-semibold rounded-full transition-all shadow"
-                    >
-                      <Share2 className="w-4 h-4 text-gold-soft" /> Share
-                    </button>
-                  </div>
-                </div>
-
-                {/* Devotional Emoji Reactions Bar (Below the video, never obstructing the sanctum!) */}
-                <DevotionalEmojiBar socket={socket} streamId={id} />
-
-                {/* Pandit Info & Devotee Counters */}
-                <div className="pt-3 border-t border-stone-800/80 flex items-center justify-between text-xs text-stone-300">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-stone-100 text-sm flex items-center gap-1.5">
-                      <PranamIcon size={16} /> {stream.streamer?.name}
+                    <span className="flex items-center gap-1 text-stone-400 font-medium">
+                      <Users className="w-3.5 h-3.5 text-gold" /> Live Devotees
                     </span>
-                    {stream.streamer?.streamerProfile?.isVerifiedBadge && (
-                      <span className="inline-flex items-center gap-1 text-gold-soft font-bold" title="Verified Vedic Pandit">
-                        <VerifiedPanditBadge size={16} /> Verified
-                      </span>
-                    )}
                   </div>
-                  <span className="flex items-center gap-1 text-stone-400 font-medium">
-                    <Users className="w-3.5 h-3.5 text-gold" /> Live Devotees
-                  </span>
                 </div>
-              </div>
+              </>
             )}
           </div>
 
-          {/* Right Live Chat Sidebar (Col span 1) */}
-          <div className="h-[550px] lg:h-[620px]">
+          {/* Right Live Chat Sidebar (On mobile: shown when mobileTab === 'chat'; on desktop: always shown in right column) */}
+          <div className={`${mobileTab === 'chat' ? 'block' : 'hidden lg:block'} h-[400px] sm:h-[460px] lg:h-[620px]`}>
             <ChatWidget
               socket={socket}
               streamId={id}
