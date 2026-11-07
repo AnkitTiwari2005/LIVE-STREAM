@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ShieldAlert,
+  ShieldCheck,
   Users,
   Video,
   FileCheck,
@@ -154,7 +155,7 @@ export default function AdminConsolePage() {
       <div className="flex items-center justify-between mb-8 pb-4 border-b border-stone-800">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            🛡️ Platform Operator Console
+            <ShieldCheck className="w-6 h-6 text-amber-500" /> Platform Operator Console
           </h1>
           <p className="text-xs text-stone-400 mt-1">
             Global monitoring, KYC approvals, emergency kill switches, and audit trail

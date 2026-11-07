@@ -26,9 +26,33 @@ export function Navbar() {
       } catch {}
     }
 
-    // Fetch live wallet balance from backend
     if (storedToken) {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+
+      // Validate session with /auth/me to eliminate ghost logins if token expired
+      fetch(`${apiUrl}/auth/me`, {
+        headers: { Authorization: `Bearer ${storedToken}` },
+      })
+        .then((res) => {
+          if (res.status === 401) {
+            // Token expired: clear stale storage cleanly
+            localStorage.removeItem('pooja_user');
+            localStorage.removeItem('pooja_token');
+            setUser(null);
+            setCoinBalance(null);
+            return null;
+          }
+          return res.ok ? res.json() : null;
+        })
+        .then((freshUser) => {
+          if (freshUser) {
+            setUser(freshUser);
+            localStorage.setItem('pooja_user', JSON.stringify(freshUser));
+          }
+        })
+        .catch(() => {});
+
+      // Fetch live wallet balance from backend
       fetch(`${apiUrl}/wallet/balance`, {
         headers: { Authorization: `Bearer ${storedToken}` },
       })

@@ -73,6 +73,21 @@ export class PrivateLinksController {
       }
     }
 
+    if (!resolvedUserId && (req as any).cookies?.access_token) {
+      try {
+        const token = (req as any).cookies.access_token;
+        const base64Payload = token.split('.')[1];
+        if (base64Payload) {
+          const payload = JSON.parse(Buffer.from(base64Payload, 'base64').toString('utf8'));
+          if (payload?.sub) {
+            resolvedUserId = payload.sub;
+          }
+        }
+      } catch {
+        // Fallback silently
+      }
+    }
+
     return this.privateLinksService.claimLink(tokenSlug, dto, resolvedUserId, ip);
   }
 

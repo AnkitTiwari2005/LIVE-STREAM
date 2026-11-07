@@ -300,8 +300,13 @@ export class WalletService {
    * 5. Create Top-Up Payment Order
    */
   async createTopupOrder(userId: string, dto: CreateTopupOrderDto) {
+    const targetSku = dto.packageSku || dto.sku;
+    if (!targetSku) {
+      throw new BadRequestException('packageSku or sku is required');
+    }
+
     const pkg = await this.prisma.coinPackage.findUnique({
-      where: { sku: dto.packageSku },
+      where: { sku: targetSku },
     });
 
     if (!pkg || !pkg.isActive) {

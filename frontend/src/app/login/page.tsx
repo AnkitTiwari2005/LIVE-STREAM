@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Lock, Mail, ShieldAlert, KeyRound } from 'lucide-react';
+import { Lock, Mail, ShieldAlert, KeyRound, Sparkles } from 'lucide-react';
+import { OmIcon, DiyaIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -96,14 +97,16 @@ export default function LoginPage() {
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
       <div className="max-w-md w-full bg-stone-900 border border-stone-800 rounded-2xl p-8 shadow-2xl">
         <div className="text-center mb-8">
-          <span className="text-4xl mb-2 inline-block">🕉️</span>
+          <div className="flex justify-center mb-3">
+            <OmIcon size={44} />
+          </div>
           <h2 className="text-2xl font-bold text-white tracking-tight">
-            {tempUserId ? 'Two-Factor Authentication' : 'Welcome Back'}
+            {tempUserId ? 'Two-Factor Authentication' : 'Welcome to Shubhdarshan'}
           </h2>
           <p className="text-stone-400 text-xs mt-1">
             {tempUserId
               ? 'Enter the 6-digit code from your Authenticator app'
-              : 'Sign in to participate in sacred poojas and chat'}
+              : 'Sign in to participate in sacred poojas, darshan, and live chat'}
           </p>
         </div>
 
@@ -157,6 +160,45 @@ export default function LoginPage() {
             >
               {loading ? 'Authenticating...' : 'Sign In'}
             </button>
+
+            {/* Quick Demo Credentials Fill */}
+            <div className="pt-4 border-t border-stone-800">
+              <span className="text-[10px] uppercase font-bold text-stone-500 tracking-wider block mb-2 text-center">
+                Quick Test Accounts
+              </span>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('pandit@shubhdarshan.com');
+                    setPassword('Pandit@2026Live!');
+                  }}
+                  className="py-1.5 px-2 bg-stone-800 hover:bg-stone-700 text-orange-400 font-semibold rounded-lg text-[11px] transition-colors border border-stone-700 text-center"
+                >
+                  Pandit Account
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('devotee_wallet_test_1793998980362@shubhdarshan.com');
+                    setPassword('SecurePooja2026!');
+                  }}
+                  className="py-1.5 px-2 bg-stone-800 hover:bg-stone-700 text-amber-400 font-semibold rounded-lg text-[11px] transition-colors border border-stone-700 text-center"
+                >
+                  Devotee (100 Coins)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('admin@platform-domain.com');
+                    setPassword('AdminPooja@2026Secure!');
+                  }}
+                  className="py-1.5 px-2 bg-stone-800 hover:bg-stone-700 text-stone-300 font-semibold rounded-lg text-[11px] transition-colors border border-stone-700 text-center"
+                >
+                  Admin Console
+                </button>
+              </div>
+            </div>
           </form>
         ) : (
           <form onSubmit={handleTotpVerify} className="space-y-4">

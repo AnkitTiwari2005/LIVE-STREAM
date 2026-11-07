@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
+import { OmIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
@@ -38,7 +39,9 @@ function VerifyEmailContent() {
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4 py-16">
       <div className="max-w-md w-full bg-stone-900 border border-stone-800 rounded-3xl p-8 text-center shadow-2xl">
-        <span className="text-4xl mb-4 inline-block">🕉️</span>
+        <div className="flex justify-center mb-4">
+          <OmIcon size={44} />
+        </div>
 
         {status === 'verifying' && (
           <div>
@@ -55,9 +58,10 @@ function VerifyEmailContent() {
             <p className="text-xs text-stone-300 leading-relaxed mb-6">{message}</p>
             <Link
               href="/login"
-              className="inline-block py-2.5 px-6 bg-orange-600 hover:bg-orange-500 text-white font-semibold rounded-xl text-xs transition-colors"
+              className="inline-flex items-center gap-1.5 py-2.5 px-6 bg-orange-600 hover:bg-orange-500 text-white font-semibold rounded-xl text-xs transition-colors"
             >
-              Sign In to Your Account 🙏
+              <span>Sign In to Your Account</span>
+              <PranamIcon size={16} />
             </Link>
           </div>
         )}

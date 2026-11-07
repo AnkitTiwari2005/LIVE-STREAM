@@ -30,7 +30,21 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser }: ChatWi
   const [pinnedMessage, setPinnedMessage] = useState<ChatMessage | null>(null);
   const [input, setInput] = useState('');
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
+  const [activeUser, setActiveUser] = useState<any>(currentUser || null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (currentUser) {
+      setActiveUser(currentUser);
+    } else if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('pooja_user');
+      if (stored) {
+        try {
+          setActiveUser(JSON.parse(stored));
+        } catch {}
+      }
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     if (!socket || !streamId) return;
@@ -158,8 +172,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser }: ChatWi
     socket.emit('chat:mute', { streamId, targetUserId, durationMinutes: 15 });
   };
 
-  const storedUser = typeof window !== 'undefined' ? localStorage.getItem('pooja_user') : null;
-  const isDevoteeLoggedIn = Boolean(currentUser || storedUser);
+  const isLoggedIn = Boolean(activeUser);
 
   return (
     <div className="flex flex-col h-full bg-stone-900 border border-stone-800 rounded-3xl overflow-hidden shadow-2xl">
@@ -288,7 +301,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser }: ChatWi
 
       {/* Input Form */}
       <div className="p-3 border-t border-stone-800 bg-stone-950/60">
-        {isDevoteeLoggedIn ? (
+        {isLoggedIn ? (
           <form onSubmit={handleSendMessage} className="flex gap-2">
             <input
               type="text"

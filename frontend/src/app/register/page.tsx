@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Lock, Mail, User, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { Lock, Mail, User, ShieldAlert, CheckCircle2, Sparkles } from 'lucide-react';
+import { OmIcon, CoinIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -57,11 +58,17 @@ export default function RegisterPage() {
     <div className="min-h-[85vh] flex items-center justify-center px-4 py-12">
       <div className="max-w-md w-full bg-stone-900 border border-stone-800 rounded-2xl p-8 shadow-2xl">
         <div className="text-center mb-8">
-          <span className="text-4xl mb-2 inline-block">🕉️</span>
+          <div className="flex justify-center mb-3">
+            <OmIcon size={44} />
+          </div>
           <h2 className="text-2xl font-bold text-white tracking-tight">Create Devotee Account</h2>
           <p className="text-stone-400 text-xs mt-1">
             Join thousands watching authentic Vedic Darshan and Kundli analysis
           </p>
+          <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-950/60 border border-amber-800/60 text-amber-300 text-xs font-semibold">
+            <CoinIcon size={14} />
+            <span>100 Free Darshan Coins (20 mins free) upon registration!</span>
+          </div>
         </div>
 
         {error && (

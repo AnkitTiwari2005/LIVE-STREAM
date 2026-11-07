@@ -2,8 +2,12 @@ import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreateTopupOrderDto {
   @IsString()
-  @IsNotEmpty()
-  packageSku: string;
+  @IsOptional()
+  packageSku?: string;
+
+  @IsString()
+  @IsOptional()
+  sku?: string;
 }
 
 export class VerifyTopupDto {

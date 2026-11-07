@@ -5,15 +5,36 @@ import { useParams } from 'next/navigation';
 import { ShieldCheck, FileText } from 'lucide-react';
 
 export default function StaticCMSClient() {
-  const { slug } = useParams() as { slug: string };
+  const { slug: paramSlug } = useParams() as { slug: string };
+  const [resolvedSlug, setResolvedSlug] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const parts = window.location.pathname.replace(/\/$/, '').split('/').filter(Boolean);
+      const urlSlug = parts[parts.length - 1];
+      if (urlSlug && urlSlug !== '[slug]') {
+        return urlSlug;
+      }
+    }
+    return paramSlug || '';
+  });
   const [page, setPage] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const parts = window.location.pathname.replace(/\/$/, '').split('/').filter(Boolean);
+      const urlSlug = parts[parts.length - 1];
+      if (urlSlug && urlSlug !== '[slug]') {
+        setResolvedSlug(urlSlug);
+      }
+    }
+  }, [paramSlug]);
+
+  useEffect(() => {
+    if (!resolvedSlug || resolvedSlug === '[slug]') return;
     async function loadPage() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
       try {
-        const res = await fetch(`${apiUrl}/admin/pages/${slug}`);
+        const res = await fetch(`${apiUrl}/admin/pages/${resolvedSlug}`);
         if (res.ok) {
           const data = await res.json();
           setPage(data);
@@ -25,7 +46,7 @@ export default function StaticCMSClient() {
       }
     }
     loadPage();
-  }, [slug]);
+  }, [resolvedSlug]);
 
   if (loading) {
     return (

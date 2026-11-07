@@ -13,6 +13,9 @@ import {
 } from 'livekit-client';
 import {
   LiveKitRoom,
+  RoomAudioRenderer,
+  StartAudio,
+  useTracks,
   VideoTrack,
   AudioTrack,
   useLocalParticipant,
@@ -352,7 +355,11 @@ export default function StudioClient() {
                 }}
                 className="w-full h-full"
               >
+                <RoomAudioRenderer />
                 <PublisherTrackRenderer />
+                <div className="absolute top-4 right-4 z-30">
+                  <StartAudio label="Unmute Remote Devotee Audio" />
+                </div>
               </LiveKitRoom>
             )}
           </div>
@@ -423,14 +430,24 @@ export default function StudioClient() {
                 </div>
               )}
 
-              <button
-                onClick={handleGoLive}
-                disabled={loading}
-                className="w-full py-3.5 bg-gradient-to-r from-orange-600 via-red-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold rounded-xl text-base shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                <Radio className="w-5 h-5 animate-pulse" />
-                {loading ? 'Starting Broadcast Engine...' : (<span className="flex items-center gap-1.5">START LIVE BROADCAST NOW <PranamIcon size={18} /></span>)}
-              </button>
+              {stream?.status === 'ENDED' ? (
+                <Link
+                  href="/studio/create"
+                  className="w-full py-3.5 bg-gradient-to-r from-orange-600 via-amber-600 to-orange-500 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold rounded-xl text-base shadow-xl transition-all flex items-center justify-center gap-2 text-center"
+                >
+                  <Sparkles className="w-5 h-5" />
+                  <span>Setup New Broadcast</span>
+                </Link>
+              ) : (
+                <button
+                  onClick={handleGoLive}
+                  disabled={loading}
+                  className="w-full py-3.5 bg-gradient-to-r from-orange-600 via-red-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold rounded-xl text-base shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <Radio className="w-5 h-5 animate-pulse" />
+                  {loading ? 'Starting Broadcast Engine...' : (<span className="flex items-center gap-1.5">START LIVE BROADCAST NOW <PranamIcon size={18} /></span>)}
+                </button>
+              )}
             </div>
           ) : (
             <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl flex items-center justify-between text-xs text-stone-300">
@@ -468,6 +485,7 @@ export default function StudioClient() {
 }
 
 function PublisherTrackRenderer() {
+  const tracks = useTracks([Track.Source.Camera]);
   const { cameraTrack, localParticipant, isMicrophoneEnabled, isCameraEnabled } = useLocalParticipant();
 
   const toggleMic = async () => {
@@ -482,25 +500,35 @@ function PublisherTrackRenderer() {
     }
   };
 
-  if (!cameraTrack || !cameraTrack.track) {
-    return (
-      <div className="w-full h-full flex flex-col items-center justify-center text-stone-400 bg-stone-950">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-orange-500 mb-3" />
-        <span className="text-xs font-semibold">Broadcasting Live Video & Audio...</span>
-      </div>
-    );
-  }
+  const remoteDevoteeTrack = tracks.find((t) => t.participant.identity !== localParticipant?.identity);
 
   return (
     <div className="relative w-full h-full">
-      <VideoTrack
-        trackRef={{
-          participant: localParticipant,
-          publication: cameraTrack,
-          source: Track.Source.Camera,
-        }}
-        className="w-full h-full object-contain bg-black"
-      />
+      {cameraTrack && cameraTrack.track ? (
+        <VideoTrack
+          trackRef={{
+            participant: localParticipant,
+            publication: cameraTrack,
+            source: Track.Source.Camera,
+          }}
+          className="w-full h-full object-contain bg-black"
+        />
+      ) : (
+        <div className="w-full h-full flex flex-col items-center justify-center text-stone-400 bg-stone-950">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-orange-500 mb-3" />
+          <span className="text-xs font-semibold">Broadcasting Live Video & Audio...</span>
+        </div>
+      )}
+
+      {/* Devotee Remote Video (PIP in Top Right for 2-Way Private Consultation) */}
+      {remoteDevoteeTrack && (
+        <div className="absolute top-4 right-4 w-40 sm:w-56 aspect-video rounded-2xl overflow-hidden border-2 border-orange-500 shadow-2xl z-30 bg-stone-950">
+          <VideoTrack trackRef={remoteDevoteeTrack} className="w-full h-full object-cover" />
+          <div className="absolute bottom-1 left-2 bg-stone-950/80 px-2 py-0.5 rounded text-[10px] font-bold text-orange-300">
+            Devotee Video
+          </div>
+        </div>
+      )}
 
       {/* Pandit Live Status Badges & Controls Overlay */}
       <div className="absolute top-4 left-4 flex items-center gap-2 z-20">
@@ -518,7 +546,7 @@ function PublisherTrackRenderer() {
           title="Click to toggle microphone"
         >
           <Mic className="w-3 h-3" />
-          {isMicrophoneEnabled ? 'Mic: ON (Broadcasting)' : 'Mic: MUTED ⚠️'}
+          {isMicrophoneEnabled ? 'Mic: ON (Broadcasting)' : 'Mic: MUTED'}
         </button>
       </div>
     </div>
