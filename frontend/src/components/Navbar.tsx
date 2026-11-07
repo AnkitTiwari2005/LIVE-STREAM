@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import {
   Video,
@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { CoinTopupModal } from './CoinTopupModal';
 import { SearchPalette } from './SearchPalette';
+import { ThemeToggle } from './ThemeToggle';
 import { OmIcon, CoinIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
 
 export function Navbar() {
@@ -29,6 +30,21 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setUserDropdownOpen(false);
+      }
+    };
+    if (userDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [userDropdownOpen]);
 
   useEffect(() => {
     // Check session
@@ -168,6 +184,9 @@ export function Navbar() {
               <kbd className="px-1.5 py-0.5 rounded text-[10px] bg-stone-800 text-stone-400 border border-stone-700 font-mono">/</kbd>
             </button>
 
+            {/* Theme Toggle Button (Surya Day / Sacred Night) */}
+            <ThemeToggle />
+
             {/* Quick Broadcaster Studio (Streamers only) */}
             {user?.role === 'STREAMER' && (
               <Link
@@ -205,8 +224,8 @@ export function Navbar() {
                   <PlusCircle className="w-3.5 h-3.5 text-gold shrink-0 group-hover:text-gold-soft" />
                 </button>
 
-                {/* Devotee / Pandit Profile with Sacred Dropdown */}
-                <div className="relative shrink-0">
+                {/* Devotee / Pandit Profile with Solid High-Contrast Dropdown */}
+                <div className="relative shrink-0" ref={dropdownRef}>
                   <button
                     onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                     className="whitespace-nowrap shrink-0 flex items-center gap-1.5 text-xs font-semibold text-stone-200 hover:text-gold-pale transition px-3 py-1.5 rounded-full bg-obsidian-soft border border-gold/20 hover:border-gold/40 max-w-[140px]"
@@ -218,69 +237,76 @@ export function Navbar() {
                   </button>
 
                   {userDropdownOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-gold/30 bg-obsidian-deep/98 backdrop-blur-xl p-2 shadow-2xl z-50 text-xs">
-                      <div className="px-3 py-2 border-b border-gold/15 mb-1">
-                        <div className="font-bold text-white truncate">{user.name}</div>
-                        <div className="text-[10px] text-gold-soft uppercase tracking-wider">{user.role || 'DEVOTEE'}</div>
+                    <div className="navbar-user-dropdown absolute right-0 top-full mt-2 w-64 rounded-2xl p-2.5 z-[9999] text-xs">
+                      {/* Opaque user info header */}
+                      <div className="p-3 rounded-xl bg-[#241a12] border border-gold/25 mb-2 shadow-sm">
+                        <div className="font-bold text-white text-sm truncate">{user.name}</div>
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-[10px] text-gold font-bold uppercase tracking-wider">{user.role || 'DEVOTEE'}</span>
+                          <span className="text-[10px] text-stone-300 font-medium">{coinBalance !== null ? `${coinBalance} Coins` : ''}</span>
+                        </div>
                       </div>
-                      {user.role === 'STREAMER' && (
-                        <>
+
+                      <div className="space-y-1">
+                        {user.role === 'STREAMER' && (
+                          <>
+                            <Link
+                              href="/studio/create"
+                              onClick={() => setUserDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
+                            >
+                              <Video className="w-4 h-4 text-gold shrink-0" />
+                              <span>Broadcaster Studio</span>
+                            </Link>
+                            <Link
+                              href="/streamer/earnings"
+                              onClick={() => setUserDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
+                            >
+                              <CoinIcon size={16} className="text-gold shrink-0" />
+                              <span>Earnings & Dakshina</span>
+                            </Link>
+                          </>
+                        )}
+                        {user.role === 'ADMIN' && (
                           <Link
-                            href="/studio/create"
+                            href="/admin"
                             onClick={() => setUserDropdownOpen(false)}
-                            className="flex items-center gap-2 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/10 rounded-xl transition"
+                            className="flex items-center gap-2.5 px-3 py-2 text-amber-300 hover:bg-amber-950/40 rounded-xl transition font-medium"
                           >
-                            <Video className="w-3.5 h-3.5 text-gold" />
-                            <span>Broadcaster Studio</span>
+                            <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+                            <span>Admin Console</span>
                           </Link>
+                        )}
+                        {user.role === 'VIEWER' && (
                           <Link
-                            href="/streamer/earnings"
+                            href="/streamer/apply"
                             onClick={() => setUserDropdownOpen(false)}
-                            className="flex items-center gap-2 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/10 rounded-xl transition"
+                            className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
                           >
-                            <CoinIcon size={14} />
-                            <span>Earnings & Dakshina</span>
+                            <Sparkles className="w-4 h-4 text-gold shrink-0" />
+                            <span>Become a Pandit</span>
                           </Link>
-                        </>
-                      )}
-                      {user.role === 'ADMIN' && (
+                        )}
                         <Link
-                          href="/admin"
+                          href="/account"
                           onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-2 px-3 py-2 text-amber-300 hover:bg-amber-950/40 rounded-xl transition"
+                          className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
                         >
-                          <ShieldCheck className="w-3.5 h-3.5" />
-                          <span>Admin Console</span>
+                          <User className="w-4 h-4 text-stone-400 shrink-0" />
+                          <span>Account Settings</span>
                         </Link>
-                      )}
-                      {user.role === 'VIEWER' && (
-                        <Link
-                          href="/streamer/apply"
-                          onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-2 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/10 rounded-xl transition"
+                        <button
+                          onClick={() => {
+                            setUserDropdownOpen(false);
+                            handleLogout();
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 text-red-400 hover:bg-red-950/40 rounded-xl transition font-medium mt-1.5 pt-2 border-t border-stone-800/80"
                         >
-                          <Sparkles className="w-3.5 h-3.5 text-gold" />
-                          <span>Become a Pandit</span>
-                        </Link>
-                      )}
-                      <Link
-                        href="/account"
-                        onClick={() => setUserDropdownOpen(false)}
-                        className="flex items-center gap-2 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/10 rounded-xl transition"
-                      >
-                        <User className="w-3.5 h-3.5 text-stone-400" />
-                        <span>Account Settings</span>
-                      </Link>
-                      <button
-                        onClick={() => {
-                          setUserDropdownOpen(false);
-                          handleLogout();
-                        }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-red-400 hover:bg-red-950/30 rounded-xl transition mt-1 border-t border-stone-800/60"
-                      >
-                        <LogOut className="w-3.5 h-3.5" />
-                        <span>Log Out</span>
-                      </button>
+                          <LogOut className="w-4 h-4 text-red-400 shrink-0" />
+                          <span>Log Out</span>
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -326,6 +352,7 @@ export function Navbar() {
             >
               <Search className="w-4 h-4 text-gold-soft" />
             </button>
+            <ThemeToggle className="h-8 w-8" />
             {user && (
               <button
                 onClick={() => setTopupModalOpen(true)}
