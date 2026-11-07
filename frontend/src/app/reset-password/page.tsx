@@ -2,12 +2,11 @@
 
 import React, { Suspense, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Lock, CheckCircle2, ArrowRight } from 'lucide-react';
 import { OmIcon, DiyaIcon } from '@/components/icons/SpiritualIcons';
 
 function ResetPasswordContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [token, setToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -66,11 +65,11 @@ function ResetPasswordContent() {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-3">
             <span className="p-3 bg-orange-950/60 border border-orange-500/30 rounded-2xl text-orange-400">
-              <DiyaIcon className="w-8 h-8" />
+              <DiyaIcon size={32} />
             </span>
           </div>
           <h1 className="text-2xl font-serif font-bold text-stone-100 flex items-center justify-center gap-2">
-            <OmIcon className="w-5 h-5 text-orange-500" />
+            <OmIcon size={22} />
             Set New Password
           </h1>
           <p className="text-stone-400 text-sm mt-1">

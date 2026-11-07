@@ -57,6 +57,8 @@ export default function LoginPage() {
       const redirectUrl = params?.get('redirect');
       if (redirectUrl && redirectUrl.startsWith('/')) {
         router.push(redirectUrl);
+      } else if (data.user?.role === 'ADMIN') {
+        router.push('/admin');
       } else {
         router.push('/');
       }
@@ -85,7 +87,18 @@ export default function LoginPage() {
 
       localStorage.setItem('pooja_user', JSON.stringify(data.user));
       localStorage.setItem('pooja_token', data.accessToken);
-      router.push('/admin');
+
+      const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const redirectUrl = params?.get('redirect');
+      if (redirectUrl && redirectUrl.startsWith('/')) {
+        router.push(redirectUrl);
+      } else if (data.user?.role === 'ADMIN') {
+        router.push('/admin');
+      } else if (data.user?.role === 'STREAMER') {
+        router.push('/studio/create');
+      } else {
+        router.push('/');
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {

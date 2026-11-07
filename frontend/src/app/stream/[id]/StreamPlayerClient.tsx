@@ -16,7 +16,7 @@ import { ChatWidget } from '@/components/ChatWidget';
 import { SpiritualReactions } from '@/components/SpiritualReactions';
 import { DakshinaModal } from '@/components/DakshinaModal';
 import { CoinTopupModal } from '@/components/CoinTopupModal';
-import { Users, AlertCircle, Share2, Sparkles, Zap } from 'lucide-react';
+import { Users, AlertCircle, Share2, Sparkles, Zap, Calendar, Bell, CheckCircle2, Clock } from 'lucide-react';
 import {
   OmIcon,
   DiyaIcon,
@@ -47,6 +47,8 @@ export default function StreamPlayerClient() {
   const [error, setError] = useState<string | null>(null);
   const [loginRequired, setLoginRequired] = useState(false);
   const [streamEnded, setStreamEnded] = useState(false);
+  const [isScheduled, setIsScheduled] = useState(false);
+  const [reminderSet, setReminderSet] = useState(false);
   const [dakshinaModalOpen, setDakshinaModalOpen] = useState(false);
   const [topupModalOpen, setTopupModalOpen] = useState(false);
   const [latestDakshina, setLatestDakshina] = useState<any>(null);
@@ -111,6 +113,19 @@ export default function StreamPlayerClient() {
       if (!streamRes.ok) throw new Error('Stream not found');
       const streamData = await streamRes.json();
       setStream(streamData);
+
+      if (streamData.status === 'ENDED') {
+        setStreamEnded(true);
+        return;
+      }
+
+      if (streamData.status === 'SCHEDULED') {
+        setIsScheduled(true);
+        return;
+      }
+
+      setIsScheduled(false);
+      setStreamEnded(false);
 
       // 2. Obtain subscriber LiveKit token (and meter session token)
       const headers: Record<string, string> = {};
@@ -222,6 +237,27 @@ export default function StreamPlayerClient() {
     }
   };
 
+  const handleSetReminder = async () => {
+    const token = localStorage.getItem('pooja_token');
+    if (!token) {
+      alert('Please sign in to set email reminders.');
+      window.location.href = `/login?redirect=/stream/${id}`;
+      return;
+    }
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    try {
+      const res = await fetch(`${apiUrl}/notifications/remind/${id}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setReminderSet(true);
+      alert(data.message || 'Email reminder set! You will be notified when this pooja goes live.');
+    } catch {
+      alert('Failed to set reminder.');
+    }
+  };
+
   const handleTopupSuccess = (newBalance: number) => {
     setRemainingCoins(newBalance);
     setAvailableMinutes(Math.floor(newBalance / 5));
@@ -298,8 +334,54 @@ export default function StreamPlayerClient() {
           {/* Main Video Viewport (Col span 2) */}
           <div className="lg:col-span-2 flex flex-col gap-4">
             <div className="relative w-full aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl border border-stone-800 flex items-center justify-center">
-              {/* Zero Balance Blur & Eviction Overlay */}
-              {isZeroBalance ? (
+              {/* Scheduled Stream Announcement Overlay */}
+              {isScheduled ? (
+                <div className="absolute inset-0 z-40 bg-gradient-to-br from-stone-900 via-stone-950 to-amber-950/80 flex flex-col items-center justify-center p-6 text-center">
+                  <div className="p-4 bg-orange-950/60 border border-orange-500/30 rounded-3xl text-orange-400 mb-4 shadow-xl">
+                    <Calendar className="w-10 h-10" />
+                  </div>
+                  <span className="text-xs uppercase font-extrabold tracking-widest text-amber-400 mb-1">
+                    Scheduled Sacred Pooja
+                  </span>
+                  <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 max-w-md">
+                    {stream?.title}
+                  </h3>
+                  {stream?.scheduledAt && (
+                    <p className="text-stone-300 text-sm font-semibold mb-3 bg-stone-900/90 border border-stone-800 px-4 py-1.5 rounded-full inline-flex items-center gap-2 shadow">
+                      <Clock className="w-4 h-4 text-orange-400" />
+                      {new Date(stream.scheduledAt).toLocaleString([], { dateStyle: 'full', timeStyle: 'short' })}
+                    </p>
+                  )}
+                  <p className="text-stone-400 text-xs max-w-sm mb-6 leading-relaxed">
+                    This live pooja broadcast has not commenced yet. Set an email reminder to receive sacred darshan as soon as the Pandit goes live.
+                  </p>
+                  <div className="flex flex-col sm:flex-row items-center gap-3">
+                    <button
+                      onClick={handleSetReminder}
+                      disabled={reminderSet}
+                      className="px-6 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold rounded-2xl shadow-xl shadow-orange-950/60 flex items-center justify-center gap-2 text-xs sm:text-sm transition-all disabled:opacity-60"
+                    >
+                      {reminderSet ? (
+                        <>
+                          <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                          <span>Reminder Scheduled ✓</span>
+                        </>
+                      ) : (
+                        <>
+                          <Bell className="w-4 h-4" />
+                          <span>Remind Me via Email</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={handleShare}
+                      className="px-4 py-3 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold rounded-2xl transition"
+                    >
+                      Share Pooja Link
+                    </button>
+                  </div>
+                </div>
+              ) : isZeroBalance ? (
                 <div className="absolute inset-0 z-40 bg-stone-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
                   <OmIcon size={52} className="mb-3" />
                   <h3 className="text-xl font-bold text-white mb-1">Auspicious Darshan Paused</h3>
@@ -394,10 +476,21 @@ export default function StreamPlayerClient() {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-950 text-red-400 border border-red-800">
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                        LIVE
-                      </span>
+                      {stream.status === 'LIVE' ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-950 text-red-400 border border-red-800">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                          LIVE
+                        </span>
+                      ) : stream.status === 'SCHEDULED' ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-950 text-amber-400 border border-amber-800">
+                          <Calendar className="w-3.5 h-3.5" />
+                          SCHEDULED
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-stone-800 text-stone-400 border border-stone-700">
+                          CONCLUDED
+                        </span>
+                      )}
                       <span className="text-xs text-stone-400 font-medium">
                         {stream.category?.name}
                       </span>

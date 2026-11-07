@@ -410,6 +410,26 @@ export class AuthService {
     };
   }
 
+  async updateProfile(userId: string, data: { name?: string }) {
+    if (!data.name || data.name.trim().length < 2) {
+      throw new BadRequestException('Name must be at least 2 characters long');
+    }
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: { name: data.name.trim() },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        status: true,
+        isEmailVerified: true,
+        isTwoFactorEnabled: true,
+      },
+    });
+    return updated;
+  }
+
   async deleteAccount(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');

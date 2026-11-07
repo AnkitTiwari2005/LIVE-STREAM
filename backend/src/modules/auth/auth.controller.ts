@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Patch,
   Body,
   Get,
   Query,
@@ -141,6 +142,15 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current user profile and session data' })
   async getMe(@CurrentUser() user: any) {
     return user;
+  }
+
+  @Patch('profile')
+  @ApiOperation({ summary: 'Update devotee profile name and details' })
+  async updateProfile(
+    @CurrentUser('id') userId: string,
+    @Body('name') name: string,
+  ) {
+    return this.authService.updateProfile(userId, { name });
   }
 
   @Post('delete-account')

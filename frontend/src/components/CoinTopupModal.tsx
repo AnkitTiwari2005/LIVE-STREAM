@@ -8,6 +8,7 @@ interface CoinTopupModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: (newBalance: number) => void;
+  initialSku?: string;
 }
 
 const PACKAGES = [
@@ -59,12 +60,16 @@ function loadRazorpayScript(): Promise<boolean> {
   });
 }
 
-export function CoinTopupModal({ isOpen, onClose, onSuccess }: CoinTopupModalProps) {
+export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinTopupModalProps) {
   const [packages, setPackages] = useState(PACKAGES);
-  const [selectedSku, setSelectedSku] = useState('siddhi_600');
+  const [selectedSku, setSelectedSku] = useState(initialSku || 'siddhi_600');
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (initialSku) setSelectedSku(initialSku);
+  }, [initialSku]);
 
   React.useEffect(() => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
@@ -145,6 +150,7 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess }: CoinTopupModalPro
         });
 
         rzp.open();
+        setLoading(false);
       } else {
         if (process.env.NODE_ENV === 'production') {
           throw new Error('Online payments are currently unavailable. Please try again shortly.');

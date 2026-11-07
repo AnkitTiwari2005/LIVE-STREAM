@@ -2,8 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Navbar } from '@/components/Navbar';
-import { Footer } from '@/components/Footer';
 import { ArrowUpRight, ArrowDownLeft, Sparkles, RefreshCw, PlusCircle, Clock, ShieldCheck } from 'lucide-react';
 import { OmIcon, CoinIcon, DiyaIcon } from '@/components/icons/SpiritualIcons';
 
@@ -68,11 +66,8 @@ export default function WalletHistoryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-950 text-white flex flex-col justify-between">
-      <Navbar />
-
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full flex-1">
-        {/* Header */}
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+      {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-stone-800">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-950/60 text-amber-400 text-xs font-bold border border-amber-800/60 mb-2">
@@ -152,7 +147,9 @@ export default function WalletHistoryPage() {
             </div>
           ) : transactions.length === 0 ? (
             <div className="p-12 text-center text-stone-400 text-sm space-y-3">
-              <DiyaIcon className="w-8 h-8 mx-auto text-stone-600" />
+              <div className="flex justify-center">
+                <DiyaIcon size={36} />
+              </div>
               <p>No coin transactions found yet.</p>
               <Link
                 href="/wallet/topup"
@@ -211,9 +208,6 @@ export default function WalletHistoryPage() {
             </div>
           )}
         </div>
-      </main>
-
-      <Footer />
     </div>
   );
 }

@@ -110,12 +110,20 @@ export function Navbar() {
               <HelpCircle className="w-3.5 h-3.5 text-stone-400" /> FAQ
             </Link>
             {user?.role === 'STREAMER' && (
-              <Link
-                href="/studio/create"
-                className="flex items-center gap-1.5 text-orange-400 font-semibold hover:text-orange-300"
-              >
-                <Video className="w-4 h-4" /> Pandit Studio
-              </Link>
+              <>
+                <Link
+                  href="/studio/create"
+                  className="flex items-center gap-1.5 text-orange-400 font-semibold hover:text-orange-300"
+                >
+                  <Video className="w-4 h-4" /> Pandit Studio
+                </Link>
+                <Link
+                  href="/streamer/earnings"
+                  className="flex items-center gap-1.5 text-amber-400 font-semibold hover:text-amber-300"
+                >
+                  <CoinIcon size={16} /> Earnings
+                </Link>
+              </>
             )}
             {user?.role === 'ADMIN' && (
               <Link
@@ -216,31 +224,86 @@ export function Navbar() {
 
         {/* Mobile Menu Dropdown */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-stone-900 border-b border-stone-800 px-4 pt-3 pb-5 space-y-3">
-            <Link href="/" className="block py-2 text-stone-200 font-medium">
+          <div className="md:hidden bg-stone-900 border-b border-stone-800 px-4 pt-3 pb-5 space-y-2.5">
+            <Link
+              href="/"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block py-2 text-stone-200 font-medium hover:text-orange-400"
+            >
               Live Darshan
             </Link>
-            <Link href="/#upcoming" className="block py-2 text-stone-200 font-medium">
+            <Link
+              href="/#upcoming"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block py-2 text-stone-200 font-medium hover:text-orange-400"
+            >
               Schedule
             </Link>
-            <Link href="/about" className="block py-2 text-stone-200 font-medium">
+            <Link
+              href="/about"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block py-2 text-stone-200 font-medium hover:text-orange-400"
+            >
               About Us
             </Link>
-            <Link href="/faq" className="block py-2 text-stone-200 font-medium">
+            <Link
+              href="/faq"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block py-2 text-stone-200 font-medium hover:text-orange-400"
+            >
               FAQ
             </Link>
+            {user && (
+              <>
+                <Link
+                  href="/account"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-2 text-stone-200 font-medium hover:text-orange-400"
+                >
+                  My Profile & Settings
+                </Link>
+                <Link
+                  href="/wallet/history"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-2 text-stone-200 font-medium hover:text-orange-400"
+                >
+                  Coin Ledger & Transactions
+                </Link>
+              </>
+            )}
             {user?.role === 'STREAMER' && (
-              <Link href="/studio/create" className="block py-2 text-orange-400 font-semibold flex items-center gap-2">
-                <Video className="w-4 h-4" /> Pandit Studio (Go Live)
-              </Link>
+              <>
+                <Link
+                  href="/studio/create"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-2 text-orange-400 font-semibold flex items-center gap-2"
+                >
+                  <Video className="w-4 h-4" /> Pandit Studio (Go Live)
+                </Link>
+                <Link
+                  href="/streamer/earnings"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-2 text-amber-400 font-semibold flex items-center gap-2"
+                >
+                  <CoinIcon size={16} /> Pandit Earnings & Dakshina
+                </Link>
+              </>
             )}
             {user?.role === 'ADMIN' && (
-              <Link href="/admin" className="block py-2 text-amber-400 font-semibold flex items-center gap-2">
+              <Link
+                href="/admin"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block py-2 text-amber-400 font-semibold flex items-center gap-2"
+              >
                 <ShieldCheck className="w-4 h-4" /> Admin Console
               </Link>
             )}
             {user?.role === 'VIEWER' && (
-              <Link href="/streamer/apply" className="block py-2 text-stone-300 flex items-center gap-2">
+              <Link
+                href="/streamer/apply"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block py-2 text-stone-300 flex items-center gap-2"
+              >
                 <Sparkles className="w-4 h-4 text-orange-400" /> Apply as Pandit
               </Link>
             )}
@@ -248,26 +311,41 @@ export function Navbar() {
               {user ? (
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
-                    <span className="text-sm text-stone-300 font-medium flex items-center gap-1.5">
+                    <Link
+                      href="/account"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-sm text-stone-200 font-medium flex items-center gap-1.5 hover:text-orange-400"
+                    >
                       <PranamIcon size={16} /> {user.name}
-                    </span>
+                    </Link>
                     <button
-                      onClick={() => setTopupModalOpen(true)}
-                      className="text-xs text-amber-400 font-bold flex items-center gap-1 mt-1"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setTopupModalOpen(true);
+                      }}
+                      className="text-xs text-amber-400 font-bold flex items-center gap-1 mt-1 text-left"
                     >
                       <CoinIcon size={14} /> {coinBalance !== null ? coinBalance : 100} Coins (Tap to recharge)
                     </button>
                   </div>
-                  <button onClick={handleLogout} className="text-sm text-red-400 font-medium">
+                  <button onClick={handleLogout} className="text-sm text-red-400 font-medium hover:text-red-300">
                     Log Out
                   </button>
                 </div>
               ) : (
                 <div className="flex gap-2">
-                  <Link href="/login" className="flex-1 text-center py-2 bg-stone-800 rounded-lg text-sm text-white">
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex-1 text-center py-2 bg-stone-800 rounded-lg text-sm text-white"
+                  >
                     Sign In
                   </Link>
-                  <Link href="/register" className="flex-1 text-center py-2 bg-orange-600 rounded-lg text-sm text-white font-medium">
+                  <Link
+                    href="/register"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex-1 text-center py-2 bg-orange-600 rounded-lg text-sm text-white font-medium"
+                  >
                     Join Free (+100 Coins)
                   </Link>
                 </div>

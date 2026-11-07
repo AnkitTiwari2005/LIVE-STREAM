@@ -1,16 +1,26 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
 import { OmIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
 
 function VerifyEmailContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
   const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    if (status === 'success') {
+      const timer = setTimeout(() => {
+        router.push('/login');
+      }, 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [status, router]);
 
   useEffect(() => {
     if (!token) {

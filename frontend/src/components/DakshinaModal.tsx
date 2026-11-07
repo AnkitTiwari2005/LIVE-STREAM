@@ -138,6 +138,7 @@ export const DakshinaModal: React.FC<DakshinaModalProps> = ({
           setLoading(false);
         });
         rzp.open();
+        setLoading(false);
       } else {
         if (process.env.NODE_ENV === 'production') {
           throw new Error('Online payments are currently unavailable. Please try again shortly.');

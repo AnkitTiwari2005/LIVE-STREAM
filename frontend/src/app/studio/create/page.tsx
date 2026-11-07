@@ -65,6 +65,12 @@ export default function CreateStreamPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (scheduledAt && new Date(scheduledAt).getTime() < Date.now()) {
+      setError('Scheduled time must be in the future.');
+      return;
+    }
+
     setLoading(true);
 
     const token = localStorage.getItem('pooja_token');
@@ -275,6 +281,7 @@ export default function CreateStreamPage() {
               <input
                 type="datetime-local"
                 value={scheduledAt}
+                min={new Date(Date.now() + 60000).toISOString().slice(0, 16)}
                 onChange={(e) => setScheduledAt(e.target.value)}
                 className="w-full px-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500"
               />

@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Navbar } from '@/components/Navbar';
-import { Footer } from '@/components/Footer';
 import { CoinTopupModal } from '@/components/CoinTopupModal';
 import { Zap, ShieldCheck, CheckCircle2, Clock } from 'lucide-react';
 import { OmIcon, CoinIcon, DiyaIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
@@ -49,6 +47,7 @@ const PACKAGES = [
 export default function WalletTopupPage() {
   const [packages, setPackages] = useState(PACKAGES);
   const [modalOpen, setModalOpen] = useState(false);
+  const [selectedSku, setSelectedSku] = useState('siddhi_600');
   const [balance, setBalance] = useState<number | null>(null);
 
   useEffect(() => {
@@ -88,11 +87,8 @@ export default function WalletTopupPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-stone-950 text-white flex flex-col justify-between">
-      <Navbar />
-
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
-        {/* Header */}
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+      {/* Header */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-950/60 text-amber-400 text-xs font-bold border border-amber-800/60 mb-3">
             <CoinIcon size={16} /> Shubhdarshan Sacred Darshan Wallet
@@ -163,7 +159,10 @@ export default function WalletTopupPage() {
               </div>
 
               <button
-                onClick={() => setModalOpen(true)}
+                onClick={() => {
+                  setSelectedSku(pkg.sku);
+                  setModalOpen(true);
+                }}
                 className="mt-6 w-full py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
               >
                 <Zap className="w-3.5 h-3.5 fill-white" />
@@ -193,13 +192,11 @@ export default function WalletTopupPage() {
             </div>
           </div>
         </div>
-      </main>
-
-      <Footer />
 
       <CoinTopupModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
+        initialSku={selectedSku}
         onSuccess={(newBal) => setBalance(newBal)}
       />
     </div>

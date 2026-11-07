@@ -3,8 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Navbar } from '@/components/Navbar';
-import { Footer } from '@/components/Footer';
 import {
   User,
   Mail,
@@ -17,8 +15,11 @@ import {
   Wallet,
   ArrowRight,
   RefreshCw,
+  Edit2,
+  Check,
+  X,
 } from 'lucide-react';
-import { OmIcon, CoinIcon, DiyaIcon } from '@/components/icons/SpiritualIcons';
+import { OmIcon, CoinIcon, DiyaIcon, VerifiedPanditBadge } from '@/components/icons/SpiritualIcons';
 
 export default function AccountPage() {
   const router = useRouter();
@@ -33,6 +34,12 @@ export default function AccountPage() {
   const [verifyMsg, setVerifyMsg] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Profile Edit State
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState('');
+  const [nameSaving, setNameSaving] = useState(false);
+  const [nameMsg, setNameMsg] = useState<string | null>(null);
 
   const loadProfile = async () => {
     setLoading(true);
@@ -50,6 +57,7 @@ export default function AccountPage() {
       if (res.ok) {
         const data = await res.json();
         setUser(data);
+        setNameInput(data.name || '');
         localStorage.setItem('pooja_user', JSON.stringify(data));
       } else {
         router.push('/login');
@@ -64,6 +72,36 @@ export default function AccountPage() {
   useEffect(() => {
     loadProfile();
   }, []);
+
+  const handleUpdateName = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nameInput.trim()) return;
+    setNameSaving(true);
+    setNameMsg(null);
+    const token = localStorage.getItem('pooja_token');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    try {
+      const res = await fetch(`${apiUrl}/auth/profile`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name: nameInput.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to update name');
+      setUser((prev: any) => ({ ...prev, name: data.name }));
+      localStorage.setItem('pooja_user', JSON.stringify({ ...user, name: data.name }));
+      setIsEditingName(false);
+      setNameMsg('Profile name updated successfully!');
+      setTimeout(() => setNameMsg(null), 3000);
+    } catch (err: any) {
+      setNameMsg(err.message || 'Failed to update');
+    } finally {
+      setNameSaving(false);
+    }
+  };
 
   const handleResendVerify = async () => {
     setVerifyMsg(null);
@@ -155,83 +193,142 @@ export default function AccountPage() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-950 text-white flex flex-col justify-between">
-      <Navbar />
-
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full flex-1">
-        <div className="flex items-center gap-3 mb-8 pb-4 border-b border-stone-800">
-          <div className="p-3 rounded-2xl bg-orange-950/60 border border-orange-500/30 text-orange-400">
-            <User className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-2">
-              <OmIcon size={26} /> My Sacred Profile & Settings
-            </h1>
-            <p className="text-xs text-stone-400 mt-0.5">
-              Manage your personal information, security, and devotional preferences
-            </p>
-          </div>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+      <div className="flex items-center gap-3 mb-8 pb-4 border-b border-stone-800">
+        <div className="p-3 rounded-2xl bg-orange-950/60 border border-orange-500/30 text-orange-400">
+          <User className="w-6 h-6" />
         </div>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-2">
+            <OmIcon size={26} /> My Sacred Profile & Settings
+          </h1>
+          <p className="text-xs text-stone-400 mt-0.5">
+            Manage your personal information, security, and devotional preferences
+          </p>
+        </div>
+      </div>
 
-        {loading ? (
-          <div className="p-12 text-center text-stone-400">
-            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-orange-500" />
-            Loading account details...
-          </div>
-        ) : (
-          <div className="space-y-8">
-            {/* User Info Card */}
-            <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 sm:p-8 shadow-xl">
-              <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+      {loading ? (
+        <div className="p-12 text-center text-stone-400">
+          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-orange-500" />
+          Loading account details...
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {/* User Info Card */}
+          <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 sm:p-8 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <User className="w-5 h-5 text-orange-400" /> Account Overview
               </h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 bg-stone-950 rounded-2xl border border-stone-800/80">
-                  <span className="text-xs text-stone-400 block mb-1">Full Name</span>
-                  <span className="text-sm font-bold text-white">{user?.name}</span>
-                </div>
-
-                <div className="p-4 bg-stone-950 rounded-2xl border border-stone-800/80">
-                  <span className="text-xs text-stone-400 block mb-1">Email Address</span>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold text-white">{user?.email}</span>
-                    {user?.isEmailVerified ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-500/30">
-                        <CheckCircle2 className="w-3 h-3" /> Verified
-                      </span>
-                    ) : (
-                      <button
-                        onClick={handleResendVerify}
-                        className="text-[11px] font-bold text-amber-400 bg-amber-950/60 hover:bg-amber-900/60 px-2 py-0.5 rounded-full border border-amber-500/30 transition"
-                      >
-                        Verify Email
-                      </button>
-                    )}
-                  </div>
-                  {verifyMsg && <p className="text-xs text-emerald-400 mt-2">{verifyMsg}</p>}
-                </div>
-              </div>
-
-              {/* Wallet Shortcut */}
-              <div className="mt-4 p-4 bg-gradient-to-r from-amber-950/40 to-stone-950 rounded-2xl border border-amber-800/40 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400">
-                    <CoinIcon size={20} />
-                  </div>
-                  <div>
-                    <span className="text-xs font-semibold text-amber-200 block">Sacred Coin Wallet</span>
-                    <span className="text-xs text-stone-400">View transaction history or recharge coins</span>
-                  </div>
-                </div>
-                <Link
-                  href="/wallet/history"
-                  className="inline-flex items-center gap-1 text-xs font-bold text-amber-400 hover:text-amber-300 transition"
-                >
-                  View Ledger <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
+              {/* Role Badge */}
+              <div>
+                {user?.role === 'ADMIN' ? (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 bg-amber-950/60 px-3 py-1 rounded-full border border-amber-500/30">
+                    <Shield className="w-3.5 h-3.5" /> Platform Administrator
+                  </span>
+                ) : user?.role === 'STREAMER' ? (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-orange-400 bg-orange-950/60 px-3 py-1 rounded-full border border-orange-500/30">
+                    <VerifiedPanditBadge size={16} /> Verified Vedic Pandit
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-stone-300 bg-stone-950 px-3 py-1 rounded-full border border-stone-800">
+                    Devotee Account
+                  </span>
+                )}
               </div>
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Full Name with inline edit */}
+              <div className="p-4 bg-stone-950 rounded-2xl border border-stone-800/80">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-stone-400">Full Name</span>
+                  {!isEditingName && (
+                    <button
+                      onClick={() => {
+                        setNameInput(user?.name || '');
+                        setIsEditingName(true);
+                      }}
+                      className="text-[11px] text-orange-400 hover:text-orange-300 font-semibold flex items-center gap-1"
+                    >
+                      <Edit2 className="w-3 h-3" /> Edit Name
+                    </button>
+                  )}
+                </div>
+                {isEditingName ? (
+                  <form onSubmit={handleUpdateName} className="flex items-center gap-2 mt-1">
+                    <input
+                      type="text"
+                      required
+                      value={nameInput}
+                      onChange={(e) => setNameInput(e.target.value)}
+                      placeholder="Enter name"
+                      className="px-2.5 py-1 bg-stone-900 border border-stone-700 rounded-lg text-sm text-white focus:outline-none focus:border-orange-500 flex-1"
+                    />
+                    <button
+                      type="submit"
+                      disabled={nameSaving}
+                      className="p-1.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg transition disabled:opacity-50"
+                      title="Save Name"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingName(false)}
+                      className="p-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-lg transition"
+                      title="Cancel"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </form>
+                ) : (
+                  <span className="text-sm font-bold text-white block">{user?.name}</span>
+                )}
+                {nameMsg && <p className="text-[11px] text-emerald-400 mt-1">{nameMsg}</p>}
+              </div>
+
+              <div className="p-4 bg-stone-950 rounded-2xl border border-stone-800/80">
+                <span className="text-xs text-stone-400 block mb-1">Email Address</span>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-semibold text-white truncate">{user?.email}</span>
+                  {user?.isEmailVerified ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-500/30 shrink-0">
+                      <CheckCircle2 className="w-3 h-3" /> Verified
+                    </span>
+                  ) : (
+                    <button
+                      onClick={handleResendVerify}
+                      className="text-[11px] font-bold text-amber-400 bg-amber-950/60 hover:bg-amber-900/60 px-2 py-0.5 rounded-full border border-amber-500/30 transition shrink-0"
+                    >
+                      Verify Email
+                    </button>
+                  )}
+                </div>
+                {verifyMsg && <p className="text-xs text-emerald-400 mt-2">{verifyMsg}</p>}
+              </div>
+            </div>
+
+            {/* Wallet Shortcut */}
+            <div className="mt-4 p-4 bg-gradient-to-r from-amber-950/40 to-stone-950 rounded-2xl border border-amber-800/40 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400">
+                  <CoinIcon size={20} />
+                </div>
+                <div>
+                  <span className="text-xs font-semibold text-amber-200 block">Sacred Coin Wallet</span>
+                  <span className="text-xs text-stone-400">View transaction history or recharge coins</span>
+                </div>
+              </div>
+              <Link
+                href="/wallet/history"
+                className="inline-flex items-center gap-1 text-xs font-bold text-amber-400 hover:text-amber-300 transition"
+              >
+                View Ledger <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
 
             {/* Two-Factor Authentication (2FA) */}
             <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 sm:p-8 shadow-xl">
@@ -359,9 +456,6 @@ export default function AccountPage() {
             </div>
           </div>
         )}
-      </main>
-
-      <Footer />
     </div>
   );
 }

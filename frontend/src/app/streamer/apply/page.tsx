@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Sparkles, CheckCircle2, ShieldCheck, AlertCircle, UploadCloud, FileText } from 'lucide-react';
+import Link from 'next/link';
+import { Sparkles, CheckCircle2, ShieldCheck, AlertCircle, UploadCloud, FileText, LogIn } from 'lucide-react';
 
 export default function StreamerApplyPage() {
   const router = useRouter();
@@ -15,6 +16,17 @@ export default function StreamerApplyPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSignedIn, setIsSignedIn] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('pooja_token');
+      if (!token) {
+        setIsSignedIn(false);
+        setError('Please sign in to submit your Pandit verification application.');
+      }
+    }
+  }, []);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -125,9 +137,19 @@ export default function StreamerApplyPage() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 rounded-2xl bg-red-950/80 border border-red-800 text-red-200 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-            <span>{error}</span>
+          <div className="mb-6 p-4 rounded-2xl bg-red-950/80 border border-red-800 text-red-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+              <span>{error}</span>
+            </div>
+            {!isSignedIn && (
+              <Link
+                href="/login?redirect=/streamer/apply"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-semibold shrink-0"
+              >
+                <LogIn className="w-3.5 h-3.5" /> Sign In Now
+              </Link>
+            )}
           </div>
         )}
 

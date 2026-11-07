@@ -43,11 +43,11 @@ export default function ForgotPasswordPage() {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-3">
             <span className="p-3 bg-orange-950/60 border border-orange-500/30 rounded-2xl text-orange-400">
-              <DiyaIcon className="w-8 h-8" />
+              <DiyaIcon size={32} />
             </span>
           </div>
           <h1 className="text-2xl font-serif font-bold text-stone-100 flex items-center justify-center gap-2">
-            <OmIcon className="w-5 h-5 text-orange-500" />
+            <OmIcon size={22} />
             Reset Password
           </h1>
           <p className="text-stone-400 text-sm mt-1">

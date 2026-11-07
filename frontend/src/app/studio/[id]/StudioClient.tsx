@@ -255,6 +255,8 @@ export default function StudioClient() {
         method: 'POST',
         headers: { Authorization: `Bearer ${storedToken}` },
       });
+      setIsLive(false);
+      setToken(null);
       router.push('/');
     } catch {
       alert('Failed to end stream');

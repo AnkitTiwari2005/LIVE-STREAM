@@ -33,6 +33,7 @@ export function Footer() {
             <ul className="space-y-2 text-xs">
               <li><Link href="/" className="hover:text-orange-400 transition-colors">Live Darshan</Link></li>
               <li><Link href="/wallet/topup" className="hover:text-orange-400 transition-colors">Sacred Coins Topup</Link></li>
+              <li><Link href="/wallet/history" className="hover:text-orange-400 transition-colors">Coin History & Ledger</Link></li>
               <li><Link href="/about" className="hover:text-orange-400 transition-colors">About Us</Link></li>
               <li><Link href="/faq" className="hover:text-orange-400 transition-colors">Devotee FAQ</Link></li>
               <li><Link href="/contact" className="hover:text-orange-400 transition-colors">Contact & Support</Link></li>
@@ -48,6 +49,7 @@ export function Footer() {
               <li><Link href="/streamer/apply" className="hover:text-orange-400 transition-colors">Apply as Pandit</Link></li>
               <li><Link href="/pandit-guidelines" className="hover:text-orange-400 transition-colors">Pandit Code of Ethics</Link></li>
               <li><Link href="/studio/create" className="hover:text-orange-400 transition-colors">Broadcaster Studio</Link></li>
+              <li><Link href="/streamer/earnings" className="hover:text-orange-400 transition-colors">Pandit Earnings & Dakshina</Link></li>
             </ul>
           </div>
 

@@ -266,9 +266,16 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser }: ChatWi
                 key={msg.id}
                 className="p-2.5 rounded-xl bg-gradient-to-r from-amber-950/70 via-orange-950/70 to-yellow-950/70 border border-amber-600/40 shadow-md text-amber-200"
               >
-                <div className="flex items-center gap-1.5 font-bold text-amber-300 mb-0.5">
-                  <DiyaIcon size={16} />
-                  <span>{msg.user.name}</span>
+                <div className="flex items-center justify-between text-amber-300 mb-0.5">
+                  <div className="flex items-center gap-1.5 font-bold">
+                    <DiyaIcon size={16} />
+                    <span>{msg.user.name}</span>
+                  </div>
+                  {msg.createdAt && (
+                    <span className="text-[9px] text-stone-400 font-mono">
+                      {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  )}
                 </div>
                 <div className="text-white font-medium pl-5 text-[11px] leading-relaxed">
                   {msg.message}
@@ -296,6 +303,11 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser }: ChatWi
                   {msg.user.name}:
                 </span>
                 <span className="text-stone-100 break-words">{msg.message}</span>
+                {msg.createdAt && (
+                  <span className="text-[9px] text-stone-500 ml-1.5 font-mono select-none">
+                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                )}
               </div>
 
               <div className="hidden group-hover:flex items-center gap-1 shrink-0 opacity-80">

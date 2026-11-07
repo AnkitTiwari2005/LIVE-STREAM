@@ -34,7 +34,15 @@ export default function HomePage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
 
   useEffect(() => {
     async function loadData() {
@@ -52,7 +60,7 @@ export default function HomePage() {
         let streamUrl = `${apiUrl}/streams/public`;
         const params = new URLSearchParams();
         if (selectedCategory) params.append('categoryId', selectedCategory);
-        if (searchQuery) params.append('search', searchQuery);
+        if (debouncedSearch) params.append('search', debouncedSearch);
         if (params.toString()) streamUrl += `?${params.toString()}`;
 
         const streamRes = await fetch(streamUrl);
@@ -68,7 +76,7 @@ export default function HomePage() {
     }
 
     loadData();
-  }, [selectedCategory, searchQuery]);
+  }, [selectedCategory, debouncedSearch]);
 
   const liveStreams = streams.filter((s) => s.status === 'LIVE');
   const upcomingStreams = streams.filter((s) => s.status === 'SCHEDULED');
@@ -326,7 +334,7 @@ export default function HomePage() {
                   >
                     <Bell className="w-3.5 h-3.5" /> Remind Me (Email)
                   </button>
-                  <span className="text-[11px] text-stone-400">{stream.videoQuality} SD</span>
+                  <span className="text-[11px] text-stone-400 font-medium uppercase">{stream.videoQuality || '480p'}</span>
                 </div>
               </div>
             ))}
