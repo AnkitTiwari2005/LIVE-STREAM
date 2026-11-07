@@ -8,7 +8,9 @@ import {
   StartAudio,
   useTracks,
   useLocalParticipant,
+  useRoomContext,
   VideoTrack,
+  AudioTrack,
 } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import { io, Socket } from 'socket.io-client';
@@ -147,14 +149,6 @@ export default function JoinPrivateStreamClient() {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (storedToken) headers.Authorization = `Bearer ${storedToken}`;
 
-    let resolvedUserId: string | undefined = currentUser?.id;
-    if (!resolvedUserId) {
-      try {
-        const stored = localStorage.getItem('pooja_user');
-        if (stored) resolvedUserId = JSON.parse(stored)?.id;
-      } catch {}
-    }
-
     try {
       const res = await fetch(`${apiUrl}/private-links/claim/${tokenSlug}`, {
         method: 'POST',
@@ -163,7 +157,6 @@ export default function JoinPrivateStreamClient() {
         body: JSON.stringify({
           password: password || undefined,
           guestName: guestName || undefined,
-          userId: resolvedUserId || undefined,
         }),
       });
 
@@ -418,8 +411,35 @@ export default function JoinPrivateStreamClient() {
 }
 
 function PrivateTwoWayConsultationRenderer({ onLeave }: { onLeave: () => void }) {
-  const tracks = useTracks([Track.Source.Camera]);
+  const cameraTracks = useTracks([Track.Source.Camera]);
+  const audioTracks = useTracks([Track.Source.Microphone]);
   const { localParticipant, isMicrophoneEnabled, isCameraEnabled, cameraTrack } = useLocalParticipant();
+  const room = useRoomContext();
+
+  const [isAudioPlaybackAllowed, setIsAudioPlaybackAllowed] = useState(true);
+
+  useEffect(() => {
+    if (!room) return;
+    setIsAudioPlaybackAllowed(room.canPlaybackAudio);
+    const handleAudioPlaybackChange = () => {
+      setIsAudioPlaybackAllowed(room.canPlaybackAudio);
+    };
+    room.on('audioPlaybackChanged', handleAudioPlaybackChange);
+    return () => {
+      room.off('audioPlaybackChanged', handleAudioPlaybackChange);
+    };
+  }, [room]);
+
+  const unlockAudio = async () => {
+    if (room) {
+      try {
+        await room.startAudio();
+        setIsAudioPlaybackAllowed(true);
+      } catch (e) {
+        console.warn('LiveKit startAudio notice:', e);
+      }
+    }
+  };
 
   const toggleMic = async () => {
     if (localParticipant) {
@@ -433,11 +453,31 @@ function PrivateTwoWayConsultationRenderer({ onLeave }: { onLeave: () => void })
     }
   };
 
-  // Find remote track (Pandit) vs local track (Devotee)
-  const remoteCameraTrack = tracks.find((t) => t.participant.identity !== localParticipant?.identity);
+  // Find remote tracks (Pandit) vs local tracks (Devotee)
+  const remoteCameraTrack = cameraTracks.find((t) => t.participant.identity !== localParticipant?.identity);
+  const remoteAudioTrack = audioTracks.find((t) => t.participant.identity !== localParticipant?.identity);
 
   return (
-    <div className="relative w-full h-full bg-black">
+    <div className="relative w-full h-full bg-black cursor-pointer" onClick={unlockAudio}>
+      {/* Remote Audio Track Renderer guarantees audio is delivered to browser output */}
+      {remoteAudioTrack && (
+        <AudioTrack trackRef={remoteAudioTrack} />
+      )}
+
+      {/* Prominent Audio Unlock Banner for Strict Browser Autoplay Policies */}
+      {!isAudioPlaybackAllowed && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            unlockAudio();
+          }}
+          className="absolute top-4 left-4 z-40 px-4 py-2.5 bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-400 text-stone-950 font-extrabold text-xs rounded-2xl shadow-2xl flex items-center gap-2 animate-bounce border-2 border-yellow-200"
+        >
+          <Volume2 className="w-4 h-4" />
+          <span>Click to Hear Pandit Chanting & Mantras 🙏</span>
+        </button>
+      )}
+
       {/* Remote Pandit Video (Main Screen) */}
       {remoteCameraTrack ? (
         <VideoTrack trackRef={remoteCameraTrack} className="w-full h-full object-contain bg-black" />
@@ -466,7 +506,10 @@ function PrivateTwoWayConsultationRenderer({ onLeave }: { onLeave: () => void })
       )}
 
       {/* Bottom Floating Interactive Two-Way Controls Bar */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2.5 bg-stone-950/85 backdrop-blur-md border border-stone-800 rounded-full px-4 py-2 shadow-2xl">
+      <div
+        className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2.5 bg-stone-950/85 backdrop-blur-md border border-stone-800 rounded-full px-4 py-2 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Devotee Mic Toggle */}
         <button
           onClick={toggleMic}
@@ -493,6 +536,16 @@ function PrivateTwoWayConsultationRenderer({ onLeave }: { onLeave: () => void })
         >
           {isCameraEnabled ? <VideoIcon className="w-3.5 h-3.5" /> : <VideoOff className="w-3.5 h-3.5" />}
           <span>{isCameraEnabled ? 'Cam: ON' : 'Cam: OFF'}</span>
+        </button>
+
+        {/* Audio Speaker Status / Unmute */}
+        <button
+          onClick={unlockAudio}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold bg-stone-800 hover:bg-stone-700 text-amber-300 transition-all shadow-md"
+          title="Click to ensure speaker audio is active"
+        >
+          <Volume2 className="w-3.5 h-3.5 text-amber-400" />
+          <span>Sound ON</span>
         </button>
 
         {/* Leave Consultation */}

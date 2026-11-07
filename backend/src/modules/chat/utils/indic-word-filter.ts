@@ -14,7 +14,7 @@ export class IndicWordFilter {
     return text
       .normalize('NFKC')
       .toLowerCase()
-      .replace(/[^\w\s\u0900-\u097F]/gi, '')
+      .replace(/[^\w\s\u0900-\u0D7F]/gi, '')
       .trim();
   }
 

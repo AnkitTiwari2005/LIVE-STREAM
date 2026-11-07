@@ -2,14 +2,24 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  ServiceUnavailableException,
+  ForbiddenException,
   Logger,
 } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { ChatGateway } from '../chat/chat.gateway';
+import { ChatService } from '../chat/chat.service';
 import { CreateDakshinaDto } from './dto/create-dakshina.dto';
 import { VerifyPaymentDto } from './dto/verify-payment.dto';
-import { PaymentStatus, PaymentProvider, StreamStatus } from '@prisma/client';
+import { PaymentStatus, PaymentProvider, StreamStatus, StreamVisibility, UserRole, WalletTxType, WalletTxCategory } from '@prisma/client';
+import {
+  isProd,
+  safeEqualHex,
+  razorpaySignature,
+  createRazorpayOrder,
+  assertCaptured,
+} from '../../common/payments.util';
 
 @Injectable()
 export class PaymentsService {
@@ -18,14 +28,18 @@ export class PaymentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly chatGateway: ChatGateway,
+    private readonly chatService: ChatService,
   ) {}
 
   /**
-   * 1. Create a Dakshina (Vedic Offering) Order
+   * 1. Create a Dakshina (Vedic Offering) Order (C-02)
    */
   async createDakshinaOrder(dto: CreateDakshinaDto, devoteeId?: string) {
-    const stream = await this.prisma.stream.findUnique({
-      where: { id: dto.streamId },
+    const stream = await this.prisma.stream.findFirst({
+      where: {
+        id: dto.streamId,
+        deletedAt: null,
+      },
       include: { streamer: true },
     });
 
@@ -33,51 +47,36 @@ export class PaymentsService {
       throw new NotFoundException('Sacred stream not found');
     }
 
-    const razorpayKeyId = process.env.RAZORPAY_KEY_ID;
-    const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET;
+    if (stream.status !== StreamStatus.LIVE && stream.status !== StreamStatus.RECONNECTING_GRACE_PERIOD) {
+      throw new BadRequestException('Offerings can only be made during an active live darshan broadcast');
+    }
+
+    const keyId = process.env.RAZORPAY_KEY_ID;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    const configured = !!keyId && !!keySecret;
+
+    if (!configured && isProd()) {
+      throw new ServiceUnavailableException('Payment gateway is not configured for production');
+    }
+
+    const amountPaise = Math.round(Number(dto.amount) * 100);
+    const receipt = `dakshina_${dto.streamId.slice(0, 6)}_${Date.now()}`;
+    const notes = {
+      streamId: dto.streamId,
+      streamerId: stream.streamerId,
+      devoteeName: dto.devoteeName,
+      gotra: dto.gotra || '',
+    };
 
     let orderId: string;
-    let provider: PaymentProvider = dto.provider || PaymentProvider.RAZORPAY;
+    let provider: PaymentProvider;
 
-    if (razorpayKeyId && razorpayKeySecret) {
-      try {
-        const auth = Buffer.from(`${razorpayKeyId}:${razorpayKeySecret}`).toString('base64');
-        const res = await fetch('https://api.razorpay.com/v1/orders', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Basic ${auth}`,
-          },
-          body: JSON.stringify({
-            amount: Math.round(dto.amount * 100), // amount in paise
-            currency: 'INR',
-            receipt: `rcpt_${Date.now()}`,
-            notes: {
-              streamId: dto.streamId,
-              streamerId: stream.streamerId,
-              devoteeName: dto.devoteeName,
-              gotra: dto.gotra || '',
-            },
-          }),
-        });
-
-        const rzpData = await res.json();
-        if (!res.ok) {
-          this.logger.error(`Razorpay order error: ${JSON.stringify(rzpData)}`);
-          throw new BadRequestException('Payment gateway error. Please try again.');
-        }
-
-        orderId = rzpData.id;
-        provider = PaymentProvider.RAZORPAY;
-      } catch (err: any) {
-        this.logger.error(`Failed to reach Razorpay: ${err.message}`);
-        // Fallback to test mode order if external API fails
-        orderId = `order_shubh_${crypto.randomBytes(8).toString('hex')}`;
-        provider = PaymentProvider.MOCK;
-      }
+    if (configured) {
+      const rzp = await createRazorpayOrder(amountPaise, receipt, notes);
+      orderId = rzp.id;
+      provider = PaymentProvider.RAZORPAY;
     } else {
-      // Sandbox / Test mode order
-      orderId = `order_shubh_${crypto.randomBytes(8).toString('hex')}`;
+      orderId = `order_mock_${crypto.randomBytes(8).toString('hex')}`;
       provider = PaymentProvider.MOCK;
     }
 
@@ -101,21 +100,21 @@ export class PaymentsService {
       amount: dto.amount,
       currency: 'INR',
       provider,
-      keyId: razorpayKeyId || 'rzp_test_placeholder',
+      keyId: configured ? keyId : undefined,
       devoteeName: dto.devoteeName,
       offeringId: offering.id,
     };
   }
 
   /**
-   * 2. Verify Payment Signature & Credit Dakshina
+   * 2. Verify Payment Signature & Credit Dakshina (C-02)
    */
   async verifyPayment(dto: VerifyPaymentDto) {
     const offering = await this.prisma.dakshinaOffering.findUnique({
       where: { orderId: dto.orderId },
       include: {
         stream: {
-          select: { title: true, streamerId: true },
+          select: { id: true, title: true, streamerId: true, visibility: true },
         },
       },
     });
@@ -128,87 +127,180 @@ export class PaymentsService {
       return { success: true, message: 'Offering already verified and blessed 🙏', offering };
     }
 
-    const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET;
-
-    if (offering.provider === PaymentProvider.RAZORPAY && razorpayKeySecret && dto.signature) {
-      const generatedSignature = crypto
-        .createHmac('sha256', razorpayKeySecret)
-        .update(`${dto.orderId}|${dto.paymentId}`)
-        .digest('hex');
-
-      if (generatedSignature !== dto.signature) {
-        await this.prisma.dakshinaOffering.update({
-          where: { id: offering.id },
-          data: { status: PaymentStatus.FAILED },
-        });
-        throw new BadRequestException('Invalid payment signature verification failed');
+    if (offering.provider === PaymentProvider.MOCK) {
+      if (isProd()) {
+        throw new ForbiddenException('Mock payments are disabled in production environment');
       }
+    } else {
+      if (!dto.signature) {
+        throw new BadRequestException('Payment signature is required');
+      }
+
+      const expectedSig = razorpaySignature(dto.orderId, dto.paymentId);
+      if (!safeEqualHex(expectedSig, dto.signature)) {
+        throw new BadRequestException('Payment signature verification failed');
+      }
+
+      await assertCaptured(dto.paymentId, dto.orderId, Math.round(Number(offering.amount) * 100));
     }
 
-    // Update status to SUCCESS
-    const updatedOffering = await this.prisma.dakshinaOffering.update({
-      where: { id: offering.id },
-      data: {
-        status: PaymentStatus.SUCCESS,
-        paymentId: dto.paymentId,
-      },
+    // Atomic claim: only one concurrent process can flip PENDING -> SUCCESS
+    return this.prisma.$transaction(async (tx) => {
+      const claimed = await tx.dakshinaOffering.updateMany({
+        where: { id: offering.id, status: PaymentStatus.PENDING },
+        data: {
+          status: PaymentStatus.SUCCESS,
+          paymentId: dto.paymentId,
+        },
+      });
+
+      if (claimed.count === 0) {
+        const fresh = await tx.dakshinaOffering.findUnique({ where: { id: offering.id } });
+        return { success: true, message: 'Offering already processed', offering: fresh };
+      }
+
+      // Profanity filtering on prayer message before broadcasting
+      let safePrayerMessage = offering.prayerMessage;
+      if (safePrayerMessage && !this.chatService.wordFilter.isClean(safePrayerMessage)) {
+        safePrayerMessage = '🙏 Har Har Mahadev • Auspicious Blessings';
+      }
+
+      // Broadcast auspicious live dakshina announcement to stream devotees
+      this.chatGateway.broadcastDakshina(offering.streamId, {
+        id: offering.id,
+        devoteeName: offering.devoteeName,
+        amount: Number(offering.amount),
+        prayerMessage: safePrayerMessage,
+        gotra: offering.gotra,
+        timestamp: new Date(),
+      });
+
+      this.logger.log(
+        `Dakshina of ₹${offering.amount} blessed by ${offering.devoteeName} for stream ${offering.streamId}`,
+      );
+
+      const updatedOffering = await tx.dakshinaOffering.findUnique({ where: { id: offering.id } });
+      return {
+        success: true,
+        message: 'Sacred Dakshina accepted with Vedic blessings 🙏',
+        offering: updatedOffering,
+      };
     });
-
-    // Broadcast auspicious live dakshina announcement to all stream devotees!
-    this.chatGateway.broadcastDakshina(offering.streamId, {
-      id: updatedOffering.id,
-      devoteeName: updatedOffering.devoteeName,
-      amount: Number(updatedOffering.amount),
-      prayerMessage: updatedOffering.prayerMessage,
-      gotra: updatedOffering.gotra,
-      timestamp: updatedOffering.createdAt,
-    });
-
-    this.logger.log(
-      `Dakshina of ₹${updatedOffering.amount} blessed by ${updatedOffering.devoteeName} for stream ${offering.streamId}`,
-    );
-
-    return {
-      success: true,
-      message: 'Sacred Dakshina accepted with Vedic blessings 🙏',
-      offering: updatedOffering,
-    };
   }
 
   /**
-   * 3. Handle Webhook from Payment Providers
+   * 3. Handle Webhook from Payment Providers (C-03)
    */
-  async handleWebhook(body: any, signature: string) {
-    const webhookSecret = process.env.PAYMENT_WEBHOOK_SECRET || process.env.RAZORPAY_WEBHOOK_SECRET;
+  async handleWebhook(body: any, rawBody?: Buffer, signature?: string) {
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
 
-    if (webhookSecret && signature) {
-      const expectedSignature = crypto
+    if (isProd() && !webhookSecret) {
+      throw new ServiceUnavailableException('Webhook secret is not configured');
+    }
+
+    if (webhookSecret) {
+      if (!signature) {
+        throw new BadRequestException('Webhook signature header missing');
+      }
+      if (!rawBody) {
+        throw new BadRequestException('Raw body required for HMAC verification');
+      }
+
+      const expectedSig = crypto
         .createHmac('sha256', webhookSecret)
-        .update(JSON.stringify(body))
+        .update(rawBody)
         .digest('hex');
 
-      if (expectedSignature !== signature) {
+      if (!safeEqualHex(expectedSig, signature)) {
         this.logger.warn('Payment webhook signature mismatch');
         throw new BadRequestException('Invalid webhook signature');
       }
     }
 
-    const event = body.event;
+    const event = body?.event;
     if (event === 'payment.captured' || event === 'order.paid') {
       const orderId = body.payload?.payment?.entity?.order_id || body.data?.order?.order_id;
       const paymentId = body.payload?.payment?.entity?.id || body.data?.payment?.payment_id;
 
-      if (orderId) {
-        const offering = await this.prisma.dakshinaOffering.findUnique({
-          where: { orderId },
-        });
+      if (!orderId) {
+        return { received: true, note: 'No order_id in webhook payload' };
+      }
 
-        if (offering && offering.status !== PaymentStatus.SUCCESS) {
-          await this.verifyPayment({
-            orderId,
-            paymentId: paymentId || `pay_auto_${Date.now()}`,
+      // 1. Check if order is a Dakshina offering
+      const offering = await this.prisma.dakshinaOffering.findUnique({
+        where: { orderId },
+      });
+
+      if (offering && offering.status === PaymentStatus.PENDING) {
+        await this.prisma.$transaction(async (tx) => {
+          const claimed = await tx.dakshinaOffering.updateMany({
+            where: { id: offering.id, status: PaymentStatus.PENDING },
+            data: { status: PaymentStatus.SUCCESS, paymentId: paymentId || `pay_wh_${Date.now()}` },
           });
-        }
+
+          if (claimed.count > 0) {
+            let safePrayerMessage = offering.prayerMessage;
+            if (safePrayerMessage && !this.chatService.wordFilter.isClean(safePrayerMessage)) {
+              safePrayerMessage = '🙏 Har Har Mahadev • Auspicious Blessings';
+            }
+
+            this.chatGateway.broadcastDakshina(offering.streamId, {
+              id: offering.id,
+              devoteeName: offering.devoteeName,
+              amount: Number(offering.amount),
+              prayerMessage: safePrayerMessage,
+              gotra: offering.gotra,
+              timestamp: new Date(),
+            });
+            this.logger.log(`Webhook reconciled Dakshina offering [${offering.id}] as SUCCESS`);
+          }
+        });
+        return { received: true, reconciled: 'dakshina' };
+      }
+
+      // 2. Check if order is a Wallet Topup
+      const topupOrder = await this.prisma.walletTopupOrder.findUnique({
+        where: { orderId },
+        include: { package: true },
+      });
+
+      if (topupOrder && topupOrder.status === PaymentStatus.PENDING) {
+        await this.prisma.$transaction(async (tx) => {
+          const claimed = await tx.walletTopupOrder.updateMany({
+            where: { id: topupOrder.id, status: PaymentStatus.PENDING },
+            data: { status: PaymentStatus.SUCCESS, paymentId: paymentId || `pay_wh_${Date.now()}` },
+          });
+
+          if (claimed.count > 0) {
+            const wallet = await tx.userWallet.upsert({
+              where: { userId: topupOrder.userId },
+              create: {
+                userId: topupOrder.userId,
+                balanceCoins: topupOrder.coinsToCredit,
+                purchasedCoins: topupOrder.coinsToCredit,
+              },
+              update: {
+                balanceCoins: { increment: topupOrder.coinsToCredit },
+                purchasedCoins: { increment: topupOrder.coinsToCredit },
+              },
+            });
+
+            await tx.walletTransaction.create({
+              data: {
+                walletId: wallet.id,
+                type: WalletTxType.CREDIT,
+                category: WalletTxCategory.TOPUP_PURCHASE,
+                amountCoins: topupOrder.coinsToCredit,
+                balanceBefore: wallet.balanceCoins - topupOrder.coinsToCredit,
+                balanceAfter: wallet.balanceCoins,
+                referenceId: topupOrder.orderId,
+                idempotencyKey: `topup_wh_${topupOrder.id}`,
+              },
+            });
+            this.logger.log(`Webhook reconciled Wallet topup [${topupOrder.id}] as SUCCESS`);
+          }
+        });
+        return { received: true, reconciled: 'wallet_topup' };
       }
     }
 
@@ -216,9 +308,25 @@ export class PaymentsService {
   }
 
   /**
-   * 4. List Recent Offerings for a Live Stream
+   * 4. List Recent Offerings for a Live Stream (DPDP Act 2023 Compliant)
    */
-  async getRecentOfferings(streamId: string) {
+  async getRecentOfferings(streamId: string, callerUserId?: string, callerRole?: string) {
+    const stream = await this.prisma.stream.findUnique({
+      where: { id: streamId },
+      select: { id: true, visibility: true, streamerId: true, deletedAt: true },
+    });
+
+    if (!stream || stream.deletedAt) {
+      throw new NotFoundException('Stream not found');
+    }
+
+    const isStreamerOrAdmin =
+      callerRole === UserRole.ADMIN || (callerUserId && stream.streamerId === callerUserId);
+
+    if (stream.visibility === StreamVisibility.PRIVATE && !isStreamerOrAdmin && !callerUserId) {
+      throw new NotFoundException('Private session offerings are restricted');
+    }
+
     const offerings = await this.prisma.dakshinaOffering.findMany({
       where: {
         streamId,
@@ -237,8 +345,13 @@ export class PaymentsService {
     });
 
     return offerings.map((o) => ({
-      ...o,
+      id: o.id,
+      devoteeName: o.devoteeName,
       amount: Number(o.amount),
+      // DPDP Compliance: Gotra and personal prayer messages are only visible to the streamer or admin
+      prayerMessage: isStreamerOrAdmin ? o.prayerMessage : null,
+      gotra: isStreamerOrAdmin ? o.gotra : null,
+      createdAt: o.createdAt,
     }));
   }
 

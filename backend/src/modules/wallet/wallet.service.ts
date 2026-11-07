@@ -2,6 +2,8 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  ForbiddenException,
+  ServiceUnavailableException,
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
@@ -16,6 +18,13 @@ import {
   PaymentProvider,
 } from '@prisma/client';
 import * as crypto from 'crypto';
+import {
+  isProd,
+  safeEqualHex,
+  razorpaySignature,
+  createRazorpayOrder,
+  assertCaptured,
+} from '../../common/payments.util';
 
 @Injectable()
 export class WalletService {
@@ -296,75 +305,53 @@ export class WalletService {
     });
   }
 
+  private async alreadyCredited(userId: string) {
+    const currentWallet = await this.prisma.userWallet.findUnique({
+      where: { userId },
+    });
+    const balance = currentWallet?.balanceCoins || 0;
+    return {
+      success: true,
+      message: 'Order already credited',
+      newBalance: balance,
+      availableMinutes: Math.floor(balance / WalletService.COINS_PER_MINUTE),
+    };
+  }
+
   /**
    * 5. Create Top-Up Payment Order
    */
   async createTopupOrder(userId: string, dto: CreateTopupOrderDto) {
     const targetSku = dto.packageSku || dto.sku;
     if (!targetSku) {
-      throw new BadRequestException('packageSku or sku is required');
+      throw new BadRequestException('packageSku is required');
     }
 
-    const skuMap: Record<string, string> = {
-      'COIN_PACK_100': 'shubh_100',
-      'COIN_PACK_250': 'bhakti_275',
-      'COIN_PACK_500': 'siddhi_600',
-      'COIN_PACK_600': 'siddhi_600',
-      'COIN_PACK_1500': 'mahodadhi_1500',
-    };
-    const resolvedSku = skuMap[targetSku] || targetSku;
-
     const pkg = await this.prisma.coinPackage.findUnique({
-      where: { sku: resolvedSku },
+      where: { sku: targetSku },
     });
 
     if (!pkg || !pkg.isActive) {
       throw new NotFoundException('Selected coin package is not active');
     }
 
-    const razorpayKeyId = process.env.RAZORPAY_KEY_ID;
-    const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET;
-
-    let orderId: string;
-    let provider: PaymentProvider = PaymentProvider.RAZORPAY;
-
-    if (razorpayKeyId && razorpayKeySecret) {
-      try {
-        const auth = Buffer.from(`${razorpayKeyId}:${razorpayKeySecret}`).toString('base64');
-        const res = await fetch('https://api.razorpay.com/v1/orders', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Basic ${auth}`,
-          },
-          body: JSON.stringify({
-            amount: Math.round(Number(pkg.priceInr) * 100), // paise
-            currency: 'INR',
-            receipt: `coin_${pkg.sku}_${Date.now()}`,
-            notes: {
-              userId,
-              sku: pkg.sku,
-              coins: pkg.totalCoins,
-            },
-          }),
-        });
-
-        const rzpData = await res.json();
-        if (!res.ok) {
-          throw new BadRequestException('Razorpay order creation failed');
-        }
-        orderId = rzpData.id;
-      } catch (err: any) {
-        this.logger.error(`Failed to reach Razorpay: ${err.message}`);
-        orderId = `order_coin_${crypto.randomBytes(8).toString('hex')}`;
-        provider = PaymentProvider.MOCK;
-      }
-    } else {
-      orderId = `order_coin_${crypto.randomBytes(8).toString('hex')}`;
-      provider = PaymentProvider.MOCK;
+    const configured = !!process.env.RAZORPAY_KEY_ID && !!process.env.RAZORPAY_KEY_SECRET;
+    if (!configured && isProd()) {
+      throw new ServiceUnavailableException('Payments are not configured in production');
     }
 
-    const topupOrder = await this.prisma.walletTopupOrder.create({
+    const amountPaise = Math.round(Number(pkg.priceInr) * 100);
+    const receipt = `coin_${userId.slice(0, 8)}_${Date.now()}`;
+    const notes = { userId, sku: pkg.sku, coins: pkg.totalCoins };
+
+    const rzp = configured
+      ? await createRazorpayOrder(amountPaise, receipt, notes)
+      : null;
+
+    const orderId = rzp?.id ?? `order_mock_${crypto.randomBytes(8).toString('hex')}`;
+    const provider = rzp ? PaymentProvider.RAZORPAY : PaymentProvider.MOCK;
+
+    await this.prisma.walletTopupOrder.create({
       data: {
         userId,
         packageId: pkg.id,
@@ -378,11 +365,11 @@ export class WalletService {
 
     return {
       orderId,
+      provider,
       amountInr: Number(pkg.priceInr),
       coins: pkg.totalCoins,
       packageName: pkg.name,
-      provider,
-      keyId: razorpayKeyId || 'rzp_test_placeholder',
+      keyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_placeholder',
     };
   }
 
@@ -395,50 +382,42 @@ export class WalletService {
       include: { package: true },
     });
 
-    if (!order) {
+    if (!order || order.userId !== userId) {
       throw new NotFoundException('Recharge order not found');
     }
 
     if (order.status === PaymentStatus.SUCCESS) {
-      const currentWallet = await this.prisma.userWallet.findUnique({
-        where: { userId },
-      });
-      return {
-        success: true,
-        message: 'Order already credited',
-        balanceCoins: currentWallet?.balanceCoins || 0,
-      };
+      return this.alreadyCredited(userId);
     }
 
-    const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET;
-
-    if (order.provider === PaymentProvider.RAZORPAY && razorpayKeySecret && dto.signature) {
-      const generatedSignature = crypto
-        .createHmac('sha256', razorpayKeySecret)
-        .update(`${dto.orderId}|${dto.paymentId}`)
-        .digest('hex');
-
-      if (generatedSignature !== dto.signature) {
-        await this.prisma.walletTopupOrder.update({
-          where: { id: order.id },
-          data: { status: PaymentStatus.FAILED, failureReason: 'Signature mismatch' },
-        });
+    if (order.provider === PaymentProvider.MOCK) {
+      if (isProd()) {
+        throw new ForbiddenException('Mock payments are disabled in production');
+      }
+    } else {
+      if (!dto.signature) {
+        throw new BadRequestException('Payment signature is required');
+      }
+      if (!safeEqualHex(razorpaySignature(dto.orderId, dto.paymentId), dto.signature)) {
         throw new BadRequestException('Payment verification failed');
       }
+      await assertCaptured(dto.paymentId, dto.orderId, Math.round(Number(order.amountInr) * 100));
     }
 
-    // Execute atomic balance update
     return this.prisma.$transaction(async (tx) => {
-      // 1. Mark order successful
-      await tx.walletTopupOrder.update({
-        where: { id: order.id },
+      // Atomic claim: exactly one concurrent request can flip PENDING -> SUCCESS
+      const claimed = await tx.walletTopupOrder.updateMany({
+        where: { id: order.id, status: PaymentStatus.PENDING },
         data: {
           status: PaymentStatus.SUCCESS,
           paymentId: dto.paymentId,
         },
       });
 
-      // 2. Increment wallet balance
+      if (claimed.count !== 1) {
+        return this.alreadyCredited(userId);
+      }
+
       const wallet = await tx.userWallet.update({
         where: { userId },
         data: {
@@ -449,7 +428,6 @@ export class WalletService {
         },
       });
 
-      // 3. Log immutable transaction
       await tx.walletTransaction.create({
         data: {
           walletId: wallet.id,
@@ -459,23 +437,12 @@ export class WalletService {
           balanceBefore: wallet.balanceCoins - order.coinsToCredit,
           balanceAfter: wallet.balanceCoins,
           referenceId: order.orderId,
-          idempotencyKey: `pay_${dto.paymentId}`,
-          metadata: {
-            orderId: order.orderId,
-            paymentId: dto.paymentId,
-            packageSku: order.package.sku,
-            amountInr: Number(order.amountInr),
-          },
+          idempotencyKey: `topup_${order.id}`,
         },
       });
 
-      this.logger.log(
-        `Devotee [${userId}] recharged ${order.coinsToCredit} coins via order ${order.orderId}. New balance: ${wallet.balanceCoins}`,
-      );
-
       return {
         success: true,
-        message: `Successfully added ${order.coinsToCredit} Coins to your Sacred Wallet! 🕉️`,
         coinsAdded: order.coinsToCredit,
         newBalance: wallet.balanceCoins,
         availableMinutes: Math.floor(wallet.balanceCoins / WalletService.COINS_PER_MINUTE),

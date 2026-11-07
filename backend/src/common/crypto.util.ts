@@ -2,13 +2,19 @@ import * as crypto from 'crypto';
 
 export class CryptoUtil {
   private static getKey(): Buffer {
-    const rawKey = process.env.ENCRYPTION_MASTER_KEY || 'default_insecure_key_must_be_32_bytes_len!';
-    if (rawKey.length === 44 && rawKey.endsWith('=')) {
-      // Base64 encoded 32-byte key
-      return Buffer.from(rawKey, 'base64');
+    const rawKey = process.env.ENCRYPTION_MASTER_KEY;
+    if (process.env.NODE_ENV === 'production') {
+      if (!rawKey || rawKey.includes('default_insecure') || rawKey.includes('placeholder')) {
+        throw new Error('ENCRYPTION_MASTER_KEY must be securely defined in production (32 bytes or 44 base64 chars).');
+      }
     }
-    // Pad or slice to 32 bytes
-    return Buffer.alloc(32, rawKey, 'utf-8');
+
+    const keyString = rawKey || 'default_insecure_key_must_be_32_bytes_len!';
+    if (keyString.length === 44 && keyString.endsWith('=')) {
+      return Buffer.from(keyString, 'base64');
+    }
+    // SHA-256 digest guarantees exactly 32-byte key without padding anomalies
+    return crypto.createHash('sha256').update(keyString).digest();
   }
 
   /**

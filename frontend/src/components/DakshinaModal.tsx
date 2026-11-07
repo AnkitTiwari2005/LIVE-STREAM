@@ -28,6 +28,19 @@ const SHUBH_PRESETS = [
   { amount: 1100, label: 'Maha Arpan', Icon: AartiThaliIcon },
 ];
 
+function loadRazorpayScript(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined') return resolve(false);
+    if ((window as any).Razorpay) return resolve(true);
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+}
+
 export const DakshinaModal: React.FC<DakshinaModalProps> = ({
   isOpen,
   onClose,
@@ -81,27 +94,37 @@ export const DakshinaModal: React.FC<DakshinaModalProps> = ({
       const orderData = await orderRes.json();
       if (!orderRes.ok) throw new Error(orderData.message || 'Failed to initiate dakshina');
 
-      // 2. If Razorpay is available in window
-      if ((window as any).Razorpay && orderData.keyId && orderData.provider === 'RAZORPAY') {
+      // 2. Razorpay checkout
+      if (orderData.provider === 'RAZORPAY') {
+        const loaded = await loadRazorpayScript();
+        if (!loaded || !(window as any).Razorpay) {
+          throw new Error('Payment gateway failed to load. Please check your connection or disable ad-blockers.');
+        }
+
         const options = {
           key: orderData.keyId,
-          amount: currentFinalAmount * 100,
+          amount: Math.round(currentFinalAmount * 100),
           currency: 'INR',
           name: 'Shubhdarshan Live',
-          description: `Dakshina to ${streamerName}`,
+          description: `Sacred Dakshina to ${streamerName}`,
           order_id: orderData.orderId,
           handler: async (response: any) => {
-            const verifyRes = await fetch(`${apiUrl}/payments/dakshina/verify`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                orderId: orderData.orderId,
-                paymentId: response.razorpay_payment_id,
-                signature: response.razorpay_signature,
-              }),
-            });
-            const verifyData = await verifyRes.json();
-            setSuccessOffering(verifyData.offering || orderData);
+            try {
+              const verifyRes = await fetch(`${apiUrl}/payments/dakshina/verify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  orderId: orderData.orderId,
+                  paymentId: response.razorpay_payment_id,
+                  signature: response.razorpay_signature,
+                }),
+              });
+              const verifyData = await verifyRes.json();
+              if (!verifyRes.ok) throw new Error(verifyData.message || 'Payment verification failed');
+              setSuccessOffering(verifyData.offering || orderData);
+            } catch (err: any) {
+              setError(err.message || 'Verification failed after payment');
+            }
           },
           prefill: {
             name: devoteeName,
@@ -110,9 +133,16 @@ export const DakshinaModal: React.FC<DakshinaModalProps> = ({
           theme: { color: '#ea580c' },
         };
         const rzp = new (window as any).Razorpay(options);
+        rzp.on('payment.failed', function (resp: any) {
+          setError(resp.error?.description || 'Dakshina payment failed at gateway');
+          setLoading(false);
+        });
         rzp.open();
       } else {
-        // Fallback / instant sandbox verification
+        if (process.env.NODE_ENV === 'production') {
+          throw new Error('Online payments are currently unavailable. Please try again shortly.');
+        }
+        // Fallback / instant sandbox verification only in non-production
         const verifyRes = await fetch(`${apiUrl}/payments/dakshina/verify`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -122,6 +152,7 @@ export const DakshinaModal: React.FC<DakshinaModalProps> = ({
           }),
         });
         const verifyData = await verifyRes.json();
+        if (!verifyRes.ok) throw new Error(verifyData.message || 'Sandbox verification failed');
         setSuccessOffering(verifyData.offering || orderData);
       }
     } catch (err: any) {

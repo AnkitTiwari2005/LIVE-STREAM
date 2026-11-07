@@ -120,11 +120,15 @@ async function main() {
   console.log(`Seeded ${staticPages.length} CMS static pages.`);
 
   // 4. Default Platform Admin User (FR-A4)
-  const adminEmail = 'admin@platform-domain.com';
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@platform-domain.com';
   const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
 
   if (!existingAdmin) {
-    const passwordHash = await bcrypt.hash('AdminPooja@2026Secure!', 12);
+    const bootstrapPassword = process.env.ADMIN_BOOTSTRAP_PASSWORD || (process.env.NODE_ENV === 'production' ? '' : 'DevAdmin@' + Math.random().toString(36).slice(2, 10));
+    if (!bootstrapPassword || bootstrapPassword.length < 16) {
+      throw new Error('ADMIN_BOOTSTRAP_PASSWORD must be at least 16 characters in production.');
+    }
+    const passwordHash = await bcrypt.hash(bootstrapPassword, 12);
     await prisma.user.create({
       data: {
         email: adminEmail,

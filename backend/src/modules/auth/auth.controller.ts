@@ -61,10 +61,9 @@ export class AuthController {
   @ApiOperation({ summary: 'Verify 2FA TOTP code for admin login' })
   async verifyTotp(
     @Body() dto: VerifyTotpDto,
-    @Body('userId') userId: string,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const result = await this.authService.verifyTotpLogin(userId, dto);
+    const result = await this.authService.verifyTotpLogin(dto);
     this.setAuthCookies(res, result.accessToken, result.refreshToken);
     return {
       user: result.user,

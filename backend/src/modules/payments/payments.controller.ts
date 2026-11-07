@@ -8,7 +8,6 @@ import {
   Req,
   HttpCode,
   HttpStatus,
-  UseGuards,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { PaymentsService } from './payments.service';
@@ -28,7 +27,8 @@ export class PaymentsController {
     @Req() req: Request,
   ) {
     const user = (req as any).user;
-    return this.paymentsService.createDakshinaOrder(dto, user?.sub);
+    const devoteeId = user?.id || user?.sub;
+    return this.paymentsService.createDakshinaOrder(dto, devoteeId);
   }
 
   @Public()
@@ -41,18 +41,22 @@ export class PaymentsController {
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
   async handleWebhook(
+    @Req() req: Request,
     @Body() body: any,
     @Headers('x-razorpay-signature') razorpaySig?: string,
-    @Headers('x-webhook-signature') genericSig?: string,
   ) {
-    const signature = razorpaySig || genericSig || '';
-    return this.paymentsService.handleWebhook(body, signature);
+    const rawBody = (req as any).rawBody as Buffer | undefined;
+    return this.paymentsService.handleWebhook(body, rawBody, razorpaySig);
   }
 
   @Public()
   @Get('dakshina/stream/:streamId')
-  async getStreamOfferings(@Param('streamId') streamId: string) {
-    return this.paymentsService.getRecentOfferings(streamId);
+  async getStreamOfferings(
+    @Param('streamId') streamId: string,
+    @Req() req: Request,
+  ) {
+    const user = (req as any).user;
+    return this.paymentsService.getRecentOfferings(streamId, user?.id, user?.role);
   }
 
   @Get('streamer/earnings')

@@ -16,11 +16,15 @@ import { Public } from '../../common/decorators/public.decorator';
 import { UserRole } from '@prisma/client';
 import { Request } from 'express';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { JwtService } from '@nestjs/jwt';
 
 @ApiTags('Private Streams')
 @Controller('private-links')
 export class PrivateLinksController {
-  constructor(private readonly privateLinksService: PrivateLinksService) {}
+  constructor(
+    private readonly privateLinksService: PrivateLinksService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   @Roles(UserRole.STREAMER)
   @Post()
@@ -51,40 +55,28 @@ export class PrivateLinksController {
   ) {
     const ip = req.ip || (req.headers['x-forwarded-for'] as string);
 
-    // Resolve user ID via multiple fallbacks:
-    // 1. @CurrentUser('id') from JwtAuthGuard
-    // 2. req.user?.id attached by Passport strategy
-    // 3. dto.userId explicitly passed in request body
-    // 4. Decode Bearer token directly from Authorization header
-    let resolvedUserId = userId || (req as any).user?.id || dto.userId;
+    // C-06 Secure Identity Resolution:
+    // Only trust validated session or cryptographically verified JWT signature
+    let resolvedUserId: string | undefined = userId || (req as any).user?.id;
 
-    if (!resolvedUserId && req.headers.authorization) {
-      try {
-        const token = req.headers.authorization.replace(/^Bearer\s+/i, '');
-        const base64Payload = token.split('.')[1];
-        if (base64Payload) {
-          const payload = JSON.parse(Buffer.from(base64Payload, 'base64').toString('utf8'));
-          if (payload?.sub) {
-            resolvedUserId = payload.sub;
-          }
-        }
-      } catch {
-        // Fallback silently if token is malformed
+    if (!resolvedUserId) {
+      let rawToken: string | undefined;
+      if (req.headers.authorization?.startsWith('Bearer ')) {
+        rawToken = req.headers.authorization.slice(7);
+      } else if ((req as any).cookies?.access_token) {
+        rawToken = (req as any).cookies.access_token;
       }
-    }
 
-    if (!resolvedUserId && (req as any).cookies?.access_token) {
-      try {
-        const token = (req as any).cookies.access_token;
-        const base64Payload = token.split('.')[1];
-        if (base64Payload) {
-          const payload = JSON.parse(Buffer.from(base64Payload, 'base64').toString('utf8'));
-          if (payload?.sub) {
+      if (rawToken) {
+        try {
+          const secret = process.env.JWT_ACCESS_SECRET || 'jwt_default_insecure_access_secret_key';
+          const payload = this.jwtService.verify(rawToken, { secret });
+          if (payload?.sub && !payload.is2FAChallenge) {
             resolvedUserId = payload.sub;
           }
+        } catch {
+          // Token invalid or expired - treat as guest
         }
-      } catch {
-        // Fallback silently
       }
     }
 

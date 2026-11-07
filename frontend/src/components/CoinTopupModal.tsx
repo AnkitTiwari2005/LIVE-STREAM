@@ -46,6 +46,19 @@ const PACKAGES = [
   },
 ];
 
+function loadRazorpayScript(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined') return resolve(false);
+    if ((window as any).Razorpay) return resolve(true);
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+}
+
 export function CoinTopupModal({ isOpen, onClose, onSuccess }: CoinTopupModalProps) {
   const [selectedSku, setSelectedSku] = useState('siddhi_600');
   const [loading, setLoading] = useState(false);
@@ -83,11 +96,16 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess }: CoinTopupModalPro
 
       const orderData = await res.json();
 
-      // 2. Razorpay checkout or test completion
-      if (orderData.provider === 'RAZORPAY' && typeof window !== 'undefined' && (window as any).Razorpay) {
+      // 2. Razorpay checkout
+      if (orderData.provider === 'RAZORPAY') {
+        const loaded = await loadRazorpayScript();
+        if (!loaded || !(window as any).Razorpay) {
+          throw new Error('Payment gateway failed to load. Please check your internet connection or disable ad-blockers.');
+        }
+
         const rzp = new (window as any).Razorpay({
           key: orderData.keyId,
-          amount: orderData.amountInr * 100,
+          amount: Math.round(orderData.amountInr * 100),
           currency: 'INR',
           name: 'Shubhdarshan Coins',
           description: `Sacred Coins: ${orderData.packageName}`,
@@ -97,9 +115,18 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess }: CoinTopupModalPro
           },
           theme: { color: '#ea580c' },
         });
+
+        rzp.on('payment.failed', function (resp: any) {
+          setError(resp.error?.description || 'Payment was unsuccessful at the gateway');
+          setLoading(false);
+        });
+
         rzp.open();
       } else {
-        // Direct sandbox / test verification
+        if (process.env.NODE_ENV === 'production') {
+          throw new Error('Online payments are currently unavailable. Please try again shortly.');
+        }
+        // Direct sandbox / test verification only in development
         await verifyPayment(orderData.orderId, `pay_mock_${Date.now()}`);
       }
     } catch (err: any) {

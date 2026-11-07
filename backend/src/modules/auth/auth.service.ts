@@ -129,11 +129,12 @@ export class AuthService {
 
     // If 2FA enabled for admin, require 2FA challenge
     if (user.isTwoFactorEnabled) {
+      const secret = process.env.JWT_2FA_SECRET || process.env.JWT_ACCESS_SECRET;
       return {
         requires2FA: true,
         tempToken: this.jwtService.sign(
-          { sub: user.id, is2FAChallenge: true },
-          { expiresIn: '5m', secret: process.env.JWT_ACCESS_SECRET },
+          { sub: user.id, purpose: '2fa_challenge', is2FAChallenge: true },
+          { expiresIn: '5m', secret },
         ),
       };
     }
@@ -141,14 +142,34 @@ export class AuthService {
     return this.generateTokens(user);
   }
 
-  async verifyTotpLogin(userId: string, dto: VerifyTotpDto) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+  async verifyTotpLogin(dto: VerifyTotpDto) {
+    if (!dto.tempToken) {
+      throw new BadRequestException('tempToken is required for 2FA verification');
+    }
+
+    const secret = process.env.JWT_2FA_SECRET || process.env.JWT_ACCESS_SECRET;
+    let payload: any;
+    try {
+      payload = this.jwtService.verify(dto.tempToken, { secret });
+    } catch {
+      throw new UnauthorizedException('2FA challenge token has expired or is invalid. Please sign in again.');
+    }
+
+    if (payload.purpose !== '2fa_challenge' && !payload.is2FAChallenge) {
+      throw new UnauthorizedException('Invalid 2FA challenge token');
+    }
+
+    const userId = payload.sub;
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { streamerProfile: true, wallet: true },
+    });
     if (!user || !user.twoFactorSecretEnc) {
       throw new UnauthorizedException('User 2FA is not configured');
     }
 
-    const secret = CryptoUtil.decryptAesGcm(user.twoFactorSecretEnc);
-    const isValid = authenticator.verify({ token: dto.token, secret });
+    const totpSecret = CryptoUtil.decryptAesGcm(user.twoFactorSecretEnc);
+    const isValid = authenticator.verify({ token: dto.token, secret: totpSecret });
 
     if (!isValid) {
       // Check backup codes

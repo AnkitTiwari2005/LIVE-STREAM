@@ -33,6 +33,11 @@ export class ResetPasswordDto {
 }
 
 export class VerifyTotpDto {
+  @ApiProperty({ description: 'Temporary 2FA challenge token from login' })
+  @IsString()
+  @IsNotEmpty()
+  tempToken: string;
+
   @ApiProperty({ example: '123456', description: '6-digit TOTP authenticator code' })
   @IsString()
   @IsNotEmpty()

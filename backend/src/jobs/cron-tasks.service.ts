@@ -6,7 +6,7 @@ import {
   VIDEO_PROVIDER_TOKEN,
 } from '../modules/video/interfaces/video-provider.interface';
 import { RemindersService } from '../modules/notifications/reminders.service';
-import { StreamStatus } from '@prisma/client';
+import { StreamStatus, ViewingSessionStatus } from '@prisma/client';
 
 @Injectable()
 export class CronTasksService {
@@ -57,21 +57,27 @@ export class CronTasksService {
 
   /**
    * 2. LiveKit Room State Reconciler:
-   * Runs every minute. Compares active LiveKit rooms with DB streams to resolve any dropped webhooks.
+   * Compares active LiveKit rooms with DB streams to resolve any dropped webhooks.
+   * Safe guard: Never auto-ends if LiveKit returns empty list due to gateway timeout.
    */
   @Cron(CronExpression.EVERY_MINUTE)
   async reconcileLiveRooms() {
     if (process.env.RUN_CRONS === 'false') return;
 
     const activeLiveKitRooms = await this.videoProvider.listActiveRooms();
+    // Safety guard: if LiveKit API fails or returns 0 rooms while DB has live streams, do not mass-end
+    if (!activeLiveKitRooms || activeLiveKitRooms.length === 0) {
+      return;
+    }
+
     const liveKitRoomNames = new Set(activeLiveKitRooms.map((r) => r.name));
 
-    // Find DB streams marked LIVE that started more than 2 minutes ago
-    const twoMinutesAgo = new Date(Date.now() - 120 * 1000);
+    // Find DB streams marked LIVE that started more than 5 minutes ago
+    const fiveMinutesAgo = new Date(Date.now() - 300 * 1000);
     const dbLiveStreams = await this.prisma.stream.findMany({
       where: {
         status: StreamStatus.LIVE,
-        startedAt: { lte: twoMinutesAgo },
+        startedAt: { lte: fiveMinutesAgo },
       },
     });
 
@@ -86,6 +92,47 @@ export class CronTasksService {
           },
         });
       }
+    }
+  }
+
+  /**
+   * 3. Server-Authoritative Coin Billing Watchdog (H-01):
+   * Runs every 30 seconds. Checks active viewer sessions.
+   * If a viewer stops heartbeating (no meter tick for > 90s), they are forcefully evicted from LiveKit.
+   */
+  @Cron(CronExpression.EVERY_30_SECONDS)
+  async handleCoinMeterWatchdog() {
+    if (process.env.RUN_CRONS === 'false') return;
+
+    const ninetySecondsAgo = new Date(Date.now() - 90 * 1000);
+
+    const expiredSessions = await this.prisma.streamViewingSession.findMany({
+      where: {
+        status: 'ACTIVE',
+        lastTickAt: { lte: ninetySecondsAgo },
+        stream: { status: StreamStatus.LIVE },
+      },
+      include: {
+        stream: { select: { id: true, title: true } },
+      },
+      take: 50,
+    });
+
+    for (const session of expiredSessions) {
+      this.logger.warn(
+        `Viewer [${session.userId}] meter heartbeat timeout (>90s) in stream [${session.streamId}]. Evicting.`,
+      );
+
+      // Force eviction from LiveKit video room
+      await this.videoProvider.kickParticipant(session.streamId, session.userId);
+
+      await this.prisma.streamViewingSession.update({
+        where: { id: session.id },
+        data: {
+          status: ViewingSessionStatus.EVICTED_ZERO_BALANCE,
+          endedAt: new Date(),
+        },
+      });
     }
   }
 

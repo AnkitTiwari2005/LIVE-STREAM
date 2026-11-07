@@ -194,13 +194,18 @@ Sitemap: https://darkturquoise-louse-359917.hostingersite.com/sitemap.xml
         if (fs.existsSync(indexPath)) return res.sendFile(indexPath);
       }
 
-      // Check for exact file matches
-      const exactFile = path.join(clientDir, req.path);
-      if (fs.existsSync(exactFile) && fs.statSync(exactFile).isFile()) {
-        return res.sendFile(exactFile);
+      // Check for exact file matches (C-08 Path Traversal Hardening)
+      const normalizedPath = path.normalize(req.path).replace(/^(\.\.[\/\\])+/, '');
+      const safePath = path.resolve(clientDir, '.' + (normalizedPath.startsWith(path.sep) ? normalizedPath : path.sep + normalizedPath));
+      if (!safePath.startsWith(clientDir)) {
+        return res.status(403).send('Forbidden');
       }
 
-      const cleanPath = req.path.replace(/^\/+|\/+$/g, '');
+      if (fs.existsSync(safePath) && fs.statSync(safePath).isFile()) {
+        return res.sendFile(safePath);
+      }
+
+      const cleanPath = normalizedPath.replace(/^[\\\/]+|[\\\/]+$/g, '');
 
       // Explicit studio create check (handles /studio/create or /studio/create/)
       if (cleanPath === 'studio/create') {

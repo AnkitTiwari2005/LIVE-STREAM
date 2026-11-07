@@ -6,18 +6,19 @@ import {
   Query,
   Req,
   BadRequestException,
-  UseInterceptors,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { StorageService } from './storage.service';
-import { Public } from '../../common/decorators/public.decorator';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiTags('Storage')
+@ApiBearerAuth()
 @Controller('storage')
 export class StorageController {
   constructor(private readonly storageService: StorageService) {}
 
-  @Public()
   @Post('presigned-url')
+  @ApiOperation({ summary: 'Obtain upload authorization for verified KYC or stream assets' })
   async getPresignedUrl(
     @Body() body: { filename: string; contentType: string; folder?: string },
   ) {
@@ -31,8 +32,8 @@ export class StorageController {
     );
   }
 
-  @Public()
   @Put('upload')
+  @ApiOperation({ summary: 'Upload file directly to platform storage' })
   async uploadFile(@Query('key') key: string, @Req() req: Request) {
     if (!key) {
       throw new BadRequestException('key query parameter is required');
