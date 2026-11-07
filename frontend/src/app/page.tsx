@@ -349,18 +349,17 @@ export default function HomePage() {
         {/* Background Image with Ambient Saffron Glow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           {/* Ambient Warm Golden Saffron Radial Glow */}
-          <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1000px] h-[550px] bg-[radial-gradient(ellipse_at_center,rgba(245,158,11,0.22),rgba(234,88,12,0.08)_50%,transparent_75%)] blur-2xl" />
+          <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1000px] h-[550px] bg-[radial-gradient(ellipse_at_center,rgba(245,158,11,0.22),rgba(234,88,12,0.08)_50%,transparent_75%)] blur-2xl dark:opacity-100 opacity-20" />
 
           {/* Sacred Temple Photography Backdrop */}
           <img
             src="/images/photo-1681797849099-0053b1567d95.webp"
             alt="Sandhya Ganga Aarti Haridwar Sanctum"
-            className="h-full w-full object-cover opacity-45 scale-105"
+            className="backdrop-photo h-full w-full object-cover opacity-35 scale-105"
           />
 
           {/* Smooth Gradient Vignette */}
-          <div className="absolute inset-0 bg-gradient-to-b from-obsidian/60 via-obsidian/80 to-obsidian" />
-          <div className="absolute inset-0 bg-gradient-to-r from-obsidian/90 via-transparent to-obsidian/80" />
+          <div className="absolute inset-0 bg-gradient-to-b from-obsidian/70 via-obsidian/85 to-obsidian" />
 
           {/* Mandala Background Pattern */}
           <div className="mandala-bg absolute inset-0 opacity-40 [mask-image:radial-gradient(800px_500px_at_50%_30%,black,transparent)]" />
@@ -447,7 +446,7 @@ export default function HomePage() {
 
           {/* Right Column: Hero Featured Live Stream Card */}
           <div className="lg:col-span-5">
-            <div className="relative rounded-3xl border border-gold/30 bg-gradient-to-b from-[#221810] to-obsidian p-3 shadow-[0_25px_70px_rgba(0,0,0,0.85)] group transition hover:border-gold/60">
+            <div className="on-photo relative rounded-3xl border border-gold/30 bg-gradient-to-b from-[#221810] to-obsidian p-3 shadow-[0_25px_70px_rgba(0,0,0,0.85)] group transition hover:border-gold/60">
               <div className="relative aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden bg-black">
                 <img
                   src={

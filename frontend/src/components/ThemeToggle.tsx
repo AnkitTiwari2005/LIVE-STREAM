@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon } from 'lucide-react';
 
 interface ThemeToggleProps {
   className?: string;
@@ -9,16 +8,18 @@ interface ThemeToggleProps {
 
 export function ThemeToggle({ className = '' }: ThemeToggleProps) {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    const stored = localStorage.getItem('shubhdarshan_theme');
-    if (stored === 'light' || stored === 'dark') {
-      setTheme(stored);
-      document.documentElement.setAttribute('data-theme', stored);
-    } else {
-      document.documentElement.setAttribute('data-theme', 'dark');
+    try {
+      const stored = localStorage.getItem('sd-theme');
+      if (stored === 'light' || stored === 'dark') {
+        setTheme(stored);
+        document.documentElement.setAttribute('data-theme', stored);
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        setTheme('dark');
+      }
+    } catch {
       setTheme('dark');
     }
   }, []);
@@ -27,28 +28,42 @@ export function ThemeToggle({ className = '' }: ThemeToggleProps) {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(nextTheme);
     document.documentElement.setAttribute('data-theme', nextTheme);
-    localStorage.setItem('shubhdarshan_theme', nextTheme);
+    try {
+      localStorage.setItem('sd-theme', nextTheme);
+    } catch {}
   };
-
-  if (!mounted) {
-    return (
-      <div className={`h-9 w-9 rounded-full border border-gold/20 bg-obsidian-soft/60 ${className}`} />
-    );
-  }
 
   return (
     <button
       type="button"
       onClick={toggleTheme}
-      className={`relative h-9 w-9 rounded-full border border-gold/30 bg-obsidian-soft/80 hover:bg-stone-900 flex items-center justify-center text-gold-pale hover:text-gold transition-all shadow-sm ${className}`}
+      className={`sd-theme shrink-0 ${className}`}
+      aria-label={theme === 'dark' ? 'Switch to Surya Day Mode' : 'Switch to Sacred Night Mode'}
       title={theme === 'dark' ? 'Switch to Surya Day Mode' : 'Switch to Sacred Night Mode'}
-      aria-label="Toggle theme mode"
     >
-      {theme === 'dark' ? (
-        <Sun className="w-4 h-4 text-gold hover:rotate-45 transition-transform duration-300" />
-      ) : (
-        <Moon className="w-4 h-4 text-amber-600 hover:-rotate-12 transition-transform duration-300" />
-      )}
+      <svg
+        className="moon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z" />
+      </svg>
+      <svg
+        className="sun"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+      </svg>
     </button>
   );
 }

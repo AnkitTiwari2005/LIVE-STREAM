@@ -171,16 +171,16 @@ export function Navbar() {
           </nav>
 
           {/* 3. User Controls & Role Actions (Never Crowded, Never Escaping Screen) */}
-          <div className="hidden lg:flex items-center gap-2 xl:gap-2.5 shrink-0">
+          <div className="hidden lg:flex items-center gap-1.5 xl:gap-2 shrink-0">
             {/* Search Palette Trigger */}
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="flex items-center gap-1.5 h-9 px-2.5 xl:px-3 rounded-full border border-gold/25 bg-obsidian-soft/70 hover:bg-stone-900 text-stone-400 hover:text-stone-200 text-xs font-medium transition shadow-sm"
+              className="flex items-center gap-1.5 h-9 px-2.5 rounded-full border border-gold/25 bg-obsidian-soft/70 hover:bg-stone-900 text-stone-400 hover:text-stone-200 text-xs font-medium transition shadow-sm"
               aria-label="Search pooja and aarti"
             >
               <Search className="w-3.5 h-3.5 text-gold-soft shrink-0" />
-              <span className="hidden 2xl:inline">Search...</span>
+              <span className="hidden xl:inline">Search...</span>
               <kbd className="px-1.5 py-0.5 rounded text-[10px] bg-stone-800 text-stone-400 border border-stone-700 font-mono">/</kbd>
             </button>
 
@@ -191,7 +191,7 @@ export function Navbar() {
             {user?.role === 'STREAMER' && (
               <Link
                 href="/studio/create"
-                className="whitespace-nowrap shrink-0 flex items-center gap-1.5 rounded-full bg-gold/15 hover:bg-gold/25 border border-gold/30 px-3 py-1.5 text-xs font-bold text-gold-pale transition shadow-sm"
+                className="whitespace-nowrap shrink-0 flex items-center gap-1 rounded-full bg-gold/15 hover:bg-gold/25 border border-gold/30 px-2.5 py-1.5 text-xs font-bold text-gold-pale transition shadow-sm"
                 title="Open Studio"
               >
                 <Video className="w-3.5 h-3.5 text-gold shrink-0" />
@@ -203,7 +203,7 @@ export function Navbar() {
             {user?.role === 'ADMIN' && (
               <Link
                 href="/admin"
-                className="whitespace-nowrap shrink-0 flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-950/60 px-3 py-1.5 text-xs font-bold text-amber-300 hover:bg-amber-900/60 transition shadow-sm"
+                className="whitespace-nowrap shrink-0 flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-950/60 px-2.5 py-1.5 text-xs font-bold text-amber-300 hover:bg-amber-900/60 transition shadow-sm"
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                 <span>Admin</span>
@@ -211,16 +211,16 @@ export function Navbar() {
             )}
 
             {user ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 {/* Gold Coin Wallet Pill */}
                 <button
                   onClick={() => setTopupModalOpen(true)}
-                  className="whitespace-nowrap shrink-0 group flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold/10 px-3 py-1.5 text-xs font-bold text-gold-pale transition hover:border-gold/60 hover:bg-gold/20 shadow-sm"
+                  className="whitespace-nowrap shrink-0 group flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold/10 px-2.5 py-1.5 text-xs font-bold text-gold-pale transition hover:border-gold/60 hover:bg-gold/20 shadow-sm"
                   title="Your Sacred Coins (Click to Recharge)"
                 >
                   <CoinIcon size={14} className="text-gold shrink-0 group-hover:scale-110 transition-transform" />
                   <span className="font-extrabold text-gold">{coinBalance !== null ? coinBalance : 100}</span>
-                  <span className="text-[10px] text-stone-300 font-medium">Coins</span>
+                  <span className="hidden xl:inline text-[10px] text-stone-300 font-medium">Coins</span>
                   <PlusCircle className="w-3.5 h-3.5 text-gold shrink-0 group-hover:text-gold-soft" />
                 </button>
 
@@ -228,7 +228,7 @@ export function Navbar() {
                 <div className="relative shrink-0" ref={dropdownRef}>
                   <button
                     onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                    className="whitespace-nowrap shrink-0 flex items-center gap-1.5 text-xs font-semibold text-stone-200 hover:text-gold-pale transition px-3 py-1.5 rounded-full bg-obsidian-soft border border-gold/20 hover:border-gold/40 max-w-[140px]"
+                    className="whitespace-nowrap shrink-0 flex items-center gap-1.5 text-xs font-semibold text-stone-200 hover:text-gold-pale transition px-2.5 py-1.5 rounded-full bg-obsidian-soft border border-gold/20 hover:border-gold/40 max-w-[130px]"
                     title="Devotee & Broadcaster Menu"
                   >
                     <PranamIcon size={14} className="text-gold shrink-0" />
@@ -239,8 +239,8 @@ export function Navbar() {
                   {userDropdownOpen && (
                     <div className="navbar-user-dropdown absolute right-0 top-full mt-2 w-64 rounded-2xl p-2.5 z-[9999] text-xs">
                       {/* Opaque user info header */}
-                      <div className="p-3 rounded-xl bg-[#241a12] border border-gold/25 mb-2 shadow-sm">
-                        <div className="font-bold text-white text-sm truncate">{user.name}</div>
+                      <div className="user-dropdown-header p-3 rounded-xl bg-[#241a12] border border-gold/25 mb-2 shadow-sm">
+                        <div className="user-name font-bold text-white text-sm truncate">{user.name}</div>
                         <div className="flex items-center justify-between mt-1">
                           <span className="text-[10px] text-gold font-bold uppercase tracking-wider">{user.role || 'DEVOTEE'}</span>
                           <span className="text-[10px] text-stone-300 font-medium">{coinBalance !== null ? `${coinBalance} Coins` : ''}</span>
@@ -264,7 +264,7 @@ export function Navbar() {
                               className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
                             >
                               <CoinIcon size={16} className="text-gold shrink-0" />
-                              <span>Earnings & Dakshina</span>
+                              <span>Earnings &amp; Dakshina</span>
                             </Link>
                           </>
                         )}
@@ -301,7 +301,7 @@ export function Navbar() {
                             setUserDropdownOpen(false);
                             handleLogout();
                           }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 text-red-400 hover:bg-red-950/40 rounded-xl transition font-medium mt-1.5 pt-2 border-t border-stone-800/80"
+                          className="logout-btn w-full flex items-center gap-2.5 px-3 py-2 text-red-400 hover:bg-red-950/40 rounded-xl transition font-medium mt-1.5 pt-2 border-t border-stone-800/80"
                         >
                           <LogOut className="w-4 h-4 text-red-400 shrink-0" />
                           <span>Log Out</span>
@@ -310,16 +310,6 @@ export function Navbar() {
                     </div>
                   )}
                 </div>
-
-                {/* Direct Visible Logout Icon Button */}
-                <button
-                  onClick={handleLogout}
-                  className="whitespace-nowrap shrink-0 flex items-center justify-center p-2 rounded-full border border-red-900/40 bg-red-950/30 text-stone-300 hover:text-red-400 hover:bg-red-950/60 hover:border-red-700 transition shadow-sm"
-                  title="Log Out from Session"
-                  aria-label="Log Out"
-                >
-                  <LogOut className="w-3.5 h-3.5 text-stone-300 hover:text-red-400 shrink-0" />
-                </button>
               </div>
             ) : (
               <div className="flex items-center gap-2">
