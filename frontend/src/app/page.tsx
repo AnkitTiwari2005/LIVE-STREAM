@@ -519,7 +519,7 @@ export default function HomePage() {
                 {LIVE_SEVA_ACTIVITIES.map((act, i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between text-xs py-1.5 px-3 rounded-xl bg-obsidian-soft/70 border border-gold/10 hover:border-gold/30 transition-colors"
+                    className="flex items-center justify-between text-xs py-1.5 px-3 rounded-xl bg-obsidian-soft border border-gold/15 hover:border-gold/30 transition-colors"
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="w-6 h-6 rounded-full bg-gold/15 flex items-center justify-center text-gold text-[10px] font-bold shrink-0">
@@ -598,7 +598,7 @@ export default function HomePage() {
                   const el = document.getElementById('live-streams-grid');
                   el?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="group relative cursor-pointer rounded-2xl bg-gradient-to-b from-obsidian-soft to-obsidian p-4 border border-gold/15 hover:border-gold/50 transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-[0_10px_30px_rgba(245,158,11,0.12)] flex flex-col justify-between"
+                className="group relative cursor-pointer rounded-2xl bg-obsidian-soft p-4 border border-gold/15 hover:border-gold/50 transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-[0_10px_30px_rgba(245,158,11,0.12)] flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-3">
@@ -939,7 +939,7 @@ export default function HomePage() {
                   {p.specialties.map((s) => (
                     <span
                       key={s}
-                      className="text-[9px] font-bold uppercase tracking-wider text-stone-300 bg-stone-900/80 border border-stone-800 px-2 py-0.5 rounded"
+                      className="text-[9px] font-bold uppercase tracking-wider text-stone-300 bg-obsidian border border-gold/15 px-2 py-0.5 rounded"
                     >
                       {s}
                     </span>
@@ -997,7 +997,7 @@ export default function HomePage() {
 
       {/* 7. One Currency for Every Seva ("Devotional Coins & Transparent Seva") */}
       <section className="mx-auto max-w-7xl px-5 lg:px-8 py-16 border-t border-gold/15">
-        <div className="rounded-3xl border border-gold/30 bg-gradient-to-r from-[#1c140c] via-obsidian to-[#1c140c] p-8 sm:p-12 shadow-2xl relative overflow-hidden">
+        <div className="rounded-3xl border border-gold/25 bg-obsidian-soft p-8 sm:p-12 shadow-xl relative overflow-hidden">
           <div className="mandala-bg absolute inset-0 opacity-30 pointer-events-none" />
 
           <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
@@ -1028,19 +1028,19 @@ export default function HomePage() {
             </div>
 
             <div className="lg:col-span-5 grid grid-cols-2 gap-3 text-center">
-              <div className="p-4 rounded-2xl bg-obsidian/80 border border-gold/20">
+              <div className="p-4 rounded-2xl bg-obsidian border border-gold/15">
                 <span className="font-serif text-2xl font-bold text-gold-pale block">100 Coins</span>
                 <span className="text-[11px] text-stone-400">Free Joining Bonus</span>
               </div>
-              <div className="p-4 rounded-2xl bg-obsidian/80 border border-gold/20">
+              <div className="p-4 rounded-2xl bg-obsidian border border-gold/15">
                 <span className="font-serif text-2xl font-bold text-gold-pale block">5 Coins/min</span>
                 <span className="text-[11px] text-stone-400">Live Metered Stream</span>
               </div>
-              <div className="p-4 rounded-2xl bg-obsidian/80 border border-gold/20">
+              <div className="p-4 rounded-2xl bg-obsidian border border-gold/15">
                 <span className="font-serif text-2xl font-bold text-gold-pale block">100% Secure</span>
                 <span className="text-[11px] text-stone-400">Razorpay Encrypted</span>
               </div>
-              <div className="p-4 rounded-2xl bg-obsidian/80 border border-gold/20">
+              <div className="p-4 rounded-2xl bg-obsidian border border-gold/15">
                 <span className="font-serif text-2xl font-bold text-gold-pale block">No Expiry</span>
                 <span className="text-[11px] text-stone-400">Coins Valid Forever</span>
               </div>
@@ -1092,7 +1092,7 @@ export default function HomePage() {
 
       {/* 9. Final Sacred Call to Action Banner ("Your first Darshan is on us") */}
       <section className="mx-auto max-w-7xl px-5 lg:px-8 py-16">
-        <div className="rounded-3xl border border-gold/40 bg-gradient-to-r from-gold/20 via-obsidian-soft to-gold/20 p-8 sm:p-14 text-center shadow-2xl relative overflow-hidden">
+        <div className="rounded-3xl border border-gold/25 bg-obsidian-soft p-8 sm:p-16 text-center shadow-xl relative overflow-hidden">
           <div className="mandala-bg absolute inset-0 opacity-40 pointer-events-none" />
 
           <div className="relative z-10 max-w-2xl mx-auto space-y-5">
@@ -1117,7 +1117,7 @@ export default function HomePage() {
               </Link>
               <a
                 href="#live-section"
-                className="rounded-full border border-gold/40 bg-obsidian px-6 py-3.5 text-sm font-bold text-gold-pale hover:bg-gold/10 transition"
+                className="rounded-full border border-gold/40 bg-obsidian-soft hover:bg-gold/10 px-6 py-3.5 text-sm font-bold text-gold-pale transition"
               >
                 Explore Live Sanatan Sanctums
               </a>

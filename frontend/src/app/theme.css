@@ -171,13 +171,36 @@ html[data-theme="light"] .bg-obsidian-deep {
 }
 
 html:not([data-theme="dark"]) .bg-obsidian-soft,
-html[data-theme="light"] .bg-obsidian-soft {
+html[data-theme="light"] .bg-obsidian-soft,
+html:not([data-theme="dark"]) .bg-obsidian-soft\/60,
+html:not([data-theme="dark"]) .bg-obsidian-soft\/70,
+html:not([data-theme="dark"]) .bg-obsidian-soft\/80,
+html:not([data-theme="dark"]) .bg-obsidian-soft\/90,
+html[data-theme="light"] .bg-obsidian-soft\/60,
+html[data-theme="light"] .bg-obsidian-soft\/70,
+html[data-theme="light"] .bg-obsidian-soft\/80,
+html[data-theme="light"] .bg-obsidian-soft\/90 {
   background-color: #ffffff !important;
 }
 
-html:not([data-theme="dark"]) .bg-obsidian-soft\/60,
-html[data-theme="light"] .bg-obsidian-soft\/60 {
-  background-color: rgba(255, 255, 255, 0.85) !important;
+html:not([data-theme="dark"]) .from-obsidian-soft,
+html[data-theme="light"] .from-obsidian-soft {
+  --tw-gradient-from: #ffffff !important;
+  --tw-gradient-to: rgb(255 255 255 / 0) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+
+/* Any stone cards or dark pills outside photo overlays become light porcelain */
+html:not([data-theme="dark"]) :not(.on-photo) > [class*="bg-stone-9"],
+html:not([data-theme="dark"]) :not(.on-photo) > [class*="bg-stone-8"],
+html:not([data-theme="dark"]) div:not(.on-photo) [class*="bg-stone-9"],
+html:not([data-theme="dark"]) div:not(.on-photo) [class*="bg-stone-8"],
+html[data-theme="light"] :not(.on-photo) > [class*="bg-stone-9"],
+html[data-theme="light"] :not(.on-photo) > [class*="bg-stone-8"],
+html[data-theme="light"] div:not(.on-photo) [class*="bg-stone-9"],
+html[data-theme="light"] div:not(.on-photo) [class*="bg-stone-8"] {
+  background-color: #f7f1f1 !important;
+  border-color: #eadada !important;
 }
 
 html:not([data-theme="dark"]) .bg-obsidian\/80,
@@ -367,15 +390,26 @@ html[data-theme="light"] .hover\:from-gold\/40:hover {
 
 html:not([data-theme="dark"]) .from-\[\#2a1e12\],
 html:not([data-theme="dark"]) .from-\[\#1c130a\],
+html:not([data-theme="dark"]) .from-\[\#1c140c\],
 html:not([data-theme="dark"]) .from-\[\#211507\],
 html:not([data-theme="dark"]) .from-\[\#221810\],
 html[data-theme="light"] .from-\[\#2a1e12\],
 html[data-theme="light"] .from-\[\#1c130a\],
+html[data-theme="light"] .from-\[\#1c140c\],
 html[data-theme="light"] .from-\[\#211507\],
 html[data-theme="light"] .from-\[\#221810\] {
   --tw-gradient-from: #fff0f0 !important;
   --tw-gradient-to: rgb(255 240 240 / 0) !important;
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+
+html:not([data-theme="dark"]) .to-\[\#1c140c\],
+html:not([data-theme="dark"]) .to-\[\#1c130a\],
+html:not([data-theme="dark"]) .to-\[\#221810\],
+html[data-theme="light"] .to-\[\#1c140c\],
+html[data-theme="light"] .to-\[\#1c130a\],
+html[data-theme="light"] .to-\[\#221810\] {
+  --tw-gradient-to: #fbf8f8 !important;
 }
 
 html:not([data-theme="dark"]) a.bg-gold,

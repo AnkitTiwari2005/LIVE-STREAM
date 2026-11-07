@@ -176,12 +176,12 @@ export function Navbar() {
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="flex items-center gap-1.5 h-9 px-2.5 rounded-full border border-gold/25 bg-obsidian-soft/70 hover:bg-stone-900 text-stone-400 hover:text-stone-200 text-xs font-medium transition shadow-sm"
+              className="flex items-center gap-1.5 h-9 px-2.5 rounded-full border border-gold/25 bg-obsidian-soft hover:bg-gold/10 text-stone-400 hover:text-gold-pale text-xs font-medium transition shadow-sm"
               aria-label="Search pooja and aarti"
             >
               <Search className="w-3.5 h-3.5 text-gold-soft shrink-0" />
               <span className="hidden xl:inline">Search...</span>
-              <kbd className="px-1.5 py-0.5 rounded text-[10px] bg-stone-800 text-stone-400 border border-stone-700 font-mono">/</kbd>
+              <kbd className="px-1.5 py-0.5 rounded text-[10px] bg-obsidian text-stone-400 border border-gold/20 font-mono">/</kbd>
             </button>
 
             {/* Theme Toggle Button (Surya Day / Sacred Night) */}
