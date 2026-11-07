@@ -305,8 +305,17 @@ export class WalletService {
       throw new BadRequestException('packageSku or sku is required');
     }
 
+    const skuMap: Record<string, string> = {
+      'COIN_PACK_100': 'shubh_100',
+      'COIN_PACK_250': 'bhakti_275',
+      'COIN_PACK_500': 'siddhi_600',
+      'COIN_PACK_600': 'siddhi_600',
+      'COIN_PACK_1500': 'mahodadhi_1500',
+    };
+    const resolvedSku = skuMap[targetSku] || targetSku;
+
     const pkg = await this.prisma.coinPackage.findUnique({
-      where: { sku: targetSku },
+      where: { sku: resolvedSku },
     });
 
     if (!pkg || !pkg.isActive) {
