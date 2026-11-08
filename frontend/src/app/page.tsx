@@ -361,7 +361,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-obsidian text-foreground">
       {/* 1. Sacred Hero Section */}
-      <section className="relative overflow-hidden pt-3.5 pb-16 lg:pt-5 lg:pb-24 border-b border-gold/15">
+      <section className="relative overflow-hidden pt-3.5 pb-16 lg:pt-5 lg:pb-24 border-b border-gold/15 w-full max-w-full">
         {/* Background Image with Ambient Saffron Glow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           {/* Ambient Warm Golden Saffron Radial Glow */}
@@ -381,7 +381,7 @@ export default function HomePage() {
           <div className="mandala-bg absolute inset-0 opacity-40 [mask-image:radial-gradient(800px_500px_at_50%_30%,black,transparent)]" />
         </div>
 
-        <div className="relative mx-auto grid max-w-7xl gap-12 px-5 lg:grid-cols-12 lg:gap-8 lg:px-8 items-center">
+        <div className="relative mx-auto grid max-w-7xl gap-12 px-5 lg:grid-cols-12 lg:gap-8 lg:px-8 items-center w-full overflow-x-clip">
           {/* Left Column: Sacred Copy & Value Props */}
           <div className="flex flex-col justify-center lg:col-span-7">
             <div>
@@ -493,7 +493,7 @@ export default function HomePage() {
           {/* Right Column: Hero Featured Live Stream or Placeholder Card */}
           <div className="lg:col-span-5">
             {featuredStream ? (
-              <div className="relative rounded-3xl border border-stone-200 dark:border-gold/30 bg-white dark:bg-gradient-to-b dark:from-[#221810] dark:to-obsidian p-3 shadow-xl dark:shadow-[0_25px_70px_rgba(0,0,0,0.85)] group transition hover:border-amber-400 dark:hover:border-gold/60">
+              <div className="relative rounded-3xl border border-stone-200 dark:border-gold/30 bg-white dark:bg-gradient-to-b dark:from-[#221810] dark:to-obsidian p-3 shadow-xl dark:shadow-[0_25px_70px_rgba(0,0,0,0.85)] group transition hover:border-amber-400 dark:hover:border-gold/60 overflow-hidden">
                 <div className="on-photo video-overlay relative aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden bg-black">
                   <img
                     src={
@@ -548,7 +548,7 @@ export default function HomePage() {
                 </div>
               </div>
             ) : (
-              <div className="relative rounded-3xl border border-stone-200 dark:border-gold/30 bg-white dark:bg-gradient-to-b dark:from-[#221810] dark:to-obsidian p-3 sm:p-4 shadow-xl dark:shadow-[0_25px_70px_rgba(0,0,0,0.85)] group transition hover:border-amber-400 dark:hover:border-gold/60">
+              <div className="relative rounded-3xl border border-stone-200 dark:border-gold/30 bg-white dark:bg-gradient-to-b dark:from-[#221810] dark:to-obsidian p-3 sm:p-4 shadow-xl dark:shadow-[0_25px_70px_rgba(0,0,0,0.85)] group transition hover:border-amber-400 dark:hover:border-gold/60 overflow-hidden">
                 <div className="altar-repose-card relative aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden bg-gradient-to-br from-amber-100/80 via-orange-50/70 to-rose-50/50 dark:bg-[#0c0a09] flex flex-col justify-between p-4 sm:p-6 border border-amber-300 dark:border-gold/20 shadow-inner">
                   <img
                     src="/images/photo-1681797849099-0053b1567d95.webp"
@@ -587,9 +587,9 @@ export default function HomePage() {
                       Verified Vedic Pandits stream live whenever they conduct sacred rituals, havan poojas, or astrological discourses. Active broadcasts will appear here in real time.
                     </p>
                     {nextUpcomingStream && (
-                      <div className="mt-2.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white dark:bg-black/85 backdrop-blur-md border border-amber-300 dark:border-amber-400/40 text-[11px] shadow-sm dark:shadow-md">
-                        <span className="altar-repose-upcoming-badge font-bold uppercase tracking-wider text-[10px]">Upcoming:</span>
-                        <span className="altar-repose-upcoming font-bold truncate max-w-[220px]">{nextUpcomingStream.title}</span>
+                      <div className="mt-2.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white dark:bg-black/85 backdrop-blur-md border border-amber-300 dark:border-amber-400/40 text-[11px] shadow-sm dark:shadow-md max-w-full overflow-hidden">
+                        <span className="altar-repose-upcoming-badge font-bold uppercase tracking-wider text-[10px] shrink-0">Upcoming:</span>
+                        <span className="altar-repose-upcoming font-bold truncate min-w-0 flex-1">{nextUpcomingStream.title}</span>
                       </div>
                     )}
                   </div>
@@ -644,17 +644,17 @@ export default function HomePage() {
                 {LIVE_SEVA_ACTIVITIES.map((act, i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between text-xs py-1.5 px-3 rounded-xl bg-white dark:bg-obsidian-soft border border-stone-200 dark:border-gold/15 hover:border-amber-500/40 dark:hover:border-gold/30 transition-colors shadow-sm min-w-0"
+                    className="flex items-center justify-between text-xs py-1.5 px-3 rounded-xl bg-white dark:bg-obsidian-soft border border-stone-200 dark:border-gold/15 hover:border-amber-500/40 dark:hover:border-gold/30 transition-colors shadow-sm min-w-0 overflow-hidden"
                   >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
                       <div className="w-6 h-6 rounded-full bg-amber-500/15 dark:bg-gold/15 flex items-center justify-center text-amber-800 dark:text-gold text-[10px] font-bold shrink-0">
                         {act.initials}
                       </div>
-                      <div className="truncate min-w-0 flex-1">
+                      <p className="truncate min-w-0 flex-1 text-xs">
                         <span className="devotee-seva-name font-bold">{act.name}</span>
-                        <span className="text-stone-400 mx-1.5">•</span>
+                        <span className="text-stone-400 mx-1">•</span>
                         <span className="devotee-seva-action font-semibold">{act.action}</span>
-                      </div>
+                      </p>
                     </div>
                     <span className="devotee-seva-time text-[10px] shrink-0 ml-2 font-mono">{act.time}</span>
                   </div>

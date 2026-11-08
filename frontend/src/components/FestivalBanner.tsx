@@ -90,7 +90,7 @@ export function FestivalBanner() {
     <div
       role="region"
       aria-label="Festival announcement"
-      className={`relative z-50 flex items-center justify-between sm:justify-center gap-2 sm:gap-4 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm !text-white shadow-md border-b border-amber-600/30 ${gradientClass} pr-8 sm:pr-10 animate-in fade-in duration-200`}
+      className={`relative z-50 flex items-center justify-between sm:justify-center gap-2 sm:gap-4 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm !text-white shadow-md border-b border-amber-600/30 ${gradientClass} pr-8 sm:pr-10 animate-in fade-in duration-200 w-full max-w-full overflow-hidden`}
     >
       <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 sm:flex-initial">
         <DiyaIcon size={16} className="animate-pulse !text-amber-200 shrink-0" />

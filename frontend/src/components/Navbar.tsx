@@ -401,7 +401,7 @@ export function Navbar() {
                   className="nav-join-free-btn whitespace-nowrap shrink-0 group inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition hover:scale-105 active:scale-95 shadow-sm"
                 >
                   <span>Join Free</span>
-                  <span className="nav-join-free-badge rounded-full px-1.5 py-0.5 text-[10px] font-black shrink-0">
+                  <span className="nav-join-free-badge hidden xs:inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-black shrink-0">
                     +100 Coins
                   </span>
                 </Link>

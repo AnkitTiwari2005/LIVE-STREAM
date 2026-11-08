@@ -50,6 +50,12 @@ html {
   overflow-x: clip;
 }
 
+/* Catch-all: every direct child of body must not exceed viewport width */
+body > * {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
 /* 2. Light Mode Typography: High Contrast Charcoal & Sacred Vermillion */
 html:not([data-theme="dark"]) body,
 html[data-theme="light"] body {

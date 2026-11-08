@@ -26,6 +26,12 @@ body {
   position: relative;
 }
 
+/* Catch-all: every direct child of body must not exceed viewport width */
+body > * {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
 /* Sacred Devotional Design Utilities */
 .glass {
   background: rgba(20, 15, 19, 0.72);
