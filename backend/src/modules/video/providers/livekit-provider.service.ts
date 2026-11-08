@@ -14,10 +14,10 @@ export class LiveKitProviderService implements IVideoProviderService {
   constructor() {
     const rawHost = process.env.LIVEKIT_URL || process.env.LIVEKIT_HOST || 'http://livekit:7880';
     const livekitHost = rawHost.startsWith('wss://') ? rawHost.replace('wss://', 'https://') : rawHost;
-    const apiKey = process.env.LIVEKIT_API_KEY || 'pooja';
-    const apiSecret = process.env.LIVEKIT_API_SECRET || 'secret';
+    const apiKey = process.env.LIVEKIT_API_KEY || (process.env.NODE_ENV === 'production' ? '' : 'pooja');
+    const apiSecret = process.env.LIVEKIT_API_SECRET || (process.env.NODE_ENV === 'production' ? '' : 'secret');
 
-    this.roomService = new RoomServiceClient(livekitHost, apiKey, apiSecret);
+    this.roomService = new RoomServiceClient(livekitHost, apiKey || 'pooja', apiSecret || 'secret');
   }
 
   async createRoom(options: CreateRoomOptions): Promise<{ roomId: string; roomName: string }> {
@@ -29,16 +29,20 @@ export class LiveKitProviderService implements IVideoProviderService {
       });
       return { roomId: room.sid, roomName: room.name };
     } catch (err: any) {
-      this.logger.warn(`LiveKit server notice [${options.roomName}]: ${err.message}. Using virtual room identifier.`);
+      if (err.message?.toLowerCase().includes('already exists')) {
+        this.logger.log(`LiveKit room [${options.roomName}] already exists. Reusing room.`);
+        return { roomId: `rm_${options.roomName}`, roomName: options.roomName };
+      }
+      this.logger.warn(`LiveKit room creation notice [${options.roomName}]: ${err.message}. Using virtual room identifier.`);
       return { roomId: `rm_${options.roomName}`, roomName: options.roomName };
     }
   }
 
   async generateToken(options: ParticipantTokenOptions): Promise<string> {
-    const apiKey = process.env.LIVEKIT_API_KEY || 'pooja';
-    const apiSecret = process.env.LIVEKIT_API_SECRET || 'secret';
+    const apiKey = process.env.LIVEKIT_API_KEY || (process.env.NODE_ENV === 'production' ? '' : 'pooja');
+    const apiSecret = process.env.LIVEKIT_API_SECRET || (process.env.NODE_ENV === 'production' ? '' : 'secret');
 
-    const at = new AccessToken(apiKey, apiSecret, {
+    const at = new AccessToken(apiKey || 'pooja', apiSecret || 'secret', {
       identity: options.participantId,
       name: options.participantName,
       ttl: `${options.ttlMinutes}m`,

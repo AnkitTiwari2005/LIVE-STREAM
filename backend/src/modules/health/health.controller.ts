@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
 import { Public } from '../../common/decorators/public.decorator';
 import { PrismaService } from '../../database/prisma.service';
 import Redis from 'ioredis';
@@ -25,7 +25,8 @@ export class HealthController {
       await this.prisma.$queryRaw`SELECT 1`;
       return { status: 'ready', database: 'connected' };
     } catch (e: any) {
-      return { status: 'unready', error: e.message };
+      // B-28: Return HTTP 503 Service Unavailable when database is unreachable
+      throw new ServiceUnavailableException({ status: 'unready', error: e.message });
     }
   }
 }

@@ -11,6 +11,7 @@ import {
 import { WalletService } from '../wallet/wallet.service';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateStreamDto } from './dto/create-stream.dto';
+import { UpdateStreamDto } from './dto/update-stream.dto';
 import { StreamStatus, StreamVisibility, UserRole, UserStatus, ViewingSessionStatus } from '@prisma/client';
 import { validateStateTransition } from './state/stream-state-machine';
 import {
@@ -384,12 +385,13 @@ export class StreamsService {
     });
   }
 
-  async updateStream(streamId: string, streamerId: string, dto: Partial<CreateStreamDto>) {
+  async updateStream(streamId: string, streamerId: string, dto: UpdateStreamDto) {
     const stream = await this.prisma.stream.findUnique({ where: { id: streamId } });
     if (!stream) throw new NotFoundException('Stream not found');
     if (stream.streamerId !== streamerId) throw new ForbiddenException('Not your stream');
-    if (stream.status === StreamStatus.LIVE || stream.status === StreamStatus.ENDED) {
-      throw new BadRequestException('Cannot edit an active or concluded stream');
+    // N-04: Only DRAFT or SCHEDULED streams can be edited
+    if (stream.status !== StreamStatus.DRAFT && stream.status !== StreamStatus.SCHEDULED) {
+      throw new BadRequestException('Only draft or scheduled streams can be updated');
     }
     return this.prisma.stream.update({
       where: { id: streamId },
@@ -407,8 +409,9 @@ export class StreamsService {
     const stream = await this.prisma.stream.findUnique({ where: { id: streamId } });
     if (!stream) throw new NotFoundException('Stream not found');
     if (stream.streamerId !== streamerId) throw new ForbiddenException('Not your stream');
-    if (stream.status === StreamStatus.LIVE) {
-      throw new BadRequestException('Cannot delete an active live stream. End the stream first.');
+    // N-04: Only DRAFT or SCHEDULED streams can be cancelled/deleted
+    if (stream.status !== StreamStatus.DRAFT && stream.status !== StreamStatus.SCHEDULED) {
+      throw new BadRequestException('Only draft or scheduled streams can be cancelled or deleted');
     }
     return this.prisma.stream.update({
       where: { id: streamId },

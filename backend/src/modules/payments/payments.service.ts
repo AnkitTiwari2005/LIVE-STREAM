@@ -51,11 +51,20 @@ export class PaymentsService {
       throw new BadRequestException('Offerings can only be made during an active live darshan broadcast');
     }
 
+    // B-22: Sanitize and filter devotee name and prayer message
+    if (!this.chatService.wordFilter.isClean(dto.devoteeName)) {
+      throw new BadRequestException('Devotee name contains disallowed words');
+    }
+    if (dto.prayerMessage && !this.chatService.wordFilter.isClean(dto.prayerMessage)) {
+      throw new BadRequestException('Prayer message contains disallowed words');
+    }
+
     const keyId = process.env.RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
     const configured = !!keyId && !!keySecret;
 
-    if (!configured && isProd()) {
+    // B-29: Disallow mock payments in production unless explicitly enabled
+    if (!configured && isProd() && process.env.ALLOW_MOCK_PAYMENTS !== 'true') {
       throw new ServiceUnavailableException('Payment gateway is not configured for production');
     }
 
@@ -128,7 +137,7 @@ export class PaymentsService {
     }
 
     if (offering.provider === PaymentProvider.MOCK) {
-      if (isProd()) {
+      if (isProd() && process.env.ALLOW_MOCK_PAYMENTS !== 'true') {
         throw new ForbiddenException('Mock payments are disabled in production environment');
       }
     } else {
@@ -145,7 +154,10 @@ export class PaymentsService {
     }
 
     // Atomic claim: only one concurrent process can flip PENDING -> SUCCESS
-    return this.prisma.$transaction(async (tx) => {
+    let shouldBroadcast = false;
+    let safePrayerMessage = offering.prayerMessage;
+
+    const result = await this.prisma.$transaction(async (tx) => {
       const claimed = await tx.dakshinaOffering.updateMany({
         where: { id: offering.id, status: PaymentStatus.PENDING },
         data: {
@@ -159,13 +171,21 @@ export class PaymentsService {
         return { success: true, message: 'Offering already processed', offering: fresh };
       }
 
-      // Profanity filtering on prayer message before broadcasting
-      let safePrayerMessage = offering.prayerMessage;
+      shouldBroadcast = true;
       if (safePrayerMessage && !this.chatService.wordFilter.isClean(safePrayerMessage)) {
         safePrayerMessage = '🙏 Har Har Mahadev • Auspicious Blessings';
       }
 
-      // Broadcast auspicious live dakshina announcement to stream devotees
+      const updatedOffering = await tx.dakshinaOffering.findUnique({ where: { id: offering.id } });
+      return {
+        success: true,
+        message: 'Sacred Dakshina accepted with Vedic blessings 🙏',
+        offering: updatedOffering,
+      };
+    });
+
+    // B-22: Broadcast auspicious live dakshina announcement ONLY after transaction has committed
+    if (shouldBroadcast) {
       this.chatGateway.broadcastDakshina(offering.streamId, {
         id: offering.id,
         devoteeName: offering.devoteeName,
@@ -178,14 +198,9 @@ export class PaymentsService {
       this.logger.log(
         `Dakshina of ₹${offering.amount} blessed by ${offering.devoteeName} for stream ${offering.streamId}`,
       );
+    }
 
-      const updatedOffering = await tx.dakshinaOffering.findUnique({ where: { id: offering.id } });
-      return {
-        success: true,
-        message: 'Sacred Dakshina accepted with Vedic blessings 🙏',
-        offering: updatedOffering,
-      };
-    });
+    return result;
   }
 
   /**
@@ -360,37 +375,5 @@ export class PaymentsService {
       gotra: isStreamerOrAdmin ? o.gotra : null,
       createdAt: o.createdAt,
     }));
-  }
-
-  /**
-   * 5. Streamer Total Dakshina & Offerings Summary
-   */
-  async getStreamerEarnings(streamerId: string) {
-    const streams = await this.prisma.stream.findMany({
-      where: { streamerId },
-      select: { id: true },
-    });
-
-    const streamIds = streams.map((s) => s.id);
-
-    const offerings = await this.prisma.dakshinaOffering.findMany({
-      where: {
-        streamId: { in: streamIds },
-        status: PaymentStatus.SUCCESS,
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 100,
-    });
-
-    const totalInr = offerings.reduce((acc, curr) => acc + Number(curr.amount), 0);
-
-    return {
-      totalOfferingsCount: offerings.length,
-      totalInr,
-      recentOfferings: offerings.map((o) => ({
-        ...o,
-        amount: Number(o.amount),
-      })),
-    };
   }
 }

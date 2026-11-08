@@ -196,6 +196,7 @@ const FALLBACK_THUMBNAILS = [
 
 const CURATED_PANDITS = [
   {
+    slug: 'aarav-sharma',
     name: 'Pandit Aarav Sharma',
     title: 'Head Archak, Kashi Vishwanath Parampara',
     experience: '22 Years Seva',
@@ -205,6 +206,7 @@ const CURATED_PANDITS = [
     image: '/images/photo-1543934776-32d1cc654abb.webp',
   },
   {
+    slug: 'hariram-vyas',
     name: 'Pandit Hariram Vyas',
     title: 'Senior Purohit, Haridwar Ganga Sabha',
     experience: '18 Years Seva',
@@ -214,6 +216,7 @@ const CURATED_PANDITS = [
     image: '/images/photo-1544186196-6908a9d76ab3.webp',
   },
   {
+    slug: 'vishwanath-bhatt',
     name: 'Pandit Vishwanath Bhatt',
     title: 'Vedic Scholar, Tirupati Devasthanam Tradition',
     experience: '26 Years Seva',
@@ -223,6 +226,7 @@ const CURATED_PANDITS = [
     image: '/images/photo-1596604820148-da737958af16.webp',
   },
   {
+    slug: 'devrishi',
     name: 'Acharya Devrishi',
     title: 'Sanskrit Acharya, Rishikesh Gurukul',
     experience: '15 Years Seva',
@@ -949,6 +953,15 @@ export default function HomePage() {
                       {s}
                     </span>
                   ))}
+                </div>
+
+                <div className="pt-3 border-t border-gold/10 flex items-center justify-between gap-2">
+                  <Link
+                    href={`/pandit/${p.slug}`}
+                    className="flex-1 py-1.5 px-3 bg-gold/15 hover:bg-gold/25 border border-gold/30 rounded-xl text-center text-xs font-bold text-gold-pale transition"
+                  >
+                    View Profile &amp; Sevas
+                  </Link>
                 </div>
               </div>
             </div>

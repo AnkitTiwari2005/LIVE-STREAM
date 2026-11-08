@@ -47,35 +47,54 @@ export class WalletService {
     });
 
     if (!wallet) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { isEmailVerified: true },
+      });
+
+      // N-05: Welcome bonus coins are only awarded to email-verified accounts
+      const initialCoins = user?.isEmailVerified ? 100 : 0;
+
       try {
         wallet = await this.prisma.userWallet.create({
           data: {
             userId,
-            balanceCoins: 100,
-            bonusCoins: 100,
+            balanceCoins: initialCoins,
+            bonusCoins: initialCoins,
             purchasedCoins: 0,
-            lifetimeEarned: 100,
+            lifetimeEarned: initialCoins,
             lifetimeSpent: 0,
           },
         });
 
-        await this.prisma.walletTransaction.create({
-          data: {
-            walletId: wallet.id,
-            type: WalletTxType.CREDIT,
-            category: WalletTxCategory.JOINING_BONUS,
-            amountCoins: 100,
-            balanceBefore: 0,
-            balanceAfter: 100,
-            referenceId: `signup_bonus_${userId}`,
-            idempotencyKey: `signup_bonus_${userId}`,
-            metadata: { note: 'Auspicious Welcome Darshan Bonus' },
-          },
-        });
-      } catch {
-        // B-21: Concurrently created wallet safely fetched
-        wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
+        if (initialCoins > 0) {
+          await this.prisma.walletTransaction.create({
+            data: {
+              walletId: wallet.id,
+              type: WalletTxType.CREDIT,
+              category: WalletTxCategory.JOINING_BONUS,
+              amountCoins: initialCoins,
+              balanceBefore: 0,
+              balanceAfter: initialCoins,
+              referenceId: `signup_bonus_${userId}`,
+              idempotencyKey: `signup_bonus_${userId}`,
+              metadata: { note: 'Auspicious Welcome Darshan Bonus' },
+            },
+          });
+        }
+      } catch (err: any) {
+        // N-05: Catch only concurrent unique constraint conflict, do not swallow other database errors
+        if (err.code === 'P2002' || err.message?.includes('Unique constraint')) {
+          wallet = await this.prisma.userWallet.findUnique({ where: { userId } });
+        } else {
+          this.logger.error(`Failed to initialize wallet for user [${userId}]: ${err.message}`);
+          throw err;
+        }
       }
+    }
+
+    if (!wallet) {
+      throw new HttpException('Unable to initialize user wallet', HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     return {
@@ -365,12 +384,29 @@ export class WalletService {
       };
     }
 
+    // B-07: Generate refreshed LiveKit viewer token with 3-minute TTL
+    let livekitToken: string | undefined;
+    try {
+      livekitToken = await this.livekitProvider.generateToken({
+        roomName: dto.streamId,
+        participantId: userId,
+        participantName: 'Registered Devotee',
+        isPublisher: false,
+        canSubscribe: true,
+        ttlMinutes: 3,
+        metadata: { role: 'viewer', isGuest: false, sessionToken: dto.sessionToken },
+      });
+    } catch (e: any) {
+      this.logger.warn(`Failed to generate refreshed viewer token: ${e.message}`);
+    }
+
     return {
       canContinue: true,
       remainingCoins: tickResult.balanceAfter,
       availableMinutes: Math.floor(tickResult.balanceAfter / WalletService.COINS_PER_MINUTE),
       minutesWatched: tickResult.nextMinuteIndex,
       nextTickInSeconds: 60,
+      livekitToken,
     };
   }
 
@@ -415,7 +451,7 @@ export class WalletService {
     }
 
     const configured = !!process.env.RAZORPAY_KEY_ID && !!process.env.RAZORPAY_KEY_SECRET;
-    if (!configured && isProd()) {
+    if (!configured && isProd() && process.env.ALLOW_MOCK_PAYMENTS !== 'true') {
       throw new ServiceUnavailableException('Payments are not configured in production');
     }
 
@@ -470,7 +506,7 @@ export class WalletService {
     }
 
     if (order.provider === PaymentProvider.MOCK) {
-      if (isProd()) {
+      if (isProd() && process.env.ALLOW_MOCK_PAYMENTS !== 'true') {
         throw new ForbiddenException('Mock payments are disabled in production');
       }
     } else {

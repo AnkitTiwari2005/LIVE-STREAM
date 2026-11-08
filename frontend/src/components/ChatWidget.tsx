@@ -23,9 +23,10 @@ interface ChatWidgetProps {
   streamId: string;
   isStreamer?: boolean;
   currentUser?: any;
+  sessionId?: string | null;
 }
 
-export function ChatWidget({ socket, streamId, isStreamer, currentUser }: ChatWidgetProps) {
+export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionId }: ChatWidgetProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [pinnedMessage, setPinnedMessage] = useState<ChatMessage | null>(null);
   const [input, setInput] = useState('');
@@ -50,7 +51,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser }: ChatWi
     if (!socket || !streamId) return;
 
     const joinRoom = () => {
-      socket.emit('chat:join', { streamId });
+      socket.emit('chat:join', { streamId, sessionId: sessionId || undefined });
     };
 
     // Join room immediately if already connected, and also on every connect/reconnect

@@ -15,6 +15,13 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { UserRole, UserStatus } from '@prisma/client';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import {
+  UpdateUserStatusDto,
+  CreateCategoryDto,
+  UpdateCategoryDto,
+  AddWordFilterDto,
+  UpdateStaticPageDto,
+} from './dto/admin.dto';
 
 @ApiTags('Admin Panel')
 @Roles(UserRole.ADMIN)
@@ -44,10 +51,9 @@ export class AdminController {
     @Param('id') userId: string,
     @CurrentUser('id') adminId: string,
     @CurrentUser('email') adminEmail: string,
-    @Body('status') status: UserStatus,
-    @Body('reason') reason?: string,
+    @Body() dto: UpdateUserStatusDto,
   ) {
-    return this.adminService.updateUserStatus(userId, status, adminId, adminEmail, reason);
+    return this.adminService.updateUserStatus(userId, dto.status, adminId, adminEmail, dto.reason);
   }
 
   @Get('streams/live')
@@ -82,23 +88,17 @@ export class AdminController {
 
   @Post('categories')
   @ApiOperation({ summary: 'Create new stream category (FR-M6)' })
-  async createCategory(
-    @Body('name') name: string,
-    @Body('slug') slug: string,
-    @Body('displayOrder') displayOrder?: number,
-  ) {
-    return this.adminService.createCategory(name, slug, displayOrder);
+  async createCategory(@Body() dto: CreateCategoryDto) {
+    return this.adminService.createCategory(dto.name, dto.slug, dto.displayOrder);
   }
 
   @Patch('categories/:id')
   @ApiOperation({ summary: 'Update stream category order or active status (FR-M6)' })
   async updateCategory(
     @Param('id') id: string,
-    @Body('name') name: string,
-    @Body('displayOrder') displayOrder?: number,
-    @Body('isActive') isActive?: boolean,
+    @Body() dto: UpdateCategoryDto,
   ) {
-    return this.adminService.updateCategory(id, name, displayOrder, isActive);
+    return this.adminService.updateCategory(id, dto.name, dto.displayOrder, dto.isActive);
   }
 
   // --- Prohibited Words (FR-M6) ---
@@ -110,8 +110,8 @@ export class AdminController {
 
   @Post('word-filters')
   @ApiOperation({ summary: 'Add prohibited word to filter list' })
-  async addWordFilter(@Body('word') word: string, @Body('severity') severity?: string) {
-    return this.adminService.addWordFilter(word, severity);
+  async addWordFilter(@Body() dto: AddWordFilterDto) {
+    return this.adminService.addWordFilter(dto.word, dto.severity);
   }
 
   @Delete('word-filters/:id')
@@ -132,9 +132,8 @@ export class AdminController {
   @ApiOperation({ summary: 'Update CMS static page content (FR-M7)' })
   async updateStaticPage(
     @Param('slug') slug: string,
-    @Body('title') title: string,
-    @Body('contentHtml') contentHtml: string,
+    @Body() dto: UpdateStaticPageDto,
   ) {
-    return this.adminService.updateStaticPage(slug, title, contentHtml);
+    return this.adminService.updateStaticPage(slug, dto.title, dto.contentHtml);
   }
 }

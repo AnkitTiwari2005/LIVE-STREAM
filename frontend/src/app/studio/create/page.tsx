@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Video, Calendar, AlertCircle, LogIn, Sparkles, UserCheck } from 'lucide-react';
+import { Video, Calendar, AlertCircle, LogIn, Sparkles, UserCheck, Lock } from 'lucide-react';
 import { OmIcon, DiyaIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
 
 export default function CreateStreamPage() {
@@ -13,6 +13,9 @@ export default function CreateStreamPage() {
   const [categoryId, setCategoryId] = useState('');
   const [visibility, setVisibility] = useState<'PUBLIC' | 'PRIVATE'>('PUBLIC');
   const [videoQuality, setVideoQuality] = useState<'480p' | '720p'>('480p');
+  const [privatePassword, setPrivatePassword] = useState('');
+  const [maxViewers, setMaxViewers] = useState<number>(25);
+  const [requireLogin, setRequireLogin] = useState<boolean>(true);
   const [scheduledAt, setScheduledAt] = useState('');
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -146,6 +149,24 @@ export default function CreateStreamPage() {
           return;
         }
         throw new Error(data.message || 'Failed to create broadcast');
+      }
+
+      if (visibility === 'PRIVATE') {
+        try {
+          await fetch(`${apiUrl}/private-links`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              streamId: data.id,
+              password: privatePassword.trim() || undefined,
+              maxViewers: Number(maxViewers) || 25,
+              requireLogin,
+            }),
+          });
+        } catch {}
       }
 
       router.push(`/studio/${data.id}`);
@@ -357,6 +378,53 @@ export default function CreateStreamPage() {
               />
             </div>
           </div>
+
+          {/* Private Link Controls (B-16) */}
+          {visibility === 'PRIVATE' && (
+            <div className="p-4 bg-obsidian border border-gold/20 rounded-2xl space-y-3">
+              <span className="text-xs font-bold text-gold flex items-center gap-1.5 uppercase tracking-wider">
+                <Lock className="w-3.5 h-3.5" /> Private Session Security Controls
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label className="block text-stone-300 font-semibold mb-1">
+                    Access Password (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={privatePassword}
+                    onChange={(e) => setPrivatePassword(e.target.value)}
+                    placeholder="e.g. Sankalp2026"
+                    className="w-full px-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white focus:outline-none focus:border-gold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-stone-300 font-semibold mb-1">
+                    Max Devotees Cap
+                  </label>
+                  <select
+                    value={maxViewers}
+                    onChange={(e) => setMaxViewers(Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white focus:outline-none focus:border-gold"
+                  >
+                    <option value={10}>10 Devotees</option>
+                    <option value={25}>25 Devotees</option>
+                    <option value={50}>50 Devotees</option>
+                    <option value={100}>100 Devotees</option>
+                  </select>
+                </div>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-stone-300 pt-1">
+                <input
+                  type="checkbox"
+                  checked={requireLogin}
+                  onChange={(e) => setRequireLogin(e.target.checked)}
+                  className="rounded border-stone-800 text-gold focus:ring-gold"
+                />
+                <span>Enforce Devotee Account Sign-In (Prevents anonymous access)</span>
+              </label>
+            </div>
+          )}
 
           <button
             type="submit"

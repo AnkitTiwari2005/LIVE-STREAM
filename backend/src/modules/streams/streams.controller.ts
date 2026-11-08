@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { StreamsService } from './streams.service';
 import { CreateStreamDto } from './dto/create-stream.dto';
+import { UpdateStreamDto } from './dto/update-stream.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Public } from '../../common/decorators/public.decorator';
@@ -121,11 +122,11 @@ export class StreamsController {
 
   @Roles(UserRole.STREAMER)
   @Patch(':id')
-  @ApiOperation({ summary: 'Edit draft or scheduled stream (B-14)' })
+  @ApiOperation({ summary: 'Edit draft or scheduled stream (B-14, N-04)' })
   async updateStream(
     @Param('id') id: string,
     @CurrentUser('id') streamerId: string,
-    @Body() dto: Partial<CreateStreamDto>,
+    @Body() dto: UpdateStreamDto,
   ) {
     return this.streamsService.updateStream(id, streamerId, dto);
   }

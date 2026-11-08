@@ -4,11 +4,13 @@ import {
   UnauthorizedException,
   NotFoundException,
   ConflictException,
+  ForbiddenException,
   Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../database/prisma.service';
 import { MailerService } from '../notifications/mailer.service';
+import { StorageService } from '../storage/storage.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto, ResetPasswordDto, VerifyTotpDto } from './dto/login.dto';
 import { CryptoUtil } from '../../common/crypto.util';
@@ -25,6 +27,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly mailerService: MailerService,
+    private readonly storageService: StorageService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -438,6 +441,33 @@ export class AuthService {
     });
     if (!user) throw new NotFoundException('User not found');
 
+    // N-06: Guard against deleting the last remaining platform administrator
+    if (user.role === UserRole.ADMIN) {
+      const activeAdminCount = await this.prisma.user.count({
+        where: { role: UserRole.ADMIN, deletedAt: null },
+      });
+      if (activeAdminCount <= 1) {
+        throw new ForbiddenException('Cannot delete the last remaining platform administrator');
+      }
+    }
+
+    // N-06: Permanently remove KYC documents from storage disk
+    if (user.streamerProfile?.kycDocuments) {
+      try {
+        const docs = Array.isArray(user.streamerProfile.kycDocuments)
+          ? user.streamerProfile.kycDocuments
+          : [user.streamerProfile.kycDocuments];
+        for (const doc of docs) {
+          const key = typeof doc === 'string' ? doc : (doc as any)?.storageKey;
+          if (key && typeof key === 'string') {
+            await this.storageService.deleteFile(key);
+          }
+        }
+      } catch (err: any) {
+        this.logger.warn(`Failed to delete some KYC files for user [${userId}]: ${err.message}`);
+      }
+    }
+
     const anonymizedEmail = `deleted_${Date.now()}_${user.id.slice(0, 8)}@shubhdarshan.privacy`;
 
     await this.prisma.user.update({
@@ -463,10 +493,11 @@ export class AuthService {
       },
     });
 
+    // N-06: Do NOT retain the original user's email in the audit log after DPDP erasure
     await this.prisma.auditLog.create({
       data: {
         actorId: userId,
-        actorEmail: user.email,
+        actorEmail: '[DPDP_REDACTED]',
         action: 'DPDP_USER_ACCOUNT_DELETED',
         targetResource: `User:${userId}`,
         details: { reason: 'DPDP Act 2023 self-serve deletion request' },

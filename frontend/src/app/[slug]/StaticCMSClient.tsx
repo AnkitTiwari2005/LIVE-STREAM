@@ -4,6 +4,39 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { ShieldCheck, FileText } from 'lucide-react';
 
+function sanitizeHtml(rawHtml: string): string {
+  if (!rawHtml) return '';
+  if (typeof window === 'undefined') return rawHtml;
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(rawHtml, 'text/html');
+
+    // Remove dangerous executable tags
+    const dangerousTags = ['script', 'iframe', 'object', 'embed', 'form', 'link', 'style', 'base'];
+    dangerousTags.forEach((tag) => {
+      const elements = doc.querySelectorAll(tag);
+      elements.forEach((el) => el.remove());
+    });
+
+    // Remove inline event handlers (onclick, onload, onerror) and javascript: URLs
+    const allElements = doc.querySelectorAll('*');
+    allElements.forEach((el) => {
+      const attributes = Array.from(el.attributes);
+      for (const attr of attributes) {
+        const name = attr.name.toLowerCase();
+        const val = attr.value.trim().toLowerCase();
+        if (name.startsWith('on') || val.startsWith('javascript:') || val.startsWith('data:text/html')) {
+          el.removeAttribute(attr.name);
+        }
+      }
+    });
+
+    return doc.body.innerHTML;
+  } catch {
+    return rawHtml;
+  }
+}
+
 export default function StaticCMSClient() {
   const { slug: paramSlug } = useParams() as { slug: string };
   const [resolvedSlug, setResolvedSlug] = useState<string>(() => {
@@ -79,7 +112,7 @@ export default function StaticCMSClient() {
         </div>
         <div
           className="prose prose-invert max-w-none text-stone-300 text-sm leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: page.contentHtml || page.content }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(page.contentHtml || page.content) }}
         />
       </div>
     </div>

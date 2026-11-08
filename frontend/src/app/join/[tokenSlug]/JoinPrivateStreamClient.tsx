@@ -57,6 +57,7 @@ export default function JoinPrivateStreamClient() {
   const [token, setToken] = useState<string | null>(null);
   const [serverUrl, setServerUrl] = useState<string>('');
   const [streamId, setStreamId] = useState<string>('');
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [dakshinaModalOpen, setDakshinaModalOpen] = useState(false);
   const [latestDakshina, setLatestDakshina] = useState<any>(null);
@@ -123,7 +124,7 @@ export default function JoinPrivateStreamClient() {
     const storedToken = localStorage.getItem('pooja_token');
     const socketUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || '';
     const socketInstance = io(socketUrl, {
-      auth: { token: storedToken },
+      auth: { token: storedToken, sessionId },
       withCredentials: true,
     });
     setSocket(socketInstance);
@@ -137,7 +138,7 @@ export default function JoinPrivateStreamClient() {
       socketInstance.off('stream:dakshina_received');
       socketInstance.disconnect();
     };
-  }, [streamId]);
+  }, [streamId, sessionId]);
 
   const handleClaim = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -165,6 +166,9 @@ export default function JoinPrivateStreamClient() {
 
       setToken(data.token);
       setServerUrl(data.serverUrl);
+      if (data.sessionId) {
+        setSessionId(data.sessionId);
+      }
       if (data.streamId) {
         setStreamId(data.streamId);
       }
@@ -308,6 +312,7 @@ export default function JoinPrivateStreamClient() {
                 streamId={streamId}
                 isStreamer={false}
                 currentUser={currentUser}
+                sessionId={sessionId}
               />
             ) : (
               <div className="w-full h-full bg-stone-900 border border-stone-800 rounded-2xl flex items-center justify-center text-stone-500 text-xs">

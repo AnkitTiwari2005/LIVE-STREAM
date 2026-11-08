@@ -23,6 +23,7 @@ import {
 import { io, Socket } from 'socket.io-client';
 import { ChatWidget } from '@/components/ChatWidget';
 import { WhatsAppShareModal } from '@/components/WhatsAppShareModal';
+import { apiFetch } from '@/lib/api';
 import {
   Camera,
   Mic,
@@ -279,19 +280,13 @@ export default function StudioClient() {
   const handleEndStream = async () => {
     if (!confirm('Are you sure you wish to conclude this live pooja session?')) return;
 
-    const storedToken = localStorage.getItem('pooja_token');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
-
     try {
-      await fetch(`${apiUrl}/streams/${streamId}/end`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${storedToken}` },
-      });
+      await apiFetch(`/streams/${streamId}/end`, { method: 'POST' });
       setIsLive(false);
       setToken(null);
       router.push('/');
-    } catch {
-      alert('Failed to end stream');
+    } catch (err: any) {
+      alert(err.message || 'Failed to end stream');
     }
   };
 

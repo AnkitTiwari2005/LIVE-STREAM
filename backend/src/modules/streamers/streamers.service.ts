@@ -299,13 +299,17 @@ export class StreamersService {
     const netEarningsInr = (totalDakshinaInr * panditSharePercentage) / 100;
     const platformFeeInr = totalDakshinaInr - netEarningsInr;
 
-    const viewingSessions = await this.prisma.streamViewingSession.findMany({
+    // B-11: Database-level SQL SUM aggregation instead of loading all viewing sessions into JS memory
+    const viewingAggregate = await this.prisma.streamViewingSession.aggregate({
       where: { streamId: { in: streamIds } },
-      select: { totalMinutesWatched: true, totalCoinsDebited: true },
+      _sum: {
+        totalMinutesWatched: true,
+        totalCoinsDebited: true,
+      },
     });
 
-    const totalWatchMinutes = viewingSessions.reduce((sum, v) => sum + v.totalMinutesWatched, 0);
-    const totalCoinsConsumed = viewingSessions.reduce((sum, v) => sum + v.totalCoinsDebited, 0);
+    const totalWatchMinutes = viewingAggregate._sum.totalMinutesWatched || 0;
+    const totalCoinsConsumed = viewingAggregate._sum.totalCoinsDebited || 0;
 
     return {
       totalStreams: streams.length,

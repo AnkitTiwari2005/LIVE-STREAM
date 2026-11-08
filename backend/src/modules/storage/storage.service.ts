@@ -98,6 +98,11 @@ export class StorageService {
       throw new BadRequestException('Invalid storage key traversal');
     }
 
+    // B-06: Prevent overwriting existing stored files
+    if (fs.existsSync(targetPath)) {
+      throw new BadRequestException('Target storage key already exists');
+    }
+
     const targetDir = path.dirname(targetPath);
     if (!fs.existsSync(targetDir)) {
       fs.mkdirSync(targetDir, { recursive: true });
@@ -109,6 +114,28 @@ export class StorageService {
     return isKyc
       ? `/api/v1/storage/kyc-document?key=${encodeURIComponent(safeKey)}`
       : `/uploads/${safeKey}`;
+  }
+
+  /**
+   * Securely delete a file from storage (N-06)
+   */
+  async deleteFile(storageKey: string): Promise<boolean> {
+    try {
+      const safeKey = storageKey.replace(/\\/g, '/').replace(/\.\./g, '').replace(/^\/+/, '');
+      const isKyc = safeKey.startsWith('kyc/');
+      const baseDir = isKyc ? this.privateKycDir : this.uploadDir;
+      const relativeKey = isKyc ? safeKey.replace(/^kyc\//, '') : safeKey;
+      const targetPath = path.resolve(baseDir, relativeKey);
+
+      if (targetPath.startsWith(baseDir) && fs.existsSync(targetPath)) {
+        await fs.promises.unlink(targetPath);
+        this.logger.log(`Deleted file securely: ${safeKey}`);
+        return true;
+      }
+    } catch (err: any) {
+      this.logger.warn(`Failed to delete file [${storageKey}]: ${err.message}`);
+    }
+    return false;
   }
 
   /**

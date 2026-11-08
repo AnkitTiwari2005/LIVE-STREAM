@@ -11,6 +11,7 @@ import {
   AartiThaliIcon,
   PranamIcon,
 } from '@/components/icons/SpiritualIcons';
+import { apiFetch } from '@/lib/api';
 
 interface DakshinaModalProps {
   isOpen: boolean;
@@ -78,10 +79,9 @@ export const DakshinaModal: React.FC<DakshinaModalProps> = ({
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
     try {
-      // 1. Create order
-      const orderRes = await fetch(`${apiUrl}/payments/dakshina/create-order`, {
+      // 1. Create order via apiFetch (automatically includes Bearer token)
+      const orderData = await apiFetch('/payments/dakshina/create-order', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           streamId,
           amount: currentFinalAmount,
@@ -90,9 +90,6 @@ export const DakshinaModal: React.FC<DakshinaModalProps> = ({
           gotra: gotra.trim() || undefined,
         }),
       });
-
-      const orderData = await orderRes.json();
-      if (!orderRes.ok) throw new Error(orderData.message || 'Failed to initiate dakshina');
 
       // 2. Razorpay checkout
       if (orderData.provider === 'RAZORPAY') {
@@ -110,17 +107,14 @@ export const DakshinaModal: React.FC<DakshinaModalProps> = ({
           order_id: orderData.orderId,
           handler: async (response: any) => {
             try {
-              const verifyRes = await fetch(`${apiUrl}/payments/dakshina/verify`, {
+              const verifyData = await apiFetch('/payments/dakshina/verify', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   orderId: orderData.orderId,
                   paymentId: response.razorpay_payment_id,
                   signature: response.razorpay_signature,
                 }),
               });
-              const verifyData = await verifyRes.json();
-              if (!verifyRes.ok) throw new Error(verifyData.message || 'Payment verification failed');
               setSuccessOffering(verifyData.offering || orderData);
             } catch (err: any) {
               setError(err.message || 'Verification failed after payment');
@@ -144,16 +138,13 @@ export const DakshinaModal: React.FC<DakshinaModalProps> = ({
           throw new Error('Online payments are currently unavailable. Please try again shortly.');
         }
         // Fallback / instant sandbox verification only in non-production
-        const verifyRes = await fetch(`${apiUrl}/payments/dakshina/verify`, {
+        const verifyData = await apiFetch('/payments/dakshina/verify', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             orderId: orderData.orderId,
             paymentId: `pay_sandbox_${Date.now()}`,
           }),
         });
-        const verifyData = await verifyRes.json();
-        if (!verifyRes.ok) throw new Error(verifyData.message || 'Sandbox verification failed');
         setSuccessOffering(verifyData.offering || orderData);
       }
     } catch (err: any) {

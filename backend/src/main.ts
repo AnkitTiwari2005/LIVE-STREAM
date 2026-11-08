@@ -15,6 +15,21 @@ import helmet from 'helmet';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
+  // B-08: Boot-time Production Secret Enforcement
+  if (process.env.NODE_ENV === 'production') {
+    const criticalSecrets = [
+      { name: 'JWT_ACCESS_SECRET', insecureDefault: 'jwt_default_insecure_access_secret_key' },
+      { name: 'JWT_REFRESH_SECRET', insecureDefault: 'jwt_default_insecure_refresh_secret_key' },
+    ];
+    for (const secret of criticalSecrets) {
+      const val = process.env[secret.name];
+      if (val === secret.insecureDefault) {
+        logger.error(`FATAL: Insecure default ${secret.name} detected in production!`);
+        throw new Error(`Production requires a secure, non-default ${secret.name}`);
+      }
+    }
+  }
+
   const app = await NestFactory.create(AppModule, {
     rawBody: true, // Required for cryptographic SHA-256 HMAC LiveKit Webhook verification
   });
@@ -235,6 +250,12 @@ Sitemap: https://darkturquoise-louse-359917.hostingersite.com/sitemap.xml
       if (cleanPath.startsWith('join/')) {
         const joinFile = path.join(clientDir, 'join', 'invite', 'index.html');
         if (fs.existsSync(joinFile)) return res.sendFile(joinFile);
+      }
+
+      // Dynamic pandit profile fallback: /pandit/:id -> /pandit/aarav-sharma/index.html
+      if (cleanPath.startsWith('pandit/')) {
+        const panditFile = path.join(clientDir, 'pandit', 'aarav-sharma', 'index.html');
+        if (fs.existsSync(panditFile)) return res.sendFile(panditFile);
       }
 
       // Dynamic CMS page fallback: /:slug -> /terms/index.html fallback

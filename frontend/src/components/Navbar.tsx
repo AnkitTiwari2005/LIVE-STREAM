@@ -256,7 +256,15 @@ export function Navbar() {
                               className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
                             >
                               <Video className="w-4 h-4 text-gold shrink-0" />
-                              <span>Broadcaster Studio</span>
+                              <span>Go Live (Studio)</span>
+                            </Link>
+                            <Link
+                              href="/studio/streams"
+                              onClick={() => setUserDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
+                            >
+                              <Sparkles className="w-4 h-4 text-gold shrink-0" />
+                              <span>My Sacred Broadcasts</span>
                             </Link>
                             <Link
                               href="/streamer/earnings"
@@ -410,7 +418,14 @@ export function Navbar() {
                     onClick={() => setMobileMenuOpen(false)}
                     className="text-gold font-bold py-1.5 flex items-center gap-2"
                   >
-                    <Video className="w-4 h-4" /> Broadcaster Studio
+                    <Video className="w-4 h-4" /> Go Live (Studio)
+                  </Link>
+                  <Link
+                    href="/studio/streams"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-gold-pale font-bold py-1.5 flex items-center gap-2"
+                  >
+                    <Sparkles className="w-4 h-4 text-gold" /> My Sacred Broadcasts
                   </Link>
                   <Link
                     href="/streamer/earnings"

@@ -4,6 +4,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { Request } from 'express';
+import { ContactInquiryDto, GrievanceSubmissionDto } from './dto/notifications.dto';
 
 @ApiTags('Notifications')
 @Controller('notifications')
@@ -12,26 +13,26 @@ export class NotificationsController {
 
   @Public()
   @Post('contact')
-  @ApiOperation({ summary: 'Submit devotee contact inquiry desk form (B-17)' })
+  @ApiOperation({ summary: 'Submit devotee contact inquiry desk form (B-19)' })
   async submitContact(
-    @Body() body: { name: string; email: string; subject: string; message: string },
+    @Body() dto: ContactInquiryDto,
     @Req() req: Request,
   ) {
     return this.remindersService.submitContactInquiry({
-      ...body,
+      ...dto,
       ip: req.ip,
     });
   }
 
   @Public()
   @Post('grievance')
-  @ApiOperation({ summary: 'Submit formal statutory complaint under Rule 3(2) IT Rules 2021 (B-17)' })
+  @ApiOperation({ summary: 'Submit formal statutory complaint under Rule 3(2) IT Rules 2021 (B-19)' })
   async submitGrievance(
-    @Body() body: { name: string; email: string; phone?: string; complaintType: string; details: string },
+    @Body() dto: GrievanceSubmissionDto,
     @Req() req: Request,
   ) {
     return this.remindersService.submitGrievance({
-      ...body,
+      ...dto,
       ip: req.ip,
     });
   }

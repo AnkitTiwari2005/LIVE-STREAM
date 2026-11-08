@@ -96,6 +96,23 @@ export class RemindersService {
           </div>
         `,
       });
+      // B-19: Also forward notification to platform staff inbox
+      const staffInbox = process.env.STAFF_INBOX_EMAIL || 'support@shubhdarshan.com';
+      await this.mailer.sendEmail({
+        to: staffInbox,
+        toName: 'Shubhdarshan Staff Desk',
+        subject: `[INQUIRY DESK] New Devotee Inquiry: ${dto.subject}`,
+        htmlContent: `
+          <div style="font-family: Arial, sans-serif; color: #222;">
+            <h3>New Support Query</h3>
+            <p><strong>From:</strong> ${safeName} (${dto.email})</p>
+            <p><strong>Subject:</strong> ${safeSubject}</p>
+            <p><strong>Message:</strong></p>
+            <blockquote style="background: #f4f4f4; padding: 10px;">${safeMessage}</blockquote>
+            <p><strong>Devotee IP:</strong> ${dto.ip || 'Unknown'}</p>
+          </div>
+        `,
+      }).catch(() => {});
     } catch (err: any) {
       this.logger.error(`Failed to dispatch contact acknowledgment email: ${err.message}`);
     }
@@ -144,6 +161,25 @@ export class RemindersService {
           </div>
         `,
       });
+      // B-19: Also forward statutory grievance alert to Resident Grievance Officer inbox
+      const staffInbox = process.env.STAFF_INBOX_EMAIL || 'support@shubhdarshan.com';
+      await this.mailer.sendEmail({
+        to: staffInbox,
+        toName: 'Resident Grievance Officer',
+        subject: `[LEGAL / IT RULES GRIEVANCE] Ticket: ${ticketId} - ${safeType}`,
+        htmlContent: `
+          <div style="font-family: Arial, sans-serif; color: #222;">
+            <h3 style="color: #c2410c;">Statutory Grievance Registered [${ticketId}]</h3>
+            <p><strong>Complainant:</strong> ${safeName} (${dto.email})</p>
+            <p><strong>Phone:</strong> ${dto.phone || 'Not provided'}</p>
+            <p><strong>Category:</strong> ${safeType}</p>
+            <p><strong>Details:</strong></p>
+            <blockquote style="background: #f4f4f4; padding: 12px; border-left: 4px solid #c2410c;">${safeDetails}</blockquote>
+            <p><strong>Devotee IP:</strong> ${dto.ip || 'Unknown'}</p>
+            <p><em>Statutory Response Deadline: 15 calendar days per Rule 3(2) IT Rules 2021.</em></p>
+          </div>
+        `,
+      }).catch(() => {});
     } catch (err: any) {
       this.logger.error(`Failed to dispatch grievance acknowledgment email: ${err.message}`);
     }

@@ -19,6 +19,7 @@ import {
   Trash2,
   Plus,
 } from 'lucide-react';
+import { apiFetch } from '@/lib/api';
 
 export default function AdminConsolePage() {
   const router = useRouter();
@@ -99,134 +100,90 @@ export default function AdminConsolePage() {
     }
 
     try {
-      await fetch(`${apiUrl}/streamers/admin/applications/${profileId}`, {
+      await apiFetch(`/streamers/admin/applications/${profileId}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({ decision, rejectionReason }),
       });
       loadAdminData();
-    } catch {
-      alert('Failed to update KYC status.');
+    } catch (err: any) {
+      alert(err.message || 'Failed to update KYC status.');
     }
   };
 
   const handleForceEndStream = async (streamId: string) => {
     if (!confirm('Emergency Action: Force end this stream immediately on LiveKit SFU?')) return;
-    const token = localStorage.getItem('pooja_token');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
     try {
-      await fetch(`${apiUrl}/admin/streams/${streamId}/force-end`, {
+      await apiFetch(`/admin/streams/${streamId}/force-end`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
       });
       loadAdminData();
-    } catch {
-      alert('Failed to force end stream.');
+    } catch (err: any) {
+      alert(err.message || 'Failed to force end stream.');
     }
   };
 
   const handleSearchUsers = async () => {
-    const token = localStorage.getItem('pooja_token');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
     try {
-      const res = await fetch(`${apiUrl}/admin/users?query=${encodeURIComponent(searchUser)}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) setUsers(await res.json());
-    } catch {
-      alert('User search failed.');
+      const data = await apiFetch(`/admin/users?query=${encodeURIComponent(searchUser)}`);
+      setUsers(data);
+    } catch (err: any) {
+      alert(err.message || 'User search failed.');
     }
   };
 
   const handleUserStatus = async (userId: string, status: 'ACTIVE' | 'SUSPENDED' | 'BANNED') => {
-    const token = localStorage.getItem('pooja_token');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
     try {
-      await fetch(`${apiUrl}/admin/users/${userId}/status`, {
+      await apiFetch(`/admin/users/${userId}/status`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({ status, reason: 'Administrative intervention' }),
       });
       handleSearchUsers();
-    } catch {
-      alert('Status change failed.');
+    } catch (err: any) {
+      alert(err.message || 'Status change failed.');
     }
   };
 
   const handleResolveReport = async (reportId: string, status: 'ACTION_TAKEN' | 'DISMISSED') => {
-    const token = localStorage.getItem('pooja_token');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
     try {
-      const res = await fetch(`${apiUrl}/reports/${reportId}/resolve`, {
+      await apiFetch(`/reports/${reportId}/resolve`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({
           status,
           adminNotes: `Resolved via admin console as ${status}`,
           notes: `Resolved via admin console as ${status}`,
         }),
       });
-      if (res.ok) {
-        setReports((prev) => prev.filter((r) => r.id !== reportId));
-      } else {
-        alert('Failed to resolve report.');
-      }
-    } catch {
-      alert('Network error while resolving report.');
+      setReports((prev) => prev.filter((r) => r.id !== reportId));
+    } catch (err: any) {
+      alert(err.message || 'Failed to resolve report.');
     }
   };
 
   const handleAddWord = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newWord.trim()) return;
-    const token = localStorage.getItem('pooja_token');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
     try {
-      const res = await fetch(`${apiUrl}/admin/word-filters`, {
+      await apiFetch('/admin/word-filters', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({ word: newWord.trim(), severity: newSeverity }),
       });
-      if (res.ok) {
-        setNewWord('');
-        loadAdminData();
-      } else {
-        alert('Failed to add word to chat filter');
-      }
-    } catch {
-      alert('Network error while adding word filter');
+      setNewWord('');
+      loadAdminData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to add word to chat filter');
     }
   };
 
   const handleDeleteWord = async (id: string) => {
     if (!confirm('Remove this word from chat filter?')) return;
-    const token = localStorage.getItem('pooja_token');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
     try {
-      const res = await fetch(`${apiUrl}/admin/word-filters/${id}`, {
+      await apiFetch(`/admin/word-filters/${id}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) {
-        setWordFilters((prev) => prev.filter((w) => w.id !== id));
-      } else {
-        alert('Failed to remove word');
-      }
-    } catch {
-      alert('Network error while deleting word');
+      setWordFilters((prev) => prev.filter((w) => w.id !== id));
+    } catch (err: any) {
+      alert(err.message || 'Failed to remove word');
     }
   };
 

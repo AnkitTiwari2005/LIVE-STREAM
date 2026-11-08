@@ -16,7 +16,8 @@ import { ChatWidget } from '@/components/ChatWidget';
 import { FloatingReactionsOverlay, DevotionalEmojiBar } from '@/components/SpiritualReactions';
 import { DakshinaModal } from '@/components/DakshinaModal';
 import { CoinTopupModal } from '@/components/CoinTopupModal';
-import { Users, AlertCircle, Share2, Sparkles, Zap, Calendar, Bell, CheckCircle2, Clock, MessageSquare, Info, LogIn, Gift, Flame } from 'lucide-react';
+import { Users, AlertCircle, Share2, Sparkles, Zap, Calendar, Bell, CheckCircle2, Clock, MessageSquare, Info, LogIn, Gift, Flame, Flag, X } from 'lucide-react';
+import { apiFetch } from '@/lib/api';
 import {
   OmIcon,
   DiyaIcon,
@@ -59,6 +60,10 @@ export default function StreamPlayerClient() {
   const [remainingCoins, setRemainingCoins] = useState<number | null>(null);
   const [availableMinutes, setAvailableMinutes] = useState<number | null>(null);
   const [isZeroBalance, setIsZeroBalance] = useState(false);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportReason, setReportReason] = useState('Inappropriate Content / Conduct');
+  const [reportDetails, setReportDetails] = useState('');
+  const [reporting, setReporting] = useState(false);
 
   const meterIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -217,6 +222,10 @@ export default function StreamPlayerClient() {
           if (typeof data.availableMinutes === 'number') {
             setAvailableMinutes(data.availableMinutes);
           }
+          // B-07: Refresh LiveKit token seamlessly so participant is never disconnected
+          if (data.livekitToken) {
+            setToken(data.livekitToken);
+          }
         } else {
           setIsZeroBalance(true);
           setTopupModalOpen(true);
@@ -249,23 +258,40 @@ export default function StreamPlayerClient() {
   };
 
   const handleSetReminder = async () => {
-    const token = localStorage.getItem('pooja_token');
-    if (!token) {
-      alert('Please sign in to set email reminders.');
-      window.location.href = `/login?redirect=/stream/${id}`;
-      return;
-    }
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
     try {
-      const res = await fetch(`${apiUrl}/notifications/remind/${id}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
+      const data = await apiFetch(`/notifications/remind/${id}`, { method: 'POST' });
       setReminderSet(true);
       alert(data.message || 'Email reminder set! You will be notified when this pooja goes live.');
-    } catch {
-      alert('Failed to set reminder.');
+    } catch (err: any) {
+      if (err.status === 401) {
+        alert('Please sign in to set email reminders.');
+        window.location.href = `/login?redirect=/stream/${id}`;
+        return;
+      }
+      alert(err.message || 'Failed to set reminder.');
+    }
+  };
+
+  const handleReportSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setReporting(true);
+    try {
+      await apiFetch('/reports', {
+        method: 'POST',
+        body: JSON.stringify({
+          targetType: 'STREAM',
+          streamId: id,
+          reason: reportReason,
+          details: reportDetails.trim() || undefined,
+        }),
+      });
+      alert('Sacred community report submitted. Our Vedic moderation team will review it.');
+      setReportModalOpen(false);
+      setReportDetails('');
+    } catch (err: any) {
+      alert(err.message || 'Failed to submit report.');
+    } finally {
+      setReporting(false);
     }
   };
 
@@ -549,6 +575,14 @@ export default function StreamPlayerClient() {
                       >
                         <Share2 className="w-3.5 h-3.5 text-gold-soft" /> Share
                       </button>
+                      <button
+                        onClick={() => setReportModalOpen(true)}
+                        className="flex items-center gap-1 px-2.5 sm:px-3 py-2 sm:py-2.5 bg-obsidian border border-gold/20 hover:border-red-500/50 hover:text-red-400 text-stone-400 text-xs font-semibold rounded-full transition-all shadow"
+                        title="Report this broadcast to moderators"
+                      >
+                        <Flag className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Report</span>
+                      </button>
                     </div>
                   </div>
 
@@ -642,6 +676,74 @@ export default function StreamPlayerClient() {
         onClose={() => setTopupModalOpen(false)}
         onSuccess={handleTopupSuccess}
       />
+
+      {/* Sacred Broadcast Moderation Report Modal (B-26) */}
+      {reportModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#1c140d] border border-gold/30 rounded-3xl p-6 max-w-md w-full shadow-2xl relative text-xs">
+            <button
+              onClick={() => setReportModalOpen(false)}
+              className="absolute top-4 right-4 text-stone-400 hover:text-white p-1"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-2 mb-4 text-amber-400 font-bold">
+              <Flag className="w-4 h-4" />
+              <span className="text-sm text-white">Report Sacred Darshan Broadcast</span>
+            </div>
+
+            <p className="text-stone-300 mb-4 leading-relaxed">
+              Help maintain sacred dignity and reverence. Reports are reviewed by platform administrators within 2 hours.
+            </p>
+
+            <form onSubmit={handleReportSubmit} className="space-y-4">
+              <div>
+                <label className="block font-semibold text-stone-200 mb-1.5">Primary Reason</label>
+                <select
+                  value={reportReason}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  className="w-full p-2.5 rounded-xl bg-obsidian border border-gold/20 text-stone-200 focus:outline-none focus:border-gold"
+                >
+                  <option value="Inappropriate Content / Conduct">Inappropriate Content or Conduct</option>
+                  <option value="Harassment or Hate Speech">Harassment or Hate Speech</option>
+                  <option value="Commercial Spam / Unrelated Content">Commercial Spam / Unrelated Content</option>
+                  <option value="Audio/Video Quality / Impersonation">Audio/Video Quality or Impersonation</option>
+                  <option value="Other Violation">Other Community Guidelines Violation</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-stone-200 mb-1.5">Additional Details (Optional)</label>
+                <textarea
+                  rows={3}
+                  value={reportDetails}
+                  onChange={(e) => setReportDetails(e.target.value)}
+                  placeholder="Describe specific timestamps or details to help moderators..."
+                  className="w-full p-2.5 rounded-xl bg-obsidian border border-gold/20 text-stone-200 focus:outline-none focus:border-gold resize-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setReportModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-stone-700 text-stone-300 hover:bg-stone-800 font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={reporting}
+                  className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold disabled:opacity-50"
+                >
+                  {reporting ? 'Submitting...' : 'Submit Report'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
