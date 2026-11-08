@@ -398,7 +398,7 @@ export default function HomePage() {
               )}
             </div>
 
-            <h1 className="mt-5 sm:mt-6 w-full max-w-2xl font-serif text-3xl sm:text-5xl lg:text-7xl font-bold leading-[1.12] sm:leading-[1.08] tracking-tight break-words overflow-hidden">
+            <h1 className="mt-5 sm:mt-6 w-full max-w-2xl font-serif text-3xl sm:text-5xl lg:text-7xl font-bold leading-[1.12] sm:leading-[1.08] tracking-tight break-words overflow-hidden text-white">
               Sacred Vedic rituals, <br />
               <span className="gold-text italic font-serif">one tap away</span>
             </h1>
