@@ -434,27 +434,30 @@ export default function HomePage() {
 
               <Link
                 href="/schedule"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-amber-300 dark:border-gold/40 bg-amber-50 dark:bg-gold/10 px-6 py-3.5 text-sm font-bold text-amber-950 dark:text-gold-pale transition hover:border-gold hover:bg-amber-100 dark:hover:bg-gold/20 w-full sm:w-auto shadow-sm"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-amber-300 dark:border-gold/40 bg-amber-100 hover:bg-amber-200 dark:bg-gold/10 dark:hover:bg-gold/20 px-6 py-3.5 text-sm font-extrabold text-amber-950 dark:text-gold-pale transition w-full sm:w-auto shadow-sm"
+                style={{ color: '#451a03' }}
               >
-                <Calendar className="w-4 h-4 text-amber-600 dark:text-gold" />
-                <span>Pooja Schedule</span>
+                <Calendar className="w-4 h-4 text-amber-800 dark:text-gold shrink-0" />
+                <span className="font-extrabold" style={{ color: '#451a03' }}>Pooja Schedule</span>
               </Link>
 
               {user ? (
                 <button
                   onClick={() => setTopupModalOpen(true)}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-stone-300 dark:border-stone-700 bg-white dark:bg-obsidian-soft px-6 py-3.5 text-sm font-bold text-stone-900 dark:text-stone-200 transition hover:border-amber-400 dark:hover:border-gold/40 w-full sm:w-auto shadow-sm"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-stone-300 dark:border-stone-700 bg-white dark:bg-obsidian-soft px-6 py-3.5 text-sm font-extrabold text-stone-900 dark:text-stone-200 transition hover:border-amber-400 dark:hover:border-gold/40 w-full sm:w-auto shadow-sm"
+                  style={{ color: '#1c1917' }}
                 >
                   <CoinIcon size={18} />
-                  <span>Recharge Coins</span>
+                  <span className="font-extrabold" style={{ color: '#1c1917' }}>Recharge Coins</span>
                 </button>
               ) : (
                 <Link
                   href="/register"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-stone-300 dark:border-stone-700 bg-white dark:bg-obsidian-soft px-6 py-3.5 text-sm font-bold text-stone-900 dark:text-stone-200 transition hover:border-amber-400 dark:hover:border-gold/40 w-full sm:w-auto shadow-sm"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-stone-300 dark:border-stone-700 bg-white dark:bg-obsidian-soft px-6 py-3.5 text-sm font-extrabold text-stone-900 dark:text-stone-200 transition hover:border-amber-400 dark:hover:border-gold/40 w-full sm:w-auto shadow-sm"
+                  style={{ color: '#1c1917' }}
                 >
-                  <Sparkles className="w-4 h-4 text-amber-600 dark:text-gold" />
-                  <span>Claim 100 Free Coins</span>
+                  <Sparkles className="w-4 h-4 text-amber-600 dark:text-gold shrink-0" />
+                  <span className="font-extrabold" style={{ color: '#1c1917' }}>Claim 100 Free Coins</span>
                 </Link>
               )}
             </div>
@@ -549,7 +552,7 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="relative rounded-3xl border border-stone-200 dark:border-gold/30 bg-white dark:bg-gradient-to-b dark:from-[#221810] dark:to-obsidian p-3 sm:p-4 shadow-xl dark:shadow-[0_25px_70px_rgba(0,0,0,0.85)] group transition hover:border-amber-400 dark:hover:border-gold/60">
-                <div className="relative aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden bg-gradient-to-br from-amber-50 via-orange-50/60 to-rose-50/40 dark:bg-black flex flex-col justify-between p-4 sm:p-6 border border-amber-200/70 dark:border-gold/15 shadow-inner">
+                <div className="altar-repose-card relative aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden bg-gradient-to-br from-amber-100/80 via-orange-50/70 to-rose-50/50 dark:bg-[#0c0a09] flex flex-col justify-between p-4 sm:p-6 border border-amber-300 dark:border-gold/20 shadow-inner">
                   <img
                     src="/images/photo-1681797849099-0053b1567d95.webp"
                     alt="Sanctum Repose"
@@ -580,16 +583,16 @@ export default function HomePage() {
                     <div className="w-14 h-14 mx-auto mb-2 rounded-2xl bg-amber-100/70 dark:bg-gradient-to-b dark:from-amber-500/10 dark:to-transparent border border-amber-300 dark:border-gold/30 flex items-center justify-center shadow-sm dark:shadow-[0_0_24px_rgba(245,158,11,0.25)]">
                       <img src="/logo.png" alt="Shubhdarshan" className="w-10 h-10 object-contain drop-shadow" />
                     </div>
-                    <h3 className="font-serif text-xl sm:text-2xl font-bold text-stone-900 dark:text-white tracking-tight">
+                    <h3 className="font-serif text-xl sm:text-2xl font-bold text-stone-900 dark:text-white tracking-tight" style={{ color: '#1c1414' }}>
                       Live Pooja Altar in Repose
                     </h3>
-                    <p className="text-xs text-stone-600 dark:text-stone-300 mt-1.5 max-w-sm mx-auto leading-relaxed">
+                    <p className="text-xs text-stone-600 dark:text-stone-300 mt-1.5 max-w-sm mx-auto leading-relaxed" style={{ color: '#443832' }}>
                       Verified Vedic Pandits stream live whenever they conduct sacred rituals, havan poojas, or astrological discourses. Active broadcasts will appear here in real time.
                     </p>
                     {nextUpcomingStream && (
                       <div className="mt-2.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white dark:bg-black/85 backdrop-blur-md border border-amber-300 dark:border-amber-400/40 text-[11px] shadow-sm dark:shadow-md">
-                        <span className="text-amber-700 dark:text-amber-400 font-bold uppercase tracking-wider text-[10px]">Upcoming:</span>
-                        <span className="font-bold text-stone-900 dark:text-white truncate max-w-[220px]">{nextUpcomingStream.title}</span>
+                        <span className="text-amber-700 dark:text-amber-400 font-bold uppercase tracking-wider text-[10px]" style={{ color: '#78350f' }}>Upcoming:</span>
+                        <span className="font-bold text-stone-900 dark:text-white truncate max-w-[220px]" style={{ color: '#1c1414' }}>{nextUpcomingStream.title}</span>
                       </div>
                     )}
                   </div>
@@ -634,11 +637,11 @@ export default function HomePage() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-gold"></span>
                   </span>
-                  <span className="text-xs uppercase tracking-widest font-extrabold text-stone-900 dark:text-gold-pale">
+                  <span className="text-xs uppercase tracking-widest font-black text-amber-950 dark:text-gold-pale" style={{ color: '#451a03' }}>
                     Worldwide Devotee Seva
                   </span>
                 </div>
-                <span className="text-[11px] text-stone-500 dark:text-stone-400 font-medium">Real-time offerings</span>
+                <span className="text-[11px] text-stone-600 dark:text-stone-400 font-medium">Real-time offerings</span>
               </div>
               <div className="space-y-2">
                 {LIVE_SEVA_ACTIVITIES.map((act, i) => (
@@ -647,16 +650,16 @@ export default function HomePage() {
                     className="flex items-center justify-between text-xs py-1.5 px-3 rounded-xl bg-white dark:bg-obsidian-soft border border-stone-200 dark:border-gold/15 hover:border-amber-500/40 dark:hover:border-gold/30 transition-colors shadow-sm"
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-6 h-6 rounded-full bg-amber-500/15 dark:bg-gold/15 flex items-center justify-center text-amber-700 dark:text-gold text-[10px] font-bold shrink-0">
+                      <div className="w-6 h-6 rounded-full bg-amber-500/15 dark:bg-gold/15 flex items-center justify-center text-amber-800 dark:text-gold text-[10px] font-bold shrink-0">
                         {act.initials}
                       </div>
                       <div className="truncate">
-                        <span className="text-stone-800 dark:text-stone-200 font-semibold">{act.name}</span>
+                        <span className="text-stone-900 dark:text-stone-200 font-bold" style={{ color: '#1c1917' }}>{act.name}</span>
                         <span className="text-stone-400 mx-1.5">•</span>
-                        <span className="text-amber-700 dark:text-gold-soft">{act.action}</span>
+                        <span className="text-amber-800 dark:text-gold-soft font-semibold" style={{ color: '#78350f' }}>{act.action}</span>
                       </div>
                     </div>
-                    <span className="text-[10px] text-stone-400 shrink-0 ml-2 font-mono">{act.time}</span>
+                    <span className="text-[10px] text-stone-500 shrink-0 ml-2 font-mono">{act.time}</span>
                   </div>
                 ))}
               </div>
@@ -1022,10 +1025,10 @@ export default function HomePage() {
       <section className="mx-auto max-w-7xl px-5 lg:px-8 py-14 scroll-mt-5" id="upcoming">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-amber-700 dark:text-gold-soft">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-amber-800 dark:text-gold-soft" style={{ color: '#78350f' }}>
               Pooja Calendar
             </p>
-            <h2 className="mt-1 font-serif text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white">
+            <h2 className="mt-1 font-serif text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white" style={{ color: '#1c1414' }}>
               Upcoming sacred gatherings
             </h2>
           </div>
@@ -1044,12 +1047,12 @@ export default function HomePage() {
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-700 dark:text-gold-soft">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-800 dark:text-gold-soft" style={{ color: '#78350f' }}>
                       {stream.category.name}
                     </span>
                     {stream.scheduledAt && (
-                      <span className="text-[11px] font-semibold text-amber-950 dark:text-gold-pale bg-amber-100 dark:bg-gold/10 border border-amber-300 dark:border-gold/25 px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
-                        <Clock className="w-3 h-3 text-amber-600 dark:text-gold" />
+                      <span className="text-[11px] font-bold text-amber-950 dark:text-gold-pale bg-amber-100 dark:bg-gold/10 border border-amber-300 dark:border-gold/25 px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm" style={{ color: '#451a03' }}>
+                        <Clock className="w-3 h-3 text-amber-800 dark:text-gold" />
                         {new Date(stream.scheduledAt).toLocaleString([], {
                           dateStyle: 'short',
                           timeStyle: 'short',
@@ -1058,7 +1061,7 @@ export default function HomePage() {
                     )}
                   </div>
 
-                  <h3 className="font-serif text-lg font-bold text-stone-900 dark:text-white line-clamp-1">{stream.title}</h3>
+                  <h3 className="font-serif text-lg font-bold text-stone-900 dark:text-white line-clamp-1" style={{ color: '#1c1414' }}>{stream.title}</h3>
                   <p className="text-xs text-stone-600 dark:text-stone-400 mt-1 line-clamp-2 leading-relaxed">
                     {stream.description || 'Sacred upcoming Vedic pooja and Aarti.'}
                   </p>
@@ -1073,9 +1076,11 @@ export default function HomePage() {
                 <div className="mt-5 pt-3 border-t border-stone-200 dark:border-stone-800/80 flex items-center justify-between">
                   <button
                     onClick={() => handleRemindMe(stream.id)}
-                    className="flex items-center gap-1.5 text-xs font-bold text-amber-950 dark:text-gold-pale bg-amber-50 dark:bg-gold/10 hover:bg-amber-100 dark:hover:bg-gold/20 border border-amber-300 dark:border-gold/30 px-3.5 py-1.5 rounded-full transition shadow-sm"
+                    className="flex items-center gap-1.5 text-xs font-black text-amber-950 dark:text-gold-pale bg-amber-100 hover:bg-amber-200 dark:bg-gold/10 dark:hover:bg-gold/20 border border-amber-300 dark:border-gold/30 px-3.5 py-1.5 rounded-full transition shadow-sm"
+                    style={{ color: '#451a03' }}
                   >
-                    <Bell className="w-3.5 h-3.5 text-amber-600 dark:text-gold" /> Remind Me
+                    <Bell className="w-3.5 h-3.5 text-amber-800 dark:text-gold shrink-0" />
+                    <span className="font-black" style={{ color: '#451a03' }}>Remind Me</span>
                   </button>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">
                     Live HD
@@ -1127,9 +1132,9 @@ export default function HomePage() {
               </div>
 
               <div className="p-4 space-y-2">
-                <h3 className="font-serif text-lg font-bold text-stone-900 dark:text-white">{p.name}</h3>
+                <h3 className="font-serif text-lg font-bold text-stone-900 dark:text-white" style={{ color: '#1c1414' }}>{p.name}</h3>
                 <p className="text-[11px] text-stone-600 dark:text-stone-400 leading-tight">{p.title}</p>
-                <div className="flex items-center justify-between text-[11px] text-amber-700 dark:text-gold-soft pt-1">
+                <div className="flex items-center justify-between text-[11px] text-amber-800 dark:text-gold-soft pt-1 font-semibold" style={{ color: '#78350f' }}>
                   <span>{p.experience}</span>
                   <span>{p.reviews} sevas conducted</span>
                 </div>
@@ -1147,9 +1152,10 @@ export default function HomePage() {
                 <div className="pt-3 border-t border-stone-200 dark:border-gold/10 flex items-center justify-between gap-2">
                   <Link
                     href={`/pandit/${p.slug}`}
-                    className="flex-1 py-1.5 px-3 bg-amber-50 dark:bg-gold/15 hover:bg-amber-100 dark:hover:bg-gold/25 border border-amber-300 dark:border-gold/30 rounded-xl text-center text-xs font-bold text-amber-900 dark:text-gold-pale transition"
+                    className="flex-1 py-1.5 px-3 bg-amber-100 hover:bg-amber-200 dark:bg-gold/15 dark:hover:bg-gold/25 border border-amber-300 dark:border-gold/30 rounded-xl text-center text-xs font-black text-amber-950 dark:text-gold-pale transition shadow-sm"
+                    style={{ color: '#451a03' }}
                   >
-                    View Profile &amp; Sevas
+                    <span className="font-black" style={{ color: '#451a03' }}>View Profile &amp; Sevas</span>
                   </Link>
                 </div>
               </div>

@@ -436,59 +436,65 @@ export function Navbar() {
             )}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-full border border-gold/25 text-gold-pale hover:bg-gold/10 transition"
+              className="p-2 rounded-full border border-stone-300 dark:border-gold/25 text-stone-900 dark:text-gold-pale hover:bg-stone-100 dark:hover:bg-gold/10 transition"
               aria-label="Toggle navigation menu"
             >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {mobileMenuOpen ? <X className="w-5 h-5 text-stone-900 dark:text-gold-pale" /> : <Menu className="w-5 h-5 text-stone-900 dark:text-gold-pale" />}
             </button>
           </div>
         </div>
 
         {/* Mobile Dropdown Panel */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-stone-200 dark:border-gold/15 bg-white/95 dark:bg-obsidian-deep/95 backdrop-blur-xl px-5 py-6 space-y-4 shadow-xl">
+          <div className="lg:hidden border-t border-stone-200 dark:border-gold/15 bg-white/98 dark:bg-obsidian-deep/95 backdrop-blur-xl px-5 py-6 space-y-4 shadow-xl">
             <nav className="flex flex-col space-y-3 text-sm">
               <Link
                 href="/"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between text-stone-700 dark:text-stone-200 hover:text-stone-950 dark:hover:text-gold-pale font-medium py-1.5 border-b border-stone-200 dark:border-stone-800/60"
+                className="flex items-center justify-between text-stone-900 dark:text-stone-100 hover:text-amber-800 dark:hover:text-gold-pale font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
+                style={{ color: '#1c1414' }}
               >
-                <span className="flex items-center gap-2 font-semibold text-stone-900 dark:text-white">Live Darshan</span>
+                <span className="flex items-center gap-2 font-bold text-stone-950 dark:text-white" style={{ color: '#1c1414' }}>Live Darshan</span>
                 <span className="live-dot" />
               </Link>
               <Link
                 href="/pooja"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2 text-amber-700 dark:text-gold-pale hover:text-amber-900 dark:hover:text-gold font-medium py-1.5 border-b border-stone-200 dark:border-stone-800/60"
+                className="flex items-center gap-2 text-stone-900 dark:text-gold-pale hover:text-amber-800 dark:hover:text-gold font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
+                style={{ color: '#1c1414' }}
               >
-                <DiyaIcon size={16} />
-                <span>Book Pooja &amp; Kathas</span>
+                <DiyaIcon size={16} className="text-amber-700 dark:text-gold" />
+                <span style={{ color: '#1c1414' }}>Book Pooja &amp; Kathas</span>
               </Link>
               <Link
                 href="/#upcoming"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-stone-700 dark:text-stone-200 hover:text-stone-950 dark:hover:text-gold-pale font-medium py-1.5 border-b border-stone-200 dark:border-stone-800/60"
+                className="text-stone-900 dark:text-stone-200 hover:text-amber-800 dark:hover:text-gold-pale font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
+                style={{ color: '#1c1414' }}
               >
                 Pooja Schedule
               </Link>
               <Link
                 href="/#pandits"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-stone-700 dark:text-stone-200 hover:text-stone-950 dark:hover:text-gold-pale font-medium py-1.5 border-b border-stone-200 dark:border-stone-800/60"
+                className="text-stone-900 dark:text-stone-200 hover:text-amber-800 dark:hover:text-gold-pale font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
+                style={{ color: '#1c1414' }}
               >
                 Verified Pandits Directory
               </Link>
               <Link
                 href="/about"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-stone-700 dark:text-stone-200 hover:text-stone-950 dark:hover:text-gold-pale font-medium py-1.5 border-b border-stone-200 dark:border-stone-800/60"
+                className="text-stone-900 dark:text-stone-200 hover:text-amber-800 dark:hover:text-gold-pale font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
+                style={{ color: '#1c1414' }}
               >
                 About Our Heritage
               </Link>
               <Link
                 href="/faq"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-stone-700 dark:text-stone-200 hover:text-stone-950 dark:hover:text-gold-pale font-medium py-1.5 border-b border-stone-200 dark:border-stone-800/60"
+                className="text-stone-900 dark:text-stone-200 hover:text-amber-800 dark:hover:text-gold-pale font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
+                style={{ color: '#1c1414' }}
               >
                 FAQ &amp; Support
               </Link>
@@ -498,21 +504,21 @@ export function Navbar() {
                   <Link
                     href="/studio/create"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-gold font-bold py-1.5 flex items-center gap-2"
+                    className="text-amber-900 dark:text-gold font-bold py-1.5 flex items-center gap-2"
                   >
                     <Video className="w-4 h-4" /> Go Live (Studio)
                   </Link>
                   <Link
                     href="/studio/streams"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-gold-pale font-bold py-1.5 flex items-center gap-2"
+                    className="text-amber-900 dark:text-gold-pale font-bold py-1.5 flex items-center gap-2"
                   >
                     <DiyaIcon size={16} /> My Sacred Broadcasts
                   </Link>
                   <Link
                     href="/streamer/earnings"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-gold-pale font-bold py-1.5 flex items-center gap-2"
+                    className="text-amber-900 dark:text-gold-pale font-bold py-1.5 flex items-center gap-2"
                   >
                     <CoinIcon size={16} /> Pandit Earnings &amp; Dakshina
                   </Link>
@@ -523,7 +529,7 @@ export function Navbar() {
                 <Link
                   href="/admin"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-amber-300 font-bold py-1.5 flex items-center gap-2"
+                  className="text-amber-900 dark:text-amber-300 font-bold py-1.5 flex items-center gap-2"
                 >
                   <ShieldCheck className="w-4 h-4" /> Admin Console
                 </Link>
@@ -534,16 +540,16 @@ export function Navbar() {
                   <Link
                     href="/streamer/apply"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-gold-pale font-medium py-1.5 flex items-center gap-2"
+                    className="text-stone-900 dark:text-gold-pale font-semibold py-1.5 flex items-center gap-2"
                   >
                     <DiyaIcon size={16} /> Become a Pandit
                   </Link>
                   <Link
                     href="/streamer/status"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-gold-pale font-medium py-1.5 flex items-center gap-2"
+                    className="text-stone-900 dark:text-gold-pale font-semibold py-1.5 flex items-center gap-2"
                   >
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Pandit KYC Status
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Pandit KYC Status
                   </Link>
                 </>
               )}
@@ -552,9 +558,9 @@ export function Navbar() {
             <div className="pt-4 border-t border-stone-200 dark:border-stone-800/80">
               {user ? (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between text-xs text-stone-600 dark:text-stone-300">
-                    <span className="font-bold text-stone-900 dark:text-white truncate max-w-[180px]">{user.name}</span>
-                    <span className="text-amber-700 dark:text-gold font-bold flex items-center gap-1">
+                  <div className="flex items-center justify-between text-xs text-stone-700 dark:text-stone-300">
+                    <span className="font-bold text-stone-950 dark:text-white truncate max-w-[180px]">{user.name}</span>
+                    <span className="text-amber-800 dark:text-gold font-bold flex items-center gap-1">
                       <CoinIcon size={14} />
                       {coinBalance !== null ? coinBalance : (user ? '...' : 100)} Coins
                     </span>
@@ -565,14 +571,16 @@ export function Navbar() {
                         setMobileMenuOpen(false);
                         setTopupModalOpen(true);
                       }}
-                      className="px-3 py-2 bg-amber-100 dark:bg-gold/15 border border-amber-300 dark:border-gold/40 text-amber-950 dark:text-gold-pale text-xs font-bold rounded-xl text-center hover:bg-amber-200 dark:hover:bg-gold/25 transition shadow-sm"
+                      className="px-3 py-2 bg-amber-100 hover:bg-amber-200 dark:bg-gold/15 dark:hover:bg-gold/25 border border-amber-300 dark:border-gold/40 text-amber-950 dark:text-gold-pale text-xs font-bold rounded-xl text-center transition shadow-sm"
+                      style={{ color: '#451a03' }}
                     >
                       Top Up Coins
                     </button>
                     <Link
                       href="/account"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="px-3 py-2 bg-stone-100 dark:bg-obsidian-soft border border-stone-200 dark:border-gold/20 text-stone-800 dark:text-stone-200 text-xs font-semibold rounded-xl text-center hover:bg-stone-200 dark:hover:bg-obsidian transition shadow-sm"
+                      className="px-3 py-2 bg-stone-100 dark:bg-obsidian-soft border border-stone-200 dark:border-gold/20 text-stone-900 dark:text-stone-200 text-xs font-bold rounded-xl text-center hover:bg-stone-200 dark:hover:bg-obsidian transition shadow-sm"
+                      style={{ color: '#1c1917' }}
                     >
                       Account Settings
                     </Link>
@@ -589,7 +597,8 @@ export function Navbar() {
                   <Link
                     href="/login"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="px-4 py-2.5 rounded-xl border border-stone-300 dark:border-stone-800 text-center text-xs font-bold text-stone-800 dark:text-stone-200 bg-white dark:bg-transparent shadow-sm"
+                    className="px-4 py-2.5 rounded-xl border border-stone-300 dark:border-stone-800 text-center text-xs font-extrabold text-stone-900 dark:text-stone-200 bg-stone-100 dark:bg-transparent hover:bg-stone-200 transition shadow-sm"
+                    style={{ color: '#1c1414' }}
                   >
                     Sign In
                   </Link>
@@ -597,6 +606,7 @@ export function Navbar() {
                     href="/register"
                     onClick={() => setMobileMenuOpen(false)}
                     className="px-4 py-2.5 rounded-xl bg-gold hover:bg-gold-deep text-center text-xs font-black text-obsidian shadow-sm transition"
+                    style={{ color: '#0c0a09' }}
                   >
                     Join Free (+100)
                   </Link>

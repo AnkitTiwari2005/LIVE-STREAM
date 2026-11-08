@@ -12,15 +12,18 @@ export function ThemeToggle({ className = '' }: ThemeToggleProps) {
   useEffect(() => {
     try {
       const stored = localStorage.getItem('sd-theme');
-      if (stored === 'light' || stored === 'dark') {
-        setTheme(stored);
-        document.documentElement.setAttribute('data-theme', stored);
+      const active = stored === 'dark' ? 'dark' : 'light';
+      setTheme(active);
+      document.documentElement.setAttribute('data-theme', active);
+      if (active === 'dark') {
+        document.documentElement.classList.add('dark');
       } else {
-        document.documentElement.setAttribute('data-theme', 'light');
-        setTheme('light');
+        document.documentElement.classList.remove('dark');
       }
     } catch {
       setTheme('light');
+      document.documentElement.setAttribute('data-theme', 'light');
+      document.documentElement.classList.remove('dark');
     }
   }, []);
 
@@ -28,6 +31,11 @@ export function ThemeToggle({ className = '' }: ThemeToggleProps) {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(nextTheme);
     document.documentElement.setAttribute('data-theme', nextTheme);
+    if (nextTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
     try {
       localStorage.setItem('sd-theme', nextTheme);
     } catch {}

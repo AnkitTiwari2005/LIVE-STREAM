@@ -639,23 +639,23 @@ html[data-theme="light"] .backdrop-photo {
 html .on-photo .text-white,
 html .on-photo .text-stone-100,
 html .on-photo .text-gold-pale,
-html [class*="aspect-"] .text-white,
-html [class*="aspect-"] .text-stone-100,
-html [class*="aspect-"] .text-gold-pale {
+html .video-overlay .text-white,
+html .video-overlay .text-stone-100,
+html .video-overlay .text-gold-pale {
   color: #ffffff !important;
 }
 
 html .on-photo .text-stone-200,
 html .on-photo .text-stone-300,
 html .on-photo .text-stone-300\/90,
-html [class*="aspect-"] .text-stone-200,
-html [class*="aspect-"] .text-stone-300 {
+html .video-overlay .text-stone-200,
+html .video-overlay .text-stone-300 {
   color: #e7e2dc !important;
 }
 
 html .on-photo .text-stone-400,
 html .on-photo .text-stone-500,
-html [class*="aspect-"] .text-stone-400 {
+html .video-overlay .text-stone-400 {
   color: #c8c0b8 !important;
 }
 
@@ -663,15 +663,15 @@ html .on-photo .text-gold,
 html .on-photo .text-gold-soft,
 html .on-photo .text-gold-soft\/80,
 html .on-photo .text-gold-soft\/90,
-html [class*="aspect-"] .text-gold,
-html [class*="aspect-"] .text-gold-soft {
+html .video-overlay .text-gold,
+html .video-overlay .text-gold-soft {
   color: #fbbf24 !important;
 }
 
 html .on-photo .from-obsidian,
 html .on-photo .from-obsidian\/90,
 html .on-photo .from-obsidian\/70,
-html [class*="aspect-"] .from-obsidian {
+html .video-overlay .from-obsidian {
   --tw-gradient-from: rgb(12 10 9 / 0.88) !important;
   --tw-gradient-to: rgb(12 10 9 / 0) !important;
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
@@ -679,7 +679,7 @@ html [class*="aspect-"] .from-obsidian {
 
 html .on-photo .to-obsidian,
 html .on-photo .to-obsidian\/40,
-html [class*="aspect-"] .to-obsidian {
+html .video-overlay .to-obsidian {
   --tw-gradient-to: rgb(12 10 9 / 0.55) !important;
 }
 
@@ -703,19 +703,10 @@ html .on-photo .bg-white\/20 {
 /* All photo badges, scrims, and overlays across both light & dark themes */
 html:not([data-theme="dark"]) .on-photo [class*="bg-stone-"],
 html:not([data-theme="dark"]) .on-photo [class*="bg-black"],
-html:not([data-theme="dark"]) [class*="aspect-"] [class*="bg-stone-"],
-html:not([data-theme="dark"]) [class*="aspect-"] [class*="bg-black"],
-html:not([data-theme="dark"]) [class*="aspect-"] span.rounded,
 html[data-theme="light"] .on-photo [class*="bg-stone-"],
 html[data-theme="light"] .on-photo [class*="bg-black"],
-html[data-theme="light"] [class*="aspect-"] [class*="bg-stone-"],
-html[data-theme="light"] [class*="aspect-"] [class*="bg-black"],
-html[data-theme="light"] [class*="aspect-"] span.rounded,
 html .on-photo [class*="bg-stone-"],
-html .on-photo [class*="bg-black"],
-html [class*="aspect-"] [class*="bg-stone-"],
-html [class*="aspect-"] [class*="bg-black"],
-html [class*="aspect-"] span.rounded {
+html .on-photo [class*="bg-black"] {
   background-color: rgba(18, 14, 12, 0.88) !important;
   border-color: rgba(245, 158, 11, 0.4) !important;
   color: #fef3c7 !important;
@@ -723,34 +714,22 @@ html [class*="aspect-"] span.rounded {
 
 html:not([data-theme="dark"]) .on-photo [class*="bg-stone-"] *,
 html:not([data-theme="dark"]) .on-photo [class*="bg-black"] *,
-html:not([data-theme="dark"]) [class*="aspect-"] [class*="bg-stone-"] *,
-html:not([data-theme="dark"]) [class*="aspect-"] [class*="bg-black"] *,
-html:not([data-theme="dark"]) [class*="aspect-"] span.rounded *,
 html[data-theme="light"] .on-photo [class*="bg-stone-"] *,
 html[data-theme="light"] .on-photo [class*="bg-black"] *,
-html[data-theme="light"] [class*="aspect-"] [class*="bg-stone-"] *,
-html[data-theme="light"] [class*="aspect-"] [class*="bg-black"] *,
-html[data-theme="light"] [class*="aspect-"] span.rounded *,
 html .on-photo [class*="bg-stone-"] *,
-html .on-photo [class*="bg-black"] *,
-html [class*="aspect-"] [class*="bg-stone-"] *,
-html [class*="aspect-"] [class*="bg-black"] * {
+html .on-photo [class*="bg-black"] * {
   color: #fef3c7 !important;
 }
 
 html:not([data-theme="dark"]) .on-photo [class*="bg-stone-"] svg,
 html:not([data-theme="dark"]) .on-photo [class*="bg-black"] svg,
-html:not([data-theme="dark"]) [class*="aspect-"] [class*="bg-stone-"] svg,
-html:not([data-theme="dark"]) [class*="aspect-"] [class*="bg-black"] svg,
 html[data-theme="light"] .on-photo [class*="bg-stone-"] svg,
-html[data-theme="light"] .on-photo [class*="bg-black"] svg,
-html[data-theme="light"] [class*="aspect-"] [class*="bg-stone-"] svg,
-html[data-theme="light"] [class*="aspect-"] [class*="bg-black"] svg {
+html[data-theme="light"] .on-photo [class*="bg-black"] svg {
   color: #f59e0b !important;
 }
 
 html .on-photo svg,
-html [class*="aspect-"] svg {
+html .video-overlay svg {
   color: #f59e0b !important;
 }
 
@@ -1015,32 +994,52 @@ html[data-theme="light"] [class*="border-stone-7"]:not(.on-photo):not([class*="a
 }
 
 /* Photo & Media Overlay Badges: Always dark glass with golden text in both themes */
-html [class*="aspect-"] [class*="bg-black"],
 html .on-photo [class*="bg-black"],
-html:not([data-theme="dark"]) [class*="aspect-"] [class*="bg-black"],
+html .video-overlay [class*="bg-black"],
 html:not([data-theme="dark"]) .on-photo [class*="bg-black"],
-html[data-theme="light"] [class*="aspect-"] [class*="bg-black"],
-html[data-theme="light"] .on-photo [class*="bg-black"] {
+html:not([data-theme="dark"]) .video-overlay [class*="bg-black"],
+html[data-theme="light"] .on-photo [class*="bg-black"],
+html[data-theme="light"] .video-overlay [class*="bg-black"] {
   background-color: rgba(12, 10, 9, 0.85) !important;
   border-color: rgba(245, 158, 11, 0.4) !important;
   color: #fef3c7 !important;
 }
 
-html [class*="aspect-"] [class*="bg-black"] *,
 html .on-photo [class*="bg-black"] *,
-html:not([data-theme="dark"]) [class*="aspect-"] [class*="bg-black"] *,
-html[data-theme="light"] [class*="aspect-"] [class*="bg-black"] * {
+html .video-overlay [class*="bg-black"] *,
+html:not([data-theme="dark"]) .on-photo [class*="bg-black"] *,
+html:not([data-theme="dark"]) .video-overlay [class*="bg-black"] *,
+html[data-theme="light"] .on-photo [class*="bg-black"] *,
+html[data-theme="light"] .video-overlay [class*="bg-black"] * {
   color: #fef3c7 !important;
 }
 
-html [class*="aspect-"] [class*="bg-black"] .text-white,
-html .on-photo [class*="bg-black"] .text-white {
+html .on-photo [class*="bg-black"] .text-white,
+html .video-overlay [class*="bg-black"] .text-white {
   color: #ffffff !important;
 }
 
-html [class*="aspect-"] [class*="bg-black"] svg,
-html .on-photo [class*="bg-black"] svg {
+html .on-photo [class*="bg-black"] svg,
+html .video-overlay [class*="bg-black"] svg {
   color: #f59e0b !important;
+}
+
+/* Festival Announcement CTA Button: Always high contrast dark text */
+html [role="region"][aria-label="Festival announcement"] .fest-banner-cta,
+html [role="region"][aria-label="Festival announcement"] .fest-banner-cta span {
+  color: #0c0a09 !important;
+}
+
+/* Live Pooja Altar in Repose Card: Serene porcelain light mode surface */
+html[data-theme="light"] .altar-repose-card {
+  background: linear-gradient(135deg, #fffbeb 0%, #fff7ed 50%, #fef2f2 100%) !important;
+  border-color: #fde68a !important;
+}
+html[data-theme="light"] .altar-repose-card h3 {
+  color: #1c1414 !important;
+}
+html[data-theme="light"] .altar-repose-card p {
+  color: #443832 !important;
 }
 
 /* Safety net: Prevent any pale yellow text on light/white backgrounds */
@@ -1057,13 +1056,7 @@ html[data-theme="light"] .bg-obsidian-soft .text-gold-pale {
 html:not([data-theme="dark"]) .video-overlay [class*="text-amber-"],
 html[data-theme="light"] .video-overlay [class*="text-amber-"],
 html:not([data-theme="dark"]) .on-photo [class*="text-amber-"],
-html[data-theme="light"] .on-photo [class*="text-amber-"],
-html:not([data-theme="dark"]) [class*="aspect-"] [class*="text-amber-"],
-html[data-theme="light"] [class*="aspect-"] [class*="text-amber-"],
-html:not([data-theme="dark"]) [class*="aspect-"] [class*="!text-amber-200"],
-html[data-theme="light"] [class*="aspect-"] [class*="!text-amber-200"],
-html:not([data-theme="dark"]) [class*="bg-black"] [class*="text-amber-"],
-html[data-theme="light"] [class*="bg-black"] [class*="text-amber-"] {
+html[data-theme="light"] .on-photo [class*="text-amber-"] {
   color: #fde68a !important;
 }
 

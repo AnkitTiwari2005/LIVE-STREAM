@@ -516,10 +516,11 @@ export default function StreamPlayerClient() {
                     </Link>
                     <Link
                       href={`/login?redirect=/stream/${id}`}
-                      className="w-full sm:w-auto px-5 py-2.5 bg-white/10 hover:bg-white/20 !text-white text-xs sm:text-sm font-bold rounded-full border border-white/30 flex items-center justify-center gap-2 transition backdrop-blur-sm shadow-md"
+                      className="w-full sm:w-auto px-5 py-2.5 bg-black/70 hover:bg-black/90 !text-amber-200 hover:!text-white text-xs sm:text-sm font-bold rounded-full border border-amber-400/50 flex items-center justify-center gap-2 transition backdrop-blur-md shadow-lg"
+                      style={{ color: '#fef3c7', backgroundColor: 'rgba(20, 14, 10, 0.85)', borderColor: 'rgba(245, 158, 11, 0.5)' }}
                     >
                       <LogIn className="w-4 h-4 !text-amber-300" />
-                      <span className="!text-white font-bold">Sign In to Watch</span>
+                      <span className="font-bold" style={{ color: '#fef3c7' }}>Sign In to Watch</span>
                     </Link>
                   </div>
                   <span className="text-[10px] !text-stone-300 mt-3 font-medium">

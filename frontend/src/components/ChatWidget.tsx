@@ -378,9 +378,9 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
           </form>
         ) : (
           <div className="text-center py-1">
-            <a href="/login" className="text-xs text-orange-600 dark:text-orange-400 hover:underline font-semibold inline-flex items-center gap-1.5">
-              <span>Sign in to participate in sacred live chat</span>
-              <PranamIcon size={14} />
+            <a href="/login" className="text-xs text-amber-900 dark:text-amber-400 hover:underline font-bold inline-flex items-center gap-1.5" style={{ color: '#78350f' }}>
+              <span className="font-bold" style={{ color: '#78350f' }}>Sign in to participate in sacred live chat</span>
+              <PranamIcon size={14} className="text-amber-700" />
             </a>
           </div>
         )}

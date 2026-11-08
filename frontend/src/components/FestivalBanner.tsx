@@ -47,10 +47,11 @@ export function FestivalBanner() {
 
       <Link
         href="/#live-section"
-        className="inline-flex items-center h-6 sm:h-7 px-2.5 sm:px-3.5 rounded-full bg-amber-100 hover:bg-white text-stone-950 font-extrabold text-[10px] sm:text-xs transition-transform hover:scale-105 shadow-sm shrink-0 whitespace-nowrap ml-1"
+        className="fest-banner-cta inline-flex items-center h-6 sm:h-7 px-2.5 sm:px-3.5 rounded-full bg-amber-100 hover:bg-white font-extrabold text-[10px] sm:text-xs transition-transform hover:scale-105 shadow-sm shrink-0 whitespace-nowrap ml-1"
+        style={{ color: '#0c0a09' }}
       >
-        <span className="hidden sm:inline">Watch Live Aarti</span>
-        <span className="sm:hidden">Watch Aarti</span>
+        <span className="hidden sm:inline font-extrabold" style={{ color: '#0c0a09' }}>Watch Live Aarti</span>
+        <span className="sm:hidden font-extrabold" style={{ color: '#0c0a09' }}>Watch Aarti</span>
       </Link>
 
       <button
