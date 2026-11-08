@@ -399,7 +399,7 @@ export default function HomePage() {
             </div>
 
             <h1 className="mt-5 sm:mt-6 max-w-2xl font-serif text-3xl sm:text-5xl lg:text-7xl font-bold leading-[1.12] sm:leading-[1.08] tracking-tight break-words">
-              Sacred Vedic rituals, <br className="hidden sm:inline" />
+              Sacred Vedic rituals, <br />
               <span className="gold-text italic font-serif">one tap away</span>
             </h1>
 
@@ -595,27 +595,27 @@ export default function HomePage() {
                   </div>
 
                   {/* Bottom Action Footer */}
-                  <div className="relative z-10 pt-3 border-t border-amber-200/80 dark:border-white/15 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <PranamIcon size={16} className="text-amber-600 dark:text-amber-400" />
-                      <span className="text-xs font-semibold text-stone-700 dark:text-stone-200">
+                  <div className="relative z-10 pt-3 border-t border-amber-200/80 dark:border-white/15 flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2.5 xs:gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <PranamIcon size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                      <span className="text-xs font-semibold text-stone-700 dark:text-stone-200 whitespace-nowrap">
                         85+ Verified Pandits
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2 w-full xs:w-auto justify-end">
                       <button
                         onClick={() => {
                           setSelectedSevaId(undefined);
                           setBookingModalOpen(true);
                         }}
-                        className="rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold px-3.5 py-1.5 text-xs shadow-md transition-transform hover:scale-105 flex items-center gap-1.5"
+                        className="rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold px-3 py-1.5 text-xs shadow-md transition-transform hover:scale-105 flex items-center gap-1.5 shrink-0"
                       >
                         <DiyaIcon size={14} />
                         <span>Book a Pooja</span>
                       </button>
                       <Link
                         href="/schedule"
-                        className="rounded-full bg-white dark:bg-black/80 hover:bg-stone-50 dark:hover:bg-black backdrop-blur-md border border-stone-300 dark:border-amber-400/35 text-stone-800 dark:text-amber-100 hover:text-stone-950 dark:hover:text-white font-bold px-3 py-1.5 text-xs transition flex items-center gap-1 shadow-sm dark:shadow-md"
+                        className="rounded-full bg-white dark:bg-black/80 hover:bg-stone-50 dark:hover:bg-black backdrop-blur-md border border-stone-300 dark:border-amber-400/35 text-stone-800 dark:text-amber-100 hover:text-stone-950 dark:hover:text-white font-bold px-2.5 py-1.5 text-xs transition flex items-center gap-1 shadow-sm dark:shadow-md shrink-0"
                       >
                         <Calendar className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                         <span>Schedule</span>
@@ -627,7 +627,7 @@ export default function HomePage() {
             )}
 
             {/* Live Seva Activity Ticker (TEMP2 Real-Time Devotee Feed) */}
-            <div className="glass rounded-3xl p-4 sm:p-5 mt-4 border border-gold/20 shadow-xl">
+            <div className="glass rounded-3xl p-4 sm:p-5 mt-4 border border-gold/20 shadow-xl overflow-hidden">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <span className="relative flex h-2 w-2">
@@ -644,13 +644,13 @@ export default function HomePage() {
                 {LIVE_SEVA_ACTIVITIES.map((act, i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between text-xs py-1.5 px-3 rounded-xl bg-white dark:bg-obsidian-soft border border-stone-200 dark:border-gold/15 hover:border-amber-500/40 dark:hover:border-gold/30 transition-colors shadow-sm"
+                    className="flex items-center justify-between text-xs py-1.5 px-3 rounded-xl bg-white dark:bg-obsidian-soft border border-stone-200 dark:border-gold/15 hover:border-amber-500/40 dark:hover:border-gold/30 transition-colors shadow-sm min-w-0"
                   >
-                    <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       <div className="w-6 h-6 rounded-full bg-amber-500/15 dark:bg-gold/15 flex items-center justify-center text-amber-800 dark:text-gold text-[10px] font-bold shrink-0">
                         {act.initials}
                       </div>
-                      <div className="truncate">
+                      <div className="truncate min-w-0 flex-1">
                         <span className="devotee-seva-name font-bold">{act.name}</span>
                         <span className="text-stone-400 mx-1.5">•</span>
                         <span className="devotee-seva-action font-semibold">{act.action}</span>
@@ -777,7 +777,7 @@ export default function HomePage() {
         </div>
 
         {/* Category Filter Pills Row */}
-        <div className="flex items-center gap-2 overflow-x-auto py-2 no-scrollbar">
+        <div className="flex items-center gap-2 overflow-x-auto w-full max-w-full min-w-0 py-2 no-scrollbar">
           <button
             onClick={() => {
               setSelectedCategory('');

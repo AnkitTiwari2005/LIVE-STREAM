@@ -45,6 +45,9 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb {
 
 html {
   scroll-behavior: smooth;
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* 2. Light Mode Typography: High Contrast Charcoal & Sacred Vermillion */
@@ -52,6 +55,10 @@ html:not([data-theme="dark"]) body,
 html[data-theme="light"] body {
   background-color: #fbf8f8 !important;
   color: #1c1414 !important;
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-x: clip;
+  position: relative;
 }
 
 html:not([data-theme="dark"]) .text-white,

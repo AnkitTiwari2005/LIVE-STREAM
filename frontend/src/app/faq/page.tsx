@@ -120,7 +120,7 @@ export default function FAQPage() {
             </div>
 
             {/* Category Pills */}
-            <div className="flex items-center justify-center gap-2 overflow-x-auto py-5 no-scrollbar">
+            <div className="flex items-center sm:justify-center gap-2 overflow-x-auto w-full max-w-full min-w-0 py-5 no-scrollbar">
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat}

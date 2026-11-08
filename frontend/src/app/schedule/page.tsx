@@ -181,9 +181,9 @@ export default function SchedulePage() {
       </section>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-5 lg:px-8 py-10">
+      <section className="max-w-7xl mx-auto px-5 lg:px-8 py-10 w-full max-w-full">
         {/* Category Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-8 no-scrollbar">
+        <div className="flex items-center gap-2 overflow-x-auto w-full max-w-full min-w-0 pb-4 mb-8 no-scrollbar">
           {['ALL', 'Pooja', 'Aarti', 'Astrology', 'Katha', 'Discourse'].map((cat) => (
             <button
               key={cat}
@@ -300,7 +300,7 @@ export default function SchedulePage() {
             );
           })}
         </div>
-      </main>
+      </section>
 
       {/* Seva Booking Modal */}
       <SevaBookingModal

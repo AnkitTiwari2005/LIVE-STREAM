@@ -109,7 +109,7 @@ export default function PoojaCatalogPage() {
         </div>
 
         {/* Filter Category Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto py-5 no-scrollbar border-b border-gold/10">
+        <div className="flex items-center gap-2 overflow-x-auto w-full max-w-full min-w-0 py-5 no-scrollbar border-b border-gold/10">
           {CATEGORY_TABS.map((tab) => {
             const count =
               tab === 'ALL'

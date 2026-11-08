@@ -188,11 +188,11 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="min-h-screen flex flex-col bg-stone-950 text-stone-100 antialiased selection:bg-orange-500 selection:text-white">
+      <body className="min-h-screen flex flex-col bg-stone-950 text-stone-100 antialiased selection:bg-orange-500 selection:text-white w-full max-w-full overflow-x-clip">
         <ToastProvider>
           <FestivalBanner />
           <Navbar />
-          <main className="flex-1 overflow-x-clip">{children}</main>
+          <main className="flex-1 w-full max-w-full overflow-x-clip">{children}</main>
           <Footer />
         </ToastProvider>
       </body>

@@ -301,7 +301,7 @@ export default function AdminConsolePage() {
         </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-stone-800 pb-3 mb-8 overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-stone-800 pb-3 mb-8 overflow-x-auto w-full max-w-full min-w-0 no-scrollbar">
         {[
           { key: 'kpi', label: 'Overview Metrics' },
           { key: 'kyc', label: `Pending KYC (${kycList.length})` },

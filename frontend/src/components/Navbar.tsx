@@ -128,22 +128,22 @@ export function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 glass-strong border-b border-gold/15 py-2 shadow-[0_8px_40px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+      <header className="sticky top-0 z-50 glass-strong border-b border-gold/15 py-2 shadow-[0_8px_40px_rgba(0,0,0,0.55)] backdrop-blur-xl w-full max-w-full overflow-x-clip">
         <div className="max-w-[1440px] mx-auto px-3 sm:px-5 lg:px-6 xl:px-8 flex items-center justify-between gap-2 sm:gap-3">
           {/* 1. Sacred Brand Logo & Typography */}
-          <Link href="/" className="group flex items-center gap-2 sm:gap-2.5 shrink-0">
-            <div className="relative flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-gold/40 bg-gradient-to-b from-[#2a1e12] to-obsidian shadow-[0_0_18px_rgba(245,158,11,0.3)] transition group-hover:border-gold/75 group-hover:shadow-[0_0_22px_rgba(245,158,11,0.5)] p-0.5 overflow-hidden">
+          <Link href="/" className="group flex items-center gap-2 sm:gap-2.5 shrink min-w-0">
+            <div className="relative flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-gold/40 bg-gradient-to-b from-[#2a1e12] to-obsidian shadow-[0_0_18px_rgba(245,158,11,0.3)] transition group-hover:border-gold/75 group-hover:shadow-[0_0_22px_rgba(245,158,11,0.5)] p-0.5 overflow-hidden shrink-0">
               <img
                 src="/logo.png"
                 alt="Shubhdarshan Mandir Logo"
                 className="h-full w-full object-contain filter drop-shadow group-hover:scale-105 transition-transform duration-300"
               />
             </div>
-            <span className="leading-tight">
-              <span className="block font-serif text-lg sm:text-xl font-bold tracking-wide text-gold-pale group-hover:text-gold transition">
+            <span className="leading-tight min-w-0">
+              <span className="block font-serif text-base sm:text-xl font-bold tracking-wide text-gold-pale group-hover:text-gold transition truncate">
                 Shubhdarshan
               </span>
-              <span className="block text-[7.5px] sm:text-[8.5px] font-bold uppercase tracking-[0.24em] text-gold-soft/80">
+              <span className="hidden xs:block text-[7px] sm:text-[8.5px] font-bold uppercase tracking-[0.16em] sm:tracking-[0.24em] text-gold-soft/80 truncate">
                 Sacred Darshan Network
               </span>
             </span>
@@ -410,33 +410,32 @@ export function Navbar() {
           </div>
 
           {/* 4. Mobile Menu & Search Toggle Buttons */}
-          <div className="flex items-center gap-2 lg:hidden">
+          <div className="flex items-center gap-1 sm:gap-2 lg:hidden shrink-0">
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="p-1.5 text-stone-300 hover:text-white rounded-full hover:bg-white/5 transition"
+              className="p-1 sm:p-1.5 text-stone-300 hover:text-white rounded-full hover:bg-white/5 transition"
               aria-label="Search pooja and darshan"
             >
               <Search className="w-4 h-4 text-gold-soft" />
             </button>
-            <ThemeToggle className="h-8 w-8" />
+            <ThemeToggle className="h-7 w-7 sm:h-8 sm:w-8" />
             {user && (
               <button
                 onClick={() => setTopupModalOpen(true)}
-                className="whitespace-nowrap shrink-0 flex items-center gap-1.5 rounded-full border border-amber-300 dark:border-gold/40 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-gold/20 dark:to-gold/10 h-8 px-2.5 text-xs font-bold text-amber-950 dark:text-gold-pale shadow-sm hover:border-amber-400 dark:hover:border-gold transition active:scale-95"
+                className="whitespace-nowrap shrink-0 flex items-center gap-1 rounded-full border border-amber-300 dark:border-gold/40 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-gold/20 dark:to-gold/10 h-7 sm:h-8 px-2 text-[11px] sm:text-xs font-bold text-amber-950 dark:text-gold-pale shadow-sm hover:border-amber-400 dark:hover:border-gold transition active:scale-95"
                 title="Your Sacred Coins (Click to Recharge)"
                 aria-label="Recharge Sacred Coins"
               >
-                <CoinIcon size={14} className="shrink-0" />
+                <CoinIcon size={12} className="shrink-0" />
                 <span className="font-extrabold text-amber-900 dark:text-gold tracking-tight">
                   {coinBalance !== null ? coinBalance : (user ? '...' : 100)}
                 </span>
-                <PlusCircle className="w-3 h-3 text-amber-600 dark:text-gold shrink-0" />
               </button>
             )}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-full border border-stone-300 dark:border-gold/25 text-stone-900 dark:text-gold-pale hover:bg-stone-100 dark:hover:bg-gold/10 transition"
+              className="p-1.5 sm:p-2 rounded-full border border-stone-300 dark:border-gold/25 text-stone-900 dark:text-gold-pale hover:bg-stone-100 dark:hover:bg-gold/10 transition"
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5 text-stone-900 dark:text-gold-pale" /> : <Menu className="w-5 h-5 text-stone-900 dark:text-gold-pale" />}

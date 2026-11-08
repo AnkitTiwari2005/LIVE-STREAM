@@ -483,7 +483,7 @@ export default function AccountPage() {
             </div>
 
             {/* Filter Tabs */}
-            <div className="flex items-center gap-2 overflow-x-auto py-4 no-scrollbar border-b border-stone-200 dark:border-stone-800">
+            <div className="flex items-center gap-2 overflow-x-auto w-full max-w-full min-w-0 py-4 no-scrollbar border-b border-stone-200 dark:border-stone-800">
               {(['ALL', 'PENDING', 'APPROVED', 'DECLINED'] as const).map((filter) => {
                 const count =
                   filter === 'ALL'
