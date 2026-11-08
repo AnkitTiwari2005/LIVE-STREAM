@@ -15,62 +15,9 @@ interface SearchItem {
 }
 
 const SEARCH_DIRECTORY: SearchItem[] = [
-  {
-    title: 'Sandhya Ganga Aarti',
-    subtitle: 'Har Ki Pauri, Haridwar · Live Darshan',
-    category: 'Live Darshan',
-    url: '/stream/demo',
-    image: '/images/photo-1681797849099-0053b1567d95.webp',
-    keywords: 'ganga aarti haridwar har ki pauri live river deep darshan',
-  },
-  {
-    title: 'Grand Deepotsav Mahotsav',
-    subtitle: 'Ram Ki Paidi, Ayodhya · Live Darshan',
-    category: 'Live Darshan',
-    url: '/stream/demo',
-    image: '/images/photo-1577083753695-e010191bacb5.webp',
-    keywords: 'grand deepotsav diwali ayodhya ram mandir lakshmi diya darshan',
-  },
-  {
-    title: 'Mangala Aarti — Kashi Vishwanath',
-    subtitle: 'Kashi Vishwanath Sanctum, Varanasi',
-    category: 'Live Darshan',
-    url: '/stream/demo',
-    image: '/images/photo-1678593628844-6ea49dee8ce3.webp',
-    keywords: 'mangala aarti kashi vishwanath varanasi shiva lingam darshan',
-  },
-  {
-    title: 'Bhasma Aarti',
-    subtitle: 'Mahakaleshwar Jyotirlinga, Ujjain',
-    category: 'Live Darshan',
-    url: '/stream/demo',
-    image: '/images/photo-1763610651463-4e7b3befbcc8.webp',
-    keywords: 'bhasma aarti mahakaleshwar ujjain shiva jyotirlinga live',
-  },
-  {
-    title: 'Maha Rudrabhishek Abhishekam',
-    subtitle: 'Vedic Chanting & Sanctum Seva, Kashi',
-    category: 'Pooja',
-    url: '/stream/demo',
-    image: '/images/photo-1763479939733-eea29c578c17.webp',
-    keywords: 'rudrabhishek shiva pooja abhishekam bilva patra kashi',
-  },
-  {
-    title: 'Rasa Kirtan & Bhajan Sandhya',
-    subtitle: 'Yamuna Ghat, Vrindavan',
-    category: 'Kirtan',
-    url: '/stream/demo',
-    image: '/images/photo-1514377863868-02d7217c8bcd.webp',
-    keywords: 'rasa kirtan bhajan vrindavan krishna radhe yamuna',
-  },
-  {
-    title: 'Sandhya Deep Aarti',
-    subtitle: 'Somnath Jyotirlinga, Gujarat',
-    category: 'Live Darshan',
-    url: '/stream/demo',
-    image: '/images/photo-1763479168649-8ffb3bbb9103.webp',
-    keywords: 'somnath deep aarti gujarat jyotirlinga ocean darshan',
-  },
+  // R-04/M-10: Removed 7 entries that linked to /stream/demo (a dead/empty page).
+  // Live stream search results will come from the real API (/streams/public).
+  // Only keeping static site links that always exist.
   {
     title: 'Pandit Aarav Sharma',
     subtitle: 'Head Archak, Kashi Vishwanath Parampara',

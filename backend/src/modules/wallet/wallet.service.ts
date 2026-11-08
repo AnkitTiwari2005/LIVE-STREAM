@@ -207,6 +207,11 @@ export class WalletService {
           totalCoinsDebited: WalletService.COINS_PER_MINUTE,
           ipAddress: ip || null,
           userAgent: userAgent || null,
+          // R-03: Set lastTickAt immediately on creation so the watchdog's
+          // `lte: ninetySecondsAgo` condition can correctly evict sessions
+          // that never send a heartbeat. Without this the column is NULL and
+          // is never matched by the watchdog query.
+          lastTickAt: new Date(),
           meterTicks: {
             create: {
               minuteIndex: 1,

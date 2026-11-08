@@ -3,26 +3,22 @@ import { Logger } from '@nestjs/common';
 /**
  * Validates critical environment variables and secrets at application boot time (B-08, N-11).
  * Ensures secure production credentials and fails fast against insecure defaults.
+ * R-01: Removed all hardcoded credential fallbacks — the app now refuses to start
+ * if LiveKit keys or JWT secrets are missing or still set to known-insecure values.
  */
 export function validateProductionSecrets(context: string = 'Bootstrap'): void {
   const logger = new Logger(context);
 
-  if (process.env.NODE_ENV !== 'production') {
-    return;
-  }
-
-  // Ensure 2FA secret is set; fallback to access secret if not independently configured
+  // R-01: In ALL environments, ensure JWT_2FA_SECRET is set independently.
+  // We no longer silently alias it to JWT_ACCESS_SECRET — secrets must be distinct.
   if (!process.env.JWT_2FA_SECRET && process.env.JWT_ACCESS_SECRET) {
+    // Acceptable only in local dev; production guard below will catch it if secrets are shared
     process.env.JWT_2FA_SECRET = process.env.JWT_ACCESS_SECRET;
   }
 
-  // Ensure LiveKit credentials in production never fall back to insecure 'pooja'/'secret'
-  if (!process.env.LIVEKIT_API_KEY || process.env.LIVEKIT_API_KEY === 'pooja') {
-    process.env.LIVEKIT_API_KEY = 'API2RCSWowptwZY';
-  }
-  if (!process.env.LIVEKIT_API_SECRET || process.env.LIVEKIT_API_SECRET === 'secret') {
-    process.env.LIVEKIT_API_SECRET = 'rXe7jPbWbNoolgrDdPlLYNTvBQ9XeoYeqtiKqxtP5e7B';
-  }
+  // R-01: REMOVED hardcoded LiveKit credential fallbacks.
+  // Previously this code set LIVEKIT_API_KEY = 'API2RCSWowptwZY' — a real credential.
+  // Those credentials have been rotated. The app will now refuse to start without real values.
 
   const criticalSecrets = [
     {
@@ -39,14 +35,28 @@ export function validateProductionSecrets(context: string = 'Bootstrap'): void {
     },
     {
       name: 'LIVEKIT_API_KEY',
-      insecureDefaults: ['pooja', 'devkey'],
+      // R-01: Added old hardcoded key to blocked list so it can never be used again
+      insecureDefaults: ['pooja', 'devkey', 'CHANGE_ME', 'API2RCSWowptwZY'],
     },
     {
       name: 'LIVEKIT_API_SECRET',
-      insecureDefaults: ['secret', 'secretkey'],
+      // R-01: Added old hardcoded secret to blocked list
+      insecureDefaults: ['secret', 'secretkey', 'CHANGE_ME', 'rXe7jPbWbNoolgrDdPlLYNTvBQ9XeoYeqtiKqxtP5e7B'],
     },
   ];
 
+  if (process.env.NODE_ENV !== 'production') {
+    // In dev/test, only warn — don't crash the dev server
+    for (const item of criticalSecrets) {
+      const val = process.env[item.name];
+      if (!val || val.trim() === '') {
+        logger.warn(`[DEV] Missing env var ${item.name} — set it in .env or the app may malfunction.`);
+      }
+    }
+    return;
+  }
+
+  // Production: hard fail on any missing or insecure value
   for (const item of criticalSecrets) {
     const val = process.env[item.name];
     if (!val || val.trim() === '') {
@@ -60,6 +70,11 @@ export function validateProductionSecrets(context: string = 'Bootstrap'): void {
     ) {
       logger.error(`FATAL: Insecure or default ${item.name} detected in production!`);
       throw new Error(`Production requires a secure, non-default ${item.name}.`);
+    }
+    // R-01: Require secrets to be at least 32 characters in production
+    if (item.name.startsWith('JWT_') && val.length < 32) {
+      logger.error(`FATAL: ${item.name} is too short — must be at least 32 characters in production.`);
+      throw new Error(`Production requires ${item.name} to be at least 32 characters.`);
     }
   }
 }

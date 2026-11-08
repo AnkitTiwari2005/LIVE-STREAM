@@ -129,8 +129,14 @@ export class CronTasksService {
     const expiredSessions = await this.prisma.streamViewingSession.findMany({
       where: {
         status: 'ACTIVE',
-        lastTickAt: { lte: ninetySecondsAgo },
+        // R-03: Fixed watchdog to also catch sessions where lastTickAt IS NULL.
+        // Previously NULL never matched `lte: ninetySecondsAgo`, so viewers whose
+        // browser never sent a single heartbeat tick were never evicted.
         stream: { status: StreamStatus.LIVE },
+        OR: [
+          { lastTickAt: { lte: ninetySecondsAgo } },
+          { lastTickAt: null, startedAt: { lte: ninetySecondsAgo } },
+        ],
       },
       include: {
         stream: { select: { id: true, title: true } },

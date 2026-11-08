@@ -32,57 +32,14 @@ interface StreamItem {
   };
 }
 
-const FALLBACK_SCHEDULE = [
-  {
-    id: 'sched-1',
-    title: 'Maha Rudrabhishek & Swasti Vachan',
-    description: 'Vedic Panchamrit Abhishek with resonant Rudra Sukta recitation for peace, health, and family prosperity.',
-    thumbnailUrl: '/images/photo-1681797849099-0053b1567d95.webp',
-    status: 'SCHEDULED',
-    scheduledAt: new Date(Date.now() + 3 * 3600 * 1000).toISOString(),
-    videoQuality: '1080p',
-    category: { id: 'c1', name: 'Pooja', slug: 'pooja' },
-    streamer: {
-      id: 'p1',
-      name: 'Pandit Aarav Sharma',
-      streamerProfile: { isVerifiedBadge: true, specialties: ['Rudrabhishek', 'Vedic Pooja'] },
-    },
-  },
-  {
-    id: 'sched-2',
-    title: 'Navgrah Shanti & Vedic Kundli Remedial Pooja',
-    description: 'Auspicious 9-graha oblations and personalized horoscope dosha nivaran chanting by Gurukul scholar.',
-    thumbnailUrl: '/images/photo-1577083753695-e010191bacb5.webp',
-    status: 'SCHEDULED',
-    scheduledAt: new Date(Date.now() + 18 * 3600 * 1000).toISOString(),
-    videoQuality: '1080p HD',
-    category: { id: 'c2', name: 'Astrology and Kundli', slug: 'astrology-kundli' },
-    streamer: {
-      id: 'p2',
-      name: 'Acharya Devrat Sharma',
-      streamerProfile: { isVerifiedBadge: true, specialties: ['Navgrah Shanti', 'Karmakand'] },
-    },
-  },
-  {
-    id: 'sched-3',
-    title: 'Sandhya Deepotsav & Divine Aarti',
-    description: 'Devotional evening lamp invocation with conch shell reverberations and sacred mantra pushpam.',
-    thumbnailUrl: '/images/photo-1678593628844-6ea49dee8ce3.webp',
-    status: 'SCHEDULED',
-    scheduledAt: new Date(Date.now() + 28 * 3600 * 1000).toISOString(),
-    videoQuality: '1080p',
-    category: { id: 'c3', name: 'Aarti and Darshan', slug: 'aarti-darshan' },
-    streamer: {
-      id: 'p3',
-      name: 'Pandit Hariram Vyas',
-      streamerProfile: { isVerifiedBadge: true, specialties: ['Aarti', 'Ganga Seva'] },
-    },
-  },
-];
+// R-04: Removed FALLBACK_SCHEDULE with invented pandits/streams.
+// When no real streams are scheduled, we now show an honest empty state.
+// (The FALLBACK_SCHEDULE array was defined here previously.)
 
 export default function SchedulePage() {
   const toast = useToast();
-  const [streams, setStreams] = useState<StreamItem[]>(FALLBACK_SCHEDULE);
+  // R-04: Initialize with empty array instead of fake FALLBACK_SCHEDULE
+  const [streams, setStreams] = useState<StreamItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
@@ -96,9 +53,9 @@ export default function SchedulePage() {
         if (res.ok) {
           const data: StreamItem[] = await res.json();
           const scheduled = data.filter((s) => s.status === 'SCHEDULED');
-          if (scheduled.length > 0) {
-            setStreams(scheduled);
-          }
+          // R-04: Always replace with real data (even empty array).
+          // No fallback to invented streams.
+          setStreams(scheduled);
         }
       } catch (err) {
         console.error('Failed to load schedule:', err);
@@ -130,6 +87,11 @@ export default function SchedulePage() {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
+      // H-07: Added res.ok check — previously the UI always showed success even on 500 errors
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as any).message || `Server error ${res.status}`);
+      }
       const data = await res.json();
       setRemindStatus((prev) => ({ ...prev, [streamId]: true }));
       toast.success(data.message || 'Email reminder scheduled successfully!');
@@ -201,6 +163,25 @@ export default function SchedulePage() {
 
         {/* Schedule Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          {/* R-04: Show honest empty state instead of fake fallback streams */}
+          {!loading && filteredStreams.length === 0 && (
+            <div className="col-span-full flex flex-col items-center justify-center py-20 text-center gap-4">
+              <div className="p-5 rounded-3xl bg-gold/10 border border-gold/25 shadow-lg">
+                <Calendar className="w-10 h-10 text-gold-soft" />
+              </div>
+              <h3 className="font-serif text-2xl font-bold text-white">No Broadcasts Scheduled Yet</h3>
+              <p className="text-stone-400 text-sm max-w-sm leading-relaxed">
+                Our Gurukul-verified Pandits are preparing upcoming live poojas and darshans.
+                Check back soon or book a personal private session.
+              </p>
+              <button
+                onClick={() => setBookingModalOpen(true)}
+                className="mt-2 px-6 py-2.5 rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold text-xs shadow-lg transition flex items-center gap-1.5"
+              >
+                <span>Book a Private Pooja</span>
+              </button>
+            </div>
+          )}
           {filteredStreams.map((stream) => {
             const isReminded = remindStatus[stream.id];
             const dateStr = stream.scheduledAt

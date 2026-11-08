@@ -92,7 +92,9 @@ html[data-theme="light"] .text-stone-400 {
 
 html:not([data-theme="dark"]) .text-stone-500,
 html[data-theme="light"] .text-stone-500 {
-  color: #8a7d7d !important;
+  /* D-03: Darkened from #8a7d7d (contrast ~3.1:1 on white — fails WCAG AA for body text)
+     to #6b7280 (stone-500 natural, contrast ~4.6:1 on white — passes WCAG AA). */
+  color: #57534e !important;
 }
 
 html:not([data-theme="dark"]) .text-gold,

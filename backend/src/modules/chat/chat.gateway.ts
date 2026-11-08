@@ -20,6 +20,23 @@ class InMemoryChatCache {
   private counts = new Map<string, number>();
   private mutes = new Map<string, number>();
 
+  constructor() {
+    // M-07: Periodic cleanup to prevent memory growth under sustained load.
+    // rateLimits and mutes never shrink on their own — with many unique users
+    // over time the Maps could grow until Node OOMs.
+    // Runs every 5 minutes: purges rateLimits older than 5 min, expired mutes.
+    setInterval(() => {
+      const now = Date.now();
+      const fiveMinutes = 5 * 60 * 1000;
+      for (const [k, v] of this.rateLimits) {
+        if (now - v > fiveMinutes) this.rateLimits.delete(k);
+      }
+      for (const [k, v] of this.mutes) {
+        if (v < now) this.mutes.delete(k);
+      }
+    }, 5 * 60 * 1000).unref(); // .unref() so it doesn't keep the process alive during tests
+  }
+
   checkRateLimit(key: string, cooldownMs: number): boolean {
     const now = Date.now();
     const last = this.rateLimits.get(key) || 0;

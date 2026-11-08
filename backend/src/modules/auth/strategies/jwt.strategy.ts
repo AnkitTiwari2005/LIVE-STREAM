@@ -24,7 +24,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       jwtFromRequest: ExtractJwt.fromExtractors([
         ExtractJwt.fromAuthHeaderAsBearerToken(),
         (req) => req?.cookies?.access_token,
-        ExtractJwt.fromUrlQueryParameter('token'),
+        // R-02: REMOVED ExtractJwt.fromUrlQueryParameter('token') — tokens in URLs
+        // appear in nginx logs, browser history, and can be stolen via open-redirect
+        // or attacker-controlled document links in the KYC admin view.
+        // Authentication is now header + httpOnly cookie only.
       ]),
       ignoreExpiration: false,
       secretOrKey: accessSecret,

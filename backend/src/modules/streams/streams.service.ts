@@ -170,14 +170,15 @@ export class StreamsService {
       return [newlyLive];
     });
 
-    // Generate short-lived publisher token (15 mins TTL)
+    // Generate publisher token — H-04: increased from 15 min to 180 min (3 hours)
+    // A pandit streaming > 15 min was silently disconnected by LiveKit when the old token expired.
     const publisherToken = await this.videoProvider.generateToken({
       roomName: stream.id,
       participantId: streamerId,
       participantName: stream.streamer.name,
       isPublisher: true,
       canSubscribe: true,
-      ttlMinutes: 15,
+      ttlMinutes: 180,
       metadata: { role: 'streamer' },
     });
 
@@ -310,14 +311,18 @@ export class StreamsService {
       },
     });
 
-    // Generate viewer token with standard 60-minute session TTL (N-12)
+    // R-03: Reduced viewer token TTL from 60 to 5 minutes.
+    // A 60-min token cannot be revoked — if a viewer's session is terminated by the
+    // watchdog or on zero balance, they could reconnect with the saved token for up to
+    // an hour. With 5-min tokens the player calls fetchStreamAndToken() on reconnect
+    // which re-validates the session before issuing a fresh token.
     const token = await this.videoProvider.generateToken({
       roomName: stream.id,
       participantId,
       participantName,
       isPublisher: false,
       canSubscribe: true,
-      ttlMinutes: 60,
+      ttlMinutes: 5,
       metadata: { role: 'viewer', isGuest: !userId, sessionToken: viewingSession?.sessionToken },
     });
 

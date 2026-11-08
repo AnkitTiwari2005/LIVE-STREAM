@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { Cormorant_Garamond, Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import './theme.css';
 import '@livekit/components-styles';
@@ -7,10 +8,42 @@ import { Footer } from '@/components/Footer';
 import { FestivalBanner } from '@/components/FestivalBanner';
 import { ToastProvider } from '@/components/Toast';
 
-const SITE_URL = 'https://darkturquoise-louse-359917.hostingersite.com';
+// R-07: Self-hosted fonts via next/font/google — fonts are bundled into the static
+// output at build time. No external request to fonts.googleapis.com at runtime,
+// so CSP restrictions and network latency cannot affect font loading.
+const cormorant = Cormorant_Garamond({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  style: ['normal', 'italic'],
+  variable: '--font-cormorant',
+  display: 'swap',
+});
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '800'],
+  variable: '--font-jakarta',
+  display: 'swap',
+});
+
+const jetbrains = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: ['400', '600'],
+  variable: '--font-jetbrains',
+  display: 'swap',
+});
+
+// R-08: Use env var so the production domain is set via NEXT_PUBLIC_SITE_URL
+// instead of the staging hostname being hardcoded in source.
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://darkturquoise-louse-359917.hostingersite.com';
 
 export const viewport: Viewport = {
-  themeColor: '#0c0a09',
+  // M-11: Use media-based themeColor so mobile browser chrome matches the active theme.
+  // Previously always obsidian/black even for light-mode users.
+  themeColor: [
+    { media: '(prefers-color-scheme: dark)', color: '#0c0a09' },
+    { media: '(prefers-color-scheme: light)', color: '#fafaf5' },
+  ],
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
@@ -176,7 +209,8 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="en">
+    // R-07: className injects next/font CSS vars so Tailwind font-serif/sans/mono work with self-hosted fonts
+    <html lang="en" className={`${cormorant.variable} ${jakarta.variable} ${jetbrains.variable}`}>
       <head>
         <script
           dangerouslySetInnerHTML={{

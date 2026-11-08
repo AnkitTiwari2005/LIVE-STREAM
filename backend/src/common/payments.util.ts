@@ -39,7 +39,9 @@ export async function assertCaptured(paymentId: string, orderId: string, amountP
     headers: { Authorization: basicAuth() },
   });
   const p: any = await res.json();
-  if (!res.ok || p.order_id !== orderId || p.amount !== amountPaise || !['captured', 'authorized'].includes(p.status)) {
+  // H-03: Removed 'authorized' — only 'captured' means Razorpay has settled funds.
+  // 'authorized' means card hold only; it can still be declined at capture time.
+  if (!res.ok || p.order_id !== orderId || p.amount !== amountPaise || p.status !== 'captured') {
     throw new BadRequestException('Payment not captured or amount mismatch on gateway');
   }
 }

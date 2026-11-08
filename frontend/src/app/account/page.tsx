@@ -64,33 +64,10 @@ export default function AccountPage() {
       const stored = localStorage.getItem('shubhdarshan_bookings');
       if (stored) {
         setBookings(JSON.parse(stored));
-      } else {
-        // Seed initial sample request so devotees immediately see how live status tracking works
-        const sample: BookingRecord[] = [
-          {
-            id: 'sample-booking-1',
-            refCode: 'SHUBH-749210',
-            poojaId: 'rudrabhishek',
-            poojaName: 'Maha Rudrabhishek & Swasti Vachan',
-            category: 'Shiva & Rudra',
-            panditId: 'aarav-sharma',
-            panditName: 'Pandit Aarav Sharma',
-            panditAvatar: '/images/photo-1543934776-32d1cc654abb.webp',
-            panditTitle: 'Senior Acharya, Kashi Vishwanath Sanctum',
-            dakshinaCoins: 150,
-            devoteeName: 'Ankit Sharma',
-            devoteeGotra: 'Kashyap',
-            scheduledDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-            timeSlot: 'Morning (07:00 AM – 09:00 AM IST)',
-            sankalpIntent: 'Family Health, Long Life & Healing',
-            status: 'PENDING',
-            createdAt: new Date().toISOString(),
-            roomLink: '/join/invite',
-          },
-        ];
-        localStorage.setItem('shubhdarshan_bookings', JSON.stringify(sample));
-        setBookings(sample);
       }
+      // R-04: Removed fake seed booking "SHUBH-749210" for "Ankit Sharma".
+      // The seed made devotees believe their booking was submitted to a real pandit.
+      // Now we simply show an empty state when no bookings exist.
     } catch {
       setBookings([]);
     }
@@ -104,22 +81,9 @@ export default function AccountPage() {
     }
   };
 
-  const handleSimulateApprove = (id: string) => {
-    updateBooking(id, {
-      status: 'APPROVED',
-      confirmedTime: 'Confirmed by Panditji for requested slot',
-      roomLink: '/join/invite',
-    });
-    toast.success('Panditji has accepted and confirmed your live pooja schedule!');
-  };
-
-  const handleSimulateDecline = (id: string) => {
-    updateBooking(id, {
-      status: 'DECLINED',
-      declineReason: 'Panditji has a conflicting temple sandhya aarti duty for this time slot.',
-    });
-    toast.error('Panditji is unavailable for this slot. You can choose another Pandit or auto-match.');
-  };
+  // R-04: Removed handleSimulateApprove and handleSimulateDecline.
+  // These buttons appeared for every devotee and misleadingly simulated a pandit
+  // accepting/declining a booking that was only stored in localStorage.
 
   const handleAutoMatchPandit = (booking: BookingRecord) => {
     const nextPandit = PANDIT_PRICING_CATALOG.find((p) => p.panditId !== booking.panditId) || PANDIT_PRICING_CATALOG[1];
@@ -699,23 +663,9 @@ export default function AccountPage() {
                           <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto shrink-0">
                             {isPending && (
                               <>
-                                {/* Devotee Test Controls (Simulate Pandit Response) */}
-                                <button
-                                  onClick={() => handleSimulateApprove(b.id)}
-                                  className="px-3 py-1.5 rounded-full bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition flex items-center gap-1 shadow-sm"
-                                  title="Devotee Demo: Simulate Pandit Confirmation"
-                                >
-                                  <Check className="w-3 h-3 text-emerald-400" />
-                                  <span>Simulate Pandit Approval</span>
-                                </button>
-                                <button
-                                  onClick={() => handleSimulateDecline(b.id)}
-                                  className="px-3 py-1.5 rounded-full bg-red-950/80 hover:bg-red-900 border border-red-500/40 text-red-300 text-xs font-bold transition flex items-center gap-1 shadow-sm"
-                                  title="Devotee Demo: Simulate Pandit Unavailable"
-                                >
-                                  <X className="w-3 h-3 text-red-400" />
-                                  <span>Simulate Decline</span>
-                                </button>
+                                {/* R-04: Removed "Simulate Pandit Approval" and "Simulate Decline"
+                                    buttons — they were visible to every devotee and created a false
+                                    impression that a real pandit had responded to their booking. */}
                                 <button
                                   onClick={() => handleDeleteBooking(b.id)}
                                   className="p-1.5 text-stone-500 hover:text-red-400 transition"

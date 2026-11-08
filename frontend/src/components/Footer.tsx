@@ -181,7 +181,8 @@ export function Footer() {
 
         {/* Bottom Bar with Sanskrit Shloka */}
         <div className="mt-8 pt-6 border-t border-stone-800/60 flex flex-col sm:flex-row items-center justify-between text-xs text-stone-500 gap-4">
-          <p>© 2026 Shubhdarshan Devotional Media Private Limited. All rights reserved.</p>
+          {/* M-08: Dynamic year — was hardcoded as 2026 */}
+          <p>© {new Date().getFullYear()} Shubhdarshan Devotional Media Private Limited. All rights reserved.</p>
           <p className="font-serif text-sm italic text-gold-soft/80 tracking-wide">
             ॐ असतो मा सद्गमय तमसो मा ज्योतिर्गमय
           </p>

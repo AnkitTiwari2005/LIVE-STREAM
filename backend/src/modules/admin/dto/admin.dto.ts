@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString, IsNumber, IsBoolean, MaxLength } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, IsNumber, IsBoolean, MaxLength, Matches } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserStatus } from '@prisma/client';
 
@@ -110,6 +110,11 @@ export class UpdateBannerDto {
   @IsOptional()
   @IsString()
   @MaxLength(200)
+  // H-08: Added URL validation — previously any string was accepted, allowing javascript: URIs
+  // which could be used for XSS via the festival banner CTA link.
+  @Matches(/^(\/[^\s<>"]*|https?:\/\/[^\s<>"]+)$/, {
+    message: 'ctaLink must be a relative path starting with / or an absolute http/https URL',
+  })
   ctaLink?: string;
 
   @ApiProperty({ required: false, example: 'amber-orange' })

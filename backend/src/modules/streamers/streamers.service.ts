@@ -38,7 +38,9 @@ export class StreamersService {
         languages: dto.languages,
         specialties: dto.specialties,
         kycStatus: KycStatus.PENDING,
-        kycDocuments: dto.kycDocuments || null,
+        // R-02: Cast to Prisma Json — KycDocDto[] is validated at DTO layer but
+        // Prisma's Json type requires an explicit cast since it only knows InputJsonValue.
+        kycDocuments: dto.kycDocuments ? (dto.kycDocuments as any) : null,
         rejectionReason: null,
       },
       create: {
@@ -47,7 +49,7 @@ export class StreamersService {
         languages: dto.languages,
         specialties: dto.specialties,
         kycStatus: KycStatus.PENDING,
-        kycDocuments: dto.kycDocuments || null,
+        kycDocuments: dto.kycDocuments ? (dto.kycDocuments as any) : null,
       },
     });
 

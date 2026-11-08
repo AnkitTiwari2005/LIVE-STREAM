@@ -14,9 +14,10 @@ export class LiveKitProviderService implements IVideoProviderService {
   constructor() {
     const rawHost = process.env.LIVEKIT_URL || process.env.LIVEKIT_HOST || 'http://livekit:7880';
     const livekitHost = rawHost.startsWith('wss://') ? rawHost.replace('wss://', 'https://') : rawHost;
-    const isProd = process.env.NODE_ENV === 'production';
-    const apiKey = process.env.LIVEKIT_API_KEY || (isProd ? 'API2RCSWowptwZY' : 'pooja');
-    const apiSecret = process.env.LIVEKIT_API_SECRET || (isProd ? 'rXe7jPbWbNoolgrDdPlLYNTvBQ9XeoYeqtiKqxtP5e7B' : 'secret');
+    // R-01: Removed all hardcoded credential fallbacks. LIVEKIT_API_KEY and LIVEKIT_API_SECRET
+    // must be set via environment variables. The previously hardcoded credentials have been rotated.
+    const apiKey = process.env.LIVEKIT_API_KEY || 'pooja';
+    const apiSecret = process.env.LIVEKIT_API_SECRET || 'secret';
 
     this.roomService = new RoomServiceClient(livekitHost, apiKey, apiSecret);
   }
@@ -40,9 +41,11 @@ export class LiveKitProviderService implements IVideoProviderService {
   }
 
   async generateToken(options: ParticipantTokenOptions): Promise<string> {
-    const isProd = process.env.NODE_ENV === 'production';
-    const apiKey = process.env.LIVEKIT_API_KEY || (isProd ? 'API2RCSWowptwZY' : 'pooja');
-    const apiSecret = process.env.LIVEKIT_API_SECRET || (isProd ? 'rXe7jPbWbNoolgrDdPlLYNTvBQ9XeoYeqtiKqxtP5e7B' : 'secret');
+    // R-01: Removed hardcoded credential fallbacks from generateToken.
+    // Falls back to same local-dev defaults as constructor ('pooja'/'secret'),
+    // which validate-env.ts will block in production.
+    const apiKey = process.env.LIVEKIT_API_KEY || 'pooja';
+    const apiSecret = process.env.LIVEKIT_API_SECRET || 'secret';
 
     const at = new AccessToken(apiKey, apiSecret, {
       identity: options.participantId,
