@@ -160,8 +160,8 @@ export function DevotionalEmojiBar({
   };
 
   return (
-    <div className="flex items-center justify-between gap-1 sm:gap-2 bg-obsidian-deep/80 border border-gold/20 rounded-2xl px-3 py-2 shadow-lg backdrop-blur-md">
-      <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-wider text-gold-soft mr-1">
+    <div className="flex items-center justify-between gap-1 sm:gap-2 bg-white dark:bg-obsidian-deep/80 border border-stone-200 dark:border-gold/20 rounded-2xl px-3 py-2 shadow-sm dark:shadow-lg backdrop-blur-md">
+      <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-wider text-stone-700 dark:text-gold-soft mr-1">
         Bhav Arpan:
       </span>
       <div className="flex items-center justify-between flex-1 gap-1">
@@ -170,7 +170,7 @@ export function DevotionalEmojiBar({
             key={emoji}
             type="button"
             onClick={() => sendReaction(emoji)}
-            className="flex-1 flex items-center justify-center text-xl sm:text-2xl p-1.5 rounded-xl hover:bg-gold/15 active:scale-130 transition transform hover:scale-115"
+            className="flex-1 flex items-center justify-center text-xl sm:text-2xl p-1.5 rounded-xl hover:bg-amber-500/10 dark:hover:bg-gold/15 active:scale-130 transition transform hover:scale-115"
             title={name}
             aria-label={name}
           >

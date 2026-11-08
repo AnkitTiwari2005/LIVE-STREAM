@@ -209,21 +209,21 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
-      <div className="relative w-full max-w-xl bg-obsidian-deep border border-gold/30 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-xl bg-white dark:bg-obsidian-deep border border-stone-200 dark:border-gold/30 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden">
         {/* Sacred ambient background glow */}
         <div className="mandala-bg absolute inset-0 opacity-20 pointer-events-none" />
 
-        <div className="relative z-10 flex items-center justify-between pb-4 border-b border-stone-800">
+        <div className="relative z-10 flex items-center justify-between pb-4 border-b border-stone-200 dark:border-stone-800">
           <div className="flex items-center gap-3">
             <CoinIcon size={32} />
             <div>
-              <h2 className="font-serif text-xl sm:text-2xl font-bold text-white">Recharge Sacred Coins</h2>
-              <p className="text-xs text-stone-400">5 Coins = 1 Minute of Auspicious Public Live Darshan</p>
+              <h2 className="font-serif text-xl sm:text-2xl font-bold text-stone-900 dark:text-white">Recharge Sacred Coins</h2>
+              <p className="text-xs text-stone-500 dark:text-stone-400">5 Coins = 1 Minute of Auspicious Public Live Darshan</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-full text-stone-400 hover:text-white hover:bg-stone-900 transition-colors"
+            className="p-2 rounded-full text-stone-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-900 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -258,7 +258,7 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
                     className={`relative p-4 rounded-2xl cursor-pointer transition-all border ${
                       isSelected
                         ? 'bg-gold/15 border-gold shadow-lg shadow-gold/25 ring-1 ring-gold/40'
-                        : 'bg-obsidian-soft border-gold/15 hover:border-gold/40'
+                        : 'bg-stone-50 dark:bg-obsidian-soft border-stone-200 dark:border-gold/15 hover:border-amber-400 dark:hover:border-gold/40'
                     }`}
                   >
                     {pkg.badge && (

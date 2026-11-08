@@ -135,36 +135,36 @@ export default function StreamerEarningsPage() {
         <div className="space-y-8">
           {/* KPI Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5 shadow-lg">
-              <span className="text-xs font-semibold text-stone-400 block mb-1">
+            <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl p-5 shadow-sm dark:shadow-lg">
+              <span className="text-xs font-semibold text-stone-600 dark:text-stone-400 block mb-1">
                 Net Earnings ({earnings?.panditSharePercentage || 85}% Share)
               </span>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-2xl font-black text-amber-400">
+                <span className="text-2xl font-black text-amber-600 dark:text-amber-400">
                   ₹{earnings ? earnings.netEarningsInr.toLocaleString('en-IN') : 0}
                 </span>
               </div>
-              <span className="text-[11px] text-emerald-400 font-medium mt-1 flex items-center gap-1">
+              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-1 flex items-center gap-1">
                 <ShieldCheck className="w-3.5 h-3.5" /> Direct Bank Payout Scheduled
               </span>
             </div>
 
-            <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5 shadow-lg">
-              <span className="text-xs font-semibold text-stone-400 block mb-1">Total Dakshina Received</span>
+            <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl p-5 shadow-sm dark:shadow-lg">
+              <span className="text-xs font-semibold text-stone-600 dark:text-stone-400 block mb-1">Total Dakshina Received</span>
               <div className="flex items-center gap-2 mt-1">
-                <DiyaIcon size={24} />
-                <span className="text-2xl font-black text-white">
+                <DiyaIcon size={24} className="text-amber-600 dark:text-amber-400" />
+                <span className="text-2xl font-black text-stone-900 dark:text-white">
                   ₹{earnings ? earnings.totalDakshinaInr.toLocaleString('en-IN') : 0}
                 </span>
               </div>
               <span className="text-[11px] text-stone-500 mt-1 block">From devout community offerings</span>
             </div>
 
-            <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5 shadow-lg">
-              <span className="text-xs font-semibold text-stone-400 block mb-1">Devotee Chanting Minutes</span>
+            <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl p-5 shadow-sm dark:shadow-lg">
+              <span className="text-xs font-semibold text-stone-600 dark:text-stone-400 block mb-1">Devotee Chanting Minutes</span>
               <div className="flex items-center gap-2 mt-1">
-                <Clock className="w-5 h-5 text-orange-400" />
-                <span className="text-2xl font-black text-orange-400">
+                <Clock className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                <span className="text-2xl font-black text-orange-600 dark:text-orange-400">
                   {earnings ? earnings.totalWatchMinutes : 0} mins
                 </span>
               </div>
@@ -173,24 +173,24 @@ export default function StreamerEarningsPage() {
               </span>
             </div>
 
-            <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5 shadow-lg">
-              <span className="text-xs font-semibold text-stone-400 block mb-1">Completed Ceremonies</span>
+            <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl p-5 shadow-sm dark:shadow-lg">
+              <span className="text-xs font-semibold text-stone-600 dark:text-stone-400 block mb-1">Completed Ceremonies</span>
               <div className="flex items-center gap-2 mt-1">
-                <Video className="w-5 h-5 text-stone-300" />
-                <span className="text-2xl font-black text-stone-100">{pastStreams.length}</span>
+                <Video className="w-5 h-5 text-stone-600 dark:text-stone-300" />
+                <span className="text-2xl font-black text-stone-900 dark:text-stone-100">{pastStreams.length}</span>
               </div>
               <span className="text-[11px] text-stone-500 mt-1 block">Live & private rituals</span>
             </div>
           </div>
 
           {/* Tab Navigation */}
-          <div className="flex items-center gap-2 border-b border-stone-800 pb-3">
+          <div className="flex items-center gap-2 border-b border-stone-200 dark:border-stone-800 pb-3">
             <button
               onClick={() => setActiveTab('dakshina')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                 activeTab === 'dakshina'
-                  ? 'bg-orange-600 text-white'
-                  : 'text-stone-400 hover:text-white hover:bg-stone-900'
+                  ? 'bg-orange-600 text-white shadow-sm'
+                  : 'text-stone-600 dark:text-stone-400 hover:text-stone-950 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-900'
               }`}
             >
               Devotee Dakshina ({earnings?.recentDakshina?.length || 0})
@@ -199,8 +199,8 @@ export default function StreamerEarningsPage() {
               onClick={() => setActiveTab('pastStreams')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                 activeTab === 'pastStreams'
-                  ? 'bg-orange-600 text-white'
-                  : 'text-stone-400 hover:text-white hover:bg-stone-900'
+                  ? 'bg-orange-600 text-white shadow-sm'
+                  : 'text-stone-600 dark:text-stone-400 hover:text-stone-950 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-900'
               }`}
             >
               Past Broadcasts ({pastStreams.length})
@@ -209,10 +209,10 @@ export default function StreamerEarningsPage() {
 
           {/* Tab Content: Devotee Dakshina */}
           {activeTab === 'dakshina' && (
-            <div className="bg-stone-900 border border-stone-800 rounded-2xl overflow-hidden shadow-xl">
-              <div className="p-4 bg-stone-950/60 border-b border-stone-800 flex items-center justify-between">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <DiyaIcon size={18} /> Recent Sacred Dakshina Offerings
+            <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl overflow-hidden shadow-sm dark:shadow-xl">
+              <div className="p-4 bg-stone-50 dark:bg-stone-950/60 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between">
+                <h3 className="text-sm font-bold text-stone-900 dark:text-white flex items-center gap-2">
+                  <DiyaIcon size={18} className="text-amber-600 dark:text-amber-400" /> Recent Sacred Dakshina Offerings
                 </h3>
                 <span className="text-xs text-stone-500 font-medium">85% Net Disbursal</span>
               </div>
@@ -263,10 +263,10 @@ export default function StreamerEarningsPage() {
 
           {/* Tab Content: Past Broadcasts */}
           {activeTab === 'pastStreams' && (
-            <div className="bg-stone-900 border border-stone-800 rounded-2xl overflow-hidden shadow-xl">
-              <div className="p-4 bg-stone-950/60 border-b border-stone-800 flex items-center justify-between">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Video className="w-4 h-4 text-orange-400" /> Completed Ritual Broadcasts
+            <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl overflow-hidden shadow-sm dark:shadow-xl">
+              <div className="p-4 bg-stone-50 dark:bg-stone-950/60 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between">
+                <h3 className="text-sm font-bold text-stone-900 dark:text-white flex items-center gap-2">
+                  <Video className="w-4 h-4 text-orange-600 dark:text-orange-400" /> Completed Ritual Broadcasts
                 </h3>
                 <span className="text-xs text-stone-500 font-medium">Recorded Session Ledger</span>
               </div>

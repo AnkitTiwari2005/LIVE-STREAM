@@ -39,29 +39,29 @@ export function WhatsAppShareModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="bg-obsidian-soft border border-gold/25 rounded-2xl max-w-md w-full p-6 shadow-2xl relative text-foreground">
+      <div className="bg-white dark:bg-obsidian-soft border border-stone-200 dark:border-gold/25 rounded-2xl max-w-md w-full p-6 shadow-2xl relative text-stone-900 dark:text-foreground">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-stone-400 hover:text-white"
+          className="absolute top-4 right-4 text-stone-400 hover:text-stone-900 dark:hover:text-white"
         >
           <X className="w-5 h-5" />
         </button>
 
         <div className="flex items-center gap-2 mb-4">
-          <Share2 className="w-5 h-5 text-green-500" />
-          <h3 className="text-lg font-bold text-foreground">Share Private Pooja Invitation</h3>
+          <Share2 className="w-5 h-5 text-green-600 dark:text-green-500" />
+          <h3 className="text-lg font-bold text-stone-900 dark:text-foreground">Share Private Pooja Invitation</h3>
         </div>
 
-        <p className="text-xs text-stone-400 mb-5 leading-relaxed">
+        <p className="text-xs text-stone-600 dark:text-stone-400 mb-5 leading-relaxed">
           For security, the join link and access password are split into two separate messages so passwords cannot be forwarded accidentally.
         </p>
 
         {/* Part 1: Join Link */}
-        <div className="bg-obsidian p-3.5 rounded-xl border border-gold/20 mb-4">
-          <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider block mb-1">
+        <div className="bg-stone-50 dark:bg-obsidian p-3.5 rounded-xl border border-stone-200 dark:border-gold/20 mb-4">
+          <span className="text-[11px] font-semibold text-stone-600 dark:text-stone-400 uppercase tracking-wider block mb-1">
             Part 1: Invitation & Join Link
           </span>
-          <p className="text-xs text-foreground font-mono break-all mb-3 bg-obsidian-soft p-2 rounded border border-gold/15">
+          <p className="text-xs text-stone-900 dark:text-foreground font-mono break-all mb-3 bg-white dark:bg-obsidian-soft p-2 rounded border border-stone-200 dark:border-gold/15">
             {joinUrl}
           </p>
           <div className="flex gap-2">
@@ -75,9 +75,9 @@ export function WhatsAppShareModal({
             </a>
             <button
               onClick={() => copyToClipboard(joinUrl, 'link')}
-              className="flex items-center gap-1 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs py-2 px-3 rounded-lg transition-colors"
+              className="flex items-center gap-1 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 border border-stone-200 dark:border-transparent text-xs py-2 px-3 rounded-lg transition-colors"
             >
-              {copiedLink ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+              {copiedLink ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
               {copiedLink ? 'Copied' : 'Copy'}
             </button>
           </div>
@@ -85,19 +85,19 @@ export function WhatsAppShareModal({
 
         {/* Part 2: Password (if configured) */}
         {password && (
-          <div className="bg-stone-950 p-3.5 rounded-xl border border-amber-900/40">
-            <span className="text-[11px] font-semibold text-amber-400 uppercase tracking-wider block mb-1 flex items-center gap-1">
+          <div className="bg-amber-50 dark:bg-stone-950 p-3.5 rounded-xl border border-amber-200 dark:border-amber-900/40">
+            <span className="text-[11px] font-semibold text-amber-800 dark:text-amber-400 uppercase tracking-wider block mb-1 flex items-center gap-1">
               <Lock className="w-3 h-3" /> Part 2: Secret Session Password
             </span>
-            <div className="flex items-center justify-between bg-stone-900 p-2 rounded mb-3">
-              <span className="text-sm font-mono text-amber-300 font-bold tracking-wider">
+            <div className="flex items-center justify-between bg-white dark:bg-stone-900 border border-amber-200 dark:border-transparent p-2 rounded mb-3">
+              <span className="text-sm font-mono text-amber-800 dark:text-amber-300 font-bold tracking-wider">
                 {password}
               </span>
               <button
                 onClick={() => copyToClipboard(password, 'pass')}
-                className="text-xs text-stone-400 hover:text-white flex items-center gap-1"
+                className="text-xs text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white flex items-center gap-1"
               >
-                {copiedPass ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedPass ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
                 {copiedPass ? 'Copied' : 'Copy'}
               </button>
             </div>

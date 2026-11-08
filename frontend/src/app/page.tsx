@@ -491,8 +491,8 @@ export default function HomePage() {
           {/* Right Column: Hero Featured Live Stream or Placeholder Card */}
           <div className="lg:col-span-5">
             {featuredStream ? (
-              <div className="on-photo relative rounded-3xl border border-gold/30 bg-gradient-to-b from-[#221810] to-obsidian p-3 shadow-[0_25px_70px_rgba(0,0,0,0.85)] group transition hover:border-gold/60">
-                <div className="relative aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden bg-black">
+              <div className="relative rounded-3xl border border-stone-200 dark:border-gold/30 bg-white dark:bg-gradient-to-b dark:from-[#221810] dark:to-obsidian p-3 shadow-xl dark:shadow-[0_25px_70px_rgba(0,0,0,0.85)] group transition hover:border-amber-400 dark:hover:border-gold/60">
+                <div className="on-photo video-overlay relative aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden bg-black">
                   <img
                     src={
                       featuredStream.thumbnailUrl ||
@@ -501,7 +501,7 @@ export default function HomePage() {
                     alt={featuredStream.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/40 to-transparent opacity-95" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-95" />
 
                   {/* Top Overlay Badges */}
                   <div className="absolute top-3.5 left-3.5 flex items-center gap-2">
@@ -521,13 +521,13 @@ export default function HomePage() {
 
                   {/* Bottom Overlay Title & Join CTA */}
                   <div className="absolute bottom-4 left-4 right-4">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-soft block mb-1">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300 block mb-1">
                       {featuredStream.category?.name || 'Live Aarti'}
                     </span>
                     <h3 className="font-serif text-xl sm:text-2xl font-bold text-white line-clamp-2 leading-snug">
                       {featuredStream.title}
                     </h3>
-                    <div className="mt-3.5 flex items-center justify-between pt-2 border-t border-stone-800/60">
+                    <div className="mt-3.5 flex items-center justify-between pt-2 border-t border-white/20">
                       <div className="flex items-center gap-2">
                         <PranamIcon size={16} />
                         <span className="text-xs font-semibold text-stone-200">
@@ -546,28 +546,28 @@ export default function HomePage() {
                 </div>
               </div>
             ) : (
-              <div className="on-photo relative rounded-3xl border border-gold/30 bg-gradient-to-b from-[#221810] to-obsidian p-4 sm:p-5 shadow-[0_25px_70px_rgba(0,0,0,0.85)] group transition hover:border-gold/60">
-                <div className="relative aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden bg-black flex flex-col justify-between p-4 sm:p-6 border border-gold/15">
+              <div className="relative rounded-3xl border border-stone-200 dark:border-gold/30 bg-white dark:bg-gradient-to-b dark:from-[#221810] dark:to-obsidian p-3 sm:p-4 shadow-xl dark:shadow-[0_25px_70px_rgba(0,0,0,0.85)] group transition hover:border-amber-400 dark:hover:border-gold/60">
+                <div className="relative aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden bg-gradient-to-br from-amber-50 via-orange-50/60 to-rose-50/40 dark:bg-black flex flex-col justify-between p-4 sm:p-6 border border-amber-200/70 dark:border-gold/15 shadow-inner">
                   <img
                     src="/images/photo-1681797849099-0053b1567d95.webp"
                     alt="Sanctum Repose"
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-40"
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-20 dark:opacity-40 mix-blend-multiply dark:mix-blend-normal"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/75 to-obsidian/60" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-white/95 via-white/70 to-transparent dark:from-obsidian dark:via-obsidian/75 dark:to-obsidian/60" />
 
                   {/* Top Overlay Badges */}
                   <div className="relative z-10 flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 rounded-full bg-black/85 backdrop-blur-md px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-200 border border-amber-400/35 shadow-md">
-                      <DiyaIcon size={14} className="text-amber-400" />
+                    <span className="flex items-center gap-1.5 rounded-full bg-amber-100/95 dark:bg-black/85 backdrop-blur-md px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-400/35 shadow-sm dark:shadow-md">
+                      <DiyaIcon size={14} className="text-amber-600 dark:text-amber-400" />
                       <span>Live Pooja Altar</span>
                     </span>
                     {nextUpcomingStream ? (
-                      <span className="flex items-center gap-1.5 rounded-full bg-black/85 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-amber-100 border border-amber-400/35 shadow-md">
-                        <Clock className="w-3 h-3 text-amber-400" />
+                      <span className="flex items-center gap-1.5 rounded-full bg-amber-100/95 dark:bg-black/85 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-amber-900 dark:text-amber-100 border border-amber-300 dark:border-amber-400/35 shadow-sm dark:shadow-md">
+                        <Clock className="w-3 h-3 text-amber-600 dark:text-amber-400" />
                         <span>Next: {new Date(nextUpcomingStream.scheduledAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} IST</span>
                       </span>
                     ) : (
-                      <span className="rounded-full bg-black/85 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-stone-200 border border-white/20 shadow-md">
+                      <span className="rounded-full bg-amber-100/95 dark:bg-black/85 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-amber-900 dark:text-stone-200 border border-amber-300 dark:border-white/20 shadow-sm dark:shadow-md">
                         <span>Verified Vedic Acharyas</span>
                       </span>
                     )}
@@ -575,28 +575,28 @@ export default function HomePage() {
 
                   {/* Center Sacred Diya & Message */}
                   <div className="relative z-10 text-center py-2 sm:py-3">
-                    <div className="w-14 h-14 mx-auto mb-2 rounded-2xl bg-gradient-to-b from-amber-500/10 to-transparent border border-gold/30 flex items-center justify-center shadow-[0_0_24px_rgba(245,158,11,0.25)]">
+                    <div className="w-14 h-14 mx-auto mb-2 rounded-2xl bg-amber-100/70 dark:bg-gradient-to-b dark:from-amber-500/10 dark:to-transparent border border-amber-300 dark:border-gold/30 flex items-center justify-center shadow-sm dark:shadow-[0_0_24px_rgba(245,158,11,0.25)]">
                       <img src="/logo.png" alt="Shubhdarshan" className="w-10 h-10 object-contain drop-shadow" />
                     </div>
-                    <h3 className="font-serif text-xl sm:text-2xl font-bold text-white tracking-tight">
+                    <h3 className="font-serif text-xl sm:text-2xl font-bold text-stone-900 dark:text-white tracking-tight">
                       Live Pooja Altar in Repose
                     </h3>
-                    <p className="text-xs text-stone-300 mt-1.5 max-w-sm mx-auto leading-relaxed">
+                    <p className="text-xs text-stone-600 dark:text-stone-300 mt-1.5 max-w-sm mx-auto leading-relaxed">
                       Verified Vedic Pandits stream live whenever they conduct sacred rituals, havan poojas, or astrological discourses. Active broadcasts will appear here in real time.
                     </p>
                     {nextUpcomingStream && (
-                      <div className="mt-2.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/85 backdrop-blur-md border border-amber-400/40 text-[11px] shadow-md">
-                        <span className="text-amber-400 font-bold uppercase tracking-wider text-[10px]">Upcoming:</span>
-                        <span className="font-bold text-white truncate max-w-[220px]">{nextUpcomingStream.title}</span>
+                      <div className="mt-2.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white dark:bg-black/85 backdrop-blur-md border border-amber-300 dark:border-amber-400/40 text-[11px] shadow-sm dark:shadow-md">
+                        <span className="text-amber-700 dark:text-amber-400 font-bold uppercase tracking-wider text-[10px]">Upcoming:</span>
+                        <span className="font-bold text-stone-900 dark:text-white truncate max-w-[220px]">{nextUpcomingStream.title}</span>
                       </div>
                     )}
                   </div>
 
                   {/* Bottom Action Footer */}
-                  <div className="relative z-10 pt-3 border-t border-white/15 flex items-center justify-between">
+                  <div className="relative z-10 pt-3 border-t border-amber-200/80 dark:border-white/15 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <PranamIcon size={16} className="text-amber-400" />
-                      <span className="text-xs font-semibold text-stone-200">
+                      <PranamIcon size={16} className="text-amber-600 dark:text-amber-400" />
+                      <span className="text-xs font-semibold text-stone-700 dark:text-stone-200">
                         85+ Verified Pandits
                       </span>
                     </div>
@@ -606,16 +606,16 @@ export default function HomePage() {
                           setSelectedSevaId(undefined);
                           setBookingModalOpen(true);
                         }}
-                        className="rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold px-3.5 py-1.5 text-xs shadow-lg transition-transform hover:scale-105 flex items-center gap-1.5"
+                        className="rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold px-3.5 py-1.5 text-xs shadow-md transition-transform hover:scale-105 flex items-center gap-1.5"
                       >
                         <DiyaIcon size={14} />
                         <span>Book a Pooja</span>
                       </button>
                       <Link
                         href="/schedule"
-                        className="rounded-full bg-black/80 hover:bg-black backdrop-blur-md border border-amber-400/35 text-amber-100 hover:text-white font-bold px-3 py-1.5 text-xs transition flex items-center gap-1 shadow-md"
+                        className="rounded-full bg-white dark:bg-black/80 hover:bg-stone-50 dark:hover:bg-black backdrop-blur-md border border-stone-300 dark:border-amber-400/35 text-stone-800 dark:text-amber-100 hover:text-stone-950 dark:hover:text-white font-bold px-3 py-1.5 text-xs transition flex items-center gap-1 shadow-sm dark:shadow-md"
                       >
-                        <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                        <Calendar className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                         <span>Schedule</span>
                       </Link>
                     </div>
@@ -632,26 +632,26 @@ export default function HomePage() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-gold"></span>
                   </span>
-                  <span className="text-xs uppercase tracking-widest font-extrabold text-gold-pale">
+                  <span className="text-xs uppercase tracking-widest font-extrabold text-stone-900 dark:text-gold-pale">
                     Worldwide Devotee Seva
                   </span>
                 </div>
-                <span className="text-[11px] text-stone-400 font-medium">Real-time offerings</span>
+                <span className="text-[11px] text-stone-500 dark:text-stone-400 font-medium">Real-time offerings</span>
               </div>
               <div className="space-y-2">
                 {LIVE_SEVA_ACTIVITIES.map((act, i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between text-xs py-1.5 px-3 rounded-xl bg-obsidian-soft border border-gold/15 hover:border-gold/30 transition-colors"
+                    className="flex items-center justify-between text-xs py-1.5 px-3 rounded-xl bg-white dark:bg-obsidian-soft border border-stone-200 dark:border-gold/15 hover:border-amber-500/40 dark:hover:border-gold/30 transition-colors shadow-sm"
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-6 h-6 rounded-full bg-gold/15 flex items-center justify-center text-gold text-[10px] font-bold shrink-0">
+                      <div className="w-6 h-6 rounded-full bg-amber-500/15 dark:bg-gold/15 flex items-center justify-center text-amber-700 dark:text-gold text-[10px] font-bold shrink-0">
                         {act.initials}
                       </div>
                       <div className="truncate">
-                        <span className="text-stone-200 font-semibold">{act.name}</span>
+                        <span className="text-stone-800 dark:text-stone-200 font-semibold">{act.name}</span>
                         <span className="text-stone-400 mx-1.5">•</span>
-                        <span className="text-gold-soft">{act.action}</span>
+                        <span className="text-amber-700 dark:text-gold-soft">{act.action}</span>
                       </div>
                     </div>
                     <span className="text-[10px] text-stone-400 shrink-0 ml-2 font-mono">{act.time}</span>
@@ -1103,7 +1103,7 @@ export default function HomePage() {
           {CURATED_PANDITS.map((p) => (
             <div
               key={p.name}
-              className="rounded-2xl bg-obsidian-soft border border-gold/15 overflow-hidden shadow-xl hover:border-gold/40 transition group"
+              className="rounded-2xl bg-white dark:bg-obsidian-soft border border-stone-200 dark:border-gold/15 overflow-hidden shadow-lg dark:shadow-xl hover:border-amber-400 dark:hover:border-gold/40 transition group"
             >
               <div className="relative aspect-square overflow-hidden bg-stone-900">
                 <img
@@ -1111,23 +1111,23 @@ export default function HomePage() {
                   alt={p.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-90" />
-                <div className="absolute top-3 right-3 rounded-full bg-black/60 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-gold-pale flex items-center gap-1 border border-gold/20">
-                  <Star className="w-3 h-3 fill-gold text-gold" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90" />
+                <div className="absolute top-3 right-3 rounded-full bg-black/75 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold !text-amber-200 flex items-center gap-1 border border-amber-400/30 shadow-md">
+                  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                   <span>{p.rating}</span>
                 </div>
                 <div className="absolute bottom-3 left-3 right-3">
-                  <div className="flex items-center gap-1 text-gold-pale font-bold text-xs">
-                    <VerifiedPanditBadge size={16} />
-                    <span>Gurukul Verified</span>
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-amber-400/40 !text-amber-200 font-bold text-xs shadow-md">
+                    <VerifiedPanditBadge size={14} />
+                    <span className="!text-amber-200">Gurukul Verified</span>
                   </div>
                 </div>
               </div>
 
               <div className="p-4 space-y-2">
-                <h3 className="font-serif text-lg font-bold text-white">{p.name}</h3>
-                <p className="text-[11px] text-stone-400 leading-tight">{p.title}</p>
-                <div className="flex items-center justify-between text-[11px] text-gold-soft pt-1">
+                <h3 className="font-serif text-lg font-bold text-stone-900 dark:text-white">{p.name}</h3>
+                <p className="text-[11px] text-stone-600 dark:text-stone-400 leading-tight">{p.title}</p>
+                <div className="flex items-center justify-between text-[11px] text-amber-700 dark:text-gold-soft pt-1">
                   <span>{p.experience}</span>
                   <span>{p.reviews} sevas conducted</span>
                 </div>
@@ -1135,17 +1135,17 @@ export default function HomePage() {
                   {p.specialties.map((s) => (
                     <span
                       key={s}
-                      className="text-[9px] font-bold uppercase tracking-wider text-stone-300 bg-obsidian border border-gold/15 px-2 py-0.5 rounded"
+                      className="text-[9px] font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-obsidian border border-stone-200 dark:border-gold/15 px-2 py-0.5 rounded"
                     >
                       {s}
                     </span>
                   ))}
                 </div>
 
-                <div className="pt-3 border-t border-gold/10 flex items-center justify-between gap-2">
+                <div className="pt-3 border-t border-stone-200 dark:border-gold/10 flex items-center justify-between gap-2">
                   <Link
                     href={`/pandit/${p.slug}`}
-                    className="flex-1 py-1.5 px-3 bg-gold/15 hover:bg-gold/25 border border-gold/30 rounded-xl text-center text-xs font-bold text-gold-pale transition"
+                    className="flex-1 py-1.5 px-3 bg-amber-50 dark:bg-gold/15 hover:bg-amber-100 dark:hover:bg-gold/25 border border-amber-300 dark:border-gold/30 rounded-xl text-center text-xs font-bold text-amber-900 dark:text-gold-pale transition"
                   >
                     View Profile &amp; Sevas
                   </Link>

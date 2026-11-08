@@ -226,13 +226,13 @@ export function Navbar() {
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="flex items-center justify-center 2xl:justify-start gap-1.5 h-8 w-8 2xl:w-auto 2xl:px-2.5 rounded-full border border-gold/25 bg-obsidian-soft hover:bg-gold/10 text-stone-400 hover:text-gold-pale text-xs font-medium transition shadow-sm"
+              className="flex items-center justify-center 2xl:justify-start gap-1.5 h-8 w-8 2xl:w-auto 2xl:px-2.5 rounded-full border border-stone-200 dark:border-gold/25 bg-white dark:bg-obsidian-soft hover:bg-stone-50 dark:hover:bg-gold/10 text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-gold-pale text-xs font-medium transition shadow-sm"
               aria-label="Search pooja and aarti"
               title="Search pooja, pandit, or aarti (/)"
             >
-              <Search className="w-3.5 h-3.5 text-gold-soft shrink-0" />
-              <span className="hidden 2xl:inline text-stone-300">Search...</span>
-              <kbd className="hidden 2xl:inline px-1 py-0.5 rounded text-[10px] bg-obsidian text-stone-400 border border-gold/20 font-mono">/</kbd>
+              <Search className="w-3.5 h-3.5 text-amber-600 dark:text-gold-soft shrink-0" />
+              <span className="hidden 2xl:inline text-stone-600 dark:text-stone-300">Search...</span>
+              <kbd className="hidden 2xl:inline px-1 py-0.5 rounded text-[10px] bg-stone-100 dark:bg-obsidian text-stone-600 dark:text-stone-400 border border-stone-200 dark:border-gold/20 font-mono">/</kbd>
             </button>
 
             {/* Theme Toggle Button (Surya Day / Sacred Night) */}
@@ -279,22 +279,22 @@ export function Navbar() {
                 <div className="relative shrink-0" ref={dropdownRef}>
                   <button
                     onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                    className="whitespace-nowrap shrink-0 flex items-center gap-1.5 text-xs font-semibold text-stone-200 hover:text-gold-pale transition h-8 px-2.5 rounded-full bg-obsidian-soft border border-gold/20 hover:border-gold/40 max-w-[115px] sm:max-w-[130px]"
+                    className="whitespace-nowrap shrink-0 flex items-center gap-1.5 text-xs font-semibold text-stone-700 dark:text-stone-200 hover:text-stone-950 dark:hover:text-gold-pale transition h-8 px-2.5 rounded-full bg-white dark:bg-obsidian-soft border border-stone-200 dark:border-gold/20 hover:border-amber-400 dark:hover:border-gold/40 max-w-[115px] sm:max-w-[130px] shadow-sm"
                     title="Devotee & Broadcaster Menu"
                   >
-                    <PranamIcon size={13} className="text-gold shrink-0" />
+                    <PranamIcon size={13} className="text-amber-600 dark:text-gold shrink-0" />
                     <span className="truncate">{user.name?.split(' ')[0] || user.name}</span>
-                    <ChevronDown className="w-3 h-3 text-gold-soft shrink-0" />
+                    <ChevronDown className="w-3 h-3 text-stone-500 dark:text-gold-soft shrink-0" />
                   </button>
 
                   {userDropdownOpen && (
-                    <div className="navbar-user-dropdown absolute right-0 top-full mt-2 w-64 rounded-2xl p-2.5 z-[9999] text-xs">
+                    <div className="navbar-user-dropdown absolute right-0 top-full mt-2 w-64 rounded-2xl p-2.5 z-[9999] text-xs bg-white dark:bg-obsidian-soft border border-stone-200 dark:border-gold/25 shadow-2xl">
                       {/* Opaque user info header */}
-                      <div className="user-dropdown-header p-3 rounded-xl bg-[#241a12] border border-gold/25 mb-2 shadow-sm">
-                        <div className="user-name font-bold text-white text-sm truncate">{user.name}</div>
+                      <div className="user-dropdown-header p-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:bg-[#241a12] border border-amber-200 dark:border-gold/25 mb-2 shadow-sm">
+                        <div className="user-name font-bold text-stone-900 dark:text-white text-sm truncate">{user.name}</div>
                         <div className="flex items-center justify-between mt-1">
-                          <span className="text-[10px] text-gold font-bold uppercase tracking-wider">{user.role || 'DEVOTEE'}</span>
-                          <span className="text-[10px] text-stone-300 font-medium">{coinBalance !== null ? `${coinBalance} Coins` : ''}</span>
+                          <span className="text-[10px] text-amber-700 dark:text-gold font-bold uppercase tracking-wider">{user.role || 'DEVOTEE'}</span>
+                          <span className="text-[10px] text-stone-600 dark:text-stone-300 font-medium">{coinBalance !== null ? `${coinBalance} Coins` : ''}</span>
                         </div>
                       </div>
 
@@ -378,7 +378,7 @@ export function Navbar() {
                             setUserDropdownOpen(false);
                             handleLogout();
                           }}
-                          className="logout-btn w-full flex items-center gap-2.5 px-3 py-2 text-red-400 hover:bg-red-950/40 rounded-xl transition font-medium mt-1.5 pt-2 border-t border-stone-800/80"
+                          className="logout-btn w-full flex items-center gap-2.5 px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition font-medium mt-1.5 pt-2 border-t border-stone-200 dark:border-stone-800/80"
                         >
                           <LogOut className="w-4 h-4 text-red-400 shrink-0" />
                           <span>Log Out</span>
@@ -441,20 +441,20 @@ export function Navbar() {
 
         {/* Mobile Dropdown Panel */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-gold/15 bg-obsidian-deep/95 backdrop-blur-xl px-5 py-6 space-y-4">
+          <div className="lg:hidden border-t border-stone-200 dark:border-gold/15 bg-white/95 dark:bg-obsidian-deep/95 backdrop-blur-xl px-5 py-6 space-y-4 shadow-xl">
             <nav className="flex flex-col space-y-3 text-sm">
               <Link
                 href="/"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between text-stone-200 hover:text-gold-pale font-medium py-1.5 border-b border-stone-800/60"
+                className="flex items-center justify-between text-stone-700 dark:text-stone-200 hover:text-stone-950 dark:hover:text-gold-pale font-medium py-1.5 border-b border-stone-200 dark:border-stone-800/60"
               >
-                <span className="flex items-center gap-2 font-semibold text-white">Live Darshan</span>
+                <span className="flex items-center gap-2 font-semibold text-stone-900 dark:text-white">Live Darshan</span>
                 <span className="live-dot" />
               </Link>
               <Link
                 href="/pooja"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2 text-gold-pale hover:text-gold font-medium py-1.5 border-b border-stone-800/60"
+                className="flex items-center gap-2 text-amber-700 dark:text-gold-pale hover:text-amber-900 dark:hover:text-gold font-medium py-1.5 border-b border-stone-200 dark:border-stone-800/60"
               >
                 <DiyaIcon size={16} />
                 <span>Book Pooja &amp; Kathas</span>
@@ -462,28 +462,28 @@ export function Navbar() {
               <Link
                 href="/#upcoming"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-stone-200 hover:text-gold-pale font-medium py-1.5 border-b border-stone-800/60"
+                className="text-stone-700 dark:text-stone-200 hover:text-stone-950 dark:hover:text-gold-pale font-medium py-1.5 border-b border-stone-200 dark:border-stone-800/60"
               >
                 Pooja Schedule
               </Link>
               <Link
                 href="/#pandits"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-stone-200 hover:text-gold-pale font-medium py-1.5 border-b border-stone-800/60"
+                className="text-stone-700 dark:text-stone-200 hover:text-stone-950 dark:hover:text-gold-pale font-medium py-1.5 border-b border-stone-200 dark:border-stone-800/60"
               >
                 Verified Pandits Directory
               </Link>
               <Link
                 href="/about"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-stone-200 hover:text-gold-pale font-medium py-1.5 border-b border-stone-800/60"
+                className="text-stone-700 dark:text-stone-200 hover:text-stone-950 dark:hover:text-gold-pale font-medium py-1.5 border-b border-stone-200 dark:border-stone-800/60"
               >
                 About Our Heritage
               </Link>
               <Link
                 href="/faq"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-stone-200 hover:text-gold-pale font-medium py-1.5 border-b border-stone-800/60"
+                className="text-stone-700 dark:text-stone-200 hover:text-stone-950 dark:hover:text-gold-pale font-medium py-1.5 border-b border-stone-200 dark:border-stone-800/60"
               >
                 FAQ &amp; Support
               </Link>

@@ -961,11 +961,43 @@ html:not([data-theme="dark"]) .bg-stone-900:not(.on-photo):not([class*="aspect-"
 html[data-theme="light"] .bg-stone-900:not(.on-photo):not([class*="aspect-"]):not(.player-container),
 html:not([data-theme="dark"]) .bg-stone-950:not(.on-photo):not([class*="aspect-"]):not(.player-container),
 html[data-theme="light"] .bg-stone-950:not(.on-photo):not([class*="aspect-"]):not(.player-container),
-html:not([data-theme="dark"]) [class*="bg-stone-9"]:not(.on-photo):not([class*="aspect-"]):not(.player-container),
-html[data-theme="light"] [class*="bg-stone-9"]:not(.on-photo):not([class*="aspect-"]):not(.player-container) {
+html:not([data-theme="dark"]) [class*="bg-stone-9"]:not(.on-photo):not([class*="aspect-"]):not(.player-container):not(.video-overlay),
+html[data-theme="light"] [class*="bg-stone-9"]:not(.on-photo):not([class*="aspect-"]):not(.player-container):not(.video-overlay),
+html:not([data-theme="dark"]) [class*="bg-obsidian"]:not(.on-photo):not([class*="aspect-"]):not(.player-container):not(.video-overlay),
+html[data-theme="light"] [class*="bg-obsidian"]:not(.on-photo):not([class*="aspect-"]):not(.player-container):not(.video-overlay) {
   background-color: #ffffff !important;
   border-color: #eadada !important;
-  color: #1c1414 !important;
+}
+
+/* Festival Announcement Banner: Always festive bright text in both light and dark themes */
+html:not([data-theme="dark"]) [role="region"][aria-label="Festival announcement"] span,
+html[data-theme="light"] [role="region"][aria-label="Festival announcement"] span {
+  color: #ffffff !important;
+}
+html:not([data-theme="dark"]) [role="region"][aria-label="Festival announcement"] span.font-extrabold,
+html[data-theme="light"] [role="region"][aria-label="Festival announcement"] span.font-extrabold {
+  color: #fef3c7 !important;
+}
+
+/* Video Player Overlays (Rendered directly over black WebRTC video box) */
+html:not([data-theme="dark"]) .video-overlay,
+html[data-theme="light"] .video-overlay,
+html:not([data-theme="dark"]) .video-overlay h1,
+html:not([data-theme="dark"]) .video-overlay h2,
+html:not([data-theme="dark"]) .video-overlay h3,
+html:not([data-theme="dark"]) .video-overlay p,
+html:not([data-theme="dark"]) .video-overlay span:not(.text-stone-950),
+html[data-theme="light"] .video-overlay h1,
+html[data-theme="light"] .video-overlay h2,
+html[data-theme="light"] .video-overlay h3,
+html[data-theme="light"] .video-overlay p,
+html[data-theme="light"] .video-overlay span:not(.text-stone-950) {
+  color: #ffffff !important;
+}
+
+html:not([data-theme="dark"]) .video-overlay .text-stone-950,
+html[data-theme="light"] .video-overlay .text-stone-950 {
+  color: #0c0a09 !important;
 }
 
 html:not([data-theme="dark"]) .bg-stone-800:not(.on-photo):not([class*="aspect-"]):not(.player-container),
@@ -1019,6 +1051,22 @@ html[data-theme="light"] [class*="bg-white"] .text-gold-pale,
 html[data-theme="light"] [class*="bg-stone-"] .text-gold-pale,
 html[data-theme="light"] .bg-obsidian-soft .text-gold-pale {
   color: #81070f !important;
+}
+
+/* Video Overlay and Photo Overlay Text Protection */
+html:not([data-theme="dark"]) .video-overlay [class*="text-amber-"],
+html[data-theme="light"] .video-overlay [class*="text-amber-"] {
+  color: #fde68a !important;
+}
+
+html:not([data-theme="dark"]) .video-overlay [class*="text-stone-"],
+html[data-theme="light"] .video-overlay [class*="text-stone-"] {
+  color: #e7e5e4 !important;
+}
+
+html:not([data-theme="dark"]) [class*="aspect-"] [class*="!text-amber-200"],
+html[data-theme="light"] [class*="aspect-"] [class*="!text-amber-200"] {
+  color: #fde68a !important;
 }
 
 /* Inputs in Light Mode */

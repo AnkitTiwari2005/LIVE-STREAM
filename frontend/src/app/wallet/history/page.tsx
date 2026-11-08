@@ -171,7 +171,7 @@ export default function WalletHistoryPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-obsidian border-b border-stone-800/80 text-stone-400 font-bold uppercase tracking-wider text-[10px]">
+                <thead className="bg-stone-100 dark:bg-obsidian border-b border-stone-200 dark:border-stone-800/80 text-stone-600 dark:text-stone-400 font-bold uppercase tracking-wider text-[10px]">
                   <tr>
                     <th className="py-3.5 px-5">Date &amp; Time</th>
                     <th className="py-3.5 px-4">Transaction Details</th>
@@ -179,12 +179,12 @@ export default function WalletHistoryPage() {
                     <th className="py-3.5 px-4 text-right">Balance After</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-stone-800/60 text-stone-300">
+                <tbody className="divide-y divide-stone-200 dark:divide-stone-800/60 text-stone-700 dark:text-stone-300">
                   {transactions.map((tx) => {
                     const isCredit = tx.type === 'CREDIT';
                     return (
-                      <tr key={tx.id} className="hover:bg-stone-900/40 transition">
-                        <td className="py-4 px-5 whitespace-nowrap text-stone-400">
+                      <tr key={tx.id} className="hover:bg-stone-50 dark:hover:bg-stone-900/40 transition">
+                        <td className="py-4 px-5 whitespace-nowrap text-stone-500 dark:text-stone-400">
                           {new Date(tx.createdAt).toLocaleString([], {
                             dateStyle: 'medium',
                             timeStyle: 'short',
@@ -194,7 +194,9 @@ export default function WalletHistoryPage() {
                           <div className="flex items-center gap-2.5">
                             <span
                               className={`p-1.5 rounded-full ${
-                                isCredit ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-stone-900 text-gold-soft border border-stone-800'
+                                isCredit
+                                  ? 'bg-emerald-100 text-emerald-700 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-400 dark:border-emerald-800'
+                                  : 'bg-amber-100 text-amber-700 border border-amber-300 dark:bg-stone-900 dark:text-gold-soft dark:border-stone-800'
                               }`}
                             >
                               {isCredit ? (

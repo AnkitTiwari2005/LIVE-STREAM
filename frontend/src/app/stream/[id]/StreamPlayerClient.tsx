@@ -375,10 +375,10 @@ export default function StreamPlayerClient() {
       )}
 
       {streamEnded ? (
-        <div className="w-full aspect-video max-h-[600px] bg-stone-900 border border-stone-800 rounded-3xl flex flex-col items-center justify-center p-8 text-center shadow-2xl">
-          <PranamIcon size={56} className="mb-4 text-gold" />
-          <h2 className="text-2xl font-bold text-white mb-2">Sacred Broadcast Concluded</h2>
-          <p className="text-stone-400 text-sm max-w-md mb-4">
+        <div className="w-full aspect-video max-h-[600px] bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-3xl flex flex-col items-center justify-center p-8 text-center shadow-xl">
+          <PranamIcon size={56} className="mb-4 text-amber-500" />
+          <h2 className="text-2xl font-bold text-stone-900 dark:text-white mb-2">Sacred Broadcast Concluded</h2>
+          <p className="text-stone-600 dark:text-stone-400 text-sm max-w-md mb-4">
             This live broadcast by {stream?.streamer?.name || 'the Pandit'} is not active or has concluded. May divine blessings be upon you.
           </p>
 
@@ -422,23 +422,23 @@ export default function StreamPlayerClient() {
             <div className="relative w-full aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl border border-gold/20 flex items-center justify-center">
               {/* Scheduled Stream Announcement Overlay */}
               {isScheduled ? (
-                <div className="absolute inset-0 z-40 bg-gradient-to-br from-obsidian-deep via-obsidian to-[#241a12] flex flex-col items-center justify-center p-6 text-center">
-                  <div className="p-4 bg-gold/10 border border-gold/30 rounded-3xl text-gold mb-4 shadow-xl">
+                <div className="video-overlay absolute inset-0 z-40 bg-gradient-to-br from-black/90 via-black/85 to-[#241a12]/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center text-white">
+                  <div className="p-4 bg-amber-500/15 border border-amber-400/40 rounded-3xl text-amber-300 mb-4 shadow-xl">
                     <Calendar className="w-10 h-10" />
                   </div>
-                  <span className="text-xs uppercase font-extrabold tracking-widest text-gold mb-1">
+                  <span className="text-xs uppercase font-extrabold tracking-widest text-amber-300 mb-1">
                     Scheduled Sacred Pooja
                   </span>
-                  <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white mb-2 max-w-md">
+                  <h3 className="font-serif text-2xl sm:text-3xl font-bold !text-white mb-2 max-w-md">
                     {stream?.title}
                   </h3>
                   {stream?.scheduledAt && (
-                    <p className="text-stone-300 text-sm font-semibold mb-3 bg-obsidian-soft/90 border border-gold/20 px-4 py-1.5 rounded-full inline-flex items-center gap-2 shadow">
-                      <Clock className="w-4 h-4 text-gold" />
+                    <p className="!text-stone-200 text-sm font-semibold mb-3 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-1.5 rounded-full inline-flex items-center gap-2 shadow">
+                      <Clock className="w-4 h-4 text-amber-300" />
                       {new Date(stream.scheduledAt).toLocaleString([], { dateStyle: 'full', timeStyle: 'short' })}
                     </p>
                   )}
-                  <p className="text-stone-400 text-xs max-w-sm mb-6 leading-relaxed">
+                  <p className="!text-stone-300 text-xs max-w-sm mb-6 leading-relaxed">
                     This live pooja broadcast has not commenced yet. Set an email reminder to receive sacred darshan as soon as the Pandit goes live.
                   </p>
                   <div className="flex flex-col sm:flex-row items-center gap-3">
@@ -461,17 +461,17 @@ export default function StreamPlayerClient() {
                     </button>
                     <button
                       onClick={handleShare}
-                      className="px-5 py-3 bg-obsidian-soft hover:bg-stone-800 text-stone-200 text-xs font-semibold rounded-full border border-gold/20 transition"
+                      className="px-5 py-3 bg-white/10 hover:bg-white/20 !text-white text-xs font-semibold rounded-full border border-white/25 transition shadow-sm backdrop-blur-sm"
                     >
                       Share Pooja Link
                     </button>
                   </div>
                 </div>
               ) : isZeroBalance ? (
-                <div className="absolute inset-0 z-40 bg-obsidian-deep/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
-                  <OmIcon size={52} className="mb-3" />
-                  <h3 className="font-serif text-2xl font-bold text-white mb-1">Auspicious Darshan Paused</h3>
-                  <p className="text-stone-400 text-xs sm:text-sm max-w-sm mb-6 leading-relaxed">
+                <div className="video-overlay absolute inset-0 z-40 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center text-white">
+                  <OmIcon size={52} className="mb-3 text-amber-400" />
+                  <h3 className="font-serif text-2xl font-bold !text-white mb-1">Auspicious Darshan Paused</h3>
+                  <p className="!text-stone-300 text-xs sm:text-sm max-w-sm mb-6 leading-relaxed">
                     You have utilized your available darshan coins. Please recharge your wallet to continue receiving live blessings.
                   </p>
                   <div className="flex flex-col sm:flex-row items-center gap-3">
@@ -491,20 +491,20 @@ export default function StreamPlayerClient() {
                   </div>
                 </div>
               ) : loginRequired ? (
-                <div className="absolute inset-0 z-40 bg-gradient-to-b from-stone-950/95 via-stone-900/95 to-black/98 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
+                <div className="video-overlay absolute inset-0 z-40 bg-gradient-to-b from-black/90 via-black/85 to-black/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center text-white">
                   <div className="relative mb-3">
                     <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-amber-600/30 via-gold/20 to-orange-500/30 flex items-center justify-center border border-gold/40 shadow-[0_0_30px_rgba(245,158,11,0.35)] animate-pulse">
                       <DiyaIcon size={32} />
                     </div>
                   </div>
-                  <span className="text-[11px] uppercase tracking-widest font-extrabold text-gold mb-1">
+                  <span className="text-[11px] uppercase tracking-widest font-extrabold !text-amber-300 mb-1">
                     Live Temple Darshan
                   </span>
-                  <h3 className="font-serif text-xl sm:text-2xl font-bold text-white mb-2 max-w-md">
+                  <h3 className="font-serif text-xl sm:text-2xl font-bold !text-white mb-2 max-w-md">
                     Sign in to Receive Live Blessings
                   </h3>
-                  <p className="text-stone-300 text-xs sm:text-sm max-w-md mb-5 leading-relaxed">
-                    Create a free account to claim <span className="text-gold font-bold">100 Free Sacred Coins</span> (20 mins of complimentary live darshan) and chant prayers in live chat.
+                  <p className="!text-stone-200 text-xs sm:text-sm max-w-md mb-5 leading-relaxed">
+                    Create a free account to claim <span className="!text-amber-300 font-bold">100 Free Sacred Coins</span> (20 mins of complimentary live darshan) and chant prayers in live chat.
                   </p>
                   <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto px-4">
                     <Link
@@ -512,17 +512,17 @@ export default function StreamPlayerClient() {
                       className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-amber-500 via-gold to-orange-500 hover:from-amber-400 hover:to-orange-400 text-stone-950 font-extrabold rounded-full shadow-[0_0_24px_rgba(245,158,11,0.4)] flex items-center justify-center gap-2 text-xs sm:text-sm transition-transform active:scale-95"
                     >
                       <Gift className="w-4 h-4 text-stone-950" />
-                      <span>Claim 100 Free Coins</span>
+                      <span className="!text-stone-950 font-extrabold">Claim 100 Free Coins</span>
                     </Link>
                     <Link
                       href={`/login?redirect=/stream/${id}`}
-                      className="w-full sm:w-auto px-5 py-2.5 bg-stone-900/90 hover:bg-stone-800 text-stone-200 hover:text-white text-xs sm:text-sm font-semibold rounded-full border border-gold/30 flex items-center justify-center gap-2 transition"
+                      className="w-full sm:w-auto px-5 py-2.5 bg-white/10 hover:bg-white/20 !text-white text-xs sm:text-sm font-bold rounded-full border border-white/30 flex items-center justify-center gap-2 transition backdrop-blur-sm shadow-md"
                     >
-                      <LogIn className="w-4 h-4 text-gold" />
-                      <span>Sign In to Watch</span>
+                      <LogIn className="w-4 h-4 !text-amber-300" />
+                      <span className="!text-white font-bold">Sign In to Watch</span>
                     </Link>
                   </div>
-                  <span className="text-[10px] text-stone-500 mt-3 font-medium">
+                  <span className="text-[10px] !text-stone-300 mt-3 font-medium">
                     100% Free registration • Instant darshan access
                   </span>
                 </div>
@@ -579,15 +579,15 @@ export default function StreamPlayerClient() {
                 <div className="absolute top-4 right-4 z-30 flex items-center gap-2">
                   <button
                     onClick={() => setTopupModalOpen(true)}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 bg-obsidian/85 backdrop-blur-md border border-gold/40 hover:border-gold rounded-full text-xs font-bold text-gold-pale shadow-xl transition-all"
+                    className="video-overlay flex items-center gap-1.5 px-3.5 py-1.5 bg-black/85 backdrop-blur-md border border-amber-400/40 hover:border-amber-400 rounded-full text-xs font-bold !text-amber-200 shadow-xl transition-all"
                     title="Click to recharge coins"
                   >
                     <CoinIcon size={16} />
-                    <span className="text-gold font-extrabold">{remainingCoins} Coins</span>
-                    <span className="text-stone-300 text-[10px] font-normal">
+                    <span className="!text-amber-300 font-extrabold">{remainingCoins} Coins</span>
+                    <span className="!text-stone-200 text-[10px] font-normal">
                       ({availableMinutes}m left)
                     </span>
-                    <span className="text-gold ml-0.5 font-black">+</span>
+                    <span className="!text-amber-300 ml-0.5 font-black">+</span>
                   </button>
                 </div>
               )}
@@ -632,29 +632,29 @@ export default function StreamPlayerClient() {
                             SCHEDULED
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-stone-900 text-stone-400 border border-stone-800">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-stone-100 dark:bg-stone-900 text-stone-600 dark:text-stone-400 border border-stone-200 dark:border-stone-800">
                             CONCLUDED
                           </span>
                         )}
-                        <span className="text-xs text-gold-soft font-semibold uppercase tracking-wider">
+                        <span className="text-xs text-amber-700 dark:text-gold-soft font-semibold uppercase tracking-wider">
                           {stream.category?.name}
                         </span>
                         {remainingCoins !== null && (
-                          <span className="text-[11px] font-bold text-gold-pale bg-gold/10 border border-gold/25 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <span className="text-[11px] font-bold text-amber-900 dark:text-gold-pale bg-amber-500/10 dark:bg-gold/10 border border-amber-500/25 dark:border-gold/25 px-2 py-0.5 rounded-full flex items-center gap-1">
                             <CoinIcon size={12} /> 5 Coins / min
                           </span>
                         )}
                       </div>
-                      <h1 className="font-serif text-lg sm:text-2xl font-bold text-white tracking-tight leading-snug">
+                      <h1 className="font-serif text-lg sm:text-2xl font-bold text-stone-900 dark:text-white tracking-tight leading-snug">
                         {stream.title}
                       </h1>
                       {/* Priest info line */}
-                      <div className="flex items-center gap-2 mt-1 text-xs text-stone-300">
-                        <span className="font-semibold text-stone-200 flex items-center gap-1">
+                      <div className="flex items-center gap-2 mt-1 text-xs text-stone-600 dark:text-stone-300">
+                        <span className="font-semibold text-stone-800 dark:text-stone-200 flex items-center gap-1">
                           <PranamIcon size={14} /> {stream.streamer?.name}
                         </span>
                         {stream.streamer?.streamerProfile?.isVerifiedBadge && (
-                          <span className="inline-flex items-center gap-1 text-gold-soft font-bold text-[11px]" title="Verified Vedic Pandit">
+                          <span className="inline-flex items-center gap-1 text-amber-700 dark:text-gold-soft font-bold text-[11px]" title="Verified Vedic Pandit">
                             <VerifiedPanditBadge size={14} /> Verified
                           </span>
                         )}
@@ -672,13 +672,13 @@ export default function StreamPlayerClient() {
                       </button>
                       <button
                         onClick={handleShare}
-                        className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 sm:py-2.5 bg-obsidian border border-gold/20 hover:bg-stone-900 text-stone-200 text-xs font-semibold rounded-full transition-all shadow"
+                        className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 sm:py-2.5 bg-white dark:bg-obsidian border border-stone-200 dark:border-gold/20 hover:bg-stone-50 dark:hover:bg-stone-900 text-stone-700 dark:text-stone-200 text-xs font-semibold rounded-full transition-all shadow-sm"
                       >
-                        <Share2 className="w-3.5 h-3.5 text-gold-soft" /> Share
+                        <Share2 className="w-3.5 h-3.5 text-amber-600 dark:text-gold-soft" /> Share
                       </button>
                       <button
                         onClick={() => setReportModalOpen(true)}
-                        className="flex items-center gap-1 px-2.5 sm:px-3 py-2 sm:py-2.5 bg-obsidian border border-gold/20 hover:border-red-500/50 hover:text-red-400 text-stone-400 text-xs font-semibold rounded-full transition-all shadow"
+                        className="flex items-center gap-1 px-2.5 sm:px-3 py-2 sm:py-2.5 bg-white dark:bg-obsidian border border-stone-200 dark:border-gold/20 hover:border-red-500/50 hover:text-red-500 dark:hover:text-red-400 text-stone-500 dark:text-stone-400 text-xs font-semibold rounded-full transition-all shadow-sm"
                         title="Report this broadcast to moderators"
                       >
                         <Flag className="w-3.5 h-3.5" />
@@ -692,13 +692,13 @@ export default function StreamPlayerClient() {
                 </div>
 
                 {/* 2. Mobile Tab Switcher (Visible only on mobile/tablet < lg) */}
-                <div className="lg:hidden flex items-center bg-stone-900/90 p-1 rounded-2xl border border-gold/20 shadow-inner">
+                <div className="lg:hidden flex items-center bg-stone-100 dark:bg-stone-900/90 p-1 rounded-2xl border border-stone-200 dark:border-gold/20 shadow-inner">
                   <button
                     onClick={() => setMobileTab('chat')}
                     className={`flex-1 py-2 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all ${
                       mobileTab === 'chat'
-                        ? 'bg-gold text-stone-950 shadow-md font-extrabold'
-                        : 'text-stone-400 hover:text-stone-200'
+                        ? 'bg-gold text-white dark:text-stone-950 shadow-md font-extrabold'
+                        : 'text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-200'
                     }`}
                   >
                     <MessageSquare className="w-3.5 h-3.5" />
@@ -708,8 +708,8 @@ export default function StreamPlayerClient() {
                     onClick={() => setMobileTab('details')}
                     className={`flex-1 py-2 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all ${
                       mobileTab === 'details'
-                        ? 'bg-gold text-stone-950 shadow-md font-extrabold'
-                        : 'text-stone-400 hover:text-stone-200'
+                        ? 'bg-gold text-white dark:text-stone-950 shadow-md font-extrabold'
+                        : 'text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-200'
                     }`}
                   >
                     <Info className="w-3.5 h-3.5" />
@@ -718,31 +718,31 @@ export default function StreamPlayerClient() {
                 </div>
 
                 {/* 3. Detailed Information Section (Shown on mobile when 'details' tab selected, ALWAYS visible on desktop) */}
-                <div className={`${mobileTab === 'details' ? 'block' : 'hidden lg:block'} bg-obsidian-soft border border-gold/15 rounded-2xl p-4 sm:p-5 shadow-lg space-y-3`}>
-                  <h3 className="font-serif text-base font-bold text-white flex items-center gap-2">
+                <div className={`${mobileTab === 'details' ? 'block' : 'hidden lg:block'} bg-white dark:bg-obsidian-soft border border-stone-200 dark:border-gold/15 rounded-2xl p-4 sm:p-5 shadow-sm dark:shadow-lg space-y-3`}>
+                  <h3 className="font-serif text-base font-bold text-stone-900 dark:text-white flex items-center gap-2">
                     <OmIcon size={18} /> Sacred Pooja Description
                   </h3>
                   {stream.description ? (
-                    <p className="text-xs sm:text-sm text-stone-300 leading-relaxed whitespace-pre-line">
+                    <p className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 leading-relaxed whitespace-pre-line">
                       {stream.description}
                     </p>
                   ) : (
                     <p className="text-xs text-stone-500 italic">No additional description provided for this pooja.</p>
                   )}
 
-                  <div className="pt-3 border-t border-stone-800/80 flex items-center justify-between text-xs text-stone-300">
+                  <div className="pt-3 border-t border-stone-200 dark:border-stone-800/80 flex items-center justify-between text-xs text-stone-600 dark:text-stone-300">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-stone-100 flex items-center gap-1.5">
+                      <span className="font-semibold text-stone-900 dark:text-stone-100 flex items-center gap-1.5">
                         <PranamIcon size={16} /> Presided by {stream.streamer?.name}
                       </span>
                       {stream.streamer?.streamerProfile?.isVerifiedBadge && (
-                        <span className="inline-flex items-center gap-1 text-gold-soft font-bold" title="Verified Vedic Pandit">
+                        <span className="inline-flex items-center gap-1 text-amber-700 dark:text-gold-soft font-bold" title="Verified Vedic Pandit">
                           <VerifiedPanditBadge size={16} /> Verified
                         </span>
                       )}
                     </div>
-                    <span className="flex items-center gap-1 text-stone-400 font-medium">
-                      <Users className="w-3.5 h-3.5 text-gold" /> Live Devotees
+                    <span className="flex items-center gap-1 text-stone-500 dark:text-stone-400 font-medium">
+                      <Users className="w-3.5 h-3.5 text-amber-600 dark:text-gold" /> Live Devotees
                     </span>
                   </div>
                 </div>
@@ -781,30 +781,30 @@ export default function StreamPlayerClient() {
       {/* Sacred Broadcast Moderation Report Modal (B-26) */}
       {reportModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#1c140d] border border-gold/30 rounded-3xl p-6 max-w-md w-full shadow-2xl relative text-xs">
+          <div className="bg-white dark:bg-[#1c140d] border border-stone-200 dark:border-gold/30 rounded-3xl p-6 max-w-md w-full shadow-2xl relative text-xs">
             <button
               onClick={() => setReportModalOpen(false)}
-              className="absolute top-4 right-4 text-stone-400 hover:text-white p-1"
+              className="absolute top-4 right-4 text-stone-400 hover:text-stone-900 dark:hover:text-white p-1"
             >
               <X className="w-4 h-4" />
             </button>
 
-            <div className="flex items-center gap-2 mb-4 text-amber-400 font-bold">
+            <div className="flex items-center gap-2 mb-4 text-amber-600 dark:text-amber-400 font-bold">
               <Flag className="w-4 h-4" />
-              <span className="text-sm text-white">Report Sacred Darshan Broadcast</span>
+              <span className="text-sm text-stone-900 dark:text-white">Report Sacred Darshan Broadcast</span>
             </div>
 
-            <p className="text-stone-300 mb-4 leading-relaxed">
+            <p className="text-stone-600 dark:text-stone-300 mb-4 leading-relaxed">
               Help maintain sacred dignity and reverence. Reports are reviewed by platform administrators within 2 hours.
             </p>
 
             <form onSubmit={handleReportSubmit} className="space-y-4">
               <div>
-                <label className="block font-semibold text-stone-200 mb-1.5">Primary Reason</label>
+                <label className="block font-semibold text-stone-700 dark:text-stone-200 mb-1.5">Primary Reason</label>
                 <select
                   value={reportReason}
                   onChange={(e) => setReportReason(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-obsidian border border-gold/20 text-stone-200 focus:outline-none focus:border-gold"
+                  className="w-full p-2.5 rounded-xl bg-stone-50 dark:bg-obsidian border border-stone-300 dark:border-gold/20 text-stone-900 dark:text-stone-200 focus:outline-none focus:border-amber-500 dark:focus:border-gold"
                 >
                   <option value="Inappropriate Content / Conduct">Inappropriate Content or Conduct</option>
                   <option value="Harassment or Hate Speech">Harassment or Hate Speech</option>
@@ -815,13 +815,13 @@ export default function StreamPlayerClient() {
               </div>
 
               <div>
-                <label className="block font-semibold text-stone-200 mb-1.5">Additional Details (Optional)</label>
+                <label className="block font-semibold text-stone-700 dark:text-stone-200 mb-1.5">Additional Details (Optional)</label>
                 <textarea
                   rows={3}
                   value={reportDetails}
                   onChange={(e) => setReportDetails(e.target.value)}
                   placeholder="Describe specific timestamps or details to help moderators..."
-                  className="w-full p-2.5 rounded-xl bg-obsidian border border-gold/20 text-stone-200 focus:outline-none focus:border-gold resize-none"
+                  className="w-full p-2.5 rounded-xl bg-stone-50 dark:bg-obsidian border border-stone-300 dark:border-gold/20 text-stone-900 dark:text-stone-200 focus:outline-none focus:border-amber-500 dark:focus:border-gold resize-none"
                 />
               </div>
 
@@ -829,7 +829,7 @@ export default function StreamPlayerClient() {
                 <button
                   type="button"
                   onClick={() => setReportModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-stone-700 text-stone-300 hover:bg-stone-800 font-semibold"
+                  className="px-4 py-2 rounded-xl border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 font-semibold"
                 >
                   Cancel
                 </button>

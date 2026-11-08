@@ -220,12 +220,12 @@ export function SearchPalette({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-xl rounded-2xl sm:rounded-3xl border border-gold/25 bg-obsidian-deep/95 text-stone-100 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+        className="w-full max-w-xl rounded-2xl sm:rounded-3xl border border-stone-200 dark:border-gold/25 bg-white dark:bg-obsidian-deep/95 text-stone-900 dark:text-stone-100 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search Input Bar */}
-        <div className="relative flex items-center px-4 py-3.5 border-b border-gold/20 bg-stone-950/70">
-          <Search className="w-5 h-5 text-gold shrink-0 mr-3" />
+        <div className="relative flex items-center px-4 py-3.5 border-b border-stone-200 dark:border-gold/20 bg-stone-50 dark:bg-stone-950/70">
+          <Search className="w-5 h-5 text-amber-600 dark:text-gold shrink-0 mr-3" />
           <input
             ref={inputRef}
             type="search"
@@ -236,12 +236,12 @@ export function SearchPalette({
             }}
             onKeyDown={handleKeyDown}
             placeholder="Search aarti, pooja, pandit, temple, or coins..."
-            className="w-full bg-transparent text-sm sm:text-base text-white placeholder-stone-400 focus:outline-none"
+            className="w-full bg-transparent text-sm sm:text-base text-stone-900 dark:text-white placeholder-stone-400 dark:placeholder-stone-500 focus:outline-none"
           />
           {query && (
             <button
               onClick={() => setQuery('')}
-              className="p-1 text-stone-400 hover:text-white rounded-full transition"
+              className="p-1 text-stone-400 hover:text-stone-900 dark:hover:text-white rounded-full transition"
             >
               <X className="w-4 h-4" />
             </button>
@@ -249,20 +249,20 @@ export function SearchPalette({
         </div>
 
         {/* Results Header */}
-        <div className="flex items-center justify-between px-4 py-2 text-[11px] font-semibold text-stone-400 border-b border-stone-800/60 bg-stone-900/40">
+        <div className="flex items-center justify-between px-4 py-2 text-[11px] font-semibold text-stone-500 dark:text-stone-400 border-b border-stone-200 dark:border-stone-800/60 bg-stone-100/70 dark:bg-stone-900/40">
           <span>{query.trim() ? `${filteredItems.length} results found` : 'Popular sanctums & sevas'}</span>
           <span className="hidden sm:inline-flex items-center gap-1.5 font-mono text-[10px]">
-            <kbd className="px-1.5 py-0.5 rounded border border-stone-700 bg-stone-800 text-stone-300">↑↓</kbd> navigate
-            <kbd className="px-1.5 py-0.5 rounded border border-stone-700 bg-stone-800 text-stone-300">↵</kbd> select
-            <kbd className="px-1.5 py-0.5 rounded border border-stone-700 bg-stone-800 text-stone-300">esc</kbd> close
+            <kbd className="px-1.5 py-0.5 rounded border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300">↑↓</kbd> navigate
+            <kbd className="px-1.5 py-0.5 rounded border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300">↵</kbd> select
+            <kbd className="px-1.5 py-0.5 rounded border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300">esc</kbd> close
           </span>
         </div>
 
         {/* Results List */}
         <div className="max-h-[380px] overflow-y-auto p-2 space-y-1">
           {filteredItems.length === 0 ? (
-            <div className="py-8 text-center text-xs text-stone-400 space-y-1">
-              <p className="font-bold text-white text-sm">No rituals found for &ldquo;{query}&rdquo;</p>
+            <div className="py-8 text-center text-xs text-stone-500 dark:text-stone-400 space-y-1">
+              <p className="font-bold text-stone-900 dark:text-white text-sm">No rituals found for &ldquo;{query}&rdquo;</p>
               <p>Try searching &ldquo;aarti&rdquo;, &ldquo;kashi&rdquo;, &ldquo;pandit&rdquo;, or &ldquo;coins&rdquo;.</p>
             </div>
           ) : (
@@ -275,31 +275,31 @@ export function SearchPalette({
                   onMouseEnter={() => setSelectedIndex(index)}
                   className={`flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-all ${
                     isSelected
-                      ? 'bg-gold/15 border border-gold/40 text-white'
-                      : 'hover:bg-stone-900/70 text-stone-200 border border-transparent'
+                      ? 'bg-amber-100 dark:bg-gold/15 border border-amber-300 dark:border-gold/40 text-stone-900 dark:text-white shadow-sm'
+                      : 'hover:bg-stone-100 dark:hover:bg-stone-900/70 text-stone-700 dark:text-stone-200 border border-transparent'
                   }`}
                 >
                   <img
                     src={item.image}
                     alt={item.title}
-                    className="w-11 h-11 rounded-lg object-cover shrink-0 border border-gold/20"
+                    className="w-11 h-11 rounded-lg object-cover shrink-0 border border-stone-200 dark:border-gold/20"
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-xs sm:text-sm truncate text-white">
+                      <span className="font-bold text-xs sm:text-sm truncate text-stone-900 dark:text-white">
                         {item.title}
                       </span>
-                      <span className="text-[10px] font-bold text-gold-pale bg-gold/10 px-2 py-0.5 rounded-full border border-gold/20 shrink-0">
+                      <span className="text-[10px] font-bold text-amber-800 dark:text-gold-pale bg-amber-50 dark:bg-gold/10 px-2 py-0.5 rounded-full border border-amber-200 dark:border-gold/20 shrink-0">
                         {item.category}
                       </span>
                     </div>
-                    <p className="text-[11px] text-stone-400 truncate mt-0.5">
+                    <p className="text-[11px] text-stone-500 dark:text-stone-400 truncate mt-0.5">
                       {item.subtitle}
                     </p>
                   </div>
                   <ChevronRight
                     className={`w-4 h-4 shrink-0 transition-transform ${
-                      isSelected ? 'text-gold translate-x-0.5' : 'text-stone-500'
+                      isSelected ? 'text-amber-600 dark:text-gold translate-x-0.5' : 'text-stone-400 dark:text-stone-500'
                     }`}
                   />
                 </div>
@@ -309,7 +309,7 @@ export function SearchPalette({
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-2.5 bg-stone-950/80 border-t border-gold/20 text-center text-[11px] text-stone-400">
+        <div className="px-4 py-2.5 bg-stone-50 dark:bg-stone-950/80 border-t border-stone-200 dark:border-gold/20 text-center text-[11px] text-stone-500 dark:text-stone-400">
           Sub-second live devotional broadcasts &amp; verified pandits worldwide
         </div>
       </div>

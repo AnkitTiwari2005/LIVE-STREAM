@@ -235,8 +235,8 @@ export default function AdminConsolePage() {
             onClick={() => setActiveTab(tab.key as any)}
             className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
               activeTab === tab.key
-                ? 'bg-orange-600 text-white'
-                : 'text-stone-400 hover:text-white hover:bg-stone-900'
+                ? 'bg-orange-600 text-white shadow-sm'
+                : 'text-stone-600 dark:text-stone-400 hover:text-stone-950 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-900'
             }`}
           >
             {tab.label}
@@ -247,29 +247,29 @@ export default function AdminConsolePage() {
       {/* Tab 1: KPI Overview */}
       {activeTab === 'kpi' && stats && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl">
-            <span className="text-[11px] text-stone-400 uppercase font-semibold block">Total Users</span>
-            <span className="text-2xl font-extrabold text-white mt-1 block">{stats.totalUsers}</span>
+          <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
+            <span className="text-[11px] text-stone-500 dark:text-stone-400 uppercase font-semibold block">Total Users</span>
+            <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{stats.totalUsers}</span>
           </div>
-          <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl">
-            <span className="text-[11px] text-orange-400 uppercase font-semibold block">Approved Pandits</span>
-            <span className="text-2xl font-extrabold text-white mt-1 block">{stats.totalStreamers}</span>
+          <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
+            <span className="text-[11px] text-orange-600 dark:text-orange-400 uppercase font-semibold block">Approved Pandits</span>
+            <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{stats.totalStreamers}</span>
           </div>
-          <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl">
-            <span className="text-[11px] text-red-400 uppercase font-semibold block">Live Right Now</span>
-            <span className="text-2xl font-extrabold text-white mt-1 block">{stats.activeLiveStreams}</span>
+          <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
+            <span className="text-[11px] text-red-600 dark:text-red-400 uppercase font-semibold block">Live Right Now</span>
+            <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{stats.activeLiveStreams}</span>
           </div>
-          <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl">
-            <span className="text-[11px] text-stone-400 uppercase font-semibold block">Total Broadcasts</span>
-            <span className="text-2xl font-extrabold text-white mt-1 block">{stats.totalStreams}</span>
+          <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
+            <span className="text-[11px] text-stone-500 dark:text-stone-400 uppercase font-semibold block">Total Broadcasts</span>
+            <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{stats.totalStreams}</span>
           </div>
-          <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl">
-            <span className="text-[11px] text-amber-400 uppercase font-semibold block">Pending KYC</span>
-            <span className="text-2xl font-extrabold text-white mt-1 block">{stats.pendingKyc}</span>
+          <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
+            <span className="text-[11px] text-amber-600 dark:text-amber-400 uppercase font-semibold block">Pending KYC</span>
+            <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{stats.pendingKyc}</span>
           </div>
-          <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl">
-            <span className="text-[11px] text-rose-400 uppercase font-semibold block">Open Reports</span>
-            <span className="text-2xl font-extrabold text-white mt-1 block">{stats.openReports}</span>
+          <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
+            <span className="text-[11px] text-rose-600 dark:text-rose-400 uppercase font-semibold block">Open Reports</span>
+            <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{stats.openReports}</span>
           </div>
         </div>
       )}
