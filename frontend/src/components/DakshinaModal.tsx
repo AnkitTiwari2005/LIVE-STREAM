@@ -162,7 +162,7 @@ export const DakshinaModal: React.FC<DakshinaModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-lg bg-stone-900 border border-stone-800 rounded-3xl p-6 shadow-2xl text-stone-100 max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-w-lg bg-obsidian-soft border border-gold/30 rounded-3xl p-6 shadow-2xl text-foreground max-h-[90vh] overflow-y-auto">
         <button
           onClick={handleReset}
           className="absolute top-5 right-5 text-stone-400 hover:text-white p-1 rounded-full hover:bg-stone-800 transition"

@@ -942,3 +942,90 @@ html[data-theme="light"] .navbar-user-dropdown .logout-btn:hover {
   background-color: #fee2e2 !important;
   color: #b91c1c !important;
 }
+
+/* 8. Comprehensive Light Mode Surface Overrides (Never Dark in Light Theme) */
+html:not([data-theme="dark"]) .bg-stone-900:not(.on-photo):not([class*="aspect-"]):not(.player-container),
+html[data-theme="light"] .bg-stone-900:not(.on-photo):not([class*="aspect-"]):not(.player-container),
+html:not([data-theme="dark"]) .bg-stone-950:not(.on-photo):not([class*="aspect-"]):not(.player-container),
+html[data-theme="light"] .bg-stone-950:not(.on-photo):not([class*="aspect-"]):not(.player-container),
+html:not([data-theme="dark"]) [class*="bg-stone-9"]:not(.on-photo):not([class*="aspect-"]):not(.player-container),
+html[data-theme="light"] [class*="bg-stone-9"]:not(.on-photo):not([class*="aspect-"]):not(.player-container) {
+  background-color: #ffffff !important;
+  border-color: #eadada !important;
+  color: #1c1414 !important;
+}
+
+html:not([data-theme="dark"]) .bg-stone-800:not(.on-photo):not([class*="aspect-"]):not(.player-container),
+html[data-theme="light"] .bg-stone-800:not(.on-photo):not([class*="aspect-"]):not(.player-container) {
+  background-color: #fde8e9 !important;
+  color: #81070f !important;
+  border-color: #fca5a5 !important;
+}
+
+html:not([data-theme="dark"]) [class*="border-stone-8"]:not(.on-photo):not([class*="aspect-"]):not(.player-container),
+html[data-theme="light"] [class*="border-stone-8"]:not(.on-photo):not([class*="aspect-"]):not(.player-container),
+html:not([data-theme="dark"]) [class*="border-stone-7"]:not(.on-photo):not([class*="aspect-"]):not(.player-container),
+html[data-theme="light"] [class*="border-stone-7"]:not(.on-photo):not([class*="aspect-"]):not(.player-container) {
+  border-color: #eadada !important;
+}
+
+/* Inputs in Light Mode */
+html:not([data-theme="dark"]) input:is(.bg-stone-900, .bg-stone-950, .bg-obsidian),
+html[data-theme="light"] input:is(.bg-stone-900, .bg-stone-950, .bg-obsidian),
+html:not([data-theme="dark"]) select:is(.bg-stone-900, .bg-stone-950, .bg-obsidian),
+html[data-theme="light"] select:is(.bg-stone-900, .bg-stone-950, .bg-obsidian),
+html:not([data-theme="dark"]) textarea:is(.bg-stone-900, .bg-stone-950, .bg-obsidian),
+html[data-theme="light"] textarea:is(.bg-stone-900, .bg-stone-950, .bg-obsidian) {
+  background-color: #ffffff !important;
+  color: #1c1414 !important;
+  border-color: #e5d7d7 !important;
+}
+
+/* 9. Light Mode Devotional Toast Notifications */
+html:not([data-theme="dark"]) .sd-toast,
+html[data-theme="light"] .sd-toast {
+  background-color: rgba(255, 255, 255, 0.98) !important;
+  color: #1c1414 !important;
+  border: 1px solid #f0a9ae !important;
+  box-shadow: 0 16px 40px rgba(129, 7, 15, 0.16) !important;
+}
+
+html:not([data-theme="dark"]) .sd-toast-success,
+html[data-theme="light"] .sd-toast-success {
+  background-color: #ffffff !important;
+  color: #81070f !important;
+  border: 1px solid #fca5a5 !important;
+  box-shadow: 0 16px 40px rgba(200, 16, 46, 0.15) !important;
+}
+
+html:not([data-theme="dark"]) .sd-toast-error,
+html[data-theme="light"] .sd-toast-error {
+  background-color: #ffffff !important;
+  color: #991b1b !important;
+  border: 1px solid #fecaca !important;
+  box-shadow: 0 16px 40px rgba(220, 38, 38, 0.15) !important;
+}
+
+html:not([data-theme="dark"]) .sd-toast-info,
+html[data-theme="light"] .sd-toast-info {
+  background-color: #ffffff !important;
+  color: #1c1414 !important;
+  border: 1px solid #f0a9ae !important;
+  box-shadow: 0 16px 40px rgba(129, 7, 15, 0.14) !important;
+}
+
+html:not([data-theme="dark"]) .sd-toast p,
+html[data-theme="light"] .sd-toast p {
+  color: #1c1414 !important;
+}
+
+html:not([data-theme="dark"]) .sd-toast button,
+html[data-theme="light"] .sd-toast button {
+  color: #78716c !important;
+}
+
+html:not([data-theme="dark"]) .sd-toast button:hover,
+html[data-theme="light"] .sd-toast button:hover {
+  background-color: #fde8e9 !important;
+  color: #c8102e !important;
+}

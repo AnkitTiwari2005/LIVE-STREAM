@@ -59,33 +59,33 @@ export default function ContactPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Contact Info Cards (Col 1) */}
         <div className="space-y-4">
-          <div className="p-5 bg-stone-900 border border-stone-800 rounded-3xl shadow-lg">
+          <div className="p-5 bg-obsidian-soft border border-gold/20 rounded-3xl shadow-lg">
             <div className="w-10 h-10 rounded-xl bg-orange-600/20 text-orange-400 flex items-center justify-center mb-3">
               <Mail className="w-5 h-5" />
             </div>
-            <h3 className="text-sm font-bold text-white mb-1">Email Support</h3>
+            <h3 className="text-sm font-bold text-foreground mb-1">Email Support</h3>
             <p className="text-xs text-stone-400 mb-2">For devotee queries, refunds, and general assistance:</p>
-            <a href="mailto:support@shubhdarshan.com" className="text-xs font-semibold text-orange-400 hover:underline">
+            <a href="mailto:support@shubhdarshan.com" className="text-xs font-semibold text-gold-pale hover:underline">
               support@shubhdarshan.com
             </a>
           </div>
 
-          <div className="p-5 bg-stone-900 border border-stone-800 rounded-3xl shadow-lg">
+          <div className="p-5 bg-obsidian-soft border border-gold/20 rounded-3xl shadow-lg">
             <div className="w-10 h-10 rounded-xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center mb-3">
               <Phone className="w-5 h-5" />
             </div>
-            <h3 className="text-sm font-bold text-white mb-1">Devotee Support Desk</h3>
+            <h3 className="text-sm font-bold text-foreground mb-1">Devotee Support Desk</h3>
             <p className="text-xs text-stone-400 mb-2">Instant assistance during live streams & rituals:</p>
             <span className="text-xs font-semibold text-emerald-400">
               +91 11 4019 7800
             </span>
           </div>
 
-          <div className="p-5 bg-stone-900 border border-stone-800 rounded-3xl shadow-lg">
+          <div className="p-5 bg-obsidian-soft border border-gold/20 rounded-3xl shadow-lg">
             <div className="w-10 h-10 rounded-xl bg-amber-600/20 text-amber-400 flex items-center justify-center mb-3">
               <MapPin className="w-5 h-5" />
             </div>
-            <h3 className="text-sm font-bold text-white mb-1">Registered Office</h3>
+            <h3 className="text-sm font-bold text-foreground mb-1">Registered Office</h3>
             <p className="text-xs text-stone-400">
               Shubhdarshan Devotional Media Pvt. Ltd.<br />
               Suite 402, Sacred Heights, Barakhamba Road, Connaught Place,<br />
@@ -96,7 +96,7 @@ export default function ContactPage() {
 
         {/* Support Ticket Form (Col 2 & 3) */}
         <div className="md:col-span-2">
-          <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 sm:p-10 shadow-2xl relative">
+          <div className="bg-obsidian-soft border border-gold/20 rounded-3xl p-6 sm:p-10 shadow-2xl relative">
             {submitted ? (
               <div className="py-12 text-center">
                 <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4">

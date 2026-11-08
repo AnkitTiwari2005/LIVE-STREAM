@@ -427,19 +427,19 @@ export default function AccountPage() {
             </div>
 
             {/* Wallet Shortcut */}
-            <div className="mt-4 p-4 bg-gradient-to-r from-amber-950/40 to-stone-950 rounded-2xl border border-amber-800/40 flex items-center justify-between">
+            <div className="mt-4 p-4 bg-gradient-to-r from-gold/15 via-obsidian-soft to-obsidian rounded-2xl border border-gold/30 flex items-center justify-between shadow-md">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400">
+                <div className="p-2 rounded-xl bg-gold/20 text-gold-pale border border-gold/30">
                   <CoinIcon size={20} />
                 </div>
                 <div>
-                  <span className="text-xs font-semibold text-amber-200 block">Sacred Coin Wallet</span>
+                  <span className="text-xs font-semibold text-foreground block">Sacred Coin Wallet</span>
                   <span className="text-xs text-stone-400">View transaction history or recharge coins</span>
                 </div>
               </div>
               <Link
                 href="/wallet/history"
-                className="inline-flex items-center gap-1 text-xs font-bold text-amber-400 hover:text-amber-300 transition"
+                className="inline-flex items-center gap-1 text-xs font-bold text-gold-pale hover:text-gold transition"
               >
                 View Ledger <ArrowRight className="w-3.5 h-3.5" />
               </Link>
@@ -519,8 +519,10 @@ export default function AccountPage() {
                         : 'Pandit Unavailable'}
                     </span>
                     <span
-                      className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                        isSelected ? 'bg-obsidian/25 text-obsidian' : 'bg-stone-800 text-gold-soft'
+                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full transition-colors ${
+                        isSelected
+                          ? 'bg-white/25 text-white'
+                          : 'bg-gold/15 text-gold-pale border border-gold/25'
                       }`}
                     >
                       {count}
@@ -635,7 +637,7 @@ export default function AccountPage() {
                           </div>
 
                           {/* Pandit & Dakshina Summary */}
-                          <div className="lg:col-span-5 rounded-xl bg-obsidian/90 border border-stone-800 p-3.5 flex items-center justify-between gap-3">
+                          <div className="lg:col-span-5 rounded-xl bg-obsidian-soft border border-gold/25 p-3.5 flex items-center justify-between gap-3 shadow-sm">
                             <div className="flex items-center gap-2.5 min-w-0">
                               <img
                                 src={b.panditAvatar || '/images/photo-1543934776-32d1cc654abb.webp'}
@@ -778,10 +780,10 @@ export default function AccountPage() {
           </div>
 
             {/* Two-Factor Authentication (2FA) */}
-            <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 sm:p-8 shadow-xl">
+            <div className="bg-obsidian-soft border border-gold/25 rounded-3xl p-6 sm:p-8 shadow-xl">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
                     <Shield className="w-5 h-5 text-emerald-400" /> Two-Factor Authentication (2FA)
                   </h2>
                   <p className="text-xs text-stone-400 mt-0.5">
@@ -811,14 +813,14 @@ export default function AccountPage() {
                 <button
                   onClick={handleStart2FA}
                   disabled={twoFaLoading}
-                  className="px-5 py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-200 font-semibold rounded-xl text-xs transition border border-stone-700"
+                  className="px-5 py-2.5 bg-gold/15 hover:bg-gold/25 text-gold-pale border border-gold/30 font-semibold rounded-xl text-xs transition"
                 >
                   {twoFaLoading ? 'Generating QR...' : 'Enable Two-Factor Authentication'}
                 </button>
               )}
 
               {twoFaData && (
-                <div className="mt-4 p-5 bg-stone-950 rounded-2xl border border-stone-800 space-y-4">
+                <div className="mt-4 p-5 bg-obsidian rounded-2xl border border-gold/25 space-y-4">
                   <div className="flex flex-col sm:flex-row items-center gap-6">
                     <img
                       src={twoFaData.qrCode}
@@ -826,10 +828,10 @@ export default function AccountPage() {
                       className="w-40 h-40 rounded-xl border border-stone-700 bg-white p-2"
                     />
                     <div className="space-y-2 text-xs text-stone-300">
-                      <p className="font-semibold text-white">Step 1: Scan with Authenticator</p>
+                      <p className="font-semibold text-foreground">Step 1: Scan with Authenticator</p>
                       <p>Scan this QR code using Google Authenticator, 1Password, or Microsoft Authenticator.</p>
-                      <p className="font-semibold text-white pt-2">Emergency Backup Codes:</p>
-                      <div className="grid grid-cols-2 gap-1.5 font-mono text-[11px] text-amber-400 bg-stone-900 p-2 rounded-lg border border-stone-800">
+                      <p className="font-semibold text-foreground pt-2">Emergency Backup Codes:</p>
+                      <div className="grid grid-cols-2 gap-1.5 font-mono text-[11px] text-gold-pale bg-obsidian-soft p-2 rounded-lg border border-gold/20">
                         {twoFaData.backupCodes.map((c, i) => (
                           <span key={i}>{c}</span>
                         ))}
@@ -845,12 +847,12 @@ export default function AccountPage() {
                       value={totpInput}
                       onChange={(e) => setTotpInput(e.target.value)}
                       placeholder="Enter 6-digit code"
-                      className="flex-1 px-3 py-2 bg-stone-900 border border-stone-800 rounded-xl text-sm text-white font-mono tracking-widest focus:outline-none focus:border-orange-500"
+                      className="flex-1 px-3 py-2 bg-obsidian border border-gold/25 rounded-xl text-sm text-foreground font-mono tracking-widest focus:outline-none focus:border-gold"
                     />
                     <button
                       type="submit"
                       disabled={twoFaLoading || totpInput.length !== 6}
-                      className="px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-xs font-bold transition disabled:opacity-50"
+                      className="px-4 py-2 bg-gold hover:bg-gold-deep text-obsidian rounded-xl text-xs font-bold transition disabled:opacity-50"
                     >
                       {twoFaLoading ? 'Verifying...' : 'Activate 2FA'}
                     </button>
@@ -860,7 +862,7 @@ export default function AccountPage() {
             </div>
 
             {/* DPDP Act 2023 Compliance & Data Deletion */}
-            <div className="bg-stone-900 border border-red-950/60 rounded-3xl p-6 sm:p-8 shadow-xl">
+            <div className="bg-obsidian-soft border border-red-500/30 rounded-3xl p-6 sm:p-8 shadow-xl">
               <h2 className="text-lg font-bold text-red-400 flex items-center gap-2 mb-1">
                 <Trash2 className="w-5 h-5" /> Data Privacy & Account Erasure
               </h2>

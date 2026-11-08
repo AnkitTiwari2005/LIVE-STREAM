@@ -38,8 +38,8 @@ export function WhatsAppShareModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-      <div className="bg-stone-900 border border-stone-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+      <div className="bg-obsidian-soft border border-gold/25 rounded-2xl max-w-md w-full p-6 shadow-2xl relative text-foreground">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-stone-400 hover:text-white"
@@ -49,7 +49,7 @@ export function WhatsAppShareModal({
 
         <div className="flex items-center gap-2 mb-4">
           <Share2 className="w-5 h-5 text-green-500" />
-          <h3 className="text-lg font-bold text-white">Share Private Pooja Invitation</h3>
+          <h3 className="text-lg font-bold text-foreground">Share Private Pooja Invitation</h3>
         </div>
 
         <p className="text-xs text-stone-400 mb-5 leading-relaxed">
@@ -57,11 +57,11 @@ export function WhatsAppShareModal({
         </p>
 
         {/* Part 1: Join Link */}
-        <div className="bg-stone-950 p-3.5 rounded-xl border border-stone-800 mb-4">
+        <div className="bg-obsidian p-3.5 rounded-xl border border-gold/20 mb-4">
           <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider block mb-1">
             Part 1: Invitation & Join Link
           </span>
-          <p className="text-xs text-stone-200 font-mono break-all mb-3 bg-stone-900 p-2 rounded">
+          <p className="text-xs text-foreground font-mono break-all mb-3 bg-obsidian-soft p-2 rounded border border-gold/15">
             {joinUrl}
           </p>
           <div className="flex gap-2">

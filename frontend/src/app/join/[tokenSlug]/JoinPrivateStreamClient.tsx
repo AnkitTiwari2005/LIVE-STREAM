@@ -253,7 +253,7 @@ export default function JoinPrivateStreamClient() {
             </div>
 
             {/* Stream Metadata & Pandit Info Card */}
-            <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5 shadow-lg">
+            <div className="bg-obsidian-soft border border-gold/25 rounded-2xl p-5 shadow-lg">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
@@ -317,7 +317,7 @@ export default function JoinPrivateStreamClient() {
                 sessionId={sessionId}
               />
             ) : (
-              <div className="w-full h-full bg-stone-900 border border-stone-800 rounded-2xl flex items-center justify-center text-stone-500 text-xs">
+              <div className="w-full h-full bg-obsidian-soft border border-gold/20 rounded-2xl flex items-center justify-center text-stone-400 text-xs">
                 Connecting to sacred pooja chat...
               </div>
             )}
@@ -336,19 +336,19 @@ export default function JoinPrivateStreamClient() {
         </div>
       ) : (
         // Verification & Password Claim Screen
-        <div className="max-w-md mx-auto bg-stone-900 border border-stone-800 rounded-3xl p-8 shadow-2xl">
+        <div className="max-w-md mx-auto bg-obsidian-soft border border-gold/30 rounded-3xl p-8 shadow-2xl">
           <div className="text-center mb-6">
-            <div className="flex justify-center mb-3">
+            <div className="flex justify-center mb-3 text-gold">
               <OmIcon size={44} />
             </div>
-            <h2 className="text-xl font-bold text-white tracking-tight">Private Pooja Consultation</h2>
+            <h2 className="text-xl font-bold text-foreground tracking-tight">Private Pooja Consultation</h2>
             <p className="text-xs text-stone-400 mt-1">
               {metadata?.streamTitle ? `"${metadata.streamTitle}" by ${metadata.streamerName}` : 'Enter your details to join'}
             </p>
           </div>
 
           {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-950/80 border border-red-800 text-red-200 text-xs flex flex-col gap-2">
+            <div className="mb-6 p-4 rounded-xl bg-red-950/20 border border-red-500/30 text-red-400 text-xs flex flex-col gap-2">
               <div className="flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
                 <span>{error}</span>
@@ -356,7 +356,7 @@ export default function JoinPrivateStreamClient() {
               {(error.includes('logged into your account') || error.includes('Unauthorized')) && (
                 <a
                   href={`/login?redirect=/join/${tokenSlug}`}
-                  className="mt-1 text-center py-2 px-3 bg-orange-600 hover:bg-orange-500 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                  className="mt-1 text-center py-2 px-3 bg-gold hover:bg-gold-deep text-obsidian font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5"
                 >
                   <PranamIcon size={16} />
                   <span>Sign In to Devotee Account</span>
@@ -378,7 +378,7 @@ export default function JoinPrivateStreamClient() {
                   value={guestName}
                   onChange={(e) => setGuestName(e.target.value)}
                   placeholder="Rahul Sharma"
-                  className="w-full pl-9 pr-3 py-2.5 bg-stone-950 border border-stone-800 rounded-xl text-sm text-white focus:outline-none focus:border-orange-500"
+                  className="w-full pl-9 pr-3 py-2.5 bg-obsidian border border-gold/25 rounded-xl text-sm text-foreground focus:outline-none focus:border-gold"
                 />
               </div>
             </div>
@@ -396,7 +396,7 @@ export default function JoinPrivateStreamClient() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter password provided by Pandit"
-                    className="w-full pl-9 pr-3 py-2.5 bg-stone-950 border border-stone-800 rounded-xl text-sm text-white focus:outline-none focus:border-orange-500"
+                    className="w-full pl-9 pr-3 py-2.5 bg-obsidian border border-gold/25 rounded-xl text-sm text-foreground focus:outline-none focus:border-gold"
                   />
                 </div>
               </div>
@@ -405,7 +405,7 @@ export default function JoinPrivateStreamClient() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold rounded-xl text-sm shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full mt-2 py-3 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-xl text-sm shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <Play className="w-4 h-4" />
               {loading ? 'Validating Token...' : 'Enter Sacred Pooja Room'}

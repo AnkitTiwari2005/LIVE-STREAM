@@ -39,7 +39,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
-      <div className="max-w-md w-full bg-stone-900 border border-stone-800 rounded-2xl p-8 shadow-2xl">
+      <div className="max-w-md w-full bg-obsidian-soft border border-gold/25 rounded-2xl p-8 shadow-2xl">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-3">
             <span className="p-3 bg-gradient-to-b from-amber-500/10 to-transparent border border-gold/30 rounded-2xl">

@@ -69,7 +69,7 @@ export default function SevaBookingModal({
   initialSevaId,
 }: SevaBookingModalProps) {
   const toast = useToast();
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(() => (initialSevaId ? 2 : 1));
   const [user, setUser] = useState<{ id: string; name?: string; email?: string } | null>(null);
 
   // Form selections
@@ -133,15 +133,20 @@ export default function SevaBookingModal({
     }
   }, [isOpen]);
 
-  // Update selected pooja if prop changes
+  // Update selected pooja and step when modal opens
   useEffect(() => {
-    if (initialSevaId) {
-      const found = COMPREHENSIVE_POOJA_CATALOG.find((s) => s.id === initialSevaId);
-      if (found) {
-        setSelectedSeva(found);
+    if (isOpen) {
+      if (initialSevaId) {
+        const found = COMPREHENSIVE_POOJA_CATALOG.find((s) => s.id === initialSevaId);
+        if (found) {
+          setSelectedSeva(found);
+          setStep(2); // User already selected their choice on the page, skip Step 1 and go straight to Step 2 (Choose Pandit)!
+          return;
+        }
       }
+      setStep(1);
     }
-  }, [initialSevaId]);
+  }, [isOpen, initialSevaId]);
 
   if (!isOpen) return null;
 
@@ -286,7 +291,10 @@ export default function SevaBookingModal({
                   return (
                     <div
                       key={pooja.id}
-                      onClick={() => setSelectedSeva(pooja)}
+                      onClick={() => {
+                        setSelectedSeva(pooja);
+                        setStep(2);
+                      }}
                       className={`cursor-pointer rounded-2xl p-4 border transition-all flex flex-col justify-between ${
                         isSelected
                           ? 'bg-gold/15 border-gold shadow-[0_0_20px_rgba(245,158,11,0.2)]'
@@ -342,9 +350,18 @@ export default function SevaBookingModal({
                   <h3 className="font-serif text-base font-bold text-white">
                     Step 2: Choose Your Gurukul-Verified Vedic Pandit
                   </h3>
-                  <p className="text-xs text-stone-400 mt-0.5">
-                    Selected Ritual: <strong className="text-gold-pale">{selectedSeva.name}</strong>
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                    <p className="text-xs text-stone-400">
+                      Selected Ritual: <strong className="text-gold-pale">{selectedSeva.name}</strong> ({selectedSeva.duration})
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setStep(1)}
+                      className="text-[11px] font-bold text-gold hover:underline bg-gold/10 px-2 py-0.5 rounded-full border border-gold/25"
+                    >
+                      Change Pooja
+                    </button>
+                  </div>
                 </div>
                 <span className="text-xs text-gold-soft bg-gold/10 px-3 py-1 rounded-full border border-gold/20 self-start sm:self-auto">
                   Transparent Dakshina

@@ -59,10 +59,10 @@ interface Stream {
 }
 
 const LIVE_SEVA_ACTIVITIES = [
-  { initials: 'MI', name: 'Meera Iyer', action: 'offered Sankalp at Prayagraj Sangam', time: '2m ago' },
-  { initials: 'PD', name: 'Priya Dave', action: 'offered Pushpa at Kashi Vishwanath', time: '5m ago' },
-  { initials: 'AS', name: 'Aarav Sharma', action: 'offered Dakshina at Somnath Shivalinga', time: '8m ago' },
-  { initials: 'LV', name: 'Lakshmi V.', action: 'joined live darshan at Mahakal Ujjain', time: '11m ago' },
+  { initials: 'MI', name: 'Meera Iyer', action: 'booked Maha Rudrabhishek with Pandit Aarav', time: '2m ago' },
+  { initials: 'PD', name: 'Priya Dave', action: 'consecrated Gotra Sankalp with Acharya Devrat', time: '5m ago' },
+  { initials: 'VJ', name: 'Vikram Joshi', action: 'booked 1-on-1 Kundli Milan with Pandit Vishwanath', time: '8m ago' },
+  { initials: 'LV', name: 'Lakshmi V.', action: 'joined live Satyanarayan Katha with Pandit Hariram', time: '11m ago' },
 ];
 
 const CATEGORY_TILES = [

@@ -71,12 +71,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             <div
               key={toast.id}
               role="alert"
-              className={`pointer-events-auto w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl backdrop-blur-xl shadow-2xl transition-all duration-300 transform translate-y-0 ${
+              className={`sd-toast pointer-events-auto w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl backdrop-blur-xl shadow-2xl transition-all duration-300 transform translate-y-0 ${
                 isError
-                  ? 'bg-stone-900/95 border border-red-500/40 text-red-200 shadow-[0_8px_32px_rgba(239,68,68,0.2)]'
+                  ? 'sd-toast-error bg-stone-900/95 border border-red-500/40 text-red-200 shadow-[0_8px_32px_rgba(239,68,68,0.2)]'
                   : isSuccess
-                  ? 'bg-stone-900/95 border border-gold/50 text-gold-pale shadow-[0_8px_32px_rgba(245,158,11,0.25)]'
-                  : 'bg-stone-900/95 border border-gold/30 text-stone-200 shadow-[0_8px_32px_rgba(0,0,0,0.5)]'
+                  ? 'sd-toast-success bg-stone-900/95 border border-gold/50 text-gold-pale shadow-[0_8px_32px_rgba(245,158,11,0.25)]'
+                  : 'sd-toast-info bg-stone-900/95 border border-gold/30 text-stone-200 shadow-[0_8px_32px_rgba(0,0,0,0.5)]'
               }`}
             >
               <div className="flex items-center gap-2.5 min-w-0">

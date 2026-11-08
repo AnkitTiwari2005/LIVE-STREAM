@@ -129,8 +129,10 @@ export default function PoojaCatalogPage() {
               >
                 <span>{tab}</span>
                 <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                    isSelected ? 'bg-obsidian/20 text-obsidian' : 'bg-stone-800 text-gold-soft'
+                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full transition-colors ${
+                    isSelected
+                      ? 'bg-white/25 text-white'
+                      : 'bg-gold/15 text-gold-pale border border-gold/25'
                   }`}
                 >
                   {count}
