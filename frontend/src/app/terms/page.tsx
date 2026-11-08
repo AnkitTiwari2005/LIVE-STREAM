@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default function TermsPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 sm:p-12 shadow-2xl relative overflow-hidden">
+      <div className="bg-obsidian-soft border border-gold/20 rounded-3xl p-6 sm:p-12 shadow-2xl relative overflow-hidden">
         {/* Sacred ambient background glow */}
         <div className="absolute top-0 right-0 w-80 h-80 bg-orange-600/10 rounded-full blur-3xl pointer-events-none" />
 

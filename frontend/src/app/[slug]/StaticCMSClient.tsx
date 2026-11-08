@@ -82,7 +82,7 @@ export default function StaticCMSClient() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="bg-stone-900 border border-stone-800 rounded-3xl p-8 sm:p-12 shadow-2xl">
+      <div className="bg-obsidian-soft border border-gold/20 rounded-3xl p-8 sm:p-12 shadow-2xl">
         <div className="flex items-center gap-2 mb-4 text-orange-400 text-xs font-semibold uppercase tracking-wider">
           <FileText className="w-4 h-4" />
           Official Shubhdarshan Document

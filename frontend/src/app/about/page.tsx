@@ -154,7 +154,7 @@ export default function AboutPage() {
         </div>
 
         {/* CTA Box */}
-        <div className="rounded-3xl border border-gold/30 bg-gradient-to-r from-gold/15 via-obsidian-soft to-gold/15 p-8 sm:p-12 text-center shadow-2xl">
+        <div className="rounded-3xl border border-gold/30 bg-obsidian-soft p-8 sm:p-12 text-center shadow-2xl relative overflow-hidden">
           <h2 className="font-serif text-3xl font-bold text-white mb-3">
             Begin with 100 free coins and your first live Darshan
           </h2>
@@ -170,7 +170,7 @@ export default function AboutPage() {
             </Link>
             <Link
               href="/"
-              className="rounded-full border border-gold/40 bg-obsidian px-6 py-3.5 text-xs sm:text-sm font-bold text-gold-pale hover:bg-gold/10 transition"
+              className="rounded-full border border-gold/40 bg-obsidian-soft px-6 py-3.5 text-xs sm:text-sm font-bold text-gold-pale hover:bg-gold/10 transition"
             >
               Watch Live Mandir Darshan
             </Link>

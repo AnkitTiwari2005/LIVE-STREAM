@@ -182,7 +182,7 @@ export default function FAQPage() {
           </div>
 
           {/* Need More Assistance Card */}
-          <div className="rounded-3xl border border-gold/30 bg-gradient-to-r from-gold/10 via-obsidian-soft to-gold/10 p-8 text-center shadow-xl">
+          <div className="rounded-3xl border border-gold/30 bg-obsidian-soft p-8 text-center shadow-xl relative overflow-hidden">
             <h3 className="font-serif text-2xl font-bold text-white mb-2">
               Still have a question?
             </h3>
@@ -198,7 +198,7 @@ export default function FAQPage() {
               </Link>
               <Link
                 href="/"
-                className="rounded-full border border-gold/40 bg-obsidian px-5 py-2.5 text-xs font-bold text-gold-pale hover:bg-gold/10 transition"
+                className="rounded-full border border-gold/40 bg-obsidian-soft px-5 py-2.5 text-xs font-bold text-gold-pale hover:bg-gold/10 transition"
               >
                 Return to Live Darshan
               </Link>

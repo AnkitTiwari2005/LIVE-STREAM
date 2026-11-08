@@ -203,6 +203,101 @@ html[data-theme="light"] div:not(.on-photo) [class*="bg-stone-8"] {
   border-color: #eadada !important;
 }
 
+/* 3.1. Light Mode Alert & Danger Callout Boxes: Soft porcelain rose tint, ruby text */
+html:not([data-theme="dark"]) [class*="bg-red-950"],
+html:not([data-theme="dark"]) [class*="bg-red-900"],
+html[data-theme="light"] [class*="bg-red-950"],
+html[data-theme="light"] [class*="bg-red-900"] {
+  background-color: #fef2f2 !important;
+  border-color: #fecaca !important;
+}
+
+html:not([data-theme="dark"]) [class*="bg-red-950"] [class*="text-red-"],
+html:not([data-theme="dark"]) [class*="bg-red-900"] [class*="text-red-"],
+html[data-theme="light"] [class*="bg-red-950"] [class*="text-red-"],
+html[data-theme="light"] [class*="bg-red-900"] [class*="text-red-"],
+html:not([data-theme="dark"]) [class*="text-red-200"],
+html:not([data-theme="dark"]) [class*="text-red-300"],
+html:not([data-theme="dark"]) [class*="text-red-400"],
+html[data-theme="light"] [class*="text-red-200"],
+html[data-theme="light"] [class*="text-red-300"],
+html[data-theme="light"] [class*="text-red-400"] {
+  color: #991b1b !important;
+}
+
+/* 3.2. Light Mode Amber & Warning Boxes: Soft warm cream tint, deep ochre text */
+html:not([data-theme="dark"]) [class*="bg-amber-950"],
+html:not([data-theme="dark"]) [class*="bg-amber-900"],
+html[data-theme="light"] [class*="bg-amber-950"],
+html[data-theme="light"] [class*="bg-amber-900"] {
+  background-color: #fffbeb !important;
+  border-color: #fde68a !important;
+}
+
+html:not([data-theme="dark"]) [class*="bg-amber-950"] [class*="text-amber-"],
+html:not([data-theme="dark"]) [class*="bg-amber-900"] [class*="text-amber-"],
+html[data-theme="light"] [class*="bg-amber-950"] [class*="text-amber-"],
+html[data-theme="light"] [class*="bg-amber-900"] [class*="text-amber-"],
+html:not([data-theme="dark"]) [class*="text-amber-200"],
+html:not([data-theme="dark"]) [class*="text-amber-300"],
+html[data-theme="light"] [class*="text-amber-200"],
+html[data-theme="light"] [class*="text-amber-300"] {
+  color: #92400e !important;
+}
+
+/* 3.3. Light Mode Emerald & Success Badges: Soft mint tint, forest green text */
+html:not([data-theme="dark"]) [class*="bg-emerald-950"],
+html:not([data-theme="dark"]) [class*="bg-emerald-900"],
+html[data-theme="light"] [class*="bg-emerald-950"],
+html[data-theme="light"] [class*="bg-emerald-900"] {
+  background-color: #f0fdf4 !important;
+  border-color: #bbf7d0 !important;
+}
+
+html:not([data-theme="dark"]) [class*="bg-emerald-950"] [class*="text-emerald-"],
+html:not([data-theme="dark"]) [class*="bg-emerald-900"] [class*="text-emerald-"],
+html[data-theme="light"] [class*="bg-emerald-950"] [class*="text-emerald-"],
+html[data-theme="light"] [class*="bg-emerald-900"] [class*="text-emerald-"] {
+  color: #166534 !important;
+}
+
+/* 3.4. Light Mode Orange & Saffron Badges */
+html:not([data-theme="dark"]) [class*="bg-orange-950"],
+html:not([data-theme="dark"]) [class*="bg-orange-900"],
+html[data-theme="light"] [class*="bg-orange-950"],
+html[data-theme="light"] [class*="bg-orange-900"] {
+  background-color: #fff7ed !important;
+  border-color: #fed7aa !important;
+}
+
+html:not([data-theme="dark"]) [class*="bg-orange-950"] [class*="text-orange-"],
+html:not([data-theme="dark"]) [class*="bg-orange-900"] [class*="text-orange-"],
+html[data-theme="light"] [class*="bg-orange-950"] [class*="text-orange-"],
+html[data-theme="light"] [class*="bg-orange-900"] [class*="text-orange-"] {
+  color: #9a3412 !important;
+}
+
+/* 3.5. Light Mode Prose Typography (Terms, Privacy, Guidelines) */
+html:not([data-theme="dark"]) .prose-invert,
+html[data-theme="light"] .prose-invert {
+  --tw-prose-body: #292524 !important;
+  --tw-prose-headings: #1c1917 !important;
+  --tw-prose-lead: #57534e !important;
+  --tw-prose-links: #c2410c !important;
+  --tw-prose-bold: #1c1917 !important;
+  --tw-prose-counters: #78716c !important;
+  --tw-prose-bullets: #d6d3d1 !important;
+  --tw-prose-hr: #e7e5e4 !important;
+  --tw-prose-quotes: #1c1917 !important;
+  --tw-prose-quote-borders: #e7e5e4 !important;
+  --tw-prose-captions: #78716c !important;
+  --tw-prose-code: #1c1917 !important;
+  --tw-prose-pre-code: #e7e5e4 !important;
+  --tw-prose-pre-bg: #292524 !important;
+  --tw-prose-th-borders: #d6d3d1 !important;
+  --tw-prose-td-borders: #e7e5e4 !important;
+}
+
 html:not([data-theme="dark"]) .bg-obsidian\/80,
 html:not([data-theme="dark"]) .bg-obsidian\/70,
 html:not([data-theme="dark"]) .bg-obsidian\/60,
@@ -462,6 +557,48 @@ html[data-theme="light"] .from-obsidian\/70,
 html[data-theme="light"] .from-obsidian\/60 {
   --tw-gradient-from: rgb(251 248 248 / 0.74) !important;
   --tw-gradient-to: rgb(251 248 248 / 0) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+
+html:not([data-theme="dark"]) .via-obsidian,
+html[data-theme="light"] .via-obsidian {
+  --tw-gradient-to: rgb(251 248 248 / 0) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), #fbf8f8 var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+}
+
+html:not([data-theme="dark"]) .via-obsidian-soft,
+html[data-theme="light"] .via-obsidian-soft {
+  --tw-gradient-to: rgb(255 255 255 / 0) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), #ffffff var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+}
+
+html:not([data-theme="dark"]) .to-obsidian-soft,
+html[data-theme="light"] .to-obsidian-soft {
+  --tw-gradient-to: #ffffff !important;
+}
+
+html:not([data-theme="dark"]) .from-obsidian-soft,
+html[data-theme="light"] .from-obsidian-soft {
+  --tw-gradient-from: #ffffff !important;
+  --tw-gradient-to: rgb(255 255 255 / 0) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+
+html:not([data-theme="dark"]) .via-obsidian-deep,
+html[data-theme="light"] .via-obsidian-deep {
+  --tw-gradient-to: rgb(247 241 241 / 0) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), #f7f1f1 var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+}
+
+html:not([data-theme="dark"]) .to-obsidian-deep,
+html[data-theme="light"] .to-obsidian-deep {
+  --tw-gradient-to: #f7f1f1 !important;
+}
+
+html:not([data-theme="dark"]) .from-obsidian-deep,
+html[data-theme="light"] .from-obsidian-deep {
+  --tw-gradient-from: #f7f1f1 !important;
+  --tw-gradient-to: rgb(247 241 241 / 0) !important;
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
 }
 

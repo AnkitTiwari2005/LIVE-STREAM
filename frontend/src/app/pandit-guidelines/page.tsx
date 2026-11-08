@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default function PanditGuidelinesPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 sm:p-12 shadow-2xl relative overflow-hidden">
+      <div className="bg-obsidian-soft border border-gold/20 rounded-3xl p-6 sm:p-12 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-80 bg-orange-600/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex items-center gap-3 mb-6">
@@ -42,7 +42,7 @@ export default function PanditGuidelinesPage() {
               Before any spiritual streamer is granted broadcasting privileges and awarded the sacred <VerifiedPanditBadge size={16} className="inline ml-1 mr-1 align-text-bottom" /> <strong>Verified Pandit Badge</strong>, our ecclesiastical review board validates:
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-              <div className="p-4 bg-stone-950 border border-stone-800 rounded-xl">
+              <div className="p-4 bg-obsidian-deep border border-gold/15 rounded-xl">
                 <div className="flex items-center gap-2 text-amber-400 font-bold text-xs mb-1">
                   <BookOpen className="w-4 h-4" /> Scriptural Credentials
                 </div>
@@ -50,7 +50,7 @@ export default function PanditGuidelinesPage() {
                   Certification from recognized Vedic Sanskrit Gurukuls, Vidyapeeths, Jyotish academies, or established temple trusts.
                 </p>
               </div>
-              <div className="p-4 bg-stone-950 border border-stone-800 rounded-xl">
+              <div className="p-4 bg-obsidian-deep border border-gold/15 rounded-xl">
                 <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs mb-1">
                   <ShieldCheck className="w-4 h-4" /> Government Identity KYC
                 </div>
@@ -66,7 +66,7 @@ export default function PanditGuidelinesPage() {
             <h2 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
               <span className="text-amber-400 font-mono">2.</span> Strict Anti-Superstition Code
             </h2>
-            <div className="p-4 bg-red-950/40 border border-red-800/60 rounded-2xl text-xs sm:text-sm text-red-200">
+            <div className="p-4 bg-red-950/30 border border-red-800/40 rounded-2xl text-xs sm:text-sm text-red-200">
               <div className="flex items-start gap-2.5">
                 <AlertOctagon className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
                 <div>
