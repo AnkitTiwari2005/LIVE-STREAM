@@ -43,6 +43,11 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb {
   border-color: #f7f1f1;
 }
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 6rem;
+}
+
 /* 2. Light Mode Typography: High Contrast Charcoal & Sacred Vermillion */
 html:not([data-theme="dark"]) body,
 html[data-theme="light"] body {

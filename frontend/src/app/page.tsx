@@ -1017,7 +1017,7 @@ export default function HomePage() {
       </section>
 
       {/* 4. Upcoming Sacred Gatherings ("Upcoming sacred gatherings") */}
-      <section className="mx-auto max-w-7xl px-5 lg:px-8 py-14" id="upcoming">
+      <section className="mx-auto max-w-7xl px-5 lg:px-8 py-14 scroll-mt-24 sm:scroll-mt-28" id="upcoming">
         <div className="flex items-center justify-between mb-8">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.24em] text-gold-soft">
@@ -1086,7 +1086,7 @@ export default function HomePage() {
       </section>
 
       {/* 5. Meet the Custodians of Tradition ("Verified Pandits & Acharyas") */}
-      <section className="mx-auto max-w-7xl px-5 lg:px-8 py-16 border-t border-gold/15" id="pandits">
+      <section className="mx-auto max-w-7xl px-5 lg:px-8 py-16 border-t border-gold/15 scroll-mt-24 sm:scroll-mt-28" id="pandits">
         <div className="text-center max-w-2xl mx-auto mb-12">
           <p className="text-xs font-bold uppercase tracking-[0.28em] text-gold-soft">
             Gurukul Verification
