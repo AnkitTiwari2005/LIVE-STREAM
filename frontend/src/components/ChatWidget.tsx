@@ -255,8 +255,8 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
       {/* Message List */}
       <div ref={chatContainerRef} className="flex-1 p-3 overflow-y-auto space-y-2.5 text-xs">
         {messages.length === 0 && (
-          <div className="h-full flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 text-center px-4">
-            <PranamIcon size={32} className="mb-2 text-amber-600 dark:text-amber-400" />
+          <div className="h-full flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 text-center px-4 py-8">
+            <DiyaIcon size={36} className="mb-2 text-amber-500 shrink-0" />
             <span className="text-xs">No messages yet. Send a prayer or chant to start the conversation!</span>
           </div>
         )}
@@ -378,9 +378,9 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
           </form>
         ) : (
           <div className="text-center py-1">
-            <a href="/login" className="text-xs text-amber-900 dark:text-amber-400 hover:underline font-bold inline-flex items-center gap-1.5" style={{ color: '#78350f' }}>
-              <span className="font-bold" style={{ color: '#78350f' }}>Sign in to participate in sacred live chat</span>
-              <PranamIcon size={14} className="text-amber-700" />
+            <a href="/login" className="chat-signin-link text-xs hover:underline font-bold inline-flex items-center gap-1.5">
+              <span className="font-bold">Sign in to participate in sacred live chat</span>
+              <PranamIcon size={14} className="text-amber-500" />
             </a>
           </div>
         )}

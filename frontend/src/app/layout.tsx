@@ -192,7 +192,7 @@ export default function RootLayout({
         <ToastProvider>
           <FestivalBanner />
           <Navbar />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1 overflow-x-clip">{children}</main>
           <Footer />
         </ToastProvider>
       </body>

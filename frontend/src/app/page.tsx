@@ -434,51 +434,48 @@ export default function HomePage() {
 
               <Link
                 href="/schedule"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-amber-300 dark:border-gold/40 bg-amber-100 hover:bg-amber-200 dark:bg-gold/10 dark:hover:bg-gold/20 px-6 py-3.5 text-sm font-extrabold text-amber-950 dark:text-gold-pale transition w-full sm:w-auto shadow-sm"
-                style={{ color: '#451a03' }}
+                className="hero-btn-schedule inline-flex items-center justify-center gap-2 rounded-full border px-6 py-3.5 text-sm font-extrabold transition w-full sm:w-auto shadow-sm"
               >
-                <Calendar className="w-4 h-4 text-amber-800 dark:text-gold shrink-0" />
-                <span className="font-extrabold" style={{ color: '#451a03' }}>Pooja Schedule</span>
+                <Calendar className="w-4 h-4 shrink-0" />
+                <span className="font-extrabold">Pooja Schedule</span>
               </Link>
 
               {user ? (
                 <button
                   onClick={() => setTopupModalOpen(true)}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-stone-300 dark:border-stone-700 bg-white dark:bg-obsidian-soft px-6 py-3.5 text-sm font-extrabold text-stone-900 dark:text-stone-200 transition hover:border-amber-400 dark:hover:border-gold/40 w-full sm:w-auto shadow-sm"
-                  style={{ color: '#1c1917' }}
+                  className="hero-btn-secondary inline-flex items-center justify-center gap-2 rounded-full border px-6 py-3.5 text-sm font-extrabold transition hover:border-amber-400 w-full sm:w-auto shadow-sm"
                 >
                   <CoinIcon size={18} />
-                  <span className="font-extrabold" style={{ color: '#1c1917' }}>Recharge Coins</span>
+                  <span className="font-extrabold">Recharge Coins</span>
                 </button>
               ) : (
                 <Link
                   href="/register"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-stone-300 dark:border-stone-700 bg-white dark:bg-obsidian-soft px-6 py-3.5 text-sm font-extrabold text-stone-900 dark:text-stone-200 transition hover:border-amber-400 dark:hover:border-gold/40 w-full sm:w-auto shadow-sm"
-                  style={{ color: '#1c1917' }}
+                  className="hero-btn-secondary inline-flex items-center justify-center gap-2 rounded-full border px-6 py-3.5 text-sm font-extrabold transition hover:border-amber-400 w-full sm:w-auto shadow-sm"
                 >
-                  <Sparkles className="w-4 h-4 text-amber-600 dark:text-gold shrink-0" />
-                  <span className="font-extrabold" style={{ color: '#1c1917' }}>Claim 100 Free Coins</span>
+                  <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
+                  <span className="font-extrabold">Claim 100 Free Coins</span>
                 </Link>
               )}
             </div>
 
             {/* Platform Stats Row with Grand Gold Serif Numbers */}
-            <dl className="mt-10 sm:mt-12 grid grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-5 sm:gap-y-6 border-t border-gold/15 pt-6 sm:pt-8 sm:grid-cols-4">
+            <dl className="mt-8 sm:mt-12 grid grid-cols-2 gap-x-3 sm:gap-x-6 gap-y-4 sm:gap-y-6 border-t border-gold/15 pt-5 sm:pt-8 sm:grid-cols-4">
               <div>
                 <dd className="font-serif text-2xl sm:text-4xl font-bold text-gold-pale">85+</dd>
-                <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider sm:tracking-[0.2em] text-stone-400">
+                <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-normal sm:tracking-[0.16em] text-stone-400">
                   Verified Pandits
                 </dt>
               </div>
               <div>
                 <dd className="font-serif text-2xl sm:text-4xl font-bold text-gold-pale">100%</dd>
-                <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider sm:tracking-[0.2em] text-stone-400">
+                <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-normal sm:tracking-[0.16em] text-stone-400">
                   Gurukul Verified
                 </dt>
               </div>
               <div>
                 <dd className="font-serif text-2xl sm:text-4xl font-bold text-gold-pale">62+</dd>
-                <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider sm:tracking-[0.2em] text-stone-400">
+                <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-normal sm:tracking-[0.16em] text-stone-400">
                   Countries Reached
                 </dt>
               </div>
@@ -486,7 +483,7 @@ export default function HomePage() {
                 <dd className="font-serif text-2xl sm:text-4xl font-bold text-gold-pale flex items-center gap-1">
                   4.9 <Star className="w-4 h-4 sm:w-5 sm:h-5 text-gold fill-gold" />
                 </dd>
-                <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider sm:tracking-[0.2em] text-stone-400">
+                <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-normal sm:tracking-[0.16em] text-stone-400">
                   Devotee Rating
                 </dt>
               </div>
@@ -583,16 +580,16 @@ export default function HomePage() {
                     <div className="w-14 h-14 mx-auto mb-2 rounded-2xl bg-amber-100/70 dark:bg-gradient-to-b dark:from-amber-500/10 dark:to-transparent border border-amber-300 dark:border-gold/30 flex items-center justify-center shadow-sm dark:shadow-[0_0_24px_rgba(245,158,11,0.25)]">
                       <img src="/logo.png" alt="Shubhdarshan" className="w-10 h-10 object-contain drop-shadow" />
                     </div>
-                    <h3 className="font-serif text-xl sm:text-2xl font-bold text-stone-900 dark:text-white tracking-tight" style={{ color: '#1c1414' }}>
+                    <h3 className="altar-repose-title font-serif text-xl sm:text-2xl font-bold tracking-tight">
                       Live Pooja Altar in Repose
                     </h3>
-                    <p className="text-xs text-stone-600 dark:text-stone-300 mt-1.5 max-w-sm mx-auto leading-relaxed" style={{ color: '#443832' }}>
+                    <p className="altar-repose-desc text-xs mt-1.5 max-w-sm mx-auto leading-relaxed">
                       Verified Vedic Pandits stream live whenever they conduct sacred rituals, havan poojas, or astrological discourses. Active broadcasts will appear here in real time.
                     </p>
                     {nextUpcomingStream && (
                       <div className="mt-2.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white dark:bg-black/85 backdrop-blur-md border border-amber-300 dark:border-amber-400/40 text-[11px] shadow-sm dark:shadow-md">
-                        <span className="text-amber-700 dark:text-amber-400 font-bold uppercase tracking-wider text-[10px]" style={{ color: '#78350f' }}>Upcoming:</span>
-                        <span className="font-bold text-stone-900 dark:text-white truncate max-w-[220px]" style={{ color: '#1c1414' }}>{nextUpcomingStream.title}</span>
+                        <span className="altar-repose-upcoming-badge font-bold uppercase tracking-wider text-[10px]">Upcoming:</span>
+                        <span className="altar-repose-upcoming font-bold truncate max-w-[220px]">{nextUpcomingStream.title}</span>
                       </div>
                     )}
                   </div>
@@ -637,7 +634,7 @@ export default function HomePage() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-gold"></span>
                   </span>
-                  <span className="text-xs uppercase tracking-widest font-black text-amber-950 dark:text-gold-pale" style={{ color: '#451a03' }}>
+                  <span className="devotee-seva-header text-xs uppercase tracking-widest font-black">
                     Worldwide Devotee Seva
                   </span>
                 </div>
@@ -654,9 +651,9 @@ export default function HomePage() {
                         {act.initials}
                       </div>
                       <div className="truncate">
-                        <span className="text-stone-900 dark:text-stone-200 font-bold" style={{ color: '#1c1917' }}>{act.name}</span>
+                        <span className="devotee-seva-name font-bold">{act.name}</span>
                         <span className="text-stone-400 mx-1.5">•</span>
-                        <span className="text-amber-800 dark:text-gold-soft font-semibold" style={{ color: '#78350f' }}>{act.action}</span>
+                        <span className="devotee-seva-action font-semibold">{act.action}</span>
                       </div>
                     </div>
                     <span className="text-[10px] text-stone-500 shrink-0 ml-2 font-mono">{act.time}</span>
@@ -687,11 +684,11 @@ export default function HomePage() {
             {/* View Full Catalog Button */}
             <Link
               href="/pooja"
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full border border-gold/40 bg-gold/10 hover:bg-gold/20 text-gold-pale text-xs font-bold transition shrink-0 shadow-sm"
+              className="catalog-explore-btn inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full border text-xs font-bold transition shrink-0 shadow-sm"
             >
               <DiyaIcon size={14} />
               <span>Explore All 24+ Poojas &amp; Kathas</span>
-              <ArrowRight className="w-3.5 h-3.5 text-gold" />
+              <ArrowRight className="w-3.5 h-3.5 text-amber-500 shrink-0" />
             </Link>
 
             {/* Search Box */}
@@ -1025,10 +1022,10 @@ export default function HomePage() {
       <section className="mx-auto max-w-7xl px-5 lg:px-8 py-14 scroll-mt-5" id="upcoming">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-amber-800 dark:text-gold-soft" style={{ color: '#78350f' }}>
+            <p className="calendar-tag text-xs font-bold uppercase tracking-[0.24em]">
               Pooja Calendar
             </p>
-            <h2 className="mt-1 font-serif text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white" style={{ color: '#1c1414' }}>
+            <h2 className="calendar-title mt-1 font-serif text-2xl sm:text-3xl font-bold">
               Upcoming sacred gatherings
             </h2>
           </div>
@@ -1047,12 +1044,12 @@ export default function HomePage() {
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-800 dark:text-gold-soft" style={{ color: '#78350f' }}>
+                    <span className="calendar-tag text-[10px] font-bold uppercase tracking-[0.2em]">
                       {stream.category.name}
                     </span>
                     {stream.scheduledAt && (
-                      <span className="text-[11px] font-bold text-amber-950 dark:text-gold-pale bg-amber-100 dark:bg-gold/10 border border-amber-300 dark:border-gold/25 px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm" style={{ color: '#451a03' }}>
-                        <Clock className="w-3 h-3 text-amber-800 dark:text-gold" />
+                      <span className="calendar-date-pill text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm border">
+                        <Clock className="w-3 h-3 shrink-0" />
                         {new Date(stream.scheduledAt).toLocaleString([], {
                           dateStyle: 'short',
                           timeStyle: 'short',
@@ -1061,7 +1058,7 @@ export default function HomePage() {
                     )}
                   </div>
 
-                  <h3 className="font-serif text-lg font-bold text-stone-900 dark:text-white line-clamp-1" style={{ color: '#1c1414' }}>{stream.title}</h3>
+                  <h3 className="calendar-title font-serif text-lg font-bold line-clamp-1">{stream.title}</h3>
                   <p className="text-xs text-stone-600 dark:text-stone-400 mt-1 line-clamp-2 leading-relaxed">
                     {stream.description || 'Sacred upcoming Vedic pooja and Aarti.'}
                   </p>
@@ -1076,11 +1073,10 @@ export default function HomePage() {
                 <div className="mt-5 pt-3 border-t border-stone-200 dark:border-stone-800/80 flex items-center justify-between">
                   <button
                     onClick={() => handleRemindMe(stream.id)}
-                    className="flex items-center gap-1.5 text-xs font-black text-amber-950 dark:text-gold-pale bg-amber-100 hover:bg-amber-200 dark:bg-gold/10 dark:hover:bg-gold/20 border border-amber-300 dark:border-gold/30 px-3.5 py-1.5 rounded-full transition shadow-sm"
-                    style={{ color: '#451a03' }}
+                    className="calendar-remind-btn flex items-center gap-1.5 text-xs font-black border px-3.5 py-1.5 rounded-full transition shadow-sm"
                   >
-                    <Bell className="w-3.5 h-3.5 text-amber-800 dark:text-gold shrink-0" />
-                    <span className="font-black" style={{ color: '#451a03' }}>Remind Me</span>
+                    <Bell className="w-3.5 h-3.5 shrink-0" />
+                    <span className="font-black">Remind Me</span>
                   </button>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">
                     Live HD
@@ -1132,9 +1128,9 @@ export default function HomePage() {
               </div>
 
               <div className="p-4 space-y-2">
-                <h3 className="font-serif text-lg font-bold text-stone-900 dark:text-white" style={{ color: '#1c1414' }}>{p.name}</h3>
+                <h3 className="pandit-name font-serif text-lg font-bold">{p.name}</h3>
                 <p className="text-[11px] text-stone-600 dark:text-stone-400 leading-tight">{p.title}</p>
-                <div className="flex items-center justify-between text-[11px] text-amber-800 dark:text-gold-soft pt-1 font-semibold" style={{ color: '#78350f' }}>
+                <div className="pandit-stats flex items-center justify-between text-[11px] pt-1 font-semibold">
                   <span>{p.experience}</span>
                   <span>{p.reviews} sevas conducted</span>
                 </div>
@@ -1142,7 +1138,7 @@ export default function HomePage() {
                   {p.specialties.map((s) => (
                     <span
                       key={s}
-                      className="text-[9px] font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-obsidian border border-stone-200 dark:border-gold/15 px-2 py-0.5 rounded"
+                      className="pandit-specialty-tag text-[9px] font-bold uppercase tracking-wider border px-2 py-0.5 rounded"
                     >
                       {s}
                     </span>
@@ -1152,10 +1148,9 @@ export default function HomePage() {
                 <div className="pt-3 border-t border-stone-200 dark:border-gold/10 flex items-center justify-between gap-2">
                   <Link
                     href={`/pandit/${p.slug}`}
-                    className="flex-1 py-1.5 px-3 bg-amber-100 hover:bg-amber-200 dark:bg-gold/15 dark:hover:bg-gold/25 border border-amber-300 dark:border-gold/30 rounded-xl text-center text-xs font-black text-amber-950 dark:text-gold-pale transition shadow-sm"
-                    style={{ color: '#451a03' }}
+                    className="pandit-btn-profile flex-1 py-1.5 px-3 border rounded-xl text-center text-xs font-black transition shadow-sm"
                   >
-                    <span className="font-black" style={{ color: '#451a03' }}>View Profile &amp; Sevas</span>
+                    <span className="font-black">View Profile &amp; Sevas</span>
                   </Link>
                 </div>
               </div>

@@ -1127,3 +1127,255 @@ html[data-theme="light"] .sd-toast button:hover {
   background-color: #fde8e9 !important;
   color: #c8102e !important;
 }
+
+/* =========================================================================
+   10. Dual-Theme Contrast System (Surya Day & Sacred Night)
+   Zero inline styles: elements automatically adapt with high contrast.
+   ========================================================================= */
+
+/* Hero Buttons */
+html[data-theme="light"] .hero-btn-schedule {
+  background-color: #fef3c7 !important;
+  border-color: #fcd34d !important;
+  color: #451a03 !important;
+}
+html[data-theme="dark"] .hero-btn-schedule {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  color: #fef3c7 !important;
+}
+html[data-theme="light"] .hero-btn-schedule svg {
+  color: #92400e !important;
+}
+html[data-theme="dark"] .hero-btn-schedule svg {
+  color: #fbbf24 !important;
+}
+
+html[data-theme="light"] .hero-btn-secondary {
+  background-color: #ffffff !important;
+  border-color: #d6d3d1 !important;
+  color: #1c1917 !important;
+}
+html[data-theme="dark"] .hero-btn-secondary {
+  background-color: #171210 !important;
+  border-color: #44403c !important;
+  color: #e7e5e4 !important;
+}
+
+/* Live Pooja Altar in Repose Card */
+html[data-theme="light"] .altar-repose-card {
+  background: linear-gradient(135deg, #fffbeb 0%, #fff7ed 50%, #fef2f2 100%) !important;
+  border-color: #fde68a !important;
+}
+html[data-theme="dark"] .altar-repose-card {
+  background: #0c0a09 !important;
+  border-color: rgba(245, 158, 11, 0.25) !important;
+}
+
+html[data-theme="light"] .altar-repose-title {
+  color: #1c1414 !important;
+}
+html[data-theme="dark"] .altar-repose-title {
+  color: #ffffff !important;
+}
+
+html[data-theme="light"] .altar-repose-desc {
+  color: #443832 !important;
+}
+html[data-theme="dark"] .altar-repose-desc {
+  color: #d6d3d1 !important;
+}
+
+html[data-theme="light"] .altar-repose-upcoming-badge {
+  color: #78350f !important;
+}
+html[data-theme="dark"] .altar-repose-upcoming-badge {
+  color: #fbbf24 !important;
+}
+
+html[data-theme="light"] .altar-repose-upcoming {
+  color: #1c1414 !important;
+}
+html[data-theme="dark"] .altar-repose-upcoming {
+  color: #ffffff !important;
+}
+
+/* Worldwide Devotee Seva Feed */
+html[data-theme="light"] .devotee-seva-header {
+  color: #451a03 !important;
+}
+html[data-theme="dark"] .devotee-seva-header {
+  color: #fef3c7 !important;
+}
+
+html[data-theme="light"] .devotee-seva-name {
+  color: #1c1917 !important;
+}
+html[data-theme="dark"] .devotee-seva-name {
+  color: #e7e5e4 !important;
+}
+
+html[data-theme="light"] .devotee-seva-action {
+  color: #78350f !important;
+}
+html[data-theme="dark"] .devotee-seva-action {
+  color: #fbbf24 !important;
+}
+
+/* Curated Pandits */
+html[data-theme="light"] .pandit-name {
+  color: #1c1414 !important;
+}
+html[data-theme="dark"] .pandit-name {
+  color: #ffffff !important;
+}
+
+html[data-theme="light"] .pandit-stats {
+  color: #78350f !important;
+}
+html[data-theme="dark"] .pandit-stats {
+  color: #fbbf24 !important;
+}
+
+html[data-theme="light"] .pandit-btn-profile {
+  background-color: #fef3c7 !important;
+  border-color: #fcd34d !important;
+  color: #451a03 !important;
+}
+html[data-theme="dark"] .pandit-btn-profile {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  color: #fef3c7 !important;
+}
+
+/* Pooja Calendar */
+html[data-theme="light"] .calendar-tag {
+  color: #78350f !important;
+}
+html[data-theme="dark"] .calendar-tag {
+  color: #fbbf24 !important;
+}
+
+html[data-theme="light"] .calendar-title {
+  color: #1c1414 !important;
+}
+html[data-theme="dark"] .calendar-title {
+  color: #ffffff !important;
+}
+
+html[data-theme="light"] .calendar-date-pill {
+  background-color: #fef3c7 !important;
+  border-color: #fcd34d !important;
+  color: #451a03 !important;
+}
+html[data-theme="dark"] .calendar-date-pill {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+  color: #fef3c7 !important;
+}
+
+html[data-theme="light"] .calendar-remind-btn {
+  background-color: #fef3c7 !important;
+  border-color: #fcd34d !important;
+  color: #451a03 !important;
+}
+html[data-theme="dark"] .calendar-remind-btn {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+  color: #fef3c7 !important;
+}
+
+/* Mobile Nav Drawer Links */
+html[data-theme="light"] .mobile-nav-link,
+html[data-theme="light"] .mobile-nav-link span {
+  color: #1c1414 !important;
+}
+html[data-theme="dark"] .mobile-nav-link,
+html[data-theme="dark"] .mobile-nav-link span {
+  color: #f5f5f4 !important;
+}
+
+html[data-theme="light"] .mobile-signin-btn {
+  background-color: #f5f5f4 !important;
+  border-color: #d6d3d1 !important;
+  color: #1c1414 !important;
+}
+html[data-theme="dark"] .mobile-signin-btn {
+  background-color: transparent !important;
+  border-color: #292524 !important;
+  color: #e7e5e4 !important;
+}
+
+/* Pandit Specialty Tags */
+html[data-theme="light"] .pandit-specialty-tag {
+  background-color: #fef3c7 !important;
+  border-color: #fde68a !important;
+  color: #78350f !important;
+}
+html[data-theme="dark"] .pandit-specialty-tag {
+  background-color: rgba(245, 158, 11, 0.08) !important;
+  border-color: rgba(245, 158, 11, 0.2) !important;
+  color: #e7e5e4 !important;
+}
+
+/* Catalog Explore Button */
+html[data-theme="light"] .catalog-explore-btn {
+  background-color: #fef3c7 !important;
+  border-color: #fcd34d !important;
+  color: #451a03 !important;
+}
+html[data-theme="dark"] .catalog-explore-btn {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  color: #fef3c7 !important;
+}
+
+/* Seva Booking Modal Step 4 */
+html[data-theme="light"] .modal-status-pill {
+  background-color: #fef3c7 !important;
+  border-color: #fcd34d !important;
+  color: #451a03 !important;
+}
+html[data-theme="dark"] .modal-status-pill {
+  background-color: rgba(69, 26, 3, 0.7) !important;
+  border-color: rgba(245, 158, 11, 0.4) !important;
+  color: #fef3c7 !important;
+}
+
+html[data-theme="light"] .modal-detail-card {
+  background-color: #fafaf9 !important;
+  border-color: #e7e5e4 !important;
+}
+html[data-theme="dark"] .modal-detail-card {
+  background-color: #0c0a09 !important;
+  border-color: rgba(245, 158, 11, 0.25) !important;
+}
+
+html[data-theme="light"] .modal-label {
+  color: #57534e !important;
+}
+html[data-theme="dark"] .modal-label {
+  color: #a8a29e !important;
+}
+
+html[data-theme="light"] .modal-value {
+  color: #1c1414 !important;
+}
+html[data-theme="dark"] .modal-value {
+  color: #ffffff !important;
+}
+
+html[data-theme="light"] .modal-gold-value {
+  color: #78350f !important;
+}
+html[data-theme="dark"] .modal-gold-value {
+  color: #fef3c7 !important;
+}
+
+/* Live Chat Sign In Link */
+html[data-theme="light"] .chat-signin-link {
+  color: #78350f !important;
+}
+html[data-theme="dark"] .chat-signin-link {
+  color: #fbbf24 !important;
+}

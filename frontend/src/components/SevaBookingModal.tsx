@@ -624,47 +624,47 @@ export default function SevaBookingModal({
               </div>
 
               <div className="space-y-1.5">
-                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-100 dark:bg-amber-950/70 text-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-500/40 shadow-sm" style={{ color: '#451a03' }}>
-                  <Clock className="w-3.5 h-3.5 text-amber-800 dark:text-amber-300 animate-spin shrink-0" />
-                  <span style={{ color: '#451a03' }}>Awaiting Panditji&apos;s Schedule Confirmation</span>
+                <span className="modal-status-pill inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm">
+                  <Clock className="w-3.5 h-3.5 animate-spin shrink-0" />
+                  <span>Awaiting Panditji&apos;s Schedule Confirmation</span>
                 </span>
-                <h3 className="font-serif text-2xl font-bold text-stone-900 dark:text-white mt-2" style={{ color: '#1c1414' }}>
+                <h3 className="modal-value font-serif text-2xl font-bold mt-2">
                   Pooja Request Transmitted to Poojari!
                 </h3>
               </div>
 
-              <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 max-w-md mx-auto leading-relaxed" style={{ color: '#443832' }}>
-                Your request for <strong className="text-stone-900 dark:text-white font-bold" style={{ color: '#1c1414' }}>{createdBooking.poojaName}</strong> has been sent to{' '}
-                <strong className="text-amber-900 dark:text-gold-pale font-bold" style={{ color: '#78350f' }}>{createdBooking.panditName}</strong>. Panditji will verify his sanctum schedule and confirm your broadcast within 2 hours.
+              <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 max-w-md mx-auto leading-relaxed">
+                Your request for <strong className="modal-value font-bold">{createdBooking.poojaName}</strong> has been sent to{' '}
+                <strong className="modal-gold-value font-bold">{createdBooking.panditName}</strong>. Panditji will verify his sanctum schedule and confirm your broadcast within 2 hours.
               </p>
 
               {/* Booking Reference Details */}
-              <div className="rounded-2xl bg-stone-50 dark:bg-obsidian border border-stone-200 dark:border-gold/25 p-5 max-w-md mx-auto text-left space-y-2 text-xs shadow-inner">
+              <div className="modal-detail-card rounded-2xl border p-5 max-w-md mx-auto text-left space-y-2 text-xs shadow-inner">
                 <div className="flex justify-between py-1 border-b border-stone-200 dark:border-stone-800">
-                  <span className="text-stone-600 dark:text-stone-400 font-medium">Booking Reference:</span>
-                  <span className="font-mono font-bold text-amber-900 dark:text-gold-pale" style={{ color: '#78350f' }}>{createdBooking.refCode}</span>
+                  <span className="modal-label font-medium">Booking Reference:</span>
+                  <span className="modal-gold-value font-mono font-bold">{createdBooking.refCode}</span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-stone-200 dark:border-stone-800">
-                  <span className="text-stone-600 dark:text-stone-400 font-medium">Pooja / Seva:</span>
-                  <span className="font-semibold text-stone-900 dark:text-white" style={{ color: '#1c1414' }}>{createdBooking.poojaName}</span>
+                  <span className="modal-label font-medium">Pooja / Seva:</span>
+                  <span className="modal-value font-semibold">{createdBooking.poojaName}</span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-stone-200 dark:border-stone-800">
-                  <span className="text-stone-600 dark:text-stone-400 font-medium">Requested Pandit:</span>
-                  <span className="font-semibold text-stone-900 dark:text-white" style={{ color: '#1c1414' }}>{createdBooking.panditName}</span>
+                  <span className="modal-label font-medium">Requested Pandit:</span>
+                  <span className="modal-value font-semibold">{createdBooking.panditName}</span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-stone-200 dark:border-stone-800">
-                  <span className="text-stone-600 dark:text-stone-400 font-medium">Auspicious Date &amp; Slot:</span>
-                  <span className="font-semibold text-stone-900 dark:text-white" style={{ color: '#1c1414' }}>{createdBooking.scheduledDate} • {createdBooking.timeSlot}</span>
+                  <span className="modal-label font-medium">Auspicious Date &amp; Slot:</span>
+                  <span className="modal-value font-semibold">{createdBooking.scheduledDate} • {createdBooking.timeSlot}</span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-stone-200 dark:border-stone-800">
-                  <span className="text-stone-600 dark:text-stone-400 font-medium">Yajman Gotra:</span>
-                  <span className="font-semibold text-stone-900 dark:text-white" style={{ color: '#1c1414' }}>
+                  <span className="modal-label font-medium">Yajman Gotra:</span>
+                  <span className="modal-value font-semibold">
                     {createdBooking.devoteeGotra} Gotra • {createdBooking.devoteeName}
                   </span>
                 </div>
                 <div className="flex justify-between py-1">
-                  <span className="text-stone-600 dark:text-stone-400 font-medium">Dakshina:</span>
-                  <span className="font-bold text-amber-900 dark:text-gold-pale flex items-center gap-1" style={{ color: '#78350f' }}>
+                  <span className="modal-label font-medium">Dakshina:</span>
+                  <span className="modal-gold-value font-bold flex items-center gap-1">
                     <CoinIcon size={12} /> {createdBooking.dakshinaCoins} Coins
                   </span>
                 </div>

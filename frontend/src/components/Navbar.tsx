@@ -451,50 +451,44 @@ export function Navbar() {
               <Link
                 href="/"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between text-stone-900 dark:text-stone-100 hover:text-amber-800 dark:hover:text-gold-pale font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
-                style={{ color: '#1c1414' }}
+                className="mobile-nav-link flex items-center justify-between font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
               >
-                <span className="flex items-center gap-2 font-bold text-stone-950 dark:text-white" style={{ color: '#1c1414' }}>Live Darshan</span>
+                <span className="flex items-center gap-2 font-bold">Live Darshan</span>
                 <span className="live-dot" />
               </Link>
               <Link
                 href="/pooja"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2 text-stone-900 dark:text-gold-pale hover:text-amber-800 dark:hover:text-gold font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
-                style={{ color: '#1c1414' }}
+                className="mobile-nav-link flex items-center gap-2 font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
               >
-                <DiyaIcon size={16} className="text-amber-700 dark:text-gold" />
-                <span style={{ color: '#1c1414' }}>Book Pooja &amp; Kathas</span>
+                <DiyaIcon size={16} className="text-amber-500" />
+                <span>Book Pooja &amp; Kathas</span>
               </Link>
               <Link
                 href="/#upcoming"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-stone-900 dark:text-stone-200 hover:text-amber-800 dark:hover:text-gold-pale font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
-                style={{ color: '#1c1414' }}
+                className="mobile-nav-link font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
               >
                 Pooja Schedule
               </Link>
               <Link
                 href="/#pandits"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-stone-900 dark:text-stone-200 hover:text-amber-800 dark:hover:text-gold-pale font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
-                style={{ color: '#1c1414' }}
+                className="mobile-nav-link font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
               >
                 Verified Pandits Directory
               </Link>
               <Link
                 href="/about"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-stone-900 dark:text-stone-200 hover:text-amber-800 dark:hover:text-gold-pale font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
-                style={{ color: '#1c1414' }}
+                className="mobile-nav-link font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
               >
                 About Our Heritage
               </Link>
               <Link
                 href="/faq"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-stone-900 dark:text-stone-200 hover:text-amber-800 dark:hover:text-gold-pale font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
-                style={{ color: '#1c1414' }}
+                className="mobile-nav-link font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
               >
                 FAQ &amp; Support
               </Link>
@@ -571,16 +565,14 @@ export function Navbar() {
                         setMobileMenuOpen(false);
                         setTopupModalOpen(true);
                       }}
-                      className="px-3 py-2 bg-amber-100 hover:bg-amber-200 dark:bg-gold/15 dark:hover:bg-gold/25 border border-amber-300 dark:border-gold/40 text-amber-950 dark:text-gold-pale text-xs font-bold rounded-xl text-center transition shadow-sm"
-                      style={{ color: '#451a03' }}
+                      className="hero-btn-schedule px-3 py-2 border text-xs font-bold rounded-xl text-center transition shadow-sm"
                     >
                       Top Up Coins
                     </button>
                     <Link
                       href="/account"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="px-3 py-2 bg-stone-100 dark:bg-obsidian-soft border border-stone-200 dark:border-gold/20 text-stone-900 dark:text-stone-200 text-xs font-bold rounded-xl text-center hover:bg-stone-200 dark:hover:bg-obsidian transition shadow-sm"
-                      style={{ color: '#1c1917' }}
+                      className="hero-btn-secondary px-3 py-2 border text-xs font-bold rounded-xl text-center transition shadow-sm"
                     >
                       Account Settings
                     </Link>
@@ -597,8 +589,7 @@ export function Navbar() {
                   <Link
                     href="/login"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="px-4 py-2.5 rounded-xl border border-stone-300 dark:border-stone-800 text-center text-xs font-extrabold text-stone-900 dark:text-stone-200 bg-stone-100 dark:bg-transparent hover:bg-stone-200 transition shadow-sm"
-                    style={{ color: '#1c1414' }}
+                    className="mobile-signin-btn px-4 py-2.5 rounded-xl border text-center text-xs font-extrabold transition shadow-sm"
                   >
                     Sign In
                   </Link>
@@ -606,7 +597,6 @@ export function Navbar() {
                     href="/register"
                     onClick={() => setMobileMenuOpen(false)}
                     className="px-4 py-2.5 rounded-xl bg-gold hover:bg-gold-deep text-center text-xs font-black text-obsidian shadow-sm transition"
-                    style={{ color: '#0c0a09' }}
                   >
                     Join Free (+100)
                   </Link>

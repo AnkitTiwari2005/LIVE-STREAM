@@ -110,7 +110,7 @@ export function DiyaIcon({ size = 24, className = '', ...props }: IconProps) {
 }
 
 /**
- * 3. Sacred Gold Coin (Embossed Minted Vedic Coin with High-Contrast White ॐ)
+ * 3. Sacred Gold Coin (Devotional Dakshina Coin with Embossed Vedic Aum)
  */
 export function CoinIcon({ size = 24, className = '', ...props }: IconProps) {
   return (
@@ -123,60 +123,30 @@ export function CoinIcon({ size = 24, className = '', ...props }: IconProps) {
       className={`inline-block flex-shrink-0 ${className}`}
       {...props}
     >
-      {/* 1. Outer Coin Base with Rich Vedic Amber Rim */}
-      <circle cx="24" cy="24" r="22" fill="#d97706" stroke="#b45309" strokeWidth="1.5" />
-
-      {/* 2. Inner Radiant Golden Field */}
-      <circle cx="24" cy="24" r="18.5" fill="#f59e0b" stroke="#fef08a" strokeWidth="1.2" />
-
-      {/* 3. Minted Beaded Edge (Vedic Coin Mill Marks) */}
-      <circle cx="24" cy="24" r="16" stroke="#fef08a" strokeWidth="0.9" strokeDasharray="1.8 1.8" strokeOpacity="0.95" fill="none" />
-
-      {/* 4a. Shadow Relief for Sacred Om (Devanagari ॐ) */}
-      <g transform="matrix(0.76, 0, 0, 0.76, 5.76, 6.8)">
-        <path
-          d="M20.5 14.5C18.5 12 15 12.5 13 15C11 17.5 11.5 21 14.5 23C12 24.5 10.5 28 11.5 31.5C12.8 35.5 17.5 37 21.5 35.5C24.5 34.3 26 31.5 26 29C26 26.5 24 25 21.5 24.5C25.5 23 27 18 24.5 15.5C23.5 14.5 22 14.5 20.5 14.5ZM21.5 28.5C23.5 29.5 23 32.5 20.5 33C17.5 33.5 14.5 32 14 29.5C13.5 27 16 26 18.5 26.5C19.8 26.8 20.8 27.5 21.5 28.5ZM20 20C18 20.5 15.5 19.5 15 17.5C14.5 15.5 16.5 14.5 18.5 14.5C20.5 14.5 22 16 21.5 18C21.2 19 20.8 19.5 20 20Z"
-          fill="#78350f"
-        />
-        <path
-          d="M23 23C26.5 24 33 26 32 32C31.5 35 28.5 37 25 36"
-          stroke="#78350f"
-          strokeWidth="3.2"
-          strokeLinecap="round"
-          fill="none"
-        />
-        <path
-          d="M27 13.5C29 15.5 33.5 15.5 35.5 13.5"
-          stroke="#78350f"
-          strokeWidth="2.8"
-          strokeLinecap="round"
-          fill="none"
-        />
-        <circle cx="31.2" cy="10" r="2.2" fill="#78350f" />
-      </g>
-
-      {/* 4b. Pure High-Contrast White Sacred Om Emblem */}
-      <g transform="matrix(0.76, 0, 0, 0.76, 5.76, 5.6)">
-        <path
-          d="M20.5 14.5C18.5 12 15 12.5 13 15C11 17.5 11.5 21 14.5 23C12 24.5 10.5 28 11.5 31.5C12.8 35.5 17.5 37 21.5 35.5C24.5 34.3 26 31.5 26 29C26 26.5 24 25 21.5 24.5C25.5 23 27 18 24.5 15.5C23.5 14.5 22 14.5 20.5 14.5ZM21.5 28.5C23.5 29.5 23 32.5 20.5 33C17.5 33.5 14.5 32 14 29.5C13.5 27 16 26 18.5 26.5C19.8 26.8 20.8 27.5 21.5 28.5ZM20 20C18 20.5 15.5 19.5 15 17.5C14.5 15.5 16.5 14.5 18.5 14.5C20.5 14.5 22 16 21.5 18C21.2 19 20.8 19.5 20 20Z"
-          fill="#ffffff"
-        />
-        <path
-          d="M23 23C26.5 24 33 26 32 32C31.5 35 28.5 37 25 36"
-          stroke="#ffffff"
-          strokeWidth="3.2"
-          strokeLinecap="round"
-          fill="none"
-        />
-        <path
-          d="M27 13.5C29 15.5 33.5 15.5 35.5 13.5"
-          stroke="#ffffff"
-          strokeWidth="2.8"
-          strokeLinecap="round"
-          fill="none"
-        />
-        <circle cx="31.2" cy="10" r="2.2" fill="#ffffff" />
-      </g>
+      <defs>
+        <linearGradient id="coinEdge" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#fef08a" />
+          <stop offset="35%" stopColor="#eab308" />
+          <stop offset="70%" stopColor="#ca8a04" />
+          <stop offset="100%" stopColor="#854d0e" />
+        </linearGradient>
+        <linearGradient id="coinFace" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#fef08a" />
+          <stop offset="50%" stopColor="#f59e0b" />
+          <stop offset="100%" stopColor="#b45309" />
+        </linearGradient>
+      </defs>
+      {/* Coin Outer Bezel */}
+      <circle cx="24" cy="24" r="21" fill="url(#coinEdge)" stroke="#fef08a" strokeWidth="1.5" />
+      {/* Coin Inner Recessed Face */}
+      <circle cx="24" cy="24" r="17" fill="url(#coinFace)" stroke="#ca8a04" strokeWidth="1" />
+      {/* Embossed Vedic Aum in Center */}
+      <path
+        d="M21.5 18C20 16.5 17.5 17 16 18.5C14.8 19.8 15 22 17 23C15 24 14 26.5 15 28.5C16 31 19 32 21.5 31C23.5 30 24.5 28 24.5 26.5C24.5 25 23 24 21.5 23.5C24 22.5 25 19.5 23.5 18C23 17.2 22.2 17.5 21.5 18Z"
+        fill="#fef9c3"
+      />
+      <circle cx="28" cy="15" r="1.5" fill="#fef9c3" />
+      <path d="M25 17C26.5 18.5 29.5 18.5 31 17" stroke="#fef9c3" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }
@@ -196,7 +166,7 @@ export function PranamIcon({ size = 24, className = '', ...props }: IconProps) {
       {...props}
     >
       <defs>
-        <linearGradient id="skinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id="pranamSkinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#fed7aa" />
           <stop offset="50%" stopColor="#fb923c" />
           <stop offset="100%" stopColor="#ea580c" />
@@ -205,12 +175,16 @@ export function PranamIcon({ size = 24, className = '', ...props }: IconProps) {
       {/* Left Hand / Palm */}
       <path
         d="M23 8C23 8 20 12 19 17C18 21 16 26 15 29C14 32 15 36 18 38C20 39.5 22 40 23 40V8Z"
-        fill="url(#skinGrad)"
+        fill="url(#pranamSkinGrad)"
+        stroke="#ea580c"
+        strokeWidth="1"
       />
       {/* Right Hand / Palm */}
       <path
         d="M25 8C25 8 28 12 29 17C30 21 32 26 33 29C34 32 33 36 30 38C28 39.5 26 40 25 40V8Z"
-        fill="url(#skinGrad)"
+        fill="url(#pranamSkinGrad)"
+        stroke="#ea580c"
+        strokeWidth="1"
       />
       {/* Sacred Central Division Line */}
       <line x1="24" y1="8" x2="24" y2="40" stroke="#c2410c" strokeWidth="1.5" strokeLinecap="round" />
