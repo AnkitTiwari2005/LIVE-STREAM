@@ -116,7 +116,7 @@ export function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 glass-strong border-b border-gold/15 py-3 shadow-[0_8px_40px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+      <header className="sticky top-0 z-50 glass-strong border-b border-gold/15 py-2 sm:py-2.5 shadow-[0_8px_40px_rgba(0,0,0,0.55)] backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-2 sm:gap-4">
           {/* 1. Sacred Brand Logo with Diya & Sanskrit Typography */}
           <Link href="/" className="group flex items-center gap-3 shrink-0">
