@@ -345,7 +345,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-obsidian text-foreground">
       {/* 1. Sacred Hero Section */}
-      <section className="relative overflow-hidden pt-12 pb-16 lg:pt-16 lg:pb-24 border-b border-gold/15">
+      <section className="relative overflow-hidden pt-6 pb-16 lg:pt-8 lg:pb-24 border-b border-gold/15">
         {/* Background Image with Ambient Saffron Glow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           {/* Ambient Warm Golden Saffron Radial Glow */}
