@@ -35,15 +35,13 @@ export function validateProductionSecrets(context: string = 'Bootstrap'): void {
     },
     {
       name: 'LIVEKIT_API_KEY',
-      // R-01: Added CHANGE_ME to blocked list; old rotated key removed from blocked list
-      // so the existing production .env value still boots while you replace the credentials.
-      // Set a NEW LIVEKIT_API_KEY in Hostinger env vars and redeploy to complete R-01.
-      insecureDefaults: ['pooja', 'devkey', 'CHANGE_ME'],
+      // R-01: Old compromised credentials are now blocked. New credentials set via Hostinger env vars.
+      insecureDefaults: ['pooja', 'devkey', 'CHANGE_ME', 'API2RCSWowptwZY'],
     },
     {
       name: 'LIVEKIT_API_SECRET',
-      // R-01: Same — removed rotated secret from blocked list temporarily.
-      insecureDefaults: ['secret', 'secretkey', 'CHANGE_ME'],
+      // R-01: Old compromised secret is now blocked. Credential rotation complete.
+      insecureDefaults: ['secret', 'secretkey', 'CHANGE_ME', 'rXe7jPbWbNoolgrDdPlLYNTvBQ9XeoYeqtiKqxtP5e7B'],
     },
   ];
 
