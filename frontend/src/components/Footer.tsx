@@ -1,9 +1,23 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ShieldCheck, Flame, HeartHandshake, Sparkles } from 'lucide-react';
+import { ShieldCheck, Flame, HeartHandshake, Sparkles, Video } from 'lucide-react';
 import { OmIcon } from '@/components/icons/SpiritualIcons';
 
 export function Footer() {
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('pooja_user');
+      if (stored) {
+        try {
+          setCurrentUser(JSON.parse(stored));
+        } catch {}
+      }
+    }
+  }, []);
   return (
     <footer className="bg-obsidian-deep border-t border-gold/15 text-stone-400 text-sm mt-20 relative overflow-hidden">
       <div className="mandala-bg absolute inset-0 opacity-20 pointer-events-none" />
@@ -91,9 +105,19 @@ export function Footer() {
             </h4>
             <ul className="space-y-2.5 text-xs">
               <li>
-                <Link href="/streamer/apply" className="text-stone-400 hover:text-gold-pale transition flex items-center gap-1.5">
-                  <Sparkles className="w-3 h-3 text-gold" /> Apply as Pandit
-                </Link>
+                {currentUser?.role === 'STREAMER' ? (
+                  <Link href="/studio/streams" className="text-stone-400 hover:text-gold-pale transition flex items-center gap-1.5">
+                    <Sparkles className="w-3 h-3 text-gold" /> My Sacred Broadcasts
+                  </Link>
+                ) : currentUser?.role === 'ADMIN' ? (
+                  <Link href="/admin" className="text-stone-400 hover:text-gold-pale transition flex items-center gap-1.5">
+                    <Sparkles className="w-3 h-3 text-gold" /> Admin Console
+                  </Link>
+                ) : (
+                  <Link href="/streamer/apply" className="text-stone-400 hover:text-gold-pale transition flex items-center gap-1.5">
+                    <Sparkles className="w-3 h-3 text-gold" /> Apply as Pandit
+                  </Link>
+                )}
               </li>
               <li>
                 <Link href="/pandit-guidelines" className="text-stone-400 hover:text-gold-pale transition">
