@@ -18,6 +18,15 @@ import {
 import { getLiveKitPublicUrl } from '../../common/livekit-url.util';
 import { StreamStatus, StreamVisibility, UserStatus } from '@prisma/client';
 
+function getFrontendOrigin(): string {
+  const origin = process.env.FRONTEND_ORIGIN || (process.env.DOMAIN ? `https://${process.env.DOMAIN}` : null);
+  if (origin) return origin.replace(/\/$/, '');
+  if (process.env.NODE_ENV === 'production') {
+    throw new BadRequestException('FRONTEND_ORIGIN or DOMAIN environment variable must be configured in production (N-13)');
+  }
+  return 'http://localhost:3000';
+}
+
 @Injectable()
 export class PrivateLinksService {
   private readonly logger = new Logger(PrivateLinksService.name);
@@ -50,7 +59,7 @@ export class PrivateLinksService {
       });
       if (existingLink && (!existingLink.expiresAt || existingLink.expiresAt > new Date())) {
         const rawTokenSlug = CryptoUtil.decryptAesGcm(existingLink.tokenEncrypted);
-        const origin = process.env.FRONTEND_ORIGIN || 'https://darkturquoise-louse-359917.hostingersite.com';
+        const origin = getFrontendOrigin();
         const joinUrl = `${origin}/join/${rawTokenSlug}`;
         const whatsAppPart1 = `🙏 Namaste! You are invited to attend our private live Pooja session on Shubhdarshan:\n*${stream.title}*\n\n🔗 Join Link: ${joinUrl}\n\nPlease join on time. Har Har Mahadev!`;
         return {
@@ -95,7 +104,7 @@ export class PrivateLinksService {
       },
     });
 
-    const origin = process.env.FRONTEND_ORIGIN || 'https://darkturquoise-louse-359917.hostingersite.com';
+    const origin = getFrontendOrigin();
     const joinUrl = `${origin}/join/${rawTokenSlug}`;
 
     // Generate 2-part WhatsApp share text (FR-P9)

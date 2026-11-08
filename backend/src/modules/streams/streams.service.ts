@@ -310,14 +310,14 @@ export class StreamsService {
       },
     });
 
-    // Generate short-lived viewer token (15 mins TTL)
+    // Generate viewer token with standard 60-minute session TTL (N-12)
     const token = await this.videoProvider.generateToken({
       roomName: stream.id,
       participantId,
       participantName,
       isPublisher: false,
       canSubscribe: true,
-      ttlMinutes: 2, // B-07: Shorter token refreshed via meter-tick to prevent unmetered viewing
+      ttlMinutes: 60,
       metadata: { role: 'viewer', isGuest: !userId, sessionToken: viewingSession?.sessionToken },
     });
 

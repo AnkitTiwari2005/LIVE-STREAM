@@ -35,6 +35,7 @@ export default function AdminConsolePage() {
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [searchUser, setSearchUser] = useState('');
   const [loading, setLoading] = useState(true);
+  const [authToken, setAuthToken] = useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('pooja_token');
@@ -43,6 +44,7 @@ export default function AdminConsolePage() {
       router.push('/login');
       return;
     }
+    setAuthToken(token);
     const user = JSON.parse(storedUser);
     if (user.role !== 'ADMIN') {
       alert('Access restricted to platform operators only.');
@@ -279,18 +281,22 @@ export default function AdminConsolePage() {
                   <p className="text-xs text-stone-300 mt-2 bg-stone-950 p-2.5 rounded-xl border border-stone-800">{app.bio}</p>
                   {app.kycDocuments && Array.isArray(app.kycDocuments) && app.kycDocuments.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-2">
-                      {app.kycDocuments.map((doc: any, i: number) => (
-                        <a
-                          key={i}
-                          href={doc.publicUrl || doc.storageKey}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1 bg-stone-800 hover:bg-stone-700 text-orange-400 rounded-lg text-xs font-semibold border border-stone-700 transition"
-                        >
-                          <FileText className="w-3.5 h-3.5" />
-                          View Credentials Document ({doc.documentType || 'KYC'})
-                        </a>
-                      ))}
+                      {app.kycDocuments.map((doc: any, i: number) => {
+                        const baseDocUrl = doc.publicUrl || (doc.storageKey ? `/api/v1/storage/kyc-document?key=${encodeURIComponent(doc.storageKey)}` : '');
+                        const authenticatedDocUrl = authToken && baseDocUrl ? `${baseDocUrl}${baseDocUrl.includes('?') ? '&' : '?'}token=${encodeURIComponent(authToken)}` : baseDocUrl;
+                        return (
+                          <a
+                            key={i}
+                            href={authenticatedDocUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1 bg-stone-800 hover:bg-stone-700 text-orange-400 rounded-lg text-xs font-semibold border border-stone-700 transition"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            View Credentials Document ({doc.documentType || 'KYC'})
+                          </a>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

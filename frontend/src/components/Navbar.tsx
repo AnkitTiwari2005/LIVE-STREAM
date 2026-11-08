@@ -17,6 +17,7 @@ import {
   ChevronDown,
   User,
   Search,
+  CheckCircle2,
 } from 'lucide-react';
 import { CoinTopupModal } from './CoinTopupModal';
 import { SearchPalette } from './SearchPalette';
@@ -118,12 +119,15 @@ export function Navbar() {
     <>
       <header className="sticky top-0 z-50 glass-strong border-b border-gold/15 py-2 sm:py-2.5 shadow-[0_8px_40px_rgba(0,0,0,0.55)] backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-2 sm:gap-4">
-          {/* 1. Sacred Brand Logo with Diya & Sanskrit Typography */}
-          <Link href="/" className="group flex items-center gap-3 shrink-0">
-            <span className="relative flex h-10 w-10 items-center justify-center rounded-full border border-gold/40 bg-gradient-to-b from-[#2a1e12] to-obsidian shadow-[0_0_18px_rgba(245,158,11,0.25)] transition group-hover:border-gold/70">
-              <Flame className="h-5 w-5 text-gold animate-flame" />
-              <span className="absolute inset-0 rounded-full bg-gold/15 blur-md transition group-hover:bg-gold/30" />
-            </span>
+          {/* 1. Sacred Brand Logo & Typography */}
+          <Link href="/" className="group flex items-center gap-2.5 sm:gap-3 shrink-0">
+            <div className="relative flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full border border-gold/40 bg-gradient-to-b from-[#2a1e12] to-obsidian shadow-[0_0_18px_rgba(245,158,11,0.3)] transition group-hover:border-gold/75 group-hover:shadow-[0_0_22px_rgba(245,158,11,0.5)] p-0.5 overflow-hidden">
+              <img
+                src="/logo.png"
+                alt="Shubhdarshan Mandir Logo"
+                className="h-full w-full object-contain filter drop-shadow group-hover:scale-105 transition-transform duration-300"
+              />
+            </div>
             <span className="leading-tight">
               <span className="block font-serif text-xl sm:text-2xl font-bold tracking-wide text-gold-pale group-hover:text-gold transition">
                 Shubhdarshan
@@ -287,14 +291,24 @@ export function Navbar() {
                           </Link>
                         )}
                         {user.role === 'VIEWER' && (
-                          <Link
-                            href="/streamer/apply"
-                            onClick={() => setUserDropdownOpen(false)}
-                            className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
-                          >
-                            <Sparkles className="w-4 h-4 text-gold shrink-0" />
-                            <span>Become a Pandit</span>
-                          </Link>
+                          <>
+                            <Link
+                              href="/streamer/apply"
+                              onClick={() => setUserDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
+                            >
+                              <Sparkles className="w-4 h-4 text-gold shrink-0" />
+                              <span>Become a Pandit</span>
+                            </Link>
+                            <Link
+                              href="/streamer/status"
+                              onClick={() => setUserDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
+                            >
+                              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                              <span>Pandit KYC Status</span>
+                            </Link>
+                          </>
                         )}
                         <Link
                           href="/account"
@@ -448,13 +462,22 @@ export function Navbar() {
               )}
 
               {user?.role === 'VIEWER' && (
-                <Link
-                  href="/streamer/apply"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-gold-pale font-medium py-1.5 flex items-center gap-2"
-                >
-                  <Sparkles className="w-4 h-4 text-gold" /> Become a Pandit
-                </Link>
+                <>
+                  <Link
+                    href="/streamer/apply"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-gold-pale font-medium py-1.5 flex items-center gap-2"
+                  >
+                    <Sparkles className="w-4 h-4 text-gold" /> Become a Pandit
+                  </Link>
+                  <Link
+                    href="/streamer/status"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-gold-pale font-medium py-1.5 flex items-center gap-2"
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Pandit KYC Status
+                  </Link>
+                </>
               )}
             </nav>
 

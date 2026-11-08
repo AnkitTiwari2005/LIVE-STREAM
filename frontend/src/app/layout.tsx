@@ -58,6 +58,10 @@ export const metadata: Metadata = {
     description:
       'Sub-second live devotional broadcasts, online pooja sankalp, and Vedic astrological consultations with verified Acharyas.',
   },
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png',
+  },
   robots: {
     index: true,
     follow: true,

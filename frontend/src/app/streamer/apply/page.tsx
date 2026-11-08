@@ -116,6 +116,9 @@ export default function StreamerApplyPage() {
       if (!res.ok) throw new Error(data.message || 'Application failed');
 
       setSuccess(true);
+      setTimeout(() => {
+        router.push('/streamer/status');
+      }, 2500);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -161,14 +164,23 @@ export default function StreamerApplyPage() {
               <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
               <h2 className="font-serif text-xl font-bold text-white mb-2">Application Submitted for Review</h2>
               <p className="text-xs text-stone-300 leading-relaxed mb-6">
-                Our Acharya council will review your spiritual credentials and certificates. Once approved, you will receive the Verified Streamer badge and unlock the Pandit Studio.
+                Our Acharya council will review your spiritual credentials and certificates. Once approved, you will receive the Verified Streamer badge and unlock the Pandit Studio. Redirecting to application tracking...
               </p>
-              <Link
-                href="/"
-                className="inline-block py-2.5 px-6 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs transition-colors shadow"
-              >
-                Return to Home
-              </Link>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Link
+                  href="/streamer/status"
+                  className="w-full sm:w-auto py-2.5 px-6 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs transition-colors shadow flex items-center justify-center gap-2"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  View Application Status &amp; Updates
+                </Link>
+                <Link
+                  href="/"
+                  className="w-full sm:w-auto py-2.5 px-6 bg-stone-900 hover:bg-stone-800 text-stone-300 font-bold rounded-full text-xs transition-colors border border-stone-700"
+                >
+                  Return to Home
+                </Link>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">

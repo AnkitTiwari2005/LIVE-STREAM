@@ -11,24 +11,13 @@ import * as fs from 'fs';
 const cookieParser = require('cookie-parser');
 const compression = require('compression');
 import helmet from 'helmet';
+import { validateProductionSecrets } from './common/config/validate-env';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
-  // B-08: Boot-time Production Secret Enforcement
-  if (process.env.NODE_ENV === 'production') {
-    const criticalSecrets = [
-      { name: 'JWT_ACCESS_SECRET', insecureDefault: 'jwt_default_insecure_access_secret_key' },
-      { name: 'JWT_REFRESH_SECRET', insecureDefault: 'jwt_default_insecure_refresh_secret_key' },
-    ];
-    for (const secret of criticalSecrets) {
-      const val = process.env[secret.name];
-      if (val === secret.insecureDefault) {
-        logger.error(`FATAL: Insecure default ${secret.name} detected in production!`);
-        throw new Error(`Production requires a secure, non-default ${secret.name}`);
-      }
-    }
-  }
+  // B-08 & N-11: Boot-time Production Secret Enforcement
+  validateProductionSecrets('Bootstrap');
 
   const app = await NestFactory.create(AppModule, {
     rawBody: true, // Required for cryptographic SHA-256 HMAC LiveKit Webhook verification

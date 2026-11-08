@@ -221,11 +221,23 @@ export class AdminService {
     return page;
   }
 
+  private cleanHtml(html: string): string {
+    if (!html) return '';
+    return html
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+      .replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, '')
+      .replace(/<embed\b[^<]*(?:(?!<\/embed>)<[^<]*)*<\/embed>/gi, '')
+      .replace(/\s*on\w+\s*=\s*(['"][^'"]*['"]|[^\s>]+)/gi, '')
+      .replace(/href\s*=\s*(['"])\s*javascript:[^'"]*\1/gi, 'href="#"');
+  }
+
   async updateStaticPage(slug: string, title: string, contentHtml: string) {
+    const safeHtml = this.cleanHtml(contentHtml);
     return this.prisma.staticPage.upsert({
       where: { slug },
-      update: { title, contentHtml },
-      create: { slug, title, contentHtml },
+      update: { title, contentHtml: safeHtml },
+      create: { slug, title, contentHtml: safeHtml },
     });
   }
 }

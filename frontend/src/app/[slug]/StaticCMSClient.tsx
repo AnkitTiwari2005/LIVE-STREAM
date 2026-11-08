@@ -3,37 +3,19 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { ShieldCheck, FileText } from 'lucide-react';
+import DOMPurify from 'dompurify';
 
 function sanitizeHtml(rawHtml: string): string {
   if (!rawHtml) return '';
   if (typeof window === 'undefined') return rawHtml;
   try {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(rawHtml, 'text/html');
-
-    // Remove dangerous executable tags
-    const dangerousTags = ['script', 'iframe', 'object', 'embed', 'form', 'link', 'style', 'base'];
-    dangerousTags.forEach((tag) => {
-      const elements = doc.querySelectorAll(tag);
-      elements.forEach((el) => el.remove());
+    return DOMPurify.sanitize(rawHtml, {
+      USE_PROFILES: { html: true },
+      FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'base'],
+      FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus'],
     });
-
-    // Remove inline event handlers (onclick, onload, onerror) and javascript: URLs
-    const allElements = doc.querySelectorAll('*');
-    allElements.forEach((el) => {
-      const attributes = Array.from(el.attributes);
-      for (const attr of attributes) {
-        const name = attr.name.toLowerCase();
-        const val = attr.value.trim().toLowerCase();
-        if (name.startsWith('on') || val.startsWith('javascript:') || val.startsWith('data:text/html')) {
-          el.removeAttribute(attr.name);
-        }
-      }
-    });
-
-    return doc.body.innerHTML;
   } catch {
-    return rawHtml;
+    return '';
   }
 }
 

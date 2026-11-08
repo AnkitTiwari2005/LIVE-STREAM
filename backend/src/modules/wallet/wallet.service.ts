@@ -384,29 +384,12 @@ export class WalletService {
       };
     }
 
-    // B-07: Generate refreshed LiveKit viewer token with 3-minute TTL
-    let livekitToken: string | undefined;
-    try {
-      livekitToken = await this.livekitProvider.generateToken({
-        roomName: dto.streamId,
-        participantId: userId,
-        participantName: 'Registered Devotee',
-        isPublisher: false,
-        canSubscribe: true,
-        ttlMinutes: 3,
-        metadata: { role: 'viewer', isGuest: false, sessionToken: dto.sessionToken },
-      });
-    } catch (e: any) {
-      this.logger.warn(`Failed to generate refreshed viewer token: ${e.message}`);
-    }
-
     return {
       canContinue: true,
       remainingCoins: tickResult.balanceAfter,
       availableMinutes: Math.floor(tickResult.balanceAfter / WalletService.COINS_PER_MINUTE),
       minutesWatched: tickResult.nextMinuteIndex,
       nextTickInSeconds: 60,
-      livekitToken,
     };
   }
 

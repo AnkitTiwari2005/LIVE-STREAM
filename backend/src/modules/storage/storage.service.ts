@@ -31,7 +31,7 @@ export class StorageService {
   /**
    * Generates a signed or direct upload token and target URL for authenticated media assets (C-07, B-06)
    */
-  async getPresignedUploadUrl(filename: string, contentType: string, folder = 'general') {
+  async getPresignedUploadUrl(filename: string, contentType: string, folder = 'general', userId?: string) {
     if (!ALLOWED_CONTENT_TYPES.has(contentType.toLowerCase())) {
       throw new BadRequestException(
         `Disallowed file type: ${contentType}. Allowed types: JPEG, PNG, WEBP, PDF.`,
@@ -44,7 +44,8 @@ export class StorageService {
     // Sanitize folder
     const safeFolder = folder.replace(/[^a-zA-Z0-9_-]/g, '') || 'general';
     const uniqueId = crypto.randomBytes(16).toString('hex');
-    const storageKey = `${safeFolder}/${uniqueId}${ext}`;
+    const userPrefix = userId ? `${userId}_` : '';
+    const storageKey = `${safeFolder}/${userPrefix}${uniqueId}${ext}`;
 
     const uploadUrl = `/api/v1/storage/upload?key=${encodeURIComponent(storageKey)}`;
     // B-06: KYC documents are served strictly through the protected route to prevent DPDP exposure

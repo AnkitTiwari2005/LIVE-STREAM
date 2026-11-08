@@ -20,6 +20,18 @@ import {
 import { OmIcon, DiyaIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
 import { apiFetch } from '@/lib/api';
 
+const toLocalDatetimeInputValue = (dateInput: string | Date): string => {
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const year = d.getFullYear();
+  const month = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
 export default function MyStreamsPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
@@ -33,6 +45,7 @@ export default function MyStreamsPage() {
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editScheduledAt, setEditScheduledAt] = useState('');
+  const [originalScheduledAt, setOriginalScheduledAt] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
 
   const loadStreams = async () => {
@@ -70,9 +83,9 @@ export default function MyStreamsPage() {
     setEditStream(stream);
     setEditTitle(stream.title || '');
     setEditDescription(stream.description || '');
-    setEditScheduledAt(
-      stream.scheduledAt ? new Date(stream.scheduledAt).toISOString().slice(0, 16) : ''
-    );
+    const localVal = stream.scheduledAt ? toLocalDatetimeInputValue(stream.scheduledAt) : '';
+    setEditScheduledAt(localVal);
+    setOriginalScheduledAt(localVal);
   };
 
   const handleSaveEdit = async (e: React.FormEvent) => {
@@ -80,13 +93,17 @@ export default function MyStreamsPage() {
     if (!editStream) return;
     setSavingEdit(true);
     try {
+      const payload: any = {
+        title: editTitle.trim(),
+        description: editDescription.trim() || undefined,
+      };
+      if (editScheduledAt && editScheduledAt !== originalScheduledAt) {
+        payload.scheduledAt = new Date(editScheduledAt).toISOString();
+      }
+
       await apiFetch(`/streams/${editStream.id}`, {
         method: 'PATCH',
-        body: JSON.stringify({
-          title: editTitle.trim(),
-          description: editDescription.trim() || undefined,
-          scheduledAt: editScheduledAt ? new Date(editScheduledAt).toISOString() : undefined,
-        }),
+        body: JSON.stringify(payload),
       });
       setEditStream(null);
       loadStreams();

@@ -13,10 +13,13 @@ export function Footer() {
           {/* Brand & Mission (Col 1 & 2) */}
           <div className="md:col-span-2 space-y-4">
             <Link href="/" className="group inline-flex items-center gap-3">
-              <span className="relative flex h-10 w-10 items-center justify-center rounded-full border border-gold/40 bg-gradient-to-b from-[#2a1e12] to-obsidian shadow-[0_0_15px_rgba(245,158,11,0.2)]">
-                <Flame className="h-5 w-5 text-gold animate-flame" />
-                <span className="absolute inset-0 rounded-full bg-gold/10 blur-md transition group-hover:bg-gold/25" />
-              </span>
+              <div className="relative flex h-11 w-11 items-center justify-center rounded-full border border-gold/40 bg-gradient-to-b from-[#2a1e12] to-obsidian shadow-[0_0_15px_rgba(245,158,11,0.3)] p-0.5 overflow-hidden">
+                <img
+                  src="/logo.png"
+                  alt="Shubhdarshan Mandir Logo"
+                  className="h-full w-full object-contain filter drop-shadow group-hover:scale-105 transition-transform"
+                />
+              </div>
               <span className="leading-tight">
                 <span className="block font-serif text-2xl font-bold tracking-wide text-gold-pale">
                   Shubhdarshan

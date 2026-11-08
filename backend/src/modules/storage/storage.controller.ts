@@ -8,6 +8,7 @@ import {
   Req,
   Res,
   BadRequestException,
+  ForbiddenException,
   PayloadTooLargeException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
@@ -15,6 +16,7 @@ import * as fs from 'fs';
 import { StorageService } from './storage.service';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '@prisma/client';
 
 @ApiTags('Storage')
@@ -27,6 +29,7 @@ export class StorageController {
   @ApiOperation({ summary: 'Obtain upload authorization for verified KYC or stream assets' })
   async getPresignedUrl(
     @Body() body: { filename: string; contentType: string; folder?: string },
+    @CurrentUser('id') userId: string,
   ) {
     if (!body.filename || !body.contentType) {
       throw new BadRequestException('filename and contentType are required');
@@ -35,14 +38,24 @@ export class StorageController {
       body.filename,
       body.contentType,
       body.folder || 'media',
+      userId,
     );
   }
 
   @Put('upload')
   @ApiOperation({ summary: 'Upload file directly to platform storage with streaming size cap (B-06)' })
-  async uploadFile(@Query('key') key: string, @Req() req: Request) {
+  async uploadFile(
+    @Query('key') key: string,
+    @CurrentUser() user: any,
+    @Req() req: Request,
+  ) {
     if (!key) {
       throw new BadRequestException('key query parameter is required');
+    }
+
+    // B-06: Prevent cross-user key tampering - bind upload to owner user ID
+    if (user?.role !== UserRole.ADMIN && user?.id && !key.includes(user.id)) {
+      throw new ForbiddenException('Unauthorized: storage key does not belong to this account');
     }
 
     const chunks: Buffer[] = [];

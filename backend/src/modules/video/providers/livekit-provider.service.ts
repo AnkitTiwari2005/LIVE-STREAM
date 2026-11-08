@@ -14,8 +14,13 @@ export class LiveKitProviderService implements IVideoProviderService {
   constructor() {
     const rawHost = process.env.LIVEKIT_URL || process.env.LIVEKIT_HOST || 'http://livekit:7880';
     const livekitHost = rawHost.startsWith('wss://') ? rawHost.replace('wss://', 'https://') : rawHost;
-    const apiKey = process.env.LIVEKIT_API_KEY || (process.env.NODE_ENV === 'production' ? '' : 'pooja');
-    const apiSecret = process.env.LIVEKIT_API_SECRET || (process.env.NODE_ENV === 'production' ? '' : 'secret');
+    const isProd = process.env.NODE_ENV === 'production';
+    const apiKey = process.env.LIVEKIT_API_KEY || (isProd ? '' : 'pooja');
+    const apiSecret = process.env.LIVEKIT_API_SECRET || (isProd ? '' : 'secret');
+
+    if (isProd && (!apiKey || !apiSecret || apiKey === 'pooja' || apiSecret === 'secret')) {
+      throw new Error('FATAL: LIVEKIT_API_KEY and LIVEKIT_API_SECRET must be configured with secure credentials in production (N-11)');
+    }
 
     this.roomService = new RoomServiceClient(livekitHost, apiKey || 'pooja', apiSecret || 'secret');
   }
@@ -39,8 +44,13 @@ export class LiveKitProviderService implements IVideoProviderService {
   }
 
   async generateToken(options: ParticipantTokenOptions): Promise<string> {
-    const apiKey = process.env.LIVEKIT_API_KEY || (process.env.NODE_ENV === 'production' ? '' : 'pooja');
-    const apiSecret = process.env.LIVEKIT_API_SECRET || (process.env.NODE_ENV === 'production' ? '' : 'secret');
+    const isProd = process.env.NODE_ENV === 'production';
+    const apiKey = process.env.LIVEKIT_API_KEY || (isProd ? '' : 'pooja');
+    const apiSecret = process.env.LIVEKIT_API_SECRET || (isProd ? '' : 'secret');
+
+    if (isProd && (!apiKey || !apiSecret || apiKey === 'pooja' || apiSecret === 'secret')) {
+      throw new Error('FATAL: LIVEKIT_API_KEY and LIVEKIT_API_SECRET must be configured with secure credentials in production (N-11)');
+    }
 
     const at = new AccessToken(apiKey || 'pooja', apiSecret || 'secret', {
       identity: options.participantId,

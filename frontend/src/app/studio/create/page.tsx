@@ -152,21 +152,24 @@ export default function CreateStreamPage() {
       }
 
       if (visibility === 'PRIVATE') {
-        try {
-          await fetch(`${apiUrl}/private-links`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              streamId: data.id,
-              password: privatePassword.trim() || undefined,
-              maxViewers: Number(maxViewers) || 25,
-              requireLogin,
-            }),
-          });
-        } catch {}
+        const linkRes = await fetch(`${apiUrl}/private-links`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            streamId: data.id,
+            password: privatePassword.trim() || undefined,
+            maxViewers: Number(maxViewers) || 25,
+            requireLogin,
+          }),
+        });
+
+        if (!linkRes.ok) {
+          const linkErr = await linkRes.json().catch(() => ({}));
+          throw new Error(linkErr.message || 'Broadcast created, but failed to configure private access link settings');
+        }
       }
 
       router.push(`/studio/${data.id}`);

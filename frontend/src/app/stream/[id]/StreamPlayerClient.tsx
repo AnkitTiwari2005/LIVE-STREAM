@@ -222,10 +222,6 @@ export default function StreamPlayerClient() {
           if (typeof data.availableMinutes === 'number') {
             setAvailableMinutes(data.availableMinutes);
           }
-          // B-07: Refresh LiveKit token seamlessly so participant is never disconnected
-          if (data.livekitToken) {
-            setToken(data.livekitToken);
-          }
         } else {
           setIsZeroBalance(true);
           setTopupModalOpen(true);
