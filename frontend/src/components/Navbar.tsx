@@ -156,6 +156,13 @@ export function Navbar() {
               <span className="live-dot shrink-0" />
             </Link>
             <Link
+              href="/pooja"
+              className="whitespace-nowrap shrink-0 rounded-full px-2 xl:px-3 py-1.5 transition hover:text-gold-pale hover:bg-gold/5 flex items-center gap-1"
+            >
+              <DiyaIcon size={13} />
+              <span>Book Pooja</span>
+            </Link>
+            <Link
               href="/#upcoming"
               className="whitespace-nowrap shrink-0 rounded-full px-2 xl:px-3 py-1.5 transition hover:text-gold-pale hover:bg-gold/5"
             >
@@ -319,6 +326,14 @@ export function Navbar() {
                           </>
                         )}
                         <Link
+                          href="/account#bookings"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
+                        >
+                          <DiyaIcon size={16} className="text-gold shrink-0" />
+                          <span>My Booked Poojas</span>
+                        </Link>
+                        <Link
                           href="/account"
                           onClick={() => setUserDropdownOpen(false)}
                           className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
@@ -403,6 +418,14 @@ export function Navbar() {
               >
                 <span className="flex items-center gap-2 font-semibold text-white">Live Darshan</span>
                 <span className="live-dot" />
+              </Link>
+              <Link
+                href="/pooja"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2 text-gold-pale hover:text-gold font-medium py-1.5 border-b border-stone-800/60"
+              >
+                <DiyaIcon size={16} />
+                <span>Book Pooja &amp; Kathas</span>
               </Link>
               <Link
                 href="/#upcoming"

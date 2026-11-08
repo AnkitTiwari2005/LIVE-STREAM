@@ -18,9 +18,18 @@ import {
   Edit2,
   Check,
   X,
+  Clock,
+  Calendar,
+  Video,
+  AlertCircle,
+  ExternalLink,
+  ChevronRight,
+  RotateCcw,
 } from 'lucide-react';
 import { OmIcon, CoinIcon, DiyaIcon, VerifiedPanditBadge } from '@/components/icons/SpiritualIcons';
 import { useToast } from '@/components/Toast';
+import SevaBookingModal, { BookingRecord } from '@/components/SevaBookingModal';
+import { PANDIT_PRICING_CATALOG } from '@/data/poojaCatalog';
 
 export default function AccountPage() {
   const router = useRouter();
@@ -42,6 +51,105 @@ export default function AccountPage() {
   const [nameInput, setNameInput] = useState('');
   const [nameSaving, setNameSaving] = useState(false);
   const [nameMsg, setNameMsg] = useState<string | null>(null);
+
+  // Devotee Bookings State
+  const [bookings, setBookings] = useState<BookingRecord[]>([]);
+  const [bookingFilter, setBookingFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'DECLINED'>('ALL');
+  const [rebookModalOpen, setRebookModalOpen] = useState(false);
+  const [rebookPoojaId, setRebookPoojaId] = useState<string | undefined>(undefined);
+
+  const loadBookings = () => {
+    if (typeof window === 'undefined') return;
+    try {
+      const stored = localStorage.getItem('shubhdarshan_bookings');
+      if (stored) {
+        setBookings(JSON.parse(stored));
+      } else {
+        // Seed initial sample request so devotees immediately see how live status tracking works
+        const sample: BookingRecord[] = [
+          {
+            id: 'sample-booking-1',
+            refCode: 'SHUBH-749210',
+            poojaId: 'rudrabhishek',
+            poojaName: 'Maha Rudrabhishek & Swasti Vachan',
+            category: 'Shiva & Rudra',
+            panditId: 'aarav-sharma',
+            panditName: 'Pandit Aarav Sharma',
+            panditAvatar: '/images/photo-1543934776-32d1cc654abb.webp',
+            panditTitle: 'Senior Acharya, Kashi Vishwanath Sanctum',
+            dakshinaCoins: 150,
+            devoteeName: 'Ankit Sharma',
+            devoteeGotra: 'Kashyap',
+            scheduledDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+            timeSlot: 'Morning (07:00 AM – 09:00 AM IST)',
+            sankalpIntent: 'Family Health, Long Life & Healing',
+            status: 'PENDING',
+            createdAt: new Date().toISOString(),
+            roomLink: '/join/invite',
+          },
+        ];
+        localStorage.setItem('shubhdarshan_bookings', JSON.stringify(sample));
+        setBookings(sample);
+      }
+    } catch {
+      setBookings([]);
+    }
+  };
+
+  const updateBooking = (id: string, updates: Partial<BookingRecord>) => {
+    const updated = bookings.map((b) => (b.id === id ? { ...b, ...updates } : b));
+    setBookings(updated);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('shubhdarshan_bookings', JSON.stringify(updated));
+    }
+  };
+
+  const handleSimulateApprove = (id: string) => {
+    updateBooking(id, {
+      status: 'APPROVED',
+      confirmedTime: 'Confirmed by Panditji for requested slot',
+      roomLink: '/join/invite',
+    });
+    toast.success('Panditji has accepted and confirmed your live pooja schedule!');
+  };
+
+  const handleSimulateDecline = (id: string) => {
+    updateBooking(id, {
+      status: 'DECLINED',
+      declineReason: 'Panditji has a conflicting temple sandhya aarti duty for this time slot.',
+    });
+    toast.error('Panditji is unavailable for this slot. You can choose another Pandit or auto-match.');
+  };
+
+  const handleAutoMatchPandit = (booking: BookingRecord) => {
+    const nextPandit = PANDIT_PRICING_CATALOG.find((p) => p.panditId !== booking.panditId) || PANDIT_PRICING_CATALOG[1];
+    updateBooking(booking.id, {
+      panditId: nextPandit.panditId,
+      panditName: nextPandit.name,
+      panditAvatar: nextPandit.avatar,
+      panditTitle: nextPandit.title,
+      dakshinaCoins: nextPandit.dakshinaCoins,
+      status: 'APPROVED',
+      confirmedTime: `Transferred & confirmed with ${nextPandit.name}`,
+      roomLink: '/join/invite',
+      declineReason: undefined,
+    });
+    toast.success(`Ritual successfully transferred to ${nextPandit.name} and confirmed!`);
+  };
+
+  const handleChooseAnotherPandit = (booking: BookingRecord) => {
+    setRebookPoojaId(booking.poojaId);
+    setRebookModalOpen(true);
+  };
+
+  const handleDeleteBooking = (id: string) => {
+    const updated = bookings.filter((b) => b.id !== id);
+    setBookings(updated);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('shubhdarshan_bookings', JSON.stringify(updated));
+    }
+    toast.info('Booking request removed.');
+  };
 
   const loadProfile = async () => {
     setLoading(true);
@@ -73,6 +181,7 @@ export default function AccountPage() {
 
   useEffect(() => {
     loadProfile();
+    loadBookings();
   }, []);
 
   const handleUpdateName = async (e: React.FormEvent) => {
@@ -337,6 +446,337 @@ export default function AccountPage() {
             </div>
           </div>
 
+          {/* MY BOOKED POOJAS & SANKALPS (LIVE STATUS TRACKING) */}
+          <div id="bookings" className="bg-obsidian-soft border border-gold/25 rounded-3xl p-6 sm:p-8 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-gold/15">
+              <div>
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.24em] text-gold-soft mb-1">
+                  <DiyaIcon size={12} /> Live Devotee Requests
+                </span>
+                <h2 className="font-serif text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+                  My Booked Poojas &amp; Sankalps
+                </h2>
+                <p className="text-xs text-stone-400 mt-0.5">
+                  Live status tracking for your personalized Vedic rituals, kathas, and astrological consultations
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setRebookPoojaId(undefined);
+                    setRebookModalOpen(true);
+                  }}
+                  className="px-4 py-2.5 rounded-full bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-gold/20 hover:scale-[1.02]"
+                >
+                  <DiyaIcon size={14} />
+                  <span>Book a Live Pooja</span>
+                </button>
+                <Link
+                  href="/pooja"
+                  className="px-4 py-2.5 rounded-full border border-gold/30 hover:border-gold text-gold-pale text-xs font-semibold transition flex items-center gap-1 bg-obsidian"
+                >
+                  <span>Catalog</span>
+                  <ChevronRight className="w-3 h-3" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Filter Tabs */}
+            <div className="flex items-center gap-2 overflow-x-auto py-4 no-scrollbar border-b border-stone-800">
+              {(['ALL', 'PENDING', 'APPROVED', 'DECLINED'] as const).map((filter) => {
+                const count =
+                  filter === 'ALL'
+                    ? bookings.length
+                    : bookings.filter((b) => b.status === filter).length;
+                const isSelected = bookingFilter === filter;
+                return (
+                  <button
+                    key={filter}
+                    onClick={() => setBookingFilter(filter)}
+                    className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-bold transition flex items-center gap-1.5 shrink-0 ${
+                      isSelected
+                        ? 'bg-gold text-obsidian shadow'
+                        : 'bg-obsidian border border-gold/15 text-stone-300 hover:text-white hover:border-gold/30'
+                    }`}
+                  >
+                    {filter === 'PENDING' && (
+                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                    )}
+                    {filter === 'APPROVED' && (
+                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                    )}
+                    {filter === 'DECLINED' && (
+                      <span className="w-2 h-2 rounded-full bg-red-400" />
+                    )}
+                    <span>
+                      {filter === 'ALL'
+                        ? 'All Bookings'
+                        : filter === 'PENDING'
+                        ? 'Pending Confirmation'
+                        : filter === 'APPROVED'
+                        ? 'Confirmed / Approved'
+                        : 'Pandit Unavailable'}
+                    </span>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                        isSelected ? 'bg-obsidian/25 text-obsidian' : 'bg-stone-800 text-gold-soft'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Bookings Card List */}
+            <div className="mt-6 space-y-4">
+              {bookings.filter((b) => bookingFilter === 'ALL' || b.status === bookingFilter).length === 0 ? (
+                <div className="p-8 text-center bg-obsidian rounded-2xl border border-stone-800 space-y-3">
+                  <div className="w-12 h-12 rounded-full bg-gold/10 border border-gold/25 flex items-center justify-center text-gold mx-auto">
+                    <DiyaIcon size={22} />
+                  </div>
+                  <p className="text-sm font-serif font-bold text-white">
+                    No {bookingFilter === 'ALL' ? '' : bookingFilter.toLowerCase()} pooja requests found
+                  </p>
+                  <p className="text-xs text-stone-400 max-w-sm mx-auto">
+                    Select a personalized Vedic pooja or 1-on-1 horoscope consultation to receive sacred live darshan.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setRebookPoojaId(undefined);
+                      setRebookModalOpen(true);
+                    }}
+                    className="px-5 py-2.5 rounded-full bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold transition inline-flex items-center gap-1.5 shadow"
+                  >
+                    <DiyaIcon size={14} />
+                    <span>Book a Live Pooja Now</span>
+                  </button>
+                </div>
+              ) : (
+                bookings
+                  .filter((b) => bookingFilter === 'ALL' || b.status === bookingFilter)
+                  .map((b) => {
+                    const isPending = b.status === 'PENDING';
+                    const isApproved = b.status === 'APPROVED';
+                    const isDeclined = b.status === 'DECLINED';
+
+                    return (
+                      <div
+                        key={b.id}
+                        className={`rounded-2xl border p-5 sm:p-6 transition-all duration-300 shadow-lg space-y-4 ${
+                          isApproved
+                            ? 'bg-gradient-to-br from-emerald-950/20 via-obsidian to-obsidian border-emerald-500/40 shadow-[0_4px_24px_rgba(16,185,129,0.08)]'
+                            : isDeclined
+                            ? 'bg-gradient-to-br from-red-950/20 via-obsidian to-obsidian border-red-500/40'
+                            : 'bg-gradient-to-br from-amber-950/20 via-obsidian to-obsidian border-amber-500/35 shadow-[0_4px_24px_rgba(245,158,11,0.08)]'
+                        }`}
+                      >
+                        {/* Top Meta Line: Status Badge & Ref Code */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-stone-800">
+                          <div className="flex items-center gap-2">
+                            {isPending && (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-950/80 text-amber-300 border border-amber-500/40">
+                                <Clock className="w-3.5 h-3.5 animate-spin" /> Awaiting Pandit Confirmation
+                              </span>
+                            )}
+                            {isApproved && (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-500/40">
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Consecrated &amp; Approved by Panditji
+                              </span>
+                            )}
+                            {isDeclined && (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-950/80 text-red-300 border border-red-500/40">
+                                <AlertTriangle className="w-3.5 h-3.5" /> Pandit Unavailable for Slot
+                              </span>
+                            )}
+                            <span className="font-mono text-xs text-stone-400 bg-obsidian-soft px-2.5 py-0.5 rounded border border-stone-800">
+                              {b.refCode}
+                            </span>
+                          </div>
+
+                          <div className="text-[11px] text-stone-400">
+                            Requested on: {new Date(b.createdAt || Date.now()).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </div>
+                        </div>
+
+                        {/* Middle Details Grid */}
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                          {/* Ritual Details */}
+                          <div className="lg:col-span-7 space-y-2">
+                            <div>
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-gold-pale bg-gold/10 px-2 py-0.5 rounded-full border border-gold/25 inline-block mb-1">
+                                {b.category || 'Vedic Ritual'}
+                              </span>
+                              <h3 className="font-serif text-lg sm:text-xl font-bold text-white leading-snug">
+                                {b.poojaName}
+                              </h3>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
+                              <div className="flex items-center gap-1.5 text-stone-300">
+                                <Calendar className="w-3.5 h-3.5 text-gold-soft shrink-0" />
+                                <span><strong>Date:</strong> {b.scheduledDate}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 text-stone-300">
+                                <Clock className="w-3.5 h-3.5 text-gold-soft shrink-0" />
+                                <span><strong>Slot:</strong> {b.timeSlot}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 text-stone-300">
+                                <OmIcon size={14} className="text-gold shrink-0" />
+                                <span><strong>Yajman:</strong> {b.devoteeName} ({b.devoteeGotra} Gotra)</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 text-stone-300">
+                                <Sparkles className="w-3.5 h-3.5 text-gold shrink-0" />
+                                <span className="truncate"><strong>Sankalp:</strong> {b.sankalpIntent}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Pandit & Dakshina Summary */}
+                          <div className="lg:col-span-5 rounded-xl bg-obsidian/90 border border-stone-800 p-3.5 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <img
+                                src={b.panditAvatar || '/images/photo-1543934776-32d1cc654abb.webp'}
+                                alt={b.panditName}
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = '/images/photo-1543934776-32d1cc654abb.webp';
+                                }}
+                                className="w-11 h-11 rounded-full object-cover border border-gold/30 shrink-0"
+                              />
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1 font-semibold text-white text-xs truncate">
+                                  <span>{b.panditName}</span>
+                                  <VerifiedPanditBadge size={13} />
+                                </div>
+                                <p className="text-[10px] text-stone-400 truncate">
+                                  {b.panditTitle}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="text-right shrink-0">
+                              <span className="text-[10px] text-stone-400 block font-semibold">Dakshina</span>
+                              <span className="font-mono font-bold text-gold-pale text-xs sm:text-sm flex items-center gap-1 justify-end">
+                                <CoinIcon size={13} /> {b.dakshinaCoins} Coins
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Bottom Status Banner & Devotee Action Strip */}
+                        <div className="pt-3 border-t border-stone-800/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                          {/* Left Status Message */}
+                          <div className="text-xs">
+                            {isPending && (
+                              <p className="text-amber-300/90 flex items-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                <span>Panditji is verifying his sanctum altar schedule. You will be notified once confirmed.</span>
+                              </p>
+                            )}
+                            {isApproved && (
+                              <p className="text-emerald-300 flex items-center gap-1.5">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                <span>
+                                  <strong>Slot Confirmed!</strong> Join the private sanctum room at your scheduled time.
+                                </span>
+                              </p>
+                            )}
+                            {isDeclined && (
+                              <p className="text-red-300/90 flex items-center gap-1.5">
+                                <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                                <span>
+                                  {b.declineReason || 'Panditji had a conflicting sanctum duty for this specific slot.'}
+                                </span>
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Right Interactive Buttons */}
+                          <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto shrink-0">
+                            {isPending && (
+                              <>
+                                {/* Devotee Test Controls (Simulate Pandit Response) */}
+                                <button
+                                  onClick={() => handleSimulateApprove(b.id)}
+                                  className="px-3 py-1.5 rounded-full bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition flex items-center gap-1 shadow-sm"
+                                  title="Devotee Demo: Simulate Pandit Confirmation"
+                                >
+                                  <Check className="w-3 h-3 text-emerald-400" />
+                                  <span>Simulate Pandit Approval</span>
+                                </button>
+                                <button
+                                  onClick={() => handleSimulateDecline(b.id)}
+                                  className="px-3 py-1.5 rounded-full bg-red-950/80 hover:bg-red-900 border border-red-500/40 text-red-300 text-xs font-bold transition flex items-center gap-1 shadow-sm"
+                                  title="Devotee Demo: Simulate Pandit Unavailable"
+                                >
+                                  <X className="w-3 h-3 text-red-400" />
+                                  <span>Simulate Decline</span>
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteBooking(b.id)}
+                                  className="p-1.5 text-stone-500 hover:text-red-400 transition"
+                                  title="Cancel Request"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </>
+                            )}
+
+                            {isApproved && (
+                              <>
+                                <Link
+                                  href={b.roomLink || '/join/invite'}
+                                  className="px-5 py-2 rounded-full bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold transition flex items-center gap-1.5 shadow-[0_0_18px_rgba(245,158,11,0.35)] hover:scale-105"
+                                >
+                                  <Video className="w-3.5 h-3.5" />
+                                  <span>Join Sacred Room (Live HD)</span>
+                                </Link>
+                                <button
+                                  onClick={() => toast.success(`Sankalp Slip for ${b.refCode}: Yajman ${b.devoteeName}, ${b.devoteeGotra} Gotra registered.`)}
+                                  className="px-3 py-1.5 rounded-full border border-gold/30 hover:border-gold text-gold-pale text-xs font-semibold transition"
+                                >
+                                  Gotra Slip
+                                </button>
+                              </>
+                            )}
+
+                            {isDeclined && (
+                              <>
+                                {/* User options if declined: Choose another pandit OR Auto-match */}
+                                <button
+                                  onClick={() => handleChooseAnotherPandit(b)}
+                                  className="px-4 py-1.5 rounded-full bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold transition flex items-center gap-1.5 shadow-md"
+                                >
+                                  <RotateCcw className="w-3 h-3" />
+                                  <span>Choose Another Pandit</span>
+                                </button>
+                                <button
+                                  onClick={() => handleAutoMatchPandit(b)}
+                                  className="px-3.5 py-1.5 rounded-full border border-gold/40 bg-gold/10 hover:bg-gold/20 text-gold-pale text-xs font-bold transition flex items-center gap-1"
+                                >
+                                  <Sparkles className="w-3 h-3 text-gold" />
+                                  <span>Auto-match Available Pandit</span>
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteBooking(b.id)}
+                                  className="p-1.5 text-stone-500 hover:text-red-400 transition"
+                                  title="Dismiss Record"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+              )}
+            </div>
+          </div>
+
             {/* Two-Factor Authentication (2FA) */}
             <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 sm:p-8 shadow-xl">
               <div className="flex items-center justify-between mb-4">
@@ -464,6 +904,15 @@ export default function AccountPage() {
           </div>
         )}
       </div>
+      {/* Seva Booking Modal */}
+      <SevaBookingModal
+        isOpen={rebookModalOpen}
+        onClose={() => {
+          setRebookModalOpen(false);
+          loadBookings();
+        }}
+        initialSevaId={rebookPoojaId}
+      />
     </div>
   );
 }

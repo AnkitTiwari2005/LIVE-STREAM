@@ -68,67 +68,76 @@ const LIVE_SEVA_ACTIVITIES = [
 const CATEGORY_TILES = [
   {
     id: 'rudrabhishek',
-    name: 'Rudrabhishek & Pooja',
-    desc: 'Conducted live by Vedic Archaks',
+    name: 'Maha Rudrabhishek',
+    desc: 'Panchamrit abhishekam & Rudra Suktam',
     icon: DiyaIcon,
-    tag: 'Sacred Ritual',
+    tag: 'Shiva Pooja',
     filterKey: 'rudrabhishek',
+    priceText: 'From 150 Coins',
   },
   {
-    id: 'aarti',
-    name: 'Live Aarti & Darshan',
-    desc: 'Devotional aartis and chants',
-    icon: Flame,
-    tag: 'Live Broadcast',
-    filterKey: 'aarti',
-  },
-  {
-    id: 'astrology',
-    name: 'Vedic Guidance & Astrology',
-    desc: 'Gurukul verified consultations',
+    id: 'kundli_matching',
+    name: 'Vedic Kundli Matching',
+    desc: '1-on-1 horoscope compatibility',
     icon: Compass,
-    tag: '1-on-1 Seva',
-    filterKey: 'astrology',
+    tag: 'Vedic Jyotish',
+    filterKey: 'kundli_matching',
+    priceText: 'From 100 Coins',
   },
   {
-    id: 'sankalp',
-    name: 'Family Sankalp',
-    desc: 'Personal gotra-naam chanting',
-    icon: HeartHandshake,
-    tag: 'Personalized Seva',
-    filterKey: 'sankalp',
-  },
-  {
-    id: 'vastu',
-    name: 'Vastu & Numerology',
-    desc: 'Harmonize home and work space',
-    icon: Shield,
-    tag: 'Vedic Acharyas',
-    filterKey: 'vastu',
-  },
-  {
-    id: 'katha',
-    name: 'Katha & Pravachan',
-    desc: 'Shrimad Bhagwat & Ramayan',
+    id: 'satyanarayan_katha',
+    name: 'Satyanarayan Maha Katha',
+    desc: 'Auspicious katha recital & hawan',
     icon: BookOpen,
-    tag: 'Daily Discourses',
-    filterKey: 'katha',
+    tag: 'Family Blessing',
+    filterKey: 'satyanarayan_katha',
+    priceText: 'From 125 Coins',
   },
   {
-    id: 'kirtan',
-    name: 'Kirtan & Bhajan',
-    desc: 'Sacred devotional melodies',
-    icon: Music,
-    tag: 'Devotional',
-    filterKey: 'kirtan',
+    id: 'navgrah',
+    name: 'Navgrah Dosh Nivaran',
+    desc: '9-planetary oblations & peace',
+    icon: Flame,
+    tag: 'Planetary Shanti',
+    filterKey: 'navgrah',
+    priceText: 'From 125 Coins',
+  },
+  {
+    id: 'family_sankalp',
+    name: 'Family Gotra Sankalp',
+    desc: 'Gotra-Naam invocation during aarti',
+    icon: HeartHandshake,
+    tag: 'Gotra Chanting',
+    filterKey: 'family_sankalp',
+    priceText: 'From 75 Coins',
+  },
+  {
+    id: 'griha_pravesh_vastu',
+    name: 'Griha Pravesh & Vastu',
+    desc: 'Purify home energies with Vedic hawan',
+    icon: Shield,
+    tag: 'Vastu Consecration',
+    filterKey: 'griha_pravesh_vastu',
+    priceText: 'From 200 Coins',
   },
   {
     id: 'mahamrityunjaya',
     name: 'Mahamrityunjaya Jaap',
-    desc: 'Healing chants for health & longevity',
+    desc: 'Chanting for longevity & health',
     icon: Sparkles,
     tag: 'Healing Seva',
     filterKey: 'mahamrityunjaya',
+    priceText: 'From 150 Coins',
+  },
+  {
+    id: 'more',
+    name: 'Explore All 24+ Poojas',
+    desc: 'Kaal Sarp, Yagyas, Vivah & more',
+    icon: ArrowRight,
+    tag: 'Full Catalog',
+    isMore: true,
+    link: '/pooja',
+    priceText: 'View All 24+ &rarr;',
   },
 ];
 
@@ -669,16 +678,28 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Search Box */}
-          <div className="relative w-full md:w-80">
-            <Search className="w-4 h-4 absolute left-3.5 top-3 text-gold-soft" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search pooja, pandit, or seva..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-full bg-obsidian-soft border border-gold/20 text-xs sm:text-sm text-white placeholder-stone-400 focus:outline-none focus:border-gold transition"
-            />
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            {/* View Full Catalog Button */}
+            <Link
+              href="/pooja"
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full border border-gold/40 bg-gold/10 hover:bg-gold/20 text-gold-pale text-xs font-bold transition shrink-0 shadow-sm"
+            >
+              <DiyaIcon size={14} />
+              <span>Explore All 24+ Poojas &amp; Kathas</span>
+              <ArrowRight className="w-3.5 h-3.5 text-gold" />
+            </Link>
+
+            {/* Search Box */}
+            <div className="relative w-full sm:w-64">
+              <Search className="w-4 h-4 absolute left-3.5 top-3 text-gold-soft" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search pooja, pandit..."
+                className="w-full pl-10 pr-4 py-2.5 rounded-full bg-obsidian-soft border border-gold/20 text-xs sm:text-sm text-white placeholder-stone-400 focus:outline-none focus:border-gold transition"
+              />
+            </div>
           </div>
         </div>
 
@@ -686,6 +707,38 @@ export default function HomePage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-4 my-6">
           {CATEGORY_TILES.map((cat) => {
             const Icon = cat.icon;
+            const isMoreCard = (cat as any).isMore;
+
+            if (isMoreCard) {
+              return (
+                <Link
+                  key={cat.id}
+                  href="/pooja"
+                  className="group relative cursor-pointer rounded-2xl bg-gradient-to-br from-gold/20 via-obsidian-soft to-obsidian p-4 border border-gold/40 hover:border-gold transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-[0_10px_30px_rgba(245,158,11,0.2)] flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="w-9 h-9 rounded-xl bg-gold/20 border border-gold/40 flex items-center justify-center text-gold group-hover:scale-110 transition-transform">
+                        <Icon size={18} />
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-gold-pale bg-gold/20 px-2 py-0.5 rounded-full border border-gold/30">
+                        {cat.tag}
+                      </span>
+                    </div>
+                    <h3 className="font-serif text-sm sm:text-base font-bold text-white group-hover:text-gold-pale transition-colors">
+                      {cat.name}
+                    </h3>
+                    <p className="text-[11px] text-stone-300 mt-1 line-clamp-1 leading-snug">
+                      {cat.desc}
+                    </p>
+                  </div>
+                  <div className="mt-3 pt-2 border-t border-gold/20 flex items-center justify-between text-[11px] text-gold font-bold">
+                    <span>View All 24+ Sevas</span>
+                    <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1.5 transition-transform" />
+                  </div>
+                </Link>
+              );
+            }
 
             return (
               <div
@@ -713,7 +766,7 @@ export default function HomePage() {
                   </p>
                 </div>
                 <div className="mt-3 pt-2 border-t border-stone-800/60 flex items-center justify-between text-[11px] text-gold-soft font-semibold">
-                  <span>Book Live Session</span>
+                  <span>{(cat as any).priceText || 'Book Live Session'}</span>
                   <ChevronRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
