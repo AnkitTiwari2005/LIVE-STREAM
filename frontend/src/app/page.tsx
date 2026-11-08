@@ -484,12 +484,12 @@ export default function HomePage() {
                       <span className="live-dot" style={{ width: '6px', height: '6px' }} />
                       LIVE
                     </span>
-                    <span className="rounded-full bg-black/70 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-gold-pale border border-gold/20">
+                    <span className="rounded-full bg-stone-900/90 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-gold-pale border border-gold/20">
                       Live HD
                     </span>
                   </div>
 
-                  <div className="absolute top-3.5 right-3.5 rounded-full bg-black/70 backdrop-blur-md px-3 py-1 text-[11px] font-semibold text-stone-300 flex items-center gap-1.5 border border-stone-800">
+                  <div className="absolute top-3.5 right-3.5 rounded-full bg-stone-900/90 backdrop-blur-md px-3 py-1 text-[11px] font-semibold text-stone-300 flex items-center gap-1.5 border border-stone-800">
                     <Users className="w-3.5 h-3.5 text-gold" />
                     <span>{featuredStream.peakViewers || 1} watching</span>
                   </div>
@@ -520,63 +520,6 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-            ) : nextUpcomingStream ? (
-              <div className="on-photo relative rounded-3xl border border-gold/30 bg-gradient-to-b from-[#221810] to-obsidian p-3 shadow-[0_25px_70px_rgba(0,0,0,0.85)] group transition hover:border-gold/60">
-                <div className="relative aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden bg-black">
-                  <img
-                    src={nextUpcomingStream.thumbnailUrl || '/images/photo-1681797849099-0053b1567d95.webp'}
-                    alt={nextUpcomingStream.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/45 to-transparent opacity-95" />
-
-                  {/* Top Overlay Badges */}
-                  <div className="absolute top-3.5 left-3.5 flex items-center gap-2">
-                    <span className="flex items-center gap-1.5 rounded-full bg-amber-600/90 backdrop-blur-md px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-md">
-                      <Clock className="w-3.5 h-3.5 text-white" />
-                      Next Darshan
-                    </span>
-                    <span className="rounded-full bg-black/70 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-gold-pale border border-gold/20">
-                      Live HD
-                    </span>
-                  </div>
-
-                  {nextUpcomingStream.scheduledAt && (
-                    <div className="absolute top-3.5 right-3.5 rounded-full bg-black/70 backdrop-blur-md px-3 py-1 text-[11px] font-semibold text-gold-pale flex items-center gap-1.5 border border-gold/30">
-                      <Calendar className="w-3.5 h-3.5 text-gold" />
-                      <span>
-                        {new Date(nextUpcomingStream.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} IST
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Bottom Overlay Title & Remind CTA */}
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-soft block mb-1">
-                      {nextUpcomingStream.category?.name || 'Upcoming Sacred Aarti'}
-                    </span>
-                    <h3 className="font-serif text-xl sm:text-2xl font-bold text-white line-clamp-2 leading-snug">
-                      {nextUpcomingStream.title}
-                    </h3>
-                    <div className="mt-3.5 flex items-center justify-between pt-2 border-t border-stone-800/60">
-                      <div className="flex items-center gap-2">
-                        <PranamIcon size={16} />
-                        <span className="text-xs font-semibold text-stone-200">
-                          {nextUpcomingStream.streamer?.name || 'Vedic Pandit'}
-                        </span>
-                        <VerifiedPanditBadge size={14} />
-                      </div>
-                      <button
-                        onClick={() => handleRemindMe(nextUpcomingStream.id)}
-                        className="rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold px-4 py-2 text-xs shadow-lg transition-transform hover:scale-105 flex items-center gap-1.5"
-                      >
-                        <Bell className="w-3.5 h-3.5 fill-obsidian" />
-                        <span>Remind Me</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
             ) : (
               <div className="on-photo relative rounded-3xl border border-gold/30 bg-gradient-to-b from-[#221810] to-obsidian p-4 sm:p-5 shadow-[0_25px_70px_rgba(0,0,0,0.85)] group transition hover:border-gold/60">
                 <div className="relative aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden bg-black flex flex-col justify-between p-4 sm:p-6 border border-gold/15">
@@ -593,22 +536,35 @@ export default function HomePage() {
                       <DiyaIcon size={14} />
                       Live Pooja Altar
                     </span>
-                    <span className="rounded-full bg-black/75 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-stone-200 border border-stone-800">
-                      Verified Vedic Acharyas
-                    </span>
+                    {nextUpcomingStream ? (
+                      <span className="flex items-center gap-1 rounded-full bg-stone-900/90 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-gold-pale border border-gold/30">
+                        <Clock className="w-3 h-3 text-gold" />
+                        Next: {new Date(nextUpcomingStream.scheduledAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} IST
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-stone-900/90 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-stone-200 border border-stone-800">
+                        Verified Vedic Acharyas
+                      </span>
+                    )}
                   </div>
 
                   {/* Center Sacred Diya & Message */}
-                  <div className="relative z-10 text-center py-2 sm:py-4">
+                  <div className="relative z-10 text-center py-2 sm:py-3">
                     <div className="w-14 h-14 mx-auto mb-2 rounded-2xl bg-gradient-to-b from-amber-500/10 to-transparent border border-gold/30 flex items-center justify-center shadow-[0_0_24px_rgba(245,158,11,0.25)]">
                       <img src="/logo.png" alt="Shubhdarshan" className="w-10 h-10 object-contain drop-shadow" />
                     </div>
                     <h3 className="font-serif text-xl sm:text-2xl font-bold text-white tracking-tight">
                       Live Pooja Altar in Repose
                     </h3>
-                    <p className="text-xs text-stone-300 mt-2 max-w-sm mx-auto leading-relaxed">
+                    <p className="text-xs text-stone-300 mt-1.5 max-w-sm mx-auto leading-relaxed">
                       Verified Vedic Pandits stream live whenever they conduct sacred rituals, havan poojas, or astrological discourses. Active broadcasts will appear here in real time.
                     </p>
+                    {nextUpcomingStream && (
+                      <div className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-900/90 border border-gold/30 text-[11px] text-gold-pale shadow-sm">
+                        <span className="text-stone-400 font-medium">Upcoming:</span>
+                        <span className="font-semibold text-white truncate max-w-[220px]">{nextUpcomingStream.title}</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Bottom Action Footer */}
@@ -632,7 +588,7 @@ export default function HomePage() {
                       </button>
                       <Link
                         href="/schedule"
-                        className="rounded-full bg-obsidian-soft hover:bg-gold/10 border border-gold/30 text-gold-pale font-bold px-3 py-1.5 text-xs transition flex items-center gap-1"
+                        className="rounded-full bg-stone-900/90 hover:bg-stone-800 border border-gold/30 text-gold-pale font-bold px-3 py-1.5 text-xs transition flex items-center gap-1"
                       >
                         <Calendar className="w-3.5 h-3.5 text-gold" />
                         <span>Schedule</span>

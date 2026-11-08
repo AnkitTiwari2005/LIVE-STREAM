@@ -48,14 +48,20 @@ export function Navbar() {
   }, [userDropdownOpen]);
 
   useEffect(() => {
-    // Check session
+    // Check session & cached wallet balance immediately
     const storedUser = localStorage.getItem('pooja_user');
     const storedToken = localStorage.getItem('pooja_token');
+    const storedBalance = localStorage.getItem('pooja_wallet_balance');
+
+    if (storedBalance !== null && !isNaN(Number(storedBalance))) {
+      setCoinBalance(Number(storedBalance));
+    }
+
     if (storedUser) {
       try {
         const parsed = JSON.parse(storedUser);
         setUser(parsed);
-        if (parsed.wallet?.balanceCoins !== undefined) {
+        if (parsed.wallet?.balanceCoins !== undefined && storedBalance === null) {
           setCoinBalance(parsed.wallet.balanceCoins);
         }
       } catch {}
@@ -72,6 +78,7 @@ export function Navbar() {
           if (res.status === 401) {
             localStorage.removeItem('pooja_user');
             localStorage.removeItem('pooja_token');
+            localStorage.removeItem('pooja_wallet_balance');
             setUser(null);
             setCoinBalance(null);
             return null;
@@ -94,6 +101,7 @@ export function Navbar() {
         .then((data) => {
           if (data && typeof data.balanceCoins === 'number') {
             setCoinBalance(data.balanceCoins);
+            localStorage.setItem('pooja_wallet_balance', String(data.balanceCoins));
           }
         })
         .catch(() => {});
@@ -110,6 +118,7 @@ export function Navbar() {
     } catch {}
     localStorage.removeItem('pooja_user');
     localStorage.removeItem('pooja_token');
+    localStorage.removeItem('pooja_wallet_balance');
     setUser(null);
     setCoinBalance(null);
     window.location.href = '/';
@@ -223,7 +232,7 @@ export function Navbar() {
                   title="Your Sacred Coins (Click to Recharge)"
                 >
                   <CoinIcon size={14} className="text-gold shrink-0 group-hover:scale-110 transition-transform" />
-                  <span className="font-extrabold text-gold">{coinBalance !== null ? coinBalance : 100}</span>
+                  <span className="font-extrabold text-gold">{coinBalance !== null ? coinBalance : (user ? '...' : 100)}</span>
                   <span className="hidden xl:inline text-[10px] text-stone-300 font-medium">Coins</span>
                   <PlusCircle className="w-3.5 h-3.5 text-gold shrink-0 group-hover:text-gold-soft" />
                 </button>
@@ -371,7 +380,7 @@ export function Navbar() {
                 className="flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold/10 px-2.5 py-1 text-xs font-bold text-gold-pale"
               >
                 <CoinIcon size={14} className="text-gold" />
-                <span>{coinBalance !== null ? coinBalance : 100}</span>
+                <span>{coinBalance !== null ? coinBalance : (user ? '...' : 100)}</span>
               </button>
             )}
             <button
@@ -486,7 +495,7 @@ export function Navbar() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-xs text-stone-300">
                     <span className="font-semibold text-white">{user.name}</span>
-                    <span className="text-gold font-bold">{coinBalance !== null ? coinBalance : 100} Coins</span>
+                    <span className="text-gold font-bold">{coinBalance !== null ? coinBalance : (user ? '...' : 100)} Coins</span>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <button
