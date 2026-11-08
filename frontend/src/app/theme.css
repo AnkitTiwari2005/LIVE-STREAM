@@ -45,7 +45,6 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb {
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 6rem;
 }
 
 /* 2. Light Mode Typography: High Contrast Charcoal & Sacred Vermillion */

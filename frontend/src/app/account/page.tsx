@@ -447,7 +447,7 @@ export default function AccountPage() {
           </div>
 
           {/* MY BOOKED POOJAS & SANKALPS (LIVE STATUS TRACKING) */}
-          <div id="bookings" className="bg-obsidian-soft border border-gold/25 rounded-3xl p-6 sm:p-8 shadow-xl scroll-mt-24 sm:scroll-mt-28">
+          <div id="bookings" className="bg-obsidian-soft border border-gold/25 rounded-3xl p-6 sm:p-8 shadow-xl scroll-mt-20">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-gold/15">
               <div>
                 <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.24em] text-gold-soft mb-1">
