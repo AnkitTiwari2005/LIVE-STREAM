@@ -110,7 +110,7 @@ export function DiyaIcon({ size = 24, className = '', ...props }: IconProps) {
 }
 
 /**
- * 3. Sacred Gold Coin (Embossed Minted Vedic Coin)
+ * 3. Sacred Gold Coin (Embossed Minted Vedic Coin with High-Contrast White ॐ)
  */
 export function CoinIcon({ size = 24, className = '', ...props }: IconProps) {
   return (
@@ -124,29 +124,61 @@ export function CoinIcon({ size = 24, className = '', ...props }: IconProps) {
       {...props}
     >
       <defs>
-        <linearGradient id="coinEdge" x1="0%" y1="0%" x2="100%" y2="100%">
+        {/* Outer Minted Bezel Gradient */}
+        <linearGradient id="coinEdgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#fef08a" />
-          <stop offset="35%" stopColor="#eab308" />
-          <stop offset="70%" stopColor="#ca8a04" />
-          <stop offset="100%" stopColor="#854d0e" />
+          <stop offset="25%" stopColor="#f59e0b" />
+          <stop offset="65%" stopColor="#d97706" />
+          <stop offset="100%" stopColor="#78350f" />
         </linearGradient>
-        <linearGradient id="coinFace" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#fef08a" />
-          <stop offset="50%" stopColor="#f59e0b" />
-          <stop offset="100%" stopColor="#b45309" />
-        </linearGradient>
+        {/* Inner Recessed Face Radial Gold */}
+        <radialGradient id="coinFaceGrad" cx="35%" cy="30%" r="70%">
+          <stop offset="0%" stopColor="#fde047" />
+          <stop offset="40%" stopColor="#f59e0b" />
+          <stop offset="80%" stopColor="#d97706" />
+          <stop offset="100%" stopColor="#9a3412" />
+        </radialGradient>
+        {/* Emboss Drop Shadow for High-Contrast White Om */}
+        <filter id="coinOmShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="1" stdDeviation="0.8" floodColor="#78350f" floodOpacity="0.85" />
+        </filter>
       </defs>
-      {/* Coin Outer Bezel */}
-      <circle cx="24" cy="24" r="21" fill="url(#coinEdge)" stroke="#fef08a" strokeWidth="1.5" />
-      {/* Coin Inner Recessed Face */}
-      <circle cx="24" cy="24" r="17" fill="url(#coinFace)" stroke="#ca8a04" strokeWidth="1" />
-      {/* Embossed Vedic Aum in Center */}
-      <path
-        d="M21.5 18C20 16.5 17.5 17 16 18.5C14.8 19.8 15 22 17 23C15 24 14 26.5 15 28.5C16 31 19 32 21.5 31C23.5 30 24.5 28 24.5 26.5C24.5 25 23 24 21.5 23.5C24 22.5 25 19.5 23.5 18C23 17.2 22.2 17.5 21.5 18Z"
-        fill="#fef9c3"
-      />
-      <circle cx="28" cy="15" r="1.5" fill="#fef9c3" />
-      <path d="M25 17C26.5 18.5 29.5 18.5 31 17" stroke="#fef9c3" strokeWidth="1.5" strokeLinecap="round" />
+
+      {/* 1. Outer Coin Base with Metallic Bevel */}
+      <circle cx="24" cy="24" r="22" fill="url(#coinEdgeGrad)" stroke="#fef08a" strokeWidth="1.5" />
+
+      {/* 2. Inner Recessed Field */}
+      <circle cx="24" cy="24" r="18.5" fill="url(#coinFaceGrad)" stroke="#b45309" strokeWidth="1" />
+
+      {/* 3. Minted Beaded Edge (Vedic Coin Mill Marks) */}
+      <circle cx="24" cy="24" r="16.5" stroke="#fef08a" strokeWidth="0.8" strokeDasharray="1.8 1.8" strokeOpacity="0.8" fill="none" />
+
+      {/* 4. Consecrated Central Om (ॐ) Emblem - Pure High-Contrast White Relief */}
+      <g transform="matrix(0.76, 0, 0, 0.76, 5.76, 5.76)" filter="url(#coinOmShadow)">
+        {/* Sacred Om Devanagari Glyph Path */}
+        <path
+          d="M20.5 14.5C18.5 12 15 12.5 13 15C11 17.5 11.5 21 14.5 23C12 24.5 10.5 28 11.5 31.5C12.8 35.5 17.5 37 21.5 35.5C24.5 34.3 26 31.5 26 29C26 26.5 24 25 21.5 24.5C25.5 23 27 18 24.5 15.5C23.5 14.5 22 14.5 20.5 14.5ZM21.5 28.5C23.5 29.5 23 32.5 20.5 33C17.5 33.5 14.5 32 14 29.5C13.5 27 16 26 18.5 26.5C19.8 26.8 20.8 27.5 21.5 28.5ZM20 20C18 20.5 15.5 19.5 15 17.5C14.5 15.5 16.5 14.5 18.5 14.5C20.5 14.5 22 16 21.5 18C21.2 19 20.8 19.5 20 20Z"
+          fill="#ffffff"
+        />
+        {/* Right Sweeping Curve */}
+        <path
+          d="M23 23C26.5 24 33 26 32 32C31.5 35 28.5 37 25 36"
+          stroke="#ffffff"
+          strokeWidth="3.2"
+          strokeLinecap="round"
+          fill="none"
+        />
+        {/* Upper Crescent (Chandrabindu base) */}
+        <path
+          d="M27 13.5C29 15.5 33.5 15.5 35.5 13.5"
+          stroke="#ffffff"
+          strokeWidth="2.8"
+          strokeLinecap="round"
+          fill="none"
+        />
+        {/* Bindu Dot */}
+        <circle cx="31.2" cy="10" r="2.2" fill="#ffffff" />
+      </g>
     </svg>
   );
 }

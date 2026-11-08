@@ -576,18 +576,18 @@ export default function StreamPlayerClient() {
 
               {/* In-Stream Real-Time Coin Balance HUD */}
               {remainingCoins !== null && !isZeroBalance && (
-                <div className="absolute top-4 right-4 z-30 flex items-center gap-2">
+                <div className="absolute top-2.5 right-2.5 sm:top-4 sm:right-4 z-30 flex items-center gap-2">
                   <button
                     onClick={() => setTopupModalOpen(true)}
-                    className="video-overlay flex items-center gap-1.5 px-3.5 py-1.5 bg-black/85 backdrop-blur-md border border-amber-400/40 hover:border-amber-400 rounded-full text-xs font-bold !text-amber-200 shadow-xl transition-all"
+                    className="video-overlay flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1 sm:py-1.5 bg-black/85 backdrop-blur-md border border-amber-400/50 hover:border-amber-400 rounded-full text-xs font-bold !text-amber-200 shadow-xl transition-all"
                     title="Click to recharge coins"
                   >
-                    <CoinIcon size={16} />
+                    <CoinIcon size={15} />
                     <span className="!text-amber-300 font-extrabold">{remainingCoins} Coins</span>
-                    <span className="!text-stone-200 text-[10px] font-normal">
+                    <span className="!text-stone-200 text-[10px] font-normal hidden xs:inline sm:inline">
                       ({availableMinutes}m left)
                     </span>
-                    <span className="!text-amber-300 ml-0.5 font-black">+</span>
+                    <span className="!text-amber-300 ml-0.5 font-black text-sm leading-none">+</span>
                   </button>
                 </div>
               )}
@@ -617,7 +617,7 @@ export default function StreamPlayerClient() {
             {stream && (
               <>
                 {/* 1. Compact Header Bar with Actions & Reactions (Always visible on mobile & desktop) */}
-                <div className="bg-obsidian-soft border border-gold/15 rounded-2xl p-3 sm:p-5 shadow-lg space-y-3">
+                <div className="bg-white dark:bg-obsidian-soft border border-stone-200 dark:border-gold/15 rounded-2xl p-3 sm:p-5 shadow-lg space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-1.5">
@@ -661,24 +661,24 @@ export default function StreamPlayerClient() {
                       </div>
                     </div>
 
-                    {/* Devotee Action CTAs (Arpan Dakshina + Share) */}
-                    <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+                    {/* Devotee Action CTAs (Arpan Dakshina + Share + Report) */}
+                    <div className="flex items-center gap-1.5 sm:gap-2 self-start sm:self-auto shrink-0 flex-wrap">
                       <button
                         onClick={() => setDakshinaModalOpen(true)}
-                        className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 sm:py-2.5 bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold rounded-full transition-all shadow-[0_0_24px_rgba(245,158,11,0.25)] hover:scale-105 active:scale-95"
+                        className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2.5 bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold rounded-full transition-all shadow-[0_0_24px_rgba(245,158,11,0.25)] hover:scale-105 active:scale-95"
                       >
-                        <DiyaIcon size={16} />
+                        <DiyaIcon size={15} />
                         <span>Arpan Dakshina</span>
                       </button>
                       <button
                         onClick={handleShare}
-                        className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 sm:py-2.5 bg-white dark:bg-obsidian border border-stone-200 dark:border-gold/20 hover:bg-stone-50 dark:hover:bg-stone-900 text-stone-700 dark:text-stone-200 text-xs font-semibold rounded-full transition-all shadow-sm"
+                        className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2.5 bg-white dark:bg-obsidian border border-stone-200 dark:border-gold/20 hover:bg-stone-50 dark:hover:bg-stone-900 text-stone-700 dark:text-stone-200 text-xs font-semibold rounded-full transition-all shadow-sm"
                       >
                         <Share2 className="w-3.5 h-3.5 text-amber-600 dark:text-gold-soft" /> Share
                       </button>
                       <button
                         onClick={() => setReportModalOpen(true)}
-                        className="flex items-center gap-1 px-2.5 sm:px-3 py-2 sm:py-2.5 bg-white dark:bg-obsidian border border-stone-200 dark:border-gold/20 hover:border-red-500/50 hover:text-red-500 dark:hover:text-red-400 text-stone-500 dark:text-stone-400 text-xs font-semibold rounded-full transition-all shadow-sm"
+                        className="flex items-center gap-1 p-1.5 sm:px-3 sm:py-2.5 bg-white dark:bg-obsidian border border-stone-200 dark:border-gold/20 hover:border-red-500/50 hover:text-red-500 dark:hover:text-red-400 text-stone-500 dark:text-stone-400 text-xs font-semibold rounded-full transition-all shadow-sm"
                         title="Report this broadcast to moderators"
                       >
                         <Flag className="w-3.5 h-3.5" />

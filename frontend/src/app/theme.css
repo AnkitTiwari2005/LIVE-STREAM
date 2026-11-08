@@ -236,10 +236,10 @@ html:not([data-theme="dark"]) [class*="bg-amber-950"] [class*="text-amber-"],
 html:not([data-theme="dark"]) [class*="bg-amber-900"] [class*="text-amber-"],
 html[data-theme="light"] [class*="bg-amber-950"] [class*="text-amber-"],
 html[data-theme="light"] [class*="bg-amber-900"] [class*="text-amber-"],
-html:not([data-theme="dark"]) [class*="text-amber-200"],
-html:not([data-theme="dark"]) [class*="text-amber-300"],
-html[data-theme="light"] [class*="text-amber-200"],
-html[data-theme="light"] [class*="text-amber-300"] {
+html:not([data-theme="dark"]) [class*="bg-white"] [class*="text-amber-200"],
+html:not([data-theme="dark"]) [class*="bg-white"] [class*="text-amber-300"],
+html[data-theme="light"] [class*="bg-white"] [class*="text-amber-200"],
+html[data-theme="light"] [class*="bg-white"] [class*="text-amber-300"] {
   color: #92400e !important;
 }
 
@@ -1055,18 +1055,23 @@ html[data-theme="light"] .bg-obsidian-soft .text-gold-pale {
 
 /* Video Overlay and Photo Overlay Text Protection */
 html:not([data-theme="dark"]) .video-overlay [class*="text-amber-"],
-html[data-theme="light"] .video-overlay [class*="text-amber-"] {
+html[data-theme="light"] .video-overlay [class*="text-amber-"],
+html:not([data-theme="dark"]) .on-photo [class*="text-amber-"],
+html[data-theme="light"] .on-photo [class*="text-amber-"],
+html:not([data-theme="dark"]) [class*="aspect-"] [class*="text-amber-"],
+html[data-theme="light"] [class*="aspect-"] [class*="text-amber-"],
+html:not([data-theme="dark"]) [class*="aspect-"] [class*="!text-amber-200"],
+html[data-theme="light"] [class*="aspect-"] [class*="!text-amber-200"],
+html:not([data-theme="dark"]) [class*="bg-black"] [class*="text-amber-"],
+html[data-theme="light"] [class*="bg-black"] [class*="text-amber-"] {
   color: #fde68a !important;
 }
 
 html:not([data-theme="dark"]) .video-overlay [class*="text-stone-"],
-html[data-theme="light"] .video-overlay [class*="text-stone-"] {
+html[data-theme="light"] .video-overlay [class*="text-stone-"],
+html:not([data-theme="dark"]) .on-photo [class*="text-stone-"],
+html[data-theme="light"] .on-photo [class*="text-stone-"] {
   color: #e7e5e4 !important;
-}
-
-html:not([data-theme="dark"]) [class*="aspect-"] [class*="!text-amber-200"],
-html[data-theme="light"] [class*="aspect-"] [class*="!text-amber-200"] {
-  color: #fde68a !important;
 }
 
 /* Inputs in Light Mode */

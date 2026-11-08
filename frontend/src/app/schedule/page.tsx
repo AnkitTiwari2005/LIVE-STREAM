@@ -216,7 +216,7 @@ export default function SchedulePage() {
             return (
               <div
                 key={stream.id}
-                className="group rounded-2xl overflow-hidden bg-obsidian-soft border border-gold/15 hover:border-gold/50 transition-all flex flex-col shadow-xl hover:shadow-[0_12px_36px_rgba(245,158,11,0.12)]"
+                className="group rounded-2xl overflow-hidden bg-white dark:bg-obsidian-soft border border-stone-200 dark:border-gold/15 hover:border-amber-400 dark:hover:border-gold/50 transition-all flex flex-col shadow-md dark:shadow-xl hover:shadow-lg"
               >
                 {/* Thumbnail Container */}
                 <div className="relative aspect-video bg-black overflow-hidden on-photo">
@@ -228,7 +228,7 @@ export default function SchedulePage() {
                     }}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-80" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
 
                   {/* Scheduled badge */}
                   <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-black/85 backdrop-blur-md border border-amber-400/40 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-100 shadow-md">
@@ -248,27 +248,27 @@ export default function SchedulePage() {
                 <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-soft">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-700 dark:text-gold-soft">
                         {stream.category?.name || 'Vedic Pooja'}
                       </span>
-                      <span className="text-[10px] font-bold text-gold-pale bg-gold/10 border border-gold/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <span className="text-[10px] font-bold text-amber-900 dark:text-gold-pale bg-amber-500/10 dark:bg-gold/10 border border-amber-500/25 dark:border-gold/20 px-2 py-0.5 rounded-full flex items-center gap-1">
                         <CoinIcon size={12} /> 5 C/min
                       </span>
                     </div>
 
-                    <h3 className="font-serif text-lg font-bold text-white line-clamp-1 group-hover:text-gold-pale transition">
+                    <h3 className="font-serif text-lg font-bold text-stone-900 dark:text-white line-clamp-1 group-hover:text-amber-700 dark:group-hover:text-gold-pale transition">
                       {stream.title}
                     </h3>
-                    <p className="text-xs text-stone-400 mt-1 line-clamp-2 leading-relaxed">
+                    <p className="text-xs text-stone-600 dark:text-stone-400 mt-1 line-clamp-2 leading-relaxed">
                       {stream.description}
                     </p>
                   </div>
 
-                  <div className="mt-5 pt-3.5 border-t border-stone-800/80 space-y-3">
-                    <div className="flex items-center justify-between text-xs text-stone-300">
+                  <div className="mt-5 pt-3.5 border-t border-stone-200 dark:border-stone-800/80 space-y-3">
+                    <div className="flex items-center justify-between text-xs text-stone-600 dark:text-stone-300">
                       <div className="flex items-center gap-1.5 font-medium">
                         <PranamIcon size={16} />
-                        <span className="text-stone-200">{stream.streamer?.name || 'Vedic Pandit'}</span>
+                        <span className="text-stone-800 dark:text-stone-200 font-semibold">{stream.streamer?.name || 'Vedic Pandit'}</span>
                         <VerifiedPanditBadge size={14} />
                       </div>
                     </div>
@@ -276,13 +276,13 @@ export default function SchedulePage() {
                     <div className="flex items-center gap-2 pt-1">
                       <button
                         onClick={() => handleRemindMe(stream.id)}
-                        className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-full border transition ${
+                        className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-full border transition shadow-sm ${
                           isReminded
-                            ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
-                            : 'bg-gold/10 hover:bg-gold/20 border-gold/30 text-gold-pale'
+                            ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-800 dark:text-emerald-300'
+                            : 'bg-amber-50 dark:bg-gold/10 hover:bg-amber-100 dark:hover:bg-gold/20 border-amber-300 dark:border-gold/30 text-amber-950 dark:text-gold-pale'
                         }`}
                       >
-                        <Bell className="w-3.5 h-3.5 text-gold" />
+                        <Bell className="w-3.5 h-3.5 text-amber-600 dark:text-gold" />
                         <span>{isReminded ? 'Reminder Set' : 'Remind Me'}</span>
                       </button>
 

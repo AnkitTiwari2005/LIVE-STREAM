@@ -266,13 +266,13 @@ export function Navbar() {
                 {/* Gold Coin Wallet Pill */}
                 <button
                   onClick={() => setTopupModalOpen(true)}
-                  className="whitespace-nowrap shrink-0 group flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold/10 h-8 px-2.5 text-xs font-bold text-gold-pale transition hover:border-gold/60 hover:bg-gold/20 shadow-sm"
+                  className="whitespace-nowrap shrink-0 group flex items-center gap-1.5 rounded-full border border-amber-300 dark:border-gold/30 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-gold/15 dark:to-gold/5 h-8 px-2.5 text-xs font-bold text-amber-950 dark:text-gold-pale transition hover:border-amber-400 dark:hover:border-gold/60 shadow-sm"
                   title="Your Sacred Coins (Click to Recharge)"
                 >
-                  <CoinIcon size={13} className="text-gold shrink-0 group-hover:scale-110 transition-transform" />
-                  <span className="font-extrabold text-gold">{coinBalance !== null ? coinBalance : (user ? '...' : 100)}</span>
-                  <span className="hidden 2xl:inline text-[10px] text-stone-300 font-medium">Coins</span>
-                  <PlusCircle className="w-3 h-3 text-gold shrink-0 group-hover:text-gold-soft" />
+                  <CoinIcon size={14} className="shrink-0 group-hover:scale-110 transition-transform" />
+                  <span className="font-extrabold text-amber-900 dark:text-gold">{coinBalance !== null ? coinBalance : (user ? '...' : 100)}</span>
+                  <span className="hidden 2xl:inline text-[10px] text-stone-500 dark:text-stone-300 font-medium">Coins</span>
+                  <PlusCircle className="w-3 h-3 text-amber-600 dark:text-gold shrink-0 group-hover:text-amber-700 dark:group-hover:text-gold-soft" />
                 </button>
 
                 {/* Devotee / Pandit Profile with Solid High-Contrast Dropdown */}
@@ -423,10 +423,15 @@ export function Navbar() {
             {user && (
               <button
                 onClick={() => setTopupModalOpen(true)}
-                className="flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold/10 px-2.5 py-1 text-xs font-bold text-gold-pale"
+                className="whitespace-nowrap shrink-0 flex items-center gap-1.5 rounded-full border border-amber-300 dark:border-gold/40 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-gold/20 dark:to-gold/10 h-8 px-2.5 text-xs font-bold text-amber-950 dark:text-gold-pale shadow-sm hover:border-amber-400 dark:hover:border-gold transition active:scale-95"
+                title="Your Sacred Coins (Click to Recharge)"
+                aria-label="Recharge Sacred Coins"
               >
-                <CoinIcon size={14} className="text-gold" />
-                <span>{coinBalance !== null ? coinBalance : (user ? '...' : 100)}</span>
+                <CoinIcon size={14} className="shrink-0" />
+                <span className="font-extrabold text-amber-900 dark:text-gold tracking-tight">
+                  {coinBalance !== null ? coinBalance : (user ? '...' : 100)}
+                </span>
+                <PlusCircle className="w-3 h-3 text-amber-600 dark:text-gold shrink-0" />
               </button>
             )}
             <button
@@ -544,12 +549,15 @@ export function Navbar() {
               )}
             </nav>
 
-            <div className="pt-4 border-t border-stone-800/80">
+            <div className="pt-4 border-t border-stone-200 dark:border-stone-800/80">
               {user ? (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between text-xs text-stone-300">
-                    <span className="font-semibold text-white">{user.name}</span>
-                    <span className="text-gold font-bold">{coinBalance !== null ? coinBalance : (user ? '...' : 100)} Coins</span>
+                  <div className="flex items-center justify-between text-xs text-stone-600 dark:text-stone-300">
+                    <span className="font-bold text-stone-900 dark:text-white truncate max-w-[180px]">{user.name}</span>
+                    <span className="text-amber-700 dark:text-gold font-bold flex items-center gap-1">
+                      <CoinIcon size={14} />
+                      {coinBalance !== null ? coinBalance : (user ? '...' : 100)} Coins
+                    </span>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <button
@@ -557,21 +565,21 @@ export function Navbar() {
                         setMobileMenuOpen(false);
                         setTopupModalOpen(true);
                       }}
-                      className="px-3 py-2 bg-gold/15 border border-gold/40 text-gold-pale text-xs font-bold rounded-xl text-center"
+                      className="px-3 py-2 bg-amber-100 dark:bg-gold/15 border border-amber-300 dark:border-gold/40 text-amber-950 dark:text-gold-pale text-xs font-bold rounded-xl text-center hover:bg-amber-200 dark:hover:bg-gold/25 transition shadow-sm"
                     >
                       Top Up Coins
                     </button>
                     <Link
                       href="/account"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="px-3 py-2 bg-obsidian-soft border border-gold/20 text-stone-200 text-xs font-semibold rounded-xl text-center"
+                      className="px-3 py-2 bg-stone-100 dark:bg-obsidian-soft border border-stone-200 dark:border-gold/20 text-stone-800 dark:text-stone-200 text-xs font-semibold rounded-xl text-center hover:bg-stone-200 dark:hover:bg-obsidian transition shadow-sm"
                     >
                       Account Settings
                     </Link>
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="w-full text-center text-xs text-red-400 py-2 border border-red-950/40 rounded-xl"
+                    className="w-full text-center text-xs font-semibold text-red-600 dark:text-red-400 py-2 border border-red-200 dark:border-red-950/40 bg-red-50 dark:bg-red-950/20 rounded-xl transition hover:bg-red-100 dark:hover:bg-red-950/30"
                   >
                     Log Out
                   </button>
@@ -581,14 +589,14 @@ export function Navbar() {
                   <Link
                     href="/login"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="px-4 py-2.5 rounded-xl border border-stone-800 text-center text-xs font-bold text-stone-200"
+                    className="px-4 py-2.5 rounded-xl border border-stone-300 dark:border-stone-800 text-center text-xs font-bold text-stone-800 dark:text-stone-200 bg-white dark:bg-transparent shadow-sm"
                   >
                     Sign In
                   </Link>
                   <Link
                     href="/register"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="px-4 py-2.5 rounded-xl bg-gold text-obsidian text-center text-xs font-black shadow-lg shadow-gold/20"
+                    className="px-4 py-2.5 rounded-xl bg-gold hover:bg-gold-deep text-center text-xs font-black text-obsidian shadow-sm transition"
                   >
                     Join Free (+100)
                   </Link>
