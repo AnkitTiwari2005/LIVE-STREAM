@@ -7,7 +7,7 @@ interface ThemeToggleProps {
 }
 
 export function ThemeToggle({ className = '' }: ThemeToggleProps) {
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [theme, setTheme] = useState<'dark' | 'light'>('light');
 
   useEffect(() => {
     try {
@@ -16,11 +16,11 @@ export function ThemeToggle({ className = '' }: ThemeToggleProps) {
         setTheme(stored);
         document.documentElement.setAttribute('data-theme', stored);
       } else {
-        document.documentElement.setAttribute('data-theme', 'dark');
-        setTheme('dark');
+        document.documentElement.setAttribute('data-theme', 'light');
+        setTheme('light');
       }
     } catch {
-      setTheme('dark');
+      setTheme('light');
     }
   }, []);
 

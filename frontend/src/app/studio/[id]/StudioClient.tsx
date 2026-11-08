@@ -24,6 +24,7 @@ import { io, Socket } from 'socket.io-client';
 import { ChatWidget } from '@/components/ChatWidget';
 import { WhatsAppShareModal } from '@/components/WhatsAppShareModal';
 import { apiFetch } from '@/lib/api';
+import { useToast } from '@/components/Toast';
 import {
   Camera,
   Mic,
@@ -40,6 +41,7 @@ import {
 export default function StudioClient() {
   const { id: paramId } = useParams() as { id: string };
   const router = useRouter();
+  const toast = useToast();
 
   const [streamId, setStreamId] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -284,9 +286,10 @@ export default function StudioClient() {
       await apiFetch(`/streams/${streamId}/end`, { method: 'POST' });
       setIsLive(false);
       setToken(null);
+      toast.success('Pooja session concluded successfully.');
       router.push('/');
     } catch (err: any) {
-      alert(err.message || 'Failed to end stream');
+      toast.error(err.message || 'Failed to end stream');
     }
   };
 

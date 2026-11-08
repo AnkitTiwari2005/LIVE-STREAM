@@ -17,6 +17,7 @@ import { io, Socket } from 'socket.io-client';
 import { ChatWidget } from '@/components/ChatWidget';
 import { SpiritualReactions } from '@/components/SpiritualReactions';
 import { DakshinaModal } from '@/components/DakshinaModal';
+import { useToast } from '@/components/Toast';
 import {
   Lock,
   User,
@@ -38,6 +39,7 @@ import {
 } from '@/components/icons/SpiritualIcons';
 
 export default function JoinPrivateStreamClient() {
+  const toast = useToast();
   const { tokenSlug: paramSlug } = useParams() as { tokenSlug: string };
   const [tokenSlug, setTokenSlug] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -188,7 +190,7 @@ export default function JoinPrivateStreamClient() {
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert('Private session link copied to clipboard');
+      toast.success('Private session link copied to clipboard!');
     }
   };
 

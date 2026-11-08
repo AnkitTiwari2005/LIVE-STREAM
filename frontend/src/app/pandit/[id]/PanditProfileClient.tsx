@@ -19,6 +19,7 @@ import {
   VerifiedPanditBadge,
 } from '@/components/icons/SpiritualIcons';
 import { apiFetch } from '@/lib/api';
+import { useToast } from '@/components/Toast';
 
 interface PanditData {
   id?: string;
@@ -98,6 +99,7 @@ const CURATED_SHOWCASE: Record<string, PanditData> = {
 
 export default function PanditProfileClient() {
   const router = useRouter();
+  const toast = useToast();
   const { id: paramId } = useParams() as { id: string };
 
   const [id, setId] = useState<string>(() => {
@@ -216,7 +218,7 @@ export default function PanditProfileClient() {
     }
 
     if (pandit.isCurated || !pandit.id) {
-      alert('This is an introductory lineage showcase. You can follow live pandits directly during their active broadcasts.');
+      toast.info('This is an introductory lineage showcase. You can follow live pandits directly during their active broadcasts.');
       return;
     }
 
@@ -228,13 +230,15 @@ export default function PanditProfileClient() {
         await apiFetch(`/streamers/${pandit.id}/follow`, { method: 'POST' });
         setIsFollowing(true);
         setFollowerCount((prev) => prev + 1);
+        toast.success(`You are now following ${pandit.name}!`);
       } else {
         await apiFetch(`/streamers/${pandit.id}/follow`, { method: 'DELETE' });
         setIsFollowing(false);
         setFollowerCount((prev) => Math.max(0, prev - 1));
+        toast.info(`Unfollowed ${pandit.name}`);
       }
     } catch (err: any) {
-      alert(err.message || 'Failed to update follow status');
+      toast.error(err.message || 'Failed to update follow status');
     } finally {
       setFollowingAction(false);
     }
@@ -246,10 +250,10 @@ export default function PanditProfileClient() {
       navigator.share({
         title: `${pandit.name} - Verified Vedic Pandit on Shubhdarshan`,
         url: window.location.href,
-      });
+      }).catch(() => {});
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert('Pandit profile link copied to clipboard!');
+      toast.success('Pandit profile link copied to clipboard!');
     }
   };
 

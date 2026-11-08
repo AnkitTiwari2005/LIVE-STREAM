@@ -20,9 +20,11 @@ import {
   X,
 } from 'lucide-react';
 import { OmIcon, CoinIcon, DiyaIcon, VerifiedPanditBadge } from '@/components/icons/SpiritualIcons';
+import { useToast } from '@/components/Toast';
 
 export default function AccountPage() {
   const router = useRouter();
+  const toast = useToast();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [twoFaData, setTwoFaData] = useState<{ qrCode: string; backupCodes: string[] } | null>(null);
@@ -180,13 +182,15 @@ export default function AccountPage() {
       if (res.ok) {
         localStorage.removeItem('pooja_user');
         localStorage.removeItem('pooja_token');
-        alert('Your account and personal data have been scheduled for deletion under DPDP Act 2023.');
-        window.location.href = '/';
+        toast.success('Your account and personal data have been scheduled for deletion under DPDP Act 2023.');
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1500);
       } else {
-        alert('Failed to delete account. Please contact support.');
+        toast.error('Failed to delete account. Please contact support.');
       }
     } catch {
-      alert('Network error while requesting deletion.');
+      toast.error('Network error while requesting deletion.');
     } finally {
       setDeleteLoading(false);
     }

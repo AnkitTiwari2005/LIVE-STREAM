@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { VerifiedPanditBadge, DiyaIcon, CoinIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
 import SevaBookingModal from '@/components/SevaBookingModal';
+import { useToast } from '@/components/Toast';
 
 interface StreamItem {
   id: string;
@@ -51,10 +52,10 @@ const FALLBACK_SCHEDULE = [
     id: 'sched-2',
     title: 'Navgrah Shanti & Vedic Kundli Remedial Pooja',
     description: 'Auspicious 9-graha oblations and personalized horoscope dosha nivaran chanting by Gurukul scholar.',
-    thumbnailUrl: '/images/photo-1609342122563-a43ac8917a3a.webp',
+    thumbnailUrl: '/images/photo-1577083753695-e010191bacb5.webp',
     status: 'SCHEDULED',
     scheduledAt: new Date(Date.now() + 18 * 3600 * 1000).toISOString(),
-    videoQuality: '1080p',
+    videoQuality: '1080p HD',
     category: { id: 'c2', name: 'Astrology and Kundli', slug: 'astrology-kundli' },
     streamer: {
       id: 'p2',
@@ -80,6 +81,7 @@ const FALLBACK_SCHEDULE = [
 ];
 
 export default function SchedulePage() {
+  const toast = useToast();
   const [streams, setStreams] = useState<StreamItem[]>(FALLBACK_SCHEDULE);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('ALL');
@@ -105,12 +107,19 @@ export default function SchedulePage() {
       }
     }
     loadStreams();
+
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('action') === 'booking') {
+        setBookingModalOpen(true);
+      }
+    }
   }, []);
 
   const handleRemindMe = async (streamId: string) => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('pooja_token') : null;
     if (!token) {
-      alert('Please sign in to set email reminders.');
+      toast.info('Please sign in to set email reminders.');
       window.location.href = '/login?redirect=/schedule';
       return;
     }
@@ -123,9 +132,9 @@ export default function SchedulePage() {
       });
       const data = await res.json();
       setRemindStatus((prev) => ({ ...prev, [streamId]: true }));
-      alert(data.message || 'Email reminder scheduled successfully!');
+      toast.success(data.message || 'Email reminder scheduled successfully!');
     } catch {
-      alert('Failed to set reminder.');
+      toast.error('Failed to set reminder.');
     }
   };
 
@@ -214,6 +223,9 @@ export default function SchedulePage() {
                   <img
                     src={stream.thumbnailUrl || '/images/photo-1681797849099-0053b1567d95.webp'}
                     alt={stream.title}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/images/photo-1681797849099-0053b1567d95.webp';
+                    }}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-80" />
@@ -227,7 +239,7 @@ export default function SchedulePage() {
                   {/* Quality */}
                   <div className="absolute top-3 right-3 flex items-center gap-1">
                     <span className="rounded bg-black/60 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-stone-300">
-                      {stream.videoQuality || '1080p'}
+                      1080p HD
                     </span>
                   </div>
                 </div>

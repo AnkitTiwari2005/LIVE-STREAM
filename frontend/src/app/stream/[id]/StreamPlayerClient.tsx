@@ -26,8 +26,10 @@ import {
   BellIcon,
   VerifiedPanditBadge,
 } from '@/components/icons/SpiritualIcons';
+import { useToast } from '@/components/Toast';
 
 export default function StreamPlayerClient() {
+  const toast = useToast();
   const { id: paramId } = useParams() as { id: string };
   const [id, setId] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -249,7 +251,7 @@ export default function StreamPlayerClient() {
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert('Sacred broadcast link copied to clipboard!');
+      toast.success('Sacred broadcast link copied to clipboard!');
     }
   };
 
@@ -257,14 +259,14 @@ export default function StreamPlayerClient() {
     try {
       const data = await apiFetch(`/notifications/remind/${id}`, { method: 'POST' });
       setReminderSet(true);
-      alert(data.message || 'Email reminder set! You will be notified when this pooja goes live.');
+      toast.success(data.message || 'Email reminder set! You will be notified when this pooja goes live.');
     } catch (err: any) {
       if (err.status === 401) {
-        alert('Please sign in to set email reminders.');
+        toast.info('Please sign in to set email reminders.');
         window.location.href = `/login?redirect=/stream/${id}`;
         return;
       }
-      alert(err.message || 'Failed to set reminder.');
+      toast.error(err.message || 'Failed to set reminder.');
     }
   };
 
@@ -281,11 +283,11 @@ export default function StreamPlayerClient() {
           details: reportDetails.trim() || undefined,
         }),
       });
-      alert('Sacred community report submitted. Our Vedic moderation team will review it.');
+      toast.success('Sacred community report submitted. Our Vedic moderation team will review it.');
       setReportModalOpen(false);
       setReportDetails('');
     } catch (err: any) {
-      alert(err.message || 'Failed to submit report.');
+      toast.error(err.message || 'Failed to submit report.');
     } finally {
       setReporting(false);
     }

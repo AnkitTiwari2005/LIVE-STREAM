@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { OmIcon, DiyaIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
 import { apiFetch } from '@/lib/api';
+import { useToast } from '@/components/Toast';
 
 const toLocalDatetimeInputValue = (dateInput: string | Date): string => {
   const d = new Date(dateInput);
@@ -34,6 +35,7 @@ const toLocalDatetimeInputValue = (dateInput: string | Date): string => {
 
 export default function MyStreamsPage() {
   const router = useRouter();
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
   const [myStreams, setMyStreams] = useState<any[]>([]);
   const [pastStreams, setPastStreams] = useState<any[]>([]);
@@ -73,9 +75,10 @@ export default function MyStreamsPage() {
     if (!confirm('Are you sure you want to cancel this scheduled darshan broadcast?')) return;
     try {
       await apiFetch(`/streams/${streamId}`, { method: 'DELETE' });
+      toast.success('Scheduled broadcast cancelled successfully.');
       loadStreams();
     } catch (err: any) {
-      alert(err.message || 'Failed to cancel broadcast');
+      toast.error(err.message || 'Failed to cancel broadcast');
     }
   };
 
@@ -106,9 +109,10 @@ export default function MyStreamsPage() {
         body: JSON.stringify(payload),
       });
       setEditStream(null);
+      toast.success('Broadcast details updated successfully.');
       loadStreams();
     } catch (err: any) {
-      alert(err.message || 'Failed to update broadcast');
+      toast.error(err.message || 'Failed to update broadcast');
     } finally {
       setSavingEdit(false);
     }

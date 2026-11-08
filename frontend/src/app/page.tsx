@@ -38,6 +38,7 @@ import {
 } from '@/components/icons/SpiritualIcons';
 import { CoinTopupModal } from '@/components/CoinTopupModal';
 import SevaBookingModal from '@/components/SevaBookingModal';
+import { useToast } from '@/components/Toast';
 
 interface Stream {
   id: string;
@@ -122,12 +123,12 @@ const CATEGORY_TILES = [
     filterKey: 'kirtan',
   },
   {
-    id: 'studio',
-    name: 'Pandit Broadcasting',
-    desc: 'Stream Vedic poojas worldwide',
-    icon: Radio,
-    tag: 'Studio Portal',
-    filterKey: 'studio',
+    id: 'mahamrityunjaya',
+    name: 'Mahamrityunjaya Jaap',
+    desc: 'Healing chants for health & longevity',
+    icon: Sparkles,
+    tag: 'Healing Seva',
+    filterKey: 'mahamrityunjaya',
   },
 ];
 
@@ -151,8 +152,8 @@ const FALLBACK_SCHEDULED_BROADCASTS = [
     streamer: 'Acharya Devrat Sharma',
     isVerified: true,
     scheduledText: 'Tomorrow, 07:30 AM IST',
-    quality: '1080p',
-    thumbnail: '/images/photo-1609342122563-a43ac8917a3a.webp',
+    quality: '1080p HD',
+    thumbnail: '/images/photo-1577083753695-e010191bacb5.webp',
   },
   {
     id: 'sandhya-aarti',
@@ -244,6 +245,7 @@ const DEVOTEE_TESTIMONIALS = [
 ];
 
 export default function HomePage() {
+  const toast = useToast();
   const [streams, setStreams] = useState<Stream[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -261,6 +263,22 @@ export default function HomePage() {
       try {
         setUser(JSON.parse(stored));
       } catch {}
+    }
+
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('action') === 'booking') {
+        const pending = sessionStorage.getItem('pending_seva_booking');
+        if (pending) {
+          try {
+            const parsed = JSON.parse(pending);
+            if (parsed.sevaId) {
+              setSelectedSevaId(parsed.sevaId);
+            }
+          } catch {}
+        }
+        setBookingModalOpen(true);
+      }
     }
   }, []);
 
@@ -311,7 +329,7 @@ export default function HomePage() {
   const handleRemindMe = async (streamId: string) => {
     const token = localStorage.getItem('pooja_token');
     if (!token) {
-      alert('Please sign in to set email reminders.');
+      toast.info('Please sign in to set email reminders.');
       window.location.href = '/login';
       return;
     }
@@ -322,9 +340,9 @@ export default function HomePage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      alert(data.message || 'Email reminder scheduled successfully!');
+      toast.success(data.message || 'Email reminder scheduled successfully!');
     } catch {
-      alert('Failed to set reminder.');
+      toast.error('Failed to set reminder.');
     }
   };
 
@@ -668,21 +686,11 @@ export default function HomePage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-4 my-6">
           {CATEGORY_TILES.map((cat) => {
             const Icon = cat.icon;
-            const isStudio = cat.id === 'studio';
-            const isStreamer = user?.role === 'STREAMER' || user?.role === 'ADMIN';
-            const title = isStudio && !isStreamer ? 'Become a Pandit' : cat.name;
-            const tag = isStudio && !isStreamer ? 'Pandit Seva' : cat.tag;
-            const desc = isStudio && !isStreamer ? 'Apply to conduct verified live poojas' : cat.desc;
-            const actionText = isStudio ? (isStreamer ? 'Open Studio' : 'Apply as Pandit') : 'Book Live Session';
 
             return (
               <div
                 key={cat.id}
                 onClick={() => {
-                  if (isStudio) {
-                    window.location.href = isStreamer ? '/studio/create' : '/streamer/apply';
-                    return;
-                  }
                   setSelectedSevaId(cat.filterKey || cat.id);
                   setBookingModalOpen(true);
                 }}
@@ -694,18 +702,18 @@ export default function HomePage() {
                       <Icon size={18} />
                     </div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-gold-pale bg-gold/10 px-2 py-0.5 rounded-full border border-gold/20">
-                      {tag}
+                      {cat.tag}
                     </span>
                   </div>
                   <h3 className="font-serif text-sm sm:text-base font-bold text-white group-hover:text-gold-pale transition-colors">
-                    {title}
+                    {cat.name}
                   </h3>
                   <p className="text-[11px] text-stone-400 mt-1 line-clamp-1 leading-snug">
-                    {desc}
+                    {cat.desc}
                   </p>
                 </div>
                 <div className="mt-3 pt-2 border-t border-stone-800/60 flex items-center justify-between text-[11px] text-gold-soft font-semibold">
-                  <span>{actionText}</span>
+                  <span>Book Live Session</span>
                   <ChevronRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
@@ -786,6 +794,9 @@ export default function HomePage() {
                   <img
                     src={stream.thumbnailUrl || fallbackImg}
                     alt={stream.title}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/images/photo-1681797849099-0053b1567d95.webp';
+                    }}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-80" />
@@ -798,7 +809,7 @@ export default function HomePage() {
                   {/* Quality & Coin Meter */}
                   <div className="absolute top-3 right-3 flex items-center gap-1">
                     <span className="rounded bg-black/75 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-stone-200">
-                      {stream.videoQuality || '1080p'}
+                      1080p HD
                     </span>
                   </div>
 
@@ -874,6 +885,9 @@ export default function HomePage() {
                   <img
                     src={thumbUrl}
                     alt={item.title}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/images/photo-1681797849099-0053b1567d95.webp';
+                    }}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-80" />
@@ -887,7 +901,7 @@ export default function HomePage() {
                   {/* Quality & Coin Meter */}
                   <div className="absolute top-3 right-3 flex items-center gap-1">
                     <span className="rounded bg-black/75 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-stone-200">
-                      {item.videoQuality || item.quality || '1080p'}
+                      1080p HD
                     </span>
                   </div>
                 </div>
@@ -1009,7 +1023,7 @@ export default function HomePage() {
                     <Bell className="w-3.5 h-3.5 text-gold" /> Remind Me
                   </button>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
-                    {stream.videoQuality || '1080p'} SFU
+                    Live HD
                   </span>
                 </div>
               </div>

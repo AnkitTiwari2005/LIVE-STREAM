@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Calendar,
@@ -12,8 +12,12 @@ import {
   User,
   Heart,
   Video,
+  Lock,
+  LogIn,
+  UserPlus,
 } from 'lucide-react';
 import { VerifiedPanditBadge, DiyaIcon, CoinIcon } from '@/components/icons/SpiritualIcons';
+import { useToast } from '@/components/Toast';
 
 export interface SevaOption {
   id: string;
@@ -91,7 +95,7 @@ export const PANDIT_CATALOG: PanditOption[] = [
     title: 'Varanasi Gurukul Parampara',
     experience: '15+ Years',
     specialties: ['Rudrabhishek', 'Vedic Pooja', 'Kundli Matching'],
-    avatar: '/images/pandit-aarav.webp',
+    avatar: '/images/photo-1543934776-32d1cc654abb.webp',
   },
   {
     id: '8cfb4f7f-f337-4475-8885-d0d91ae0939e',
@@ -99,7 +103,7 @@ export const PANDIT_CATALOG: PanditOption[] = [
     title: 'Shukla Yajurveda Acharya',
     experience: '18+ Years',
     specialties: ['Navgrah Shanti', 'Karmakand', 'Horoscope Analysis'],
-    avatar: '/images/acharya-sharma.webp',
+    avatar: '/images/photo-1762838105804-c3264c29a390.webp',
   },
   {
     id: 'pandit_vyas',
@@ -107,7 +111,7 @@ export const PANDIT_CATALOG: PanditOption[] = [
     title: 'Prayagraj Tirth Purohit',
     experience: '20+ Years',
     specialties: ['Family Sankalp', 'Ganga Aarti', 'Vastu'],
-    avatar: '/images/photo-1681797849099-0053b1567d95.webp',
+    avatar: '/images/photo-1544186196-6908a9d76ab3.webp',
   },
   {
     id: 'pandit_bhatt',
@@ -115,7 +119,7 @@ export const PANDIT_CATALOG: PanditOption[] = [
     title: 'Mahakal Ujjain Ved Vidyalaya',
     experience: '14+ Years',
     specialties: ['Mahamrityunjaya', 'Rudrabhishek', 'Numerology'],
-    avatar: '/images/photo-1609342122563-a43ac8917a3a.webp',
+    avatar: '/images/photo-1596604820148-da737958af16.webp',
   },
 ];
 
@@ -131,6 +135,48 @@ export default function SevaBookingModal({
   initialSevaId,
 }: SevaBookingModalProps) {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+
+  const toast = useToast();
+  const [user, setUser] = useState<{ id: string; name?: string; email?: string } | null>(null);
+
+  // Check devotee authentication status and restore pending bookings
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('pooja_user');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          setUser(parsed);
+          if (!devoteeName) {
+            setDevoteeName(parsed.name || parsed.fullName || parsed.email?.split('@')[0] || '');
+          }
+        } else {
+          setUser(null);
+        }
+
+        // Restore pending draft if user just signed in
+        const pending = sessionStorage.getItem('pending_seva_booking');
+        if (pending && isOpen) {
+          const draft = JSON.parse(pending);
+          if (draft.sevaId) {
+            const s = SEVA_CATALOG.find((item) => item.id === draft.sevaId);
+            if (s) setSelectedSeva(s);
+          }
+          if (draft.panditId) {
+            const p = PANDIT_CATALOG.find((item) => item.id === draft.panditId);
+            if (p) setSelectedPandit(p);
+          }
+          if (draft.date) setBookingDate(draft.date);
+          if (draft.slot) setTimeSlot(draft.slot);
+          if (draft.intent) setSankalpIntent(draft.intent);
+          setStep(3);
+          sessionStorage.removeItem('pending_seva_booking');
+        }
+      } catch (e) {
+        setUser(null);
+      }
+    }
+  }, [isOpen]);
 
   // Form selections
   const [selectedSeva, setSelectedSeva] = useState<SevaOption>(() => {
@@ -151,10 +197,32 @@ export default function SevaBookingModal({
 
   if (!isOpen) return null;
 
+  const handleAuthRedirect = (target: '/login' | '/register') => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem(
+        'pending_seva_booking',
+        JSON.stringify({
+          sevaId: selectedSeva.id,
+          panditId: selectedPandit.id,
+          date: bookingDate,
+          slot: timeSlot,
+          intent: sankalpIntent,
+        })
+      );
+      const returnPath = encodeURIComponent(`${window.location.pathname}?action=booking`);
+      window.location.href = `${target}?redirect=${returnPath}`;
+    }
+  };
+
   const handleConfirmBooking = () => {
+    if (!user) {
+      toast.error('Please sign in or register to consecrate your live pooja.');
+      return;
+    }
     const refCode = `SHUBH-${Math.floor(100000 + Math.random() * 900000)}`;
     setBookingRef(refCode);
     setStep(4);
+    toast.success('Sankalp registered successfully! Sacred details transmitted to Panditji.');
   };
 
   const handleResetAndClose = () => {
@@ -274,28 +342,38 @@ export default function SevaBookingModal({
                           : 'bg-obsidian border-gold/15 hover:border-gold/40'
                       }`}
                     >
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-1.5 font-serif font-bold text-white text-sm">
-                            <span>{pandit.name}</span>
-                            <VerifiedPanditBadge size={15} />
-                          </div>
-                          <span className="text-[10px] font-bold text-gold-pale bg-gold/10 px-2 py-0.5 rounded-full border border-gold/20">
-                            {pandit.experience}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-gold-soft font-medium mb-2">
-                          {pandit.title}
-                        </p>
-                        <div className="flex flex-wrap gap-1">
-                          {pandit.specialties.map((spec) => (
-                            <span
-                              key={spec}
-                              className="text-[9px] font-semibold text-stone-300 bg-obsidian-soft border border-stone-800 px-1.5 py-0.5 rounded"
-                            >
-                              {spec}
+                      <div className="flex items-start gap-3">
+                        <img
+                          src={pandit.avatar}
+                          alt={pandit.name}
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/images/photo-1543934776-32d1cc654abb.webp';
+                          }}
+                          className="w-12 h-12 rounded-full object-cover border border-gold/30 shrink-0 shadow-md"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-1.5 font-serif font-bold text-white text-sm">
+                              <span className="truncate">{pandit.name}</span>
+                              <VerifiedPanditBadge size={14} />
+                            </div>
+                            <span className="text-[10px] font-bold text-gold-pale bg-gold/10 px-2 py-0.5 rounded-full border border-gold/20 shrink-0">
+                              {pandit.experience}
                             </span>
-                          ))}
+                          </div>
+                          <p className="text-[11px] text-gold-soft font-medium mb-2 truncate">
+                            {pandit.title}
+                          </p>
+                          <div className="flex flex-wrap gap-1">
+                            {pandit.specialties.map((spec) => (
+                              <span
+                                key={spec}
+                                className="text-[9px] font-semibold text-stone-300 bg-obsidian-soft border border-stone-800 px-1.5 py-0.5 rounded"
+                              >
+                                {spec}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -308,90 +386,150 @@ export default function SevaBookingModal({
           {/* STEP 3: DEVOTEE SANKALP DETAILS */}
           {step === 3 && (
             <div className="space-y-4">
-              <div>
-                <h3 className="font-serif text-base font-bold text-white">
-                  Step 3: Devotee &amp; Sacred Sankalp Details
-                </h3>
-                <p className="text-xs text-stone-400 mt-0.5">
-                  The Pandit will invoke these sacred details during the live chanting and Swasti Vachan.
-                </p>
-              </div>
+              {!user ? (
+                <div className="rounded-2xl bg-obsidian border border-gold/30 p-6 sm:p-8 text-center space-y-4 shadow-xl">
+                  <div className="w-14 h-14 rounded-full bg-gold/15 border border-gold/40 flex items-center justify-center text-gold mx-auto shadow-[0_0_24px_rgba(245,158,11,0.25)]">
+                    <DiyaIcon size={26} />
+                  </div>
+                  <div className="space-y-1.5 max-w-md mx-auto">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-gold-soft">
+                      Consecrate Your Gotra &amp; Sankalp
+                    </span>
+                    <h3 className="font-serif text-xl sm:text-2xl font-bold text-white">
+                      Devotee Sign-in Required
+                    </h3>
+                    <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
+                      Sign in or claim your <strong className="text-gold-pale">100 Free Welcome Coins</strong> to consecrate your Gotra and confirm your live pooja session with <strong className="text-gold-pale">{selectedPandit.name}</strong>.
+                    </p>
+                  </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-stone-300 mb-1">
-                    Yajman (Devotee) Full Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={devoteeName}
-                    onChange={(e) => setDevoteeName(e.target.value)}
-                    placeholder="e.g. Ramesh Chandra Sharma"
-                    className="w-full px-3.5 py-2 rounded-xl bg-obsidian border border-gold/20 text-xs sm:text-sm text-white placeholder-stone-500 focus:outline-none focus:border-gold"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-stone-300 mb-1">
-                    Gotra (Vedic Lineage)
-                  </label>
-                  <input
-                    type="text"
-                    value={devoteeGotra}
-                    onChange={(e) => setDevoteeGotra(e.target.value)}
-                    placeholder="e.g. Kashyap, Bharadwaj (or 'Kashyap')"
-                    className="w-full px-3.5 py-2 rounded-xl bg-obsidian border border-gold/20 text-xs sm:text-sm text-white placeholder-stone-500 focus:outline-none focus:border-gold"
-                  />
-                </div>
-              </div>
+                  {/* 100 Free Coins Pill */}
+                  <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-4 py-1 text-xs font-semibold text-gold-pale">
+                    <Sparkles className="w-3.5 h-3.5 text-gold" />
+                    <span>100 Free Coins credited instantly on registration</span>
+                  </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-stone-300 mb-1">
-                    Preferred Auspicious Date *
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={bookingDate}
-                    onChange={(e) => setBookingDate(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-obsidian border border-gold/20 text-xs sm:text-sm text-white focus:outline-none focus:border-gold"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-stone-300 mb-1">
-                    Preferred Time Slot *
-                  </label>
-                  <select
-                    value={timeSlot}
-                    onChange={(e) => setTimeSlot(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-obsidian border border-gold/20 text-xs sm:text-sm text-white focus:outline-none focus:border-gold"
-                  >
-                    <option>Morning (07:00 AM – 09:00 AM IST)</option>
-                    <option>Madhyahna (11:30 AM – 01:00 PM IST)</option>
-                    <option>Sandhya (06:00 PM – 08:00 PM IST)</option>
-                    <option>Night (08:30 PM – 10:00 PM IST)</option>
-                  </select>
-                </div>
-              </div>
+                  <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <button
+                      onClick={() => handleAuthRedirect('/login')}
+                      className="w-full sm:w-auto px-6 py-2.5 rounded-full border border-gold/40 bg-obsidian-soft hover:bg-gold/10 text-gold-pale font-bold text-xs transition flex items-center justify-center gap-2"
+                    >
+                      <LogIn className="w-4 h-4 text-gold" />
+                      <span>Sign In to Account</span>
+                    </button>
+                    <button
+                      onClick={() => handleAuthRedirect('/register')}
+                      className="w-full sm:w-auto px-7 py-2.5 rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold text-xs shadow-lg transition flex items-center justify-center gap-2"
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      <span>Register &amp; Claim 100 Coins</span>
+                    </button>
+                  </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
-                  Sankalp / Prayer Intention
-                </label>
-                <select
-                  value={sankalpIntent}
-                  onChange={(e) => setSankalpIntent(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-obsidian border border-gold/20 text-xs sm:text-sm text-white focus:outline-none focus:border-gold"
-                >
-                  <option>Family Health, Long Life &amp; Healing</option>
-                  <option>Peace, Harmony &amp; Removal of Domestic Obstacles</option>
-                  <option>Business Growth, Career &amp; Financial Abundance</option>
-                  <option>Planetary Dosh Nivaran &amp; Shanti</option>
-                  <option>Child Education &amp; Saraswati Blessing</option>
-                  <option>Ancestral Pitru Tarpana &amp; Swasti</option>
-                </select>
-              </div>
+                  <p className="text-[11px] text-stone-400 italic">
+                    Your selected ritual ({selectedSeva.name}) with {selectedPandit.name} will be preserved automatically upon sign-in.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between p-3.5 rounded-xl bg-gold/10 border border-gold/25 text-xs">
+                    <div className="flex items-center gap-2 text-stone-200">
+                      <CheckCircle2 className="w-4 h-4 text-gold shrink-0" />
+                      <span>
+                        Consecrating as <strong className="text-white">{user.name || user.email}</strong>
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold text-gold-pale bg-gold/20 px-2 py-0.5 rounded-full border border-gold/30">
+                      Devotee Verified
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 className="font-serif text-base font-bold text-white">
+                      Step 3: Devotee &amp; Sacred Sankalp Details
+                    </h3>
+                    <p className="text-xs text-stone-400 mt-0.5">
+                      The Pandit will invoke these sacred details during the live chanting and Swasti Vachan.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-stone-300 mb-1">
+                        Yajman (Devotee) Full Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={devoteeName}
+                        onChange={(e) => setDevoteeName(e.target.value)}
+                        placeholder="e.g. Ramesh Chandra Sharma"
+                        className="w-full px-3.5 py-2 rounded-xl bg-obsidian border border-gold/20 text-xs sm:text-sm text-white placeholder-stone-500 focus:outline-none focus:border-gold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-stone-300 mb-1">
+                        Gotra (Vedic Lineage)
+                      </label>
+                      <input
+                        type="text"
+                        value={devoteeGotra}
+                        onChange={(e) => setDevoteeGotra(e.target.value)}
+                        placeholder="e.g. Kashyap, Bharadwaj (or 'Kashyap')"
+                        className="w-full px-3.5 py-2 rounded-xl bg-obsidian border border-gold/20 text-xs sm:text-sm text-white placeholder-stone-500 focus:outline-none focus:border-gold"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-stone-300 mb-1">
+                        Preferred Auspicious Date *
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={bookingDate}
+                        onChange={(e) => setBookingDate(e.target.value)}
+                        className="w-full px-3.5 py-2 rounded-xl bg-obsidian border border-gold/20 text-xs sm:text-sm text-white focus:outline-none focus:border-gold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-stone-300 mb-1">
+                        Preferred Time Slot *
+                      </label>
+                      <select
+                        value={timeSlot}
+                        onChange={(e) => setTimeSlot(e.target.value)}
+                        className="w-full px-3.5 py-2 rounded-xl bg-obsidian border border-gold/20 text-xs sm:text-sm text-white focus:outline-none focus:border-gold"
+                      >
+                        <option>Morning (07:00 AM – 09:00 AM IST)</option>
+                        <option>Madhyahna (11:30 AM – 01:00 PM IST)</option>
+                        <option>Sandhya (06:00 PM – 08:00 PM IST)</option>
+                        <option>Night (08:30 PM – 10:00 PM IST)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-stone-300 mb-1">
+                      Sankalp / Prayer Intention
+                    </label>
+                    <select
+                      value={sankalpIntent}
+                      onChange={(e) => setSankalpIntent(e.target.value)}
+                      className="w-full px-3.5 py-2 rounded-xl bg-obsidian border border-gold/20 text-xs sm:text-sm text-white focus:outline-none focus:border-gold"
+                    >
+                      <option>Family Health, Long Life &amp; Healing</option>
+                      <option>Peace, Harmony &amp; Removal of Domestic Obstacles</option>
+                      <option>Business Growth, Career &amp; Financial Abundance</option>
+                      <option>Planetary Dosh Nivaran &amp; Shanti</option>
+                      <option>Child Education &amp; Saraswati Blessing</option>
+                      <option>Ancestral Pitru Tarpana &amp; Swasti</option>
+                    </select>
+                  </div>
+                </>
+              )}
 
               {/* Summary Pill */}
               <div className="rounded-2xl bg-obsidian p-4 border border-gold/20 flex items-center justify-between">
@@ -483,7 +621,7 @@ export default function SevaBookingModal({
                 <span>Continue</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
-            ) : (
+            ) : user ? (
               <button
                 onClick={handleConfirmBooking}
                 disabled={!devoteeName}
@@ -496,6 +634,22 @@ export default function SevaBookingModal({
                 <DiyaIcon size={14} />
                 <span>Confirm &amp; Register Sankalp</span>
               </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleAuthRedirect('/login')}
+                  className="px-4 py-2 rounded-full border border-gold/40 text-gold-pale hover:bg-gold/10 text-xs font-bold transition"
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => handleAuthRedirect('/register')}
+                  className="px-5 py-2 rounded-full bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold transition flex items-center gap-1.5 shadow-md"
+                >
+                  <DiyaIcon size={13} />
+                  <span>Register Free</span>
+                </button>
+              </div>
             )}
           </div>
         )}

@@ -5,6 +5,7 @@ import '@livekit/components-styles';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { FestivalBanner } from '@/components/FestivalBanner';
+import { ToastProvider } from '@/components/Toast';
 
 const SITE_URL = 'https://darkturquoise-louse-359917.hostingersite.com';
 
@@ -179,7 +180,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("sd-theme");if(t==="light"||t==="dark"){document.documentElement.setAttribute("data-theme",t);}else{document.documentElement.setAttribute("data-theme","dark");}}catch(e){}})()`,
+            __html: `(function(){try{var t=localStorage.getItem("sd-theme");if(t==="light"||t==="dark"){document.documentElement.setAttribute("data-theme",t);}else{document.documentElement.setAttribute("data-theme","light");}}catch(e){}})()`,
           }}
         />
         <script
@@ -188,10 +189,12 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen flex flex-col bg-stone-950 text-stone-100 antialiased selection:bg-orange-500 selection:text-white">
-        <FestivalBanner />
-        <Navbar />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <ToastProvider>
+          <FestivalBanner />
+          <Navbar />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </ToastProvider>
       </body>
     </html>
   );

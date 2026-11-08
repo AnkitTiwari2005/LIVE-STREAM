@@ -20,9 +20,11 @@ import {
   Plus,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { useToast } from '@/components/Toast';
 
 export default function AdminConsolePage() {
   const router = useRouter();
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState<'kpi' | 'kyc' | 'streams' | 'reports' | 'wordFilters' | 'users' | 'audit'>('kpi');
   const [stats, setStats] = useState<any>(null);
   const [kycList, setKycList] = useState<any[]>([]);
@@ -47,7 +49,7 @@ export default function AdminConsolePage() {
     setAuthToken(token);
     const user = JSON.parse(storedUser);
     if (user.role !== 'ADMIN') {
-      alert('Access restricted to platform operators only.');
+      toast.error('Access restricted to platform operators only.');
       router.push('/');
       return;
     }
@@ -107,8 +109,9 @@ export default function AdminConsolePage() {
         body: JSON.stringify({ decision, rejectionReason }),
       });
       loadAdminData();
+      toast.success('KYC status updated successfully.');
     } catch (err: any) {
-      alert(err.message || 'Failed to update KYC status.');
+      toast.error(err.message || 'Failed to update KYC status.');
     }
   };
 
@@ -120,8 +123,9 @@ export default function AdminConsolePage() {
         method: 'POST',
       });
       loadAdminData();
+      toast.success('Stream ended successfully.');
     } catch (err: any) {
-      alert(err.message || 'Failed to force end stream.');
+      toast.error(err.message || 'Failed to force end stream.');
     }
   };
 
@@ -130,7 +134,7 @@ export default function AdminConsolePage() {
       const data = await apiFetch(`/admin/users?query=${encodeURIComponent(searchUser)}`);
       setUsers(data);
     } catch (err: any) {
-      alert(err.message || 'User search failed.');
+      toast.error(err.message || 'User search failed.');
     }
   };
 
@@ -141,8 +145,9 @@ export default function AdminConsolePage() {
         body: JSON.stringify({ status, reason: 'Administrative intervention' }),
       });
       handleSearchUsers();
+      toast.success(`User status updated to ${status}.`);
     } catch (err: any) {
-      alert(err.message || 'Status change failed.');
+      toast.error(err.message || 'Status change failed.');
     }
   };
 
@@ -157,8 +162,9 @@ export default function AdminConsolePage() {
         }),
       });
       setReports((prev) => prev.filter((r) => r.id !== reportId));
+      toast.success('Report resolved successfully.');
     } catch (err: any) {
-      alert(err.message || 'Failed to resolve report.');
+      toast.error(err.message || 'Failed to resolve report.');
     }
   };
 
@@ -172,8 +178,9 @@ export default function AdminConsolePage() {
       });
       setNewWord('');
       loadAdminData();
+      toast.success('Word added to chat filter.');
     } catch (err: any) {
-      alert(err.message || 'Failed to add word to chat filter');
+      toast.error(err.message || 'Failed to add word to chat filter');
     }
   };
 
@@ -184,8 +191,9 @@ export default function AdminConsolePage() {
         method: 'DELETE',
       });
       setWordFilters((prev) => prev.filter((w) => w.id !== id));
+      toast.success('Word removed from chat filter.');
     } catch (err: any) {
-      alert(err.message || 'Failed to remove word');
+      toast.error(err.message || 'Failed to remove word');
     }
   };
 
