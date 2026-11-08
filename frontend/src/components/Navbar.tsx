@@ -6,7 +6,6 @@ import {
   Video,
   ShieldCheck,
   LogOut,
-  Sparkles,
   Menu,
   X,
   PlusCircle,
@@ -22,7 +21,7 @@ import {
 import { CoinTopupModal } from './CoinTopupModal';
 import { SearchPalette } from './SearchPalette';
 import { ThemeToggle } from './ThemeToggle';
-import { OmIcon, CoinIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
+import { OmIcon, CoinIcon, PranamIcon, DiyaIcon } from '@/components/icons/SpiritualIcons';
 
 export function Navbar() {
   const [user, setUser] = useState<any>(null);
@@ -276,7 +275,7 @@ export function Navbar() {
                               onClick={() => setUserDropdownOpen(false)}
                               className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
                             >
-                              <Sparkles className="w-4 h-4 text-gold shrink-0" />
+                              <DiyaIcon size={16} className="text-gold shrink-0" />
                               <span>My Sacred Broadcasts</span>
                             </Link>
                             <Link
@@ -306,7 +305,7 @@ export function Navbar() {
                               onClick={() => setUserDropdownOpen(false)}
                               className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
                             >
-                              <Sparkles className="w-4 h-4 text-gold shrink-0" />
+                              <DiyaIcon size={16} className="text-gold shrink-0" />
                               <span>Become a Pandit</span>
                             </Link>
                             <Link
@@ -448,7 +447,7 @@ export function Navbar() {
                     onClick={() => setMobileMenuOpen(false)}
                     className="text-gold-pale font-bold py-1.5 flex items-center gap-2"
                   >
-                    <Sparkles className="w-4 h-4 text-gold" /> My Sacred Broadcasts
+                    <DiyaIcon size={16} /> My Sacred Broadcasts
                   </Link>
                   <Link
                     href="/streamer/earnings"
@@ -477,7 +476,7 @@ export function Navbar() {
                     onClick={() => setMobileMenuOpen(false)}
                     className="text-gold-pale font-medium py-1.5 flex items-center gap-2"
                   >
-                    <Sparkles className="w-4 h-4 text-gold" /> Become a Pandit
+                    <DiyaIcon size={16} /> Become a Pandit
                   </Link>
                   <Link
                     href="/streamer/status"

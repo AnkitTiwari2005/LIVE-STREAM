@@ -398,11 +398,9 @@ export default function HomePage() {
                     setSelectedSevaId(undefined);
                     setBookingModalOpen(true);
                   }}
-                  className="group inline-flex items-center gap-3 rounded-full bg-gold px-8 py-3.5 text-sm font-bold text-obsidian shadow-[0_0_36px_rgba(245,158,11,0.4)] transition hover:bg-gold-deep hover:shadow-[0_0_48px_rgba(245,158,11,0.6)] hover:scale-[1.02]"
+                  className="group inline-flex items-center gap-2.5 rounded-full bg-gold px-8 py-3.5 text-sm font-bold text-obsidian shadow-[0_0_36px_rgba(245,158,11,0.4)] transition hover:bg-gold-deep hover:shadow-[0_0_48px_rgba(245,158,11,0.6)] hover:scale-[1.02]"
                 >
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-obsidian/20">
-                    <Sparkles className="h-3.5 w-3.5 fill-obsidian text-obsidian ml-0.5" />
-                  </span>
+                  <DiyaIcon size={20} className="transform group-hover:scale-110 transition-transform" />
                   <span>Book a Live Pooja</span>
                 </button>
               )}
@@ -583,7 +581,7 @@ export default function HomePage() {
                         }}
                         className="rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold px-3.5 py-1.5 text-xs shadow-lg transition-transform hover:scale-105 flex items-center gap-1.5"
                       >
-                        <Sparkles className="w-3.5 h-3.5 fill-obsidian" />
+                        <DiyaIcon size={14} />
                         <span>Book a Pooja</span>
                       </button>
                       <Link
@@ -939,7 +937,7 @@ export default function HomePage() {
                         }}
                         className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-full bg-gold hover:bg-gold-deep text-obsidian transition shadow"
                       >
-                        <Sparkles className="w-3.5 h-3.5" />
+                        <DiyaIcon size={14} />
                         <span>Book Sankalp</span>
                       </button>
                     </div>

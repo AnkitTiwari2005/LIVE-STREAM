@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ShieldCheck, Flame, HeartHandshake, Sparkles, Video } from 'lucide-react';
-import { OmIcon } from '@/components/icons/SpiritualIcons';
+import { ShieldCheck, Flame, HeartHandshake, Video } from 'lucide-react';
+import { OmIcon, DiyaIcon } from '@/components/icons/SpiritualIcons';
 
 export function Footer() {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -107,15 +107,15 @@ export function Footer() {
               <li>
                 {currentUser?.role === 'STREAMER' ? (
                   <Link href="/studio/streams" className="text-stone-400 hover:text-gold-pale transition flex items-center gap-1.5">
-                    <Sparkles className="w-3 h-3 text-gold" /> My Sacred Broadcasts
+                    <DiyaIcon size={14} /> My Sacred Broadcasts
                   </Link>
                 ) : currentUser?.role === 'ADMIN' ? (
                   <Link href="/admin" className="text-stone-400 hover:text-gold-pale transition flex items-center gap-1.5">
-                    <Sparkles className="w-3 h-3 text-gold" /> Admin Console
+                    <DiyaIcon size={14} /> Admin Console
                   </Link>
                 ) : (
                   <Link href="/streamer/apply" className="text-stone-400 hover:text-gold-pale transition flex items-center gap-1.5">
-                    <Sparkles className="w-3 h-3 text-gold" /> Apply as Pandit
+                    <DiyaIcon size={14} /> Apply as Pandit
                   </Link>
                 )}
               </li>

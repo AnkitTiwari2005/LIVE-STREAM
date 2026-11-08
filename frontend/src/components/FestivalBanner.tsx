@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { X, Sparkles } from 'lucide-react';
+import { X } from 'lucide-react';
+import { DiyaIcon } from '@/components/icons/SpiritualIcons';
 
 export function FestivalBanner() {
   const [visible, setVisible] = useState(false);
@@ -38,7 +39,7 @@ export function FestivalBanner() {
       }}
     >
       <div className="flex items-center gap-2">
-        <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+        <DiyaIcon size={16} className="animate-pulse" />
         <span className="font-bold text-amber-200">Deepotsav Special:</span>
         <span className="text-stone-200 hidden sm:inline">
           Join the Grand Deepotsav Mahotsav &amp; Live Ganga Aarti from Bharat&apos;s sacred ghats

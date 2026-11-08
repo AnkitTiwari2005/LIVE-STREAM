@@ -493,7 +493,7 @@ export default function SevaBookingModal({
                     : 'bg-stone-800 text-stone-500 cursor-not-allowed'
                 }`}
               >
-                <Sparkles className="w-3.5 h-3.5" />
+                <DiyaIcon size={14} />
                 <span>Confirm &amp; Register Sankalp</span>
               </button>
             )}

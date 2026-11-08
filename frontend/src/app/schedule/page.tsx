@@ -158,7 +158,7 @@ export default function SchedulePage() {
               onClick={() => setBookingModalOpen(true)}
               className="px-6 py-2.5 rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold text-xs shadow-lg transition flex items-center gap-1.5"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <DiyaIcon size={15} />
               <span>Book a Personal Pooja Session</span>
             </button>
             <Link
@@ -278,7 +278,7 @@ export default function SchedulePage() {
                         onClick={() => setBookingModalOpen(true)}
                         className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-full bg-gold hover:bg-gold-deep text-obsidian transition shadow"
                       >
-                        <Sparkles className="w-3.5 h-3.5" />
+                        <DiyaIcon size={14} />
                         <span>Book Sankalp</span>
                       </button>
                     </div>
