@@ -42,12 +42,11 @@ export default function ForgotPasswordPage() {
       <div className="max-w-md w-full bg-stone-900 border border-stone-800 rounded-2xl p-8 shadow-2xl">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-3">
-            <span className="p-3 bg-orange-950/60 border border-orange-500/30 rounded-2xl text-orange-400">
-              <DiyaIcon size={32} />
+            <span className="p-3 bg-gradient-to-b from-amber-500/10 to-transparent border border-gold/30 rounded-2xl">
+              <img src="/logo.png" alt="Shubhdarshan" className="w-10 h-10 object-contain drop-shadow" />
             </span>
           </div>
           <h1 className="text-2xl font-serif font-bold text-stone-100 flex items-center justify-center gap-2">
-            <OmIcon size={22} />
             Reset Password
           </h1>
           <p className="text-stone-400 text-sm mt-1">

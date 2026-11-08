@@ -54,6 +54,7 @@ export default function StreamerApplyPage() {
           if (u.role === 'STREAMER' || u.role === 'ADMIN') {
             setExistingRole(u.role);
             setCheckingExisting(false);
+            router.replace('/studio/create');
             return;
           }
         } catch {}
@@ -62,11 +63,13 @@ export default function StreamerApplyPage() {
       // Query current profile status from backend to verify if already applied
       apiFetch('/streamers/me')
         .then((profile) => {
+          if (profile?.user?.role === 'STREAMER' || profile?.kycStatus === 'APPROVED') {
+            setExistingRole('STREAMER');
+            router.replace('/studio/create');
+            return;
+          }
           if (profile?.kycStatus) {
             setExistingKycStatus(profile.kycStatus);
-            if (profile.kycStatus === 'APPROVED') {
-              setExistingRole('STREAMER');
-            }
           }
         })
         .catch(() => {})

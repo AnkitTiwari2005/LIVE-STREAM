@@ -37,6 +37,7 @@ import {
   VerifiedPanditBadge,
 } from '@/components/icons/SpiritualIcons';
 import { CoinTopupModal } from '@/components/CoinTopupModal';
+import SevaBookingModal from '@/components/SevaBookingModal';
 
 interface Stream {
   id: string;
@@ -65,36 +66,36 @@ const LIVE_SEVA_ACTIVITIES = [
 
 const CATEGORY_TILES = [
   {
-    id: 'aarti',
-    name: 'Live Aarti & Darshan',
-    desc: 'Daily temple sanctum streams',
-    icon: Flame,
-    tag: '12 Temples Live',
-    filterKey: 'aarti',
-  },
-  {
     id: 'rudrabhishek',
     name: 'Rudrabhishek & Pooja',
-    desc: 'Conducted by Vedic Archaks',
+    desc: 'Conducted live by Vedic Archaks',
     icon: DiyaIcon,
-    tag: '8 Daily Sevas',
+    tag: 'Sacred Ritual',
     filterKey: 'rudrabhishek',
   },
   {
-    id: 'kirtan',
-    name: 'Kirtan & Bhajan',
-    desc: 'Sacred devotional melodies',
-    icon: Music,
-    tag: 'Live Evenings',
-    filterKey: 'kirtan',
+    id: 'aarti',
+    name: 'Live Aarti & Darshan',
+    desc: 'Devotional aartis and chants',
+    icon: Flame,
+    tag: 'Live Broadcast',
+    filterKey: 'aarti',
   },
   {
     id: 'astrology',
     name: 'Vedic Guidance & Astrology',
     desc: 'Gurukul verified consultations',
     icon: Compass,
-    tag: '24 Verified Pandits',
+    tag: '1-on-1 Seva',
     filterKey: 'astrology',
+  },
+  {
+    id: 'sankalp',
+    name: 'Family Sankalp',
+    desc: 'Personal gotra-naam chanting',
+    icon: HeartHandshake,
+    tag: 'Personalized Seva',
+    filterKey: 'sankalp',
   },
   {
     id: 'vastu',
@@ -113,75 +114,56 @@ const CATEGORY_TILES = [
     filterKey: 'katha',
   },
   {
-    id: 'sankalp',
-    name: 'Family Sankalp',
-    desc: 'Personal gotra-naam chanting',
-    icon: HeartHandshake,
-    tag: 'Personalized Seva',
-    filterKey: 'sankalp',
+    id: 'kirtan',
+    name: 'Kirtan & Bhajan',
+    desc: 'Sacred devotional melodies',
+    icon: Music,
+    tag: 'Devotional',
+    filterKey: 'kirtan',
   },
   {
     id: 'studio',
     name: 'Pandit Broadcasting',
-    desc: 'Stream sanctum poojas worldwide',
+    desc: 'Stream Vedic poojas worldwide',
     icon: Radio,
     tag: 'Studio Portal',
     filterKey: 'studio',
   },
 ];
 
-const SANCTUM_STREAMS = [
+const FALLBACK_SCHEDULED_BROADCASTS = [
   {
-    id: 'ganga-aarti',
-    streamUrl: '/stream/demo',
-    title: 'Sandhya Ganga Aarti',
-    sanctum: 'Har Ki Pauri, Haridwar',
-    description: 'Sacred twilight lamp offering on the banks of holy Maa Ganga with resonant Vedic chanting.',
-    category: 'Aarti & Darshan',
-    streamer: 'Pandit Hariram Vyas',
+    id: 'rudrabhishek-live',
+    title: 'Maha Rudrabhishek & Swasti Vachan',
+    description: 'Vedic Panchamrit Abhishek with resonant Rudra Sukta recitation for peace, health, and family prosperity.',
+    category: 'Rudrabhishek',
+    streamer: 'Pandit Aarav Sharma',
     isVerified: true,
-    viewers: 412,
-    quality: 'Live HD',
+    scheduledText: 'Today, 06:00 PM IST',
+    quality: '1080p',
     thumbnail: '/images/photo-1681797849099-0053b1567d95.webp',
   },
   {
-    id: 'kashi-mangala',
-    streamUrl: '/stream/demo',
-    title: 'Mangala Aarti — Kashi Vishwanath',
-    sanctum: 'Kashi Vishwanath Jyotirlinga, Varanasi',
-    description: 'Auspicious dawn offering and abhishekam at the golden temple of Mahadev in sacred Varanasi.',
-    category: 'Mangala Aarti',
-    streamer: 'Pandit Aarav Sharma',
-    isVerified: true,
-    viewers: 248,
-    quality: 'Live HD',
-    thumbnail: '/images/photo-1678593628844-6ea49dee8ce3.webp',
-  },
-  {
-    id: 'rudrabhishek',
-    streamUrl: '/stream/demo',
-    title: 'Maha Rudrabhishek & Live Aarti',
-    sanctum: 'Rameshwaram Jyotirlinga Dham',
-    description: 'Vedic Rudra Sukta recitation with Panchamrit abhishekam for family peace and prosperity.',
-    category: 'Rudrabhishek',
-    streamer: 'Pandit Vishwanath Bhatt',
-    isVerified: true,
-    viewers: 184,
-    quality: 'Live HD',
-    thumbnail: '/images/photo-1763479939733-eea29c578c17.webp',
-  },
-  {
-    id: 'somnath-aarti',
-    streamUrl: '/stream/demo',
-    title: 'Somnath Sandhya Deep Aarti',
-    sanctum: 'Somnath Jyotirlinga, Prabhas Patan',
-    description: 'Evening oceanfront illumination and Shankh naad at Bharat’s first Jyotirlinga sanctum.',
-    category: 'Deep Aarti',
+    id: 'navgrah-shanti',
+    title: 'Navgrah Shanti & Vedic Kundli Remedial Pooja',
+    description: 'Auspicious 9-graha oblations and personalized horoscope dosha nivaran chanting by Gurukul scholar.',
+    category: 'Astrology & Kundli',
     streamer: 'Acharya Devrat Sharma',
     isVerified: true,
-    viewers: 329,
-    quality: 'Live HD',
-    thumbnail: '/images/photo-1763479168649-8ffb3bbb9103.webp',
+    scheduledText: 'Tomorrow, 07:30 AM IST',
+    quality: '1080p',
+    thumbnail: '/images/photo-1609342122563-a43ac8917a3a.webp',
+  },
+  {
+    id: 'sandhya-aarti',
+    title: 'Sandhya Deepotsav & Divine Aarti',
+    description: 'Devotional evening lamp invocation with conch shell reverberations and sacred mantra pushpam.',
+    category: 'Aarti & Darshan',
+    streamer: 'Pandit Hariram Vyas',
+    isVerified: true,
+    scheduledText: 'Tomorrow, 06:30 PM IST',
+    quality: '1080p',
+    thumbnail: '/images/photo-1678593628844-6ea49dee8ce3.webp',
   },
 ];
 
@@ -269,6 +251,8 @@ export default function HomePage() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [topupModalOpen, setTopupModalOpen] = useState(false);
+  const [bookingModalOpen, setBookingModalOpen] = useState(false);
+  const [selectedSevaId, setSelectedSevaId] = useState<string | undefined>(undefined);
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
@@ -377,23 +361,23 @@ export default function HomePage() {
               {liveStreams.length > 0 ? (
                 <p className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.24em] text-gold-pale shadow-[0_0_20px_rgba(245,158,11,0.15)]">
                   <span className="live-dot" />
-                  Live from Bharat&apos;s sacred sanctums
+                  Live Vedic Broadcasts • Gurukul Verified
                 </p>
               ) : (
                 <p className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.24em] text-gold-pale shadow-[0_0_20px_rgba(245,158,11,0.15)]">
                   <DiyaIcon size={14} />
-                  Direct from Bharat&apos;s Sacred Sanctums
+                  Live Vedic Broadcasts &bull; Gurukul Verified
                 </p>
               )}
             </div>
 
             <h1 className="mt-6 max-w-2xl font-serif text-4xl sm:text-6xl lg:text-7xl font-bold leading-[1.08] tracking-tight">
-              The sanctum is now <br className="hidden sm:inline" />
+              Sacred Vedic rituals, <br className="hidden sm:inline" />
               <span className="gold-text italic font-serif">one tap away</span>
             </h1>
 
             <p className="mt-6 max-w-xl text-stone-300 text-base sm:text-lg leading-relaxed">
-              Shubhdarshan brings real-time temple Darshan, personalized Vedic poojas, and Gurukul-verified astrologers to devotees in 62 countries — in ultra-low latency HD, from the sacred ghats of Kashi to your living room.
+              Shubhdarshan connects you directly with Gurukul-verified Vedic Pandits for personalized poojas, havans, and spiritual counseling — in ultra-low latency HD, directly to your screen.
             </p>
 
             {/* Hero Action Buttons */}
@@ -409,21 +393,32 @@ export default function HomePage() {
                   <span>Watch Live Darshan</span>
                 </Link>
               ) : (
-                <Link
-                  href="/schedule"
+                <button
+                  onClick={() => {
+                    setSelectedSevaId(undefined);
+                    setBookingModalOpen(true);
+                  }}
                   className="group inline-flex items-center gap-3 rounded-full bg-gold px-8 py-3.5 text-sm font-bold text-obsidian shadow-[0_0_36px_rgba(245,158,11,0.4)] transition hover:bg-gold-deep hover:shadow-[0_0_48px_rgba(245,158,11,0.6)] hover:scale-[1.02]"
                 >
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-obsidian/20">
-                    <Calendar className="h-3.5 w-3.5 text-obsidian ml-0.5" />
+                    <Sparkles className="h-3.5 w-3.5 fill-obsidian text-obsidian ml-0.5" />
                   </span>
-                  <span>Explore Darshan Schedule</span>
-                </Link>
+                  <span>Book a Live Pooja</span>
+                </button>
               )}
+
+              <Link
+                href="/schedule"
+                className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-7 py-3.5 text-sm font-bold text-gold-pale transition hover:border-gold hover:bg-gold/20"
+              >
+                <Calendar className="w-4 h-4 text-gold" />
+                <span>Pooja Schedule</span>
+              </Link>
 
               {user ? (
                 <button
                   onClick={() => setTopupModalOpen(true)}
-                  className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-7 py-3.5 text-sm font-bold text-gold-pale transition hover:border-gold hover:bg-gold/20"
+                  className="inline-flex items-center gap-2 rounded-full border border-stone-700 bg-obsidian-soft px-6 py-3.5 text-sm font-bold text-stone-200 transition hover:border-gold/40"
                 >
                   <CoinIcon size={18} />
                   <span>Recharge Coins</span>
@@ -431,7 +426,7 @@ export default function HomePage() {
               ) : (
                 <Link
                   href="/register"
-                  className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-7 py-3.5 text-sm font-bold text-gold-pale transition hover:border-gold hover:bg-gold/20"
+                  className="inline-flex items-center gap-2 rounded-full border border-stone-700 bg-obsidian-soft px-6 py-3.5 text-sm font-bold text-stone-200 transition hover:border-gold/40"
                 >
                   <Sparkles className="w-4 h-4 text-gold" />
                   <span>Claim 100 Free Coins</span>
@@ -448,9 +443,9 @@ export default function HomePage() {
                 </dt>
               </div>
               <div>
-                <dd className="font-serif text-3xl sm:text-4xl font-bold text-gold-pale">40+</dd>
+                <dd className="font-serif text-3xl sm:text-4xl font-bold text-gold-pale">100%</dd>
                 <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400">
-                  Partner Temples
+                  Gurukul Verified
                 </dt>
               </div>
               <div>
@@ -594,25 +589,25 @@ export default function HomePage() {
 
                   {/* Top Overlay Badges */}
                   <div className="relative z-10 flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 rounded-full bg-gold/15 backdrop-blur-md px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gold-pale border border-gold/30 shadow-md">
+                    <span className="flex items-center gap-1.5 rounded-full bg-stone-900/90 backdrop-blur-md px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gold-pale border border-gold/30 shadow-md">
                       <DiyaIcon size={14} />
-                      Sanctum in Repose
+                      Live Pooja Altar
                     </span>
-                    <span className="rounded-full bg-black/70 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-stone-300 border border-stone-800">
-                      Daily 04:30 AM – 10:00 PM IST
+                    <span className="rounded-full bg-black/75 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-stone-200 border border-stone-800">
+                      Verified Vedic Acharyas
                     </span>
                   </div>
 
                   {/* Center Sacred Diya & Message */}
                   <div className="relative z-10 text-center py-2 sm:py-4">
-                    <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-gold/15 border border-gold/30 flex items-center justify-center text-gold shadow-[0_0_24px_rgba(245,158,11,0.25)]">
-                      <OmIcon size={24} />
+                    <div className="w-14 h-14 mx-auto mb-2 rounded-2xl bg-gradient-to-b from-amber-500/10 to-transparent border border-gold/30 flex items-center justify-center shadow-[0_0_24px_rgba(245,158,11,0.25)]">
+                      <img src="/logo.png" alt="Shubhdarshan" className="w-10 h-10 object-contain drop-shadow" />
                     </div>
                     <h3 className="font-serif text-xl sm:text-2xl font-bold text-white tracking-tight">
-                      Temple Sanctums Awaiting Next Aarti
+                      Live Pooja Altar in Repose
                     </h3>
                     <p className="text-xs text-stone-300 mt-2 max-w-sm mx-auto leading-relaxed">
-                      All sanctums are currently in quiet repose. Morning Mangala Aartis from Kashi Vishwanath, Ujjain, and Haridwar resume at dawn.
+                      Verified Vedic Pandits stream live whenever they conduct sacred rituals, havan poojas, or astrological discourses. Active broadcasts will appear here in real time.
                     </p>
                   </div>
 
@@ -624,13 +619,25 @@ export default function HomePage() {
                         85+ Verified Pandits
                       </span>
                     </div>
-                    <Link
-                      href="/schedule"
-                      className="rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold px-4 py-2 text-xs shadow-lg transition-transform hover:scale-105 flex items-center gap-1.5"
-                    >
-                      <Calendar className="w-3.5 h-3.5 text-obsidian" />
-                      <span>View Schedule</span>
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setSelectedSevaId(undefined);
+                          setBookingModalOpen(true);
+                        }}
+                        className="rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold px-3.5 py-1.5 text-xs shadow-lg transition-transform hover:scale-105 flex items-center gap-1.5"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 fill-obsidian" />
+                        <span>Book a Pooja</span>
+                      </button>
+                      <Link
+                        href="/schedule"
+                        className="rounded-full bg-obsidian-soft hover:bg-gold/10 border border-gold/30 text-gold-pale font-bold px-3 py-1.5 text-xs transition flex items-center gap-1"
+                      >
+                        <Calendar className="w-3.5 h-3.5 text-gold" />
+                        <span>Schedule</span>
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -675,18 +682,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 2. Category Filter & Search Section ("Every ritual, every tradition") */}
+      {/* 2. Category Filter & Search Section ("Book Personalized Vedic Poojas & Consultations") */}
       <section className="mx-auto max-w-7xl px-5 lg:px-8 py-12" id="live-section">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-gold/15">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.24em] text-gold-soft">
-              Vedic Sanctums
+              Sacred Pooja &amp; Seva Booking
             </p>
             <h2 className="mt-1 font-serif text-3xl sm:text-4xl font-bold text-white">
-              Every ritual, every tradition
+              Book Personalized Vedic Poojas &amp; Consultations
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-stone-400 max-w-xl">
-              From dawn Mangala Aartis at Kashi to evening river deepotsavs at Haridwar, select your sacred path.
+              Select a sacred ritual, choose your preferred Gurukul-verified Pandit, and book a live personal broadcast.
             </p>
           </div>
 
@@ -697,13 +704,13 @@ export default function HomePage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search pooja, pandit, or mandir..."
+              placeholder="Search pooja, pandit, or seva..."
               className="w-full pl-10 pr-4 py-2.5 rounded-full bg-obsidian-soft border border-gold/20 text-xs sm:text-sm text-white placeholder-stone-400 focus:outline-none focus:border-gold transition"
             />
           </div>
         </div>
 
-        {/* 8-Tile Sacred Category Grid (TEMP2 Design) */}
+        {/* 8-Tile Sacred Category Grid (Seva Booking Flow) */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-4 my-6">
           {CATEGORY_TILES.map((cat) => {
             const Icon = cat.icon;
@@ -711,8 +718,8 @@ export default function HomePage() {
             const isStreamer = user?.role === 'STREAMER' || user?.role === 'ADMIN';
             const title = isStudio && !isStreamer ? 'Become a Pandit' : cat.name;
             const tag = isStudio && !isStreamer ? 'Pandit Seva' : cat.tag;
-            const desc = isStudio && !isStreamer ? 'Apply to conduct verified sanctum poojas' : cat.desc;
-            const actionText = isStudio ? (isStreamer ? 'Open Studio' : 'Apply as Pandit') : 'Explore';
+            const desc = isStudio && !isStreamer ? 'Apply to conduct verified live poojas' : cat.desc;
+            const actionText = isStudio ? (isStreamer ? 'Open Studio' : 'Apply as Pandit') : 'Book Live Session';
 
             return (
               <div
@@ -722,22 +729,8 @@ export default function HomePage() {
                     window.location.href = isStreamer ? '/studio/create' : '/streamer/apply';
                     return;
                   }
-                  if (cat.id === 'astrology' || cat.id === 'vastu') {
-                    const el = document.getElementById('pandits');
-                    el?.scrollIntoView({ behavior: 'smooth' });
-                    return;
-                  }
-                  const matched = categories.find((c) =>
-                    c.name.toLowerCase().includes(cat.filterKey) ||
-                    c.slug.toLowerCase().includes(cat.filterKey)
-                  );
-                  if (matched) {
-                    setSelectedCategory(matched.id);
-                  } else {
-                    setSearchQuery(cat.name.split(' ')[0]);
-                  }
-                  const el = document.getElementById('live-streams-grid');
-                  el?.scrollIntoView({ behavior: 'smooth' });
+                  setSelectedSevaId(cat.filterKey || cat.id);
+                  setBookingModalOpen(true);
                 }}
                 className="group relative cursor-pointer rounded-2xl bg-obsidian-soft p-4 border border-gold/15 hover:border-gold/50 transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-[0_10px_30px_rgba(245,158,11,0.12)] flex flex-col justify-between"
               >
@@ -797,7 +790,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 3. Live Now or Sanctum Highlights Section */}
+      {/* 3. Live Now or Scheduled Broadcasts Section */}
       <section className="mx-auto max-w-7xl px-5 lg:px-8 py-8" id="live-streams-grid">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
@@ -810,9 +803,9 @@ export default function HomePage() {
               </>
             ) : (
               <>
-                <DiyaIcon size={22} />
+                <Calendar className="w-6 h-6 text-gold" />
                 <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white">
-                  Sanctum Rituals &amp; Curated Darshans
+                  Scheduled Vedic Poojas &amp; Darshans
                 </h2>
               </>
             )}
@@ -820,7 +813,7 @@ export default function HomePage() {
           <span className="text-xs text-gold-soft/90 font-medium hidden sm:inline">
             {liveStreams.length > 0
               ? '5 Coins / min metered darshan • Live HD'
-              : 'Temples are between aarti timings • Next broadcasts resume shortly'}
+              : 'Upcoming live broadcasts scheduled by Gurukul-verified Pandits'}
           </span>
         </div>
 
@@ -835,7 +828,7 @@ export default function HomePage() {
                 className="group rounded-2xl overflow-hidden bg-obsidian-soft border border-gold/15 hover:border-gold/50 transition-all flex flex-col shadow-xl hover:shadow-[0_12px_36px_rgba(245,158,11,0.12)]"
               >
                 {/* Thumbnail Container */}
-                <div className="relative aspect-video bg-black overflow-hidden">
+                <div className="relative aspect-video bg-black overflow-hidden on-photo">
                   <img
                     src={stream.thumbnailUrl || fallbackImg}
                     alt={stream.title}
@@ -850,7 +843,7 @@ export default function HomePage() {
 
                   {/* Quality & Coin Meter */}
                   <div className="absolute top-3 right-3 flex items-center gap-1">
-                    <span className="rounded bg-black/60 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-stone-300">
+                    <span className="rounded bg-black/75 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-stone-200">
                       {stream.videoQuality || '1080p'}
                     </span>
                   </div>
@@ -901,75 +894,104 @@ export default function HomePage() {
             );
           })}
 
-          {/* N-01: Display curated sanctum sample cards ONLY when no active live streams are broadcasting */}
-          {liveStreams.length === 0 && SANCTUM_STREAMS.map((item) => (
-            <div
-              key={item.id}
-              className="group rounded-2xl overflow-hidden bg-obsidian-soft border border-gold/15 flex flex-col shadow-xl"
-            >
-              {/* Thumbnail Container */}
-              <div className="relative aspect-video bg-black overflow-hidden">
-                <img
-                  src={item.thumbnail}
-                  alt={item.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-80" />
+          {/* When No Live Stream: Display Scheduled Broadcasts created by Pandits */}
+          {liveStreams.length === 0 && (upcomingStreams.length > 0 ? upcomingStreams : FALLBACK_SCHEDULED_BROADCASTS).map((item: any, idx: number) => {
+            const fallbackImg = FALLBACK_THUMBNAILS[idx % FALLBACK_THUMBNAILS.length];
+            const dateStr = item.scheduledAt
+              ? new Date(item.scheduledAt).toLocaleString([], {
+                  weekday: 'short',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+              : (item.scheduledText || 'Today Evening');
+            const streamerName = item.streamer?.name || item.streamer || 'Vedic Pandit';
+            const categoryName = item.category?.name || item.category || 'Vedic Pooja';
+            const thumbUrl = item.thumbnailUrl || item.thumbnail || fallbackImg;
 
-                {/* Sanctum Highlight badge */}
-                <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-stone-900/90 border border-gold/30 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold-pale">
-                  <DiyaIcon size={12} /> Sanctum Highlight
+            return (
+              <div
+                key={item.id}
+                className="group rounded-2xl overflow-hidden bg-obsidian-soft border border-gold/15 hover:border-gold/50 transition-all flex flex-col shadow-xl hover:shadow-[0_12px_36px_rgba(245,158,11,0.12)]"
+              >
+                {/* Thumbnail Container */}
+                <div className="relative aspect-video bg-black overflow-hidden on-photo">
+                  <img
+                    src={thumbUrl}
+                    alt={item.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-80" />
+
+                  {/* Scheduled badge */}
+                  <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-stone-900/90 border border-gold/30 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold-pale">
+                    <Calendar className="w-3 h-3 text-gold" />
+                    <span>{dateStr}</span>
+                  </div>
+
+                  {/* Quality & Coin Meter */}
+                  <div className="absolute top-3 right-3 flex items-center gap-1">
+                    <span className="rounded bg-black/75 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-stone-200">
+                      {item.videoQuality || item.quality || '1080p'}
+                    </span>
+                  </div>
                 </div>
 
-                {/* Quality & Coin Meter */}
-                <div className="absolute top-3 right-3 flex items-center gap-1">
-                  <span className="rounded bg-black/60 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-stone-300">
-                    {item.quality}
-                  </span>
-                </div>
+                {/* Card Content */}
+                <div className="p-5 flex-1 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-soft">
+                        {categoryName}
+                      </span>
+                      <span className="text-[10px] font-bold text-gold-pale bg-gold/10 border border-gold/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <CoinIcon size={12} /> 5 C/min
+                      </span>
+                    </div>
 
-                {/* Play Hover Overlay */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gold text-obsidian shadow-xl transform scale-90 group-hover:scale-100 transition-transform">
-                    <Play className="h-5 w-5 fill-obsidian ml-0.5" />
+                    <h3 className="font-serif text-lg font-bold text-white line-clamp-1 group-hover:text-gold-pale transition">
+                      {item.title}
+                    </h3>
+                    <p className="text-xs text-stone-400 mt-1 line-clamp-2 leading-relaxed">
+                      {item.description}
+                    </p>
+                  </div>
+
+                  <div className="mt-5 pt-3.5 border-t border-stone-800/80 space-y-3">
+                    <div className="flex items-center justify-between text-xs text-stone-300">
+                      <div className="flex items-center gap-1.5 font-medium">
+                        <PranamIcon size={16} />
+                        <span className="text-stone-200">{streamerName}</span>
+                        <VerifiedPanditBadge size={14} />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <button
+                        onClick={() => handleRemindMe(item.id)}
+                        className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-full border border-gold/30 bg-gold/10 hover:bg-gold/20 text-gold-pale transition"
+                      >
+                        <Bell className="w-3.5 h-3.5 text-gold" />
+                        <span>Remind Me</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setSelectedSevaId(item.category?.slug || 'rudrabhishek');
+                          setBookingModalOpen(true);
+                        }}
+                        className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-full bg-gold hover:bg-gold-deep text-obsidian transition shadow"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Book Sankalp</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-
-              {/* Card Content */}
-              <div className="p-5 flex-1 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-soft">
-                      {item.category}
-                    </span>
-                    <span className="text-[10px] font-bold text-gold-pale bg-gold/10 border border-gold/20 px-2 py-0.5 rounded-full flex items-center gap-1">
-                      <CoinIcon size={12} /> 5 C/min
-                    </span>
-                  </div>
-
-                  <h3 className="font-serif text-lg font-bold text-white line-clamp-1 group-hover:text-gold-pale transition">
-                    {item.title}
-                  </h3>
-                  <p className="text-xs text-stone-400 mt-1 line-clamp-2 leading-relaxed">
-                    {item.description}
-                  </p>
-                </div>
-
-                <div className="mt-5 pt-3.5 border-t border-stone-800/80 flex items-center justify-between text-xs text-stone-300">
-                  <div className="flex items-center gap-1.5 font-medium">
-                    <PranamIcon size={16} />
-                    <span className="text-stone-200">{item.streamer}</span>
-                    <VerifiedPanditBadge size={14} />
-                  </div>
-                  <span className="flex items-center gap-1 text-stone-400 font-medium">
-                    <HeartHandshake className="w-3.5 h-3.5 text-gold" />
-                    <span>{item.viewers} blessed</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
@@ -1117,41 +1139,41 @@ export default function HomePage() {
       <section className="mx-auto max-w-7xl px-5 lg:px-8 py-16 border-t border-gold/15">
         <div className="text-center max-w-xl mx-auto mb-12">
           <p className="text-xs font-bold uppercase tracking-[0.28em] text-gold-soft">
-            Seamless Experience
+            Seamless Devotional Journey
           </p>
           <h2 className="mt-2 font-serif text-3xl sm:text-4xl font-bold text-white">
-            Three steps to your first Darshan
+            Three steps to your sacred live pooja
           </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="rounded-2xl bg-obsidian-soft border border-gold/15 p-6 shadow-xl relative">
-            <span className="font-serif text-5xl font-black text-gold/20 block mb-2">01</span>
+            <span className="font-serif text-5xl font-black text-amber-600/70 block mb-2 step-num">01</span>
             <h3 className="font-serif text-xl font-bold text-white mb-2">
-              Choose Temple &amp; Tradition
+              Select Ritual &amp; Verified Pandit
             </h3>
             <p className="text-xs sm:text-sm text-stone-400 leading-relaxed">
-              Explore live shrines from Kashi, Haridwar, Ujjain, Ayodhya, and Tirupati. Filter by Aarti, Rudrabhishek, or Katha according to your spiritual sankalp.
+              Choose from authentic Vedic rituals — Rudrabhishek, Navgrah Shanti, Kundli guidance, or Family Sankalp. Select your preferred Gurukul-verified Pandit.
             </p>
           </div>
 
           <div className="rounded-2xl bg-obsidian-soft border border-gold/15 p-6 shadow-xl relative">
-            <span className="font-serif text-5xl font-black text-gold/20 block mb-2">02</span>
+            <span className="font-serif text-5xl font-black text-amber-600/70 block mb-2 step-num">02</span>
             <h3 className="font-serif text-xl font-bold text-white mb-2">
-              Receive Sub-Second Darshan
+              Join Live Consecrated Broadcast
             </h3>
             <p className="text-xs sm:text-sm text-stone-400 leading-relaxed">
-              Connect to our ultra-low latency WebRTC stream with zero audio lag. Hear Vedic mantras with studio acoustics right from your home or phone.
+              Connect to our ultra-low latency WebRTC stream with zero audio lag. Hear authentic Vedic mantras and ritual chants with pure acoustics directly on your screen.
             </p>
           </div>
 
           <div className="rounded-2xl bg-obsidian-soft border border-gold/15 p-6 shadow-xl relative">
-            <span className="font-serif text-5xl font-black text-gold/20 block mb-2">03</span>
+            <span className="font-serif text-5xl font-black text-amber-600/70 block mb-2 step-num">03</span>
             <h3 className="font-serif text-xl font-bold text-white mb-2">
-              Offer Sankalp &amp; Pranam
+              Offer Sankalp &amp; Dakshina
             </h3>
             <p className="text-xs sm:text-sm text-stone-400 leading-relaxed">
-              Use your sacred coin wallet to tip dakshina, request your family gotra chant, and interact with the pandit in the live consecrated chatroom.
+              Provide your family Gotra for personal chanting, interact directly in the consecrated chatroom, and offer voluntary Dakshina using your Sacred Coin wallet.
             </p>
           </div>
         </div>
@@ -1267,7 +1289,7 @@ export default function HomePage() {
             </h2>
 
             <p className="text-stone-300 text-xs sm:text-base leading-relaxed">
-              Experience the grace of Bharat’s sanctums today. Join over 40,000 devotees across the globe receiving daily morning and evening Aarti blessings.
+              Experience authentic Vedic rituals and personalized poojas today. Join over 40,000 devotees across the globe receiving live blessings from Gurukul-verified Pandits.
             </p>
 
             <div className="pt-2 flex flex-wrap items-center justify-center gap-4">
@@ -1277,12 +1299,15 @@ export default function HomePage() {
               >
                 Join Free &amp; Claim 100 Coins
               </Link>
-              <a
-                href="#live-section"
+              <button
+                onClick={() => {
+                  setSelectedSevaId(undefined);
+                  setBookingModalOpen(true);
+                }}
                 className="rounded-full border border-gold/40 bg-obsidian-soft hover:bg-gold/10 px-6 py-3.5 text-sm font-bold text-gold-pale transition"
               >
-                Explore Live Sanatan Sanctums
-              </a>
+                Book a Live Pooja Session
+              </button>
             </div>
           </div>
         </div>
@@ -1293,6 +1318,13 @@ export default function HomePage() {
         isOpen={topupModalOpen}
         onClose={() => setTopupModalOpen(false)}
         onSuccess={() => {}}
+      />
+
+      {/* Seva Booking Modal */}
+      <SevaBookingModal
+        isOpen={bookingModalOpen}
+        onClose={() => setBookingModalOpen(false)}
+        initialSevaId={selectedSevaId}
       />
     </div>
   );

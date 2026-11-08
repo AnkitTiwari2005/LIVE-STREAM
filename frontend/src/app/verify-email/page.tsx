@@ -50,7 +50,9 @@ function VerifyEmailContent() {
     <div className="min-h-[70vh] flex items-center justify-center px-4 py-16">
       <div className="max-w-md w-full bg-stone-900 border border-stone-800 rounded-3xl p-8 text-center shadow-2xl">
         <div className="flex justify-center mb-4">
-          <OmIcon size={44} />
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-b from-amber-500/10 to-transparent border border-gold/30 flex items-center justify-center shadow-md">
+            <img src="/logo.png" alt="Shubhdarshan" className="w-11 h-11 object-contain drop-shadow" />
+          </div>
         </div>
 
         {status === 'verifying' && (

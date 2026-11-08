@@ -74,8 +74,8 @@ export default function RegisterPage() {
       <div className="relative max-w-md w-full bg-obsidian-soft border border-gold/25 rounded-3xl p-8 shadow-2xl">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-3">
-            <span className="relative flex h-12 w-12 items-center justify-center rounded-full border border-gold/40 bg-gradient-to-b from-[#2a1e12] to-obsidian shadow-[0_0_15px_rgba(245,158,11,0.25)]">
-              <OmIcon size={28} />
+            <span className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-gold/40 bg-gradient-to-b from-[#2a1e12] to-obsidian shadow-[0_0_20px_rgba(245,158,11,0.25)]">
+              <img src="/logo.png" alt="Shubhdarshan" className="w-10 h-10 object-contain drop-shadow" />
             </span>
           </div>
           <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white tracking-tight">Create Devotee Account</h2>

@@ -247,10 +247,19 @@ Sitemap: https://darkturquoise-louse-359917.hostingersite.com/sitemap.xml
         if (fs.existsSync(panditFile)) return res.sendFile(panditFile);
       }
 
-      // Dynamic CMS page fallback: /:slug -> /terms/index.html fallback
-      const slugIndex = path.join(clientDir, 'terms', 'index.html');
-      if (fs.existsSync(slugIndex)) {
-        return res.sendFile(slugIndex);
+      // Explicit schedule route check (/schedule -> /schedule/index.html)
+      if (cleanPath === 'schedule') {
+        const scheduleFile = path.join(clientDir, 'schedule', 'index.html');
+        if (fs.existsSync(scheduleFile)) return res.sendFile(scheduleFile);
+      }
+
+      // Dynamic CMS page fallback for known policy slugs
+      const CMS_SLUGS = ['terms', 'privacy', 'refund', 'grievance', 'pandit-guidelines', 'about', 'contact', 'faq'];
+      if (CMS_SLUGS.includes(cleanPath)) {
+        const slugFile = path.join(clientDir, cleanPath, 'index.html');
+        if (fs.existsSync(slugFile)) return res.sendFile(slugFile);
+        const termsIndex = path.join(clientDir, 'terms', 'index.html');
+        if (fs.existsSync(termsIndex)) return res.sendFile(termsIndex);
       }
 
       // Final fallback to homepage

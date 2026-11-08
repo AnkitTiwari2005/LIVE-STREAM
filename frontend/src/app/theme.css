@@ -711,8 +711,28 @@ html .on-photo .bg-white\/20 {
 
 html .on-photo .bg-black\/60,
 html .on-photo .bg-black\/70,
-html .on-photo .bg-black\/80 {
-  background-color: rgba(8, 6, 5, 0.68) !important;
+html .on-photo .bg-black\/80,
+html [class*="aspect-"] .bg-black\/60,
+html [class*="aspect-"] .bg-black\/70,
+html [class*="aspect-"] .bg-black\/80,
+html [class*="aspect-"] [class*="bg-black"] {
+  background-color: rgba(8, 6, 5, 0.78) !important;
+  color: #ffffff !important;
+}
+
+html .on-photo [class*="bg-stone-9"],
+html .on-photo [class*="bg-stone-8"],
+html [class*="aspect-"] [class*="bg-stone-9"],
+html [class*="aspect-"] [class*="bg-stone-8"],
+html [class*="aspect-"] .bg-stone-900\/90 {
+  background-color: rgba(20, 16, 15, 0.88) !important;
+  color: #fef3c7 !important;
+  border-color: rgba(245, 158, 11, 0.4) !important;
+}
+
+html .on-photo svg,
+html [class*="aspect-"] svg {
+  color: #f59e0b !important;
 }
 
 html .on-photo .bg-obsidian\/80,
@@ -743,6 +763,18 @@ html .on-photo .border-gold\/40 {
 
 html .on-photo .text-gold\/70 {
   color: #fbbf24 !important;
+}
+
+/* High contrast step numbers in both light and dark mode */
+html:not([data-theme="dark"]) .step-num,
+html[data-theme="light"] .step-num {
+  color: #c8102e !important;
+  opacity: 0.85 !important;
+}
+
+html[data-theme="dark"] .step-num {
+  color: #f59e0b !important;
+  opacity: 0.75 !important;
 }
 
 /* 8. =========================================================================
