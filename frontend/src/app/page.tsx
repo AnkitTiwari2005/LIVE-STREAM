@@ -361,7 +361,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-obsidian text-foreground w-full overflow-x-clip">
       {/* 1. Sacred Hero Section */}
-      <section className="relative overflow-hidden pt-3.5 pb-16 lg:pt-5 lg:pb-24 border-b border-gold/15 w-full max-w-full">
+      <section className="relative overflow-x-clip pt-3.5 pb-16 lg:pt-5 lg:pb-24 border-b border-gold/15 w-full max-w-full">
         {/* Background Image with Ambient Saffron Glow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           {/* Ambient Warm Golden Saffron Radial Glow */}
@@ -381,7 +381,7 @@ export default function HomePage() {
           <div className="mandala-bg absolute inset-0 opacity-40 [mask-image:radial-gradient(800px_500px_at_50%_30%,black,transparent)]" />
         </div>
 
-        <div className="relative mx-auto grid max-w-7xl gap-12 px-5 lg:grid-cols-12 lg:gap-8 lg:px-8 items-center w-full overflow-x-clip">
+        <div className="relative mx-auto grid grid-cols-1 max-w-7xl gap-8 px-5 lg:grid-cols-12 lg:gap-8 lg:px-8 items-center w-full overflow-x-clip">
           {/* Left Column: Sacred Copy & Value Props */}
           <div className="flex flex-col justify-center lg:col-span-7 min-w-0 w-full">
             <div>
@@ -491,7 +491,7 @@ export default function HomePage() {
           </div>
 
           {/* Right Column: Hero Featured Live Stream or Placeholder Card */}
-          <div className="lg:col-span-5">
+          <div className="lg:col-span-5 min-w-0 w-full overflow-hidden">
             {featuredStream ? (
               <div className="relative rounded-3xl border border-stone-200 dark:border-gold/30 bg-white dark:bg-gradient-to-b dark:from-[#221810] dark:to-obsidian p-3 shadow-xl dark:shadow-[0_25px_70px_rgba(0,0,0,0.85)] group transition hover:border-amber-400 dark:hover:border-gold/60 overflow-hidden">
                 <div className="on-photo video-overlay relative aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden bg-black">
@@ -558,7 +558,7 @@ export default function HomePage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-white/95 via-white/70 to-transparent dark:from-obsidian dark:via-obsidian/75 dark:to-obsidian/60" />
 
                   {/* Top Overlay Badges */}
-                  <div className="relative z-10 flex items-center justify-between">
+                  <div className="relative z-10 flex items-center justify-between gap-2 overflow-hidden min-w-0">
                     <span className="flex items-center gap-1.5 rounded-full bg-amber-100/95 dark:bg-black/85 backdrop-blur-md px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-400/35 shadow-sm dark:shadow-md">
                       <DiyaIcon size={14} className="text-amber-600 dark:text-amber-400" />
                       <span>Live Pooja Altar</span>
@@ -583,7 +583,7 @@ export default function HomePage() {
                     <h3 className="altar-repose-title font-serif text-xl sm:text-2xl font-bold tracking-tight">
                       Live Pooja Altar in Repose
                     </h3>
-                    <p className="altar-repose-desc text-xs mt-1.5 max-w-sm mx-auto leading-relaxed">
+                    <p className="altar-repose-desc text-xs mt-1.5 w-full max-w-sm mx-auto leading-relaxed break-words">
                       Verified Vedic Pandits stream live whenever they conduct sacred rituals, havan poojas, or astrological discourses. Active broadcasts will appear here in real time.
                     </p>
                     {nextUpcomingStream && (
