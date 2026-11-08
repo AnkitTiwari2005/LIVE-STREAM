@@ -427,19 +427,19 @@ export default function AccountPage() {
             </div>
 
             {/* Wallet Shortcut */}
-            <div className="mt-4 p-4 bg-gradient-to-r from-gold/15 via-obsidian-soft to-obsidian rounded-2xl border border-gold/30 flex items-center justify-between shadow-md">
+            <div className="mt-4 p-4 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent dark:from-gold/15 dark:via-obsidian-soft dark:to-obsidian rounded-2xl border border-amber-500/30 dark:border-gold/30 flex items-center justify-between shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-gold/20 text-gold-pale border border-gold/30">
+                <div className="p-2 rounded-xl bg-amber-500/15 dark:bg-gold/20 text-amber-700 dark:text-gold-pale border border-amber-500/30 dark:border-gold/30">
                   <CoinIcon size={20} />
                 </div>
                 <div>
-                  <span className="text-xs font-semibold text-foreground block">Sacred Coin Wallet</span>
-                  <span className="text-xs text-stone-400">View transaction history or recharge coins</span>
+                  <span className="text-xs font-bold text-stone-900 dark:text-foreground block">Sacred Coin Wallet</span>
+                  <span className="text-xs text-stone-600 dark:text-stone-400">View transaction history or recharge coins</span>
                 </div>
               </div>
               <Link
                 href="/wallet/history"
-                className="inline-flex items-center gap-1 text-xs font-bold text-gold-pale hover:text-gold transition"
+                className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 dark:text-gold-pale hover:text-amber-800 dark:hover:text-gold transition"
               >
                 View Ledger <ArrowRight className="w-3.5 h-3.5" />
               </Link>
@@ -474,7 +474,7 @@ export default function AccountPage() {
                 </button>
                 <Link
                   href="/pooja"
-                  className="px-4 py-2.5 rounded-full border border-gold/30 hover:border-gold text-gold-pale text-xs font-semibold transition flex items-center gap-1 bg-obsidian"
+                  className="px-4 py-2.5 rounded-full border border-stone-300 dark:border-gold/30 hover:border-amber-500 dark:hover:border-gold text-stone-700 dark:text-gold-pale text-xs font-semibold transition flex items-center gap-1 bg-white dark:bg-obsidian shadow-sm"
                 >
                   <span>Catalog</span>
                   <ChevronRight className="w-3 h-3" />
@@ -483,7 +483,7 @@ export default function AccountPage() {
             </div>
 
             {/* Filter Tabs */}
-            <div className="flex items-center gap-2 overflow-x-auto py-4 no-scrollbar border-b border-stone-800">
+            <div className="flex items-center gap-2 overflow-x-auto py-4 no-scrollbar border-b border-stone-200 dark:border-stone-800">
               {(['ALL', 'PENDING', 'APPROVED', 'DECLINED'] as const).map((filter) => {
                 const count =
                   filter === 'ALL'
@@ -497,7 +497,7 @@ export default function AccountPage() {
                     className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-bold transition flex items-center gap-1.5 shrink-0 ${
                       isSelected
                         ? 'bg-gold text-obsidian shadow'
-                        : 'bg-obsidian border border-gold/15 text-stone-300 hover:text-white hover:border-gold/30'
+                        : 'bg-stone-100 dark:bg-obsidian border border-stone-200 dark:border-gold/15 text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
                     }`}
                   >
                     {filter === 'PENDING' && (
@@ -522,7 +522,7 @@ export default function AccountPage() {
                       className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full transition-colors ${
                         isSelected
                           ? 'bg-white/25 text-white'
-                          : 'bg-gold/15 text-gold-pale border border-gold/25'
+                          : 'bg-stone-200 text-stone-800 dark:bg-gold/15 dark:text-gold-pale dark:border dark:border-gold/25'
                       }`}
                     >
                       {count}

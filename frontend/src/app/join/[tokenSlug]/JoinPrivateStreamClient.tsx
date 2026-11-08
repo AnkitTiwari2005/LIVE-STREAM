@@ -336,21 +336,21 @@ export default function JoinPrivateStreamClient() {
         </div>
       ) : (
         // Verification & Password Claim Screen
-        <div className="max-w-md mx-auto bg-obsidian-soft border border-gold/30 rounded-3xl p-8 shadow-2xl">
+        <div className="max-w-md mx-auto bg-white dark:bg-obsidian-soft border border-stone-200 dark:border-gold/30 rounded-3xl p-8 shadow-2xl">
           <div className="text-center mb-6">
             <div className="flex justify-center mb-3 text-gold">
               <OmIcon size={44} />
             </div>
-            <h2 className="text-xl font-bold text-foreground tracking-tight">Private Pooja Consultation</h2>
-            <p className="text-xs text-stone-400 mt-1">
+            <h2 className="text-xl font-bold text-stone-900 dark:text-foreground tracking-tight">Private Pooja Consultation</h2>
+            <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
               {metadata?.streamTitle ? `"${metadata.streamTitle}" by ${metadata.streamerName}` : 'Enter your details to join'}
             </p>
           </div>
 
           {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-950/20 border border-red-500/30 text-red-400 text-xs flex flex-col gap-2">
+            <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 text-xs flex flex-col gap-2">
               <div className="flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                <AlertCircle className="w-4 h-4 text-red-500 dark:text-red-400 shrink-0" />
                 <span>{error}</span>
               </div>
               {(error.includes('logged into your account') || error.includes('Unauthorized')) && (
@@ -367,36 +367,36 @@ export default function JoinPrivateStreamClient() {
 
           <form onSubmit={handleClaim} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-stone-300 mb-1.5">
+              <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1.5">
                 Your Devotee Name *
               </label>
               <div className="relative">
-                <User className="w-4 h-4 text-stone-500 absolute left-3 top-3" />
+                <User className="w-4 h-4 text-stone-400 dark:text-stone-500 absolute left-3 top-3" />
                 <input
                   type="text"
                   required
                   value={guestName}
                   onChange={(e) => setGuestName(e.target.value)}
                   placeholder="Rahul Sharma"
-                  className="w-full pl-9 pr-3 py-2.5 bg-obsidian border border-gold/25 rounded-xl text-sm text-foreground focus:outline-none focus:border-gold"
+                  className="w-full pl-9 pr-3 py-2.5 bg-stone-50 dark:bg-obsidian border border-stone-200 dark:border-gold/25 rounded-xl text-sm text-stone-900 dark:text-foreground focus:outline-none focus:border-gold"
                 />
               </div>
             </div>
 
             {metadata?.requiresPassword && (
               <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1.5">
+                <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1.5">
                   Secret Session Password *
                 </label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-stone-500 absolute left-3 top-3" />
+                  <Lock className="w-4 h-4 text-stone-400 dark:text-stone-500 absolute left-3 top-3" />
                   <input
                     type="password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter password provided by Pandit"
-                    className="w-full pl-9 pr-3 py-2.5 bg-obsidian border border-gold/25 rounded-xl text-sm text-foreground focus:outline-none focus:border-gold"
+                    className="w-full pl-9 pr-3 py-2.5 bg-stone-50 dark:bg-obsidian border border-stone-200 dark:border-gold/25 rounded-xl text-sm text-stone-900 dark:text-foreground focus:outline-none focus:border-gold"
                   />
                 </div>
               </div>

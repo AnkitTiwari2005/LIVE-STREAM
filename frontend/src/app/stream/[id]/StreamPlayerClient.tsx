@@ -16,7 +16,7 @@ import { ChatWidget } from '@/components/ChatWidget';
 import { FloatingReactionsOverlay, DevotionalEmojiBar } from '@/components/SpiritualReactions';
 import { DakshinaModal } from '@/components/DakshinaModal';
 import { CoinTopupModal } from '@/components/CoinTopupModal';
-import { Users, AlertCircle, Share2, Sparkles, Zap, Calendar, Bell, CheckCircle2, Clock, MessageSquare, Info, LogIn, Gift, Flame, Flag, X } from 'lucide-react';
+import { Users, AlertCircle, Share2, Sparkles, Zap, Calendar, Bell, CheckCircle2, Clock, MessageSquare, Info, LogIn, Gift, Flame, Flag, X, ArrowRight } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import {
   OmIcon,
@@ -48,6 +48,21 @@ export default function StreamPlayerClient() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [activeOtherLiveStream, setActiveOtherLiveStream] = useState<any>(null);
+
+  const checkActiveLiveStreams = async (currentId: string) => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const res = await fetch(`${apiUrl}/streams/public`);
+      if (res.ok) {
+        const allStreams = await res.json();
+        const liveOne = allStreams.find((s: any) => s.status === 'LIVE' && s.id !== currentId);
+        if (liveOne) {
+          setActiveOtherLiveStream(liveOne);
+        }
+      }
+    } catch {}
+  };
   const [loginRequired, setLoginRequired] = useState(false);
   const [streamEnded, setStreamEnded] = useState(false);
   const [isScheduled, setIsScheduled] = useState(false);
@@ -124,6 +139,7 @@ export default function StreamPlayerClient() {
 
       if (streamData.status === 'ENDED') {
         setStreamEnded(true);
+        checkActiveLiveStreams(id);
         return;
       }
 
@@ -157,7 +173,14 @@ export default function StreamPlayerClient() {
 
       if (!tokenRes.ok) {
         const errJson = await tokenRes.json().catch(() => ({}));
-        throw new Error(errJson.message || 'Failed to join stream session');
+        const errMsg = errJson.message || 'Failed to join stream session';
+        if (errMsg.toLowerCase().includes('not currently live')) {
+          setStreamEnded(true);
+          setStream((prev: any) => (prev ? { ...prev, status: 'ENDED' } : prev));
+          checkActiveLiveStreams(id);
+          return;
+        }
+        throw new Error(errMsg);
       }
 
       const resData = await tokenRes.json();
@@ -173,7 +196,12 @@ export default function StreamPlayerClient() {
         setIsZeroBalance(false);
       }
     } catch (err: any) {
-      setError(err.message || 'Error connecting to sacred stream');
+      const msg = err.message || 'Error connecting to sacred stream';
+      setError(msg);
+      if (msg.toLowerCase().includes('not currently live')) {
+        setStreamEnded(true);
+        checkActiveLiveStreams(id);
+      }
     }
   };
 
@@ -320,7 +348,26 @@ export default function StreamPlayerClient() {
         </div>
       )}
 
-      {error && (
+      {/* Banner if another Pandit is currently live */}
+      {activeOtherLiveStream && (
+        <div className="mb-4 p-3.5 bg-gradient-to-r from-red-950/90 via-amber-950/90 to-red-950/90 border border-amber-500/50 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-amber-200 shadow-xl animate-pulse">
+          <div className="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+            <span className="live-dot shrink-0" />
+            <span>
+              🔴 Pandit is live now: <strong className="text-white">&ldquo;{activeOtherLiveStream.title}&rdquo;</strong> with {activeOtherLiveStream.streamer?.name || 'Acharya'}
+            </span>
+          </div>
+          <Link
+            href={`/stream/${activeOtherLiveStream.id}`}
+            className="px-4 py-1.5 bg-gold hover:bg-gold-deep text-obsidian text-xs font-extrabold rounded-full shadow transition-all shrink-0 flex items-center gap-1.5 hover:scale-105"
+          >
+            <span>Watch Live Darshan Now</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      )}
+
+      {error && !streamEnded && (
         <div className="mb-6 p-4 bg-red-950/80 border border-red-800 rounded-2xl flex items-center gap-3 text-red-200">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
           <span className="text-sm font-medium">{error}</span>
@@ -329,11 +376,44 @@ export default function StreamPlayerClient() {
 
       {streamEnded ? (
         <div className="w-full aspect-video max-h-[600px] bg-stone-900 border border-stone-800 rounded-3xl flex flex-col items-center justify-center p-8 text-center shadow-2xl">
-          <PranamIcon size={56} className="mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-2">Pooja Completed</h2>
-          <p className="text-stone-400 text-sm max-w-md">
-            This live broadcast has concluded. May the sacred blessings be upon you and your family.
+          <PranamIcon size={56} className="mb-4 text-gold" />
+          <h2 className="text-2xl font-bold text-white mb-2">Sacred Broadcast Concluded</h2>
+          <p className="text-stone-400 text-sm max-w-md mb-4">
+            This live broadcast by {stream?.streamer?.name || 'the Pandit'} is not active or has concluded. May divine blessings be upon you.
           </p>
+
+          {activeOtherLiveStream ? (
+            <div className="mt-2 p-5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 border border-amber-500/50 text-center max-w-md shadow-xl">
+              <span className="text-[11px] font-extrabold uppercase tracking-widest text-amber-300 flex items-center justify-center gap-2 mb-1.5">
+                <span className="live-dot" /> Live Darshan Active Right Now
+              </span>
+              <p className="text-base font-bold text-white mb-4">
+                &ldquo;{activeOtherLiveStream.title}&rdquo; by {activeOtherLiveStream.streamer?.name || 'Vedic Pandit'}
+              </p>
+              <Link
+                href={`/stream/${activeOtherLiveStream.id}`}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-red-600 via-amber-500 to-orange-500 text-white font-extrabold text-xs shadow-xl hover:scale-105 transition-transform"
+              >
+                <span>Join Active Live Darshan Now</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center justify-center gap-3 mt-2">
+              <Link
+                href="/schedule"
+                className="px-5 py-2.5 bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold rounded-full transition"
+              >
+                View Pooja Schedule
+              </Link>
+              <Link
+                href="/"
+                className="px-5 py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold rounded-full border border-stone-700 transition"
+              >
+                Return to Home
+              </Link>
+            </div>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -462,6 +542,29 @@ export default function StreamPlayerClient() {
                     <StartAudio label="Click to Unmute Live Chanting & Aarti" />
                   </div>
                 </LiveKitRoom>
+              ) : error ? (
+                <div className="flex flex-col items-center gap-3 p-6 text-center max-w-md">
+                  <div className="w-12 h-12 rounded-full bg-red-950/80 border border-red-500/40 flex items-center justify-center text-red-400 mb-1">
+                    <AlertCircle className="w-6 h-6" />
+                  </div>
+                  <span className="text-sm font-bold text-stone-200">{error}</span>
+                  {activeOtherLiveStream ? (
+                    <Link
+                      href={`/stream/${activeOtherLiveStream.id}`}
+                      className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold text-xs shadow-lg transition"
+                    >
+                      <span>Watch {activeOtherLiveStream.streamer?.name || 'Live Pandit'} Now</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={fetchStreamAndToken}
+                      className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold border border-stone-700 transition"
+                    >
+                      <span>Retry Connection</span>
+                    </button>
+                  )}
+                </div>
               ) : (
                 <div className="flex flex-col items-center gap-3 text-stone-500">
                   <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-gold" />
