@@ -29,22 +29,25 @@ export function Navbar() {
   const [topupModalOpen, setTopupModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const moreDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setUserDropdownOpen(false);
       }
+      if (moreDropdownRef.current && !moreDropdownRef.current.contains(event.target as Node)) {
+        setMoreDropdownOpen(false);
+      }
     };
-    if (userDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [userDropdownOpen]);
+  }, []);
 
   useEffect(() => {
     // Check session & cached wallet balance immediately
@@ -125,11 +128,11 @@ export function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 glass-strong border-b border-gold/15 py-2 sm:py-2.5 shadow-[0_8px_40px_rgba(0,0,0,0.55)] backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-2 sm:gap-4">
+      <header className="sticky top-0 z-50 glass-strong border-b border-gold/15 py-2 shadow-[0_8px_40px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+        <div className="max-w-[1440px] mx-auto px-3 sm:px-5 lg:px-6 xl:px-8 flex items-center justify-between gap-2 sm:gap-3">
           {/* 1. Sacred Brand Logo & Typography */}
-          <Link href="/" className="group flex items-center gap-2.5 sm:gap-3 shrink-0">
-            <div className="relative flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full border border-gold/40 bg-gradient-to-b from-[#2a1e12] to-obsidian shadow-[0_0_18px_rgba(245,158,11,0.3)] transition group-hover:border-gold/75 group-hover:shadow-[0_0_22px_rgba(245,158,11,0.5)] p-0.5 overflow-hidden">
+          <Link href="/" className="group flex items-center gap-2 sm:gap-2.5 shrink-0">
+            <div className="relative flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-gold/40 bg-gradient-to-b from-[#2a1e12] to-obsidian shadow-[0_0_18px_rgba(245,158,11,0.3)] transition group-hover:border-gold/75 group-hover:shadow-[0_0_22px_rgba(245,158,11,0.5)] p-0.5 overflow-hidden">
               <img
                 src="/logo.png"
                 alt="Shubhdarshan Mandir Logo"
@@ -137,84 +140,113 @@ export function Navbar() {
               />
             </div>
             <span className="leading-tight">
-              <span className="block font-serif text-xl sm:text-2xl font-bold tracking-wide text-gold-pale group-hover:text-gold transition">
+              <span className="block font-serif text-lg sm:text-xl font-bold tracking-wide text-gold-pale group-hover:text-gold transition">
                 Shubhdarshan
               </span>
-              <span className="block text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.28em] text-gold-soft/80">
+              <span className="block text-[7.5px] sm:text-[8.5px] font-bold uppercase tracking-[0.24em] text-gold-soft/80">
                 Sacred Darshan Network
               </span>
             </span>
           </Link>
 
-          {/* 2. Center Navigation Links (Clean, Balanced & Single Line) */}
-          <nav className="hidden lg:flex items-center gap-1 xl:gap-2 text-xs xl:text-sm font-semibold tracking-wide text-stone-300">
+          {/* 2. Center Navigation Links (Clean, Balanced & Uncluttered) */}
+          <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5 text-xs xl:text-sm font-semibold tracking-wide text-stone-300">
             <Link
               href="/"
-              className="whitespace-nowrap shrink-0 rounded-full px-2.5 xl:px-3 py-1.5 transition text-gold-pale hover:text-white flex items-center gap-1.5 hover:bg-gold/10"
+              className="whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition text-gold-pale hover:text-white flex items-center gap-1.5 hover:bg-gold/10"
             >
               <span>Live Darshan</span>
               <span className="live-dot shrink-0" />
             </Link>
             <Link
               href="/pooja"
-              className="whitespace-nowrap shrink-0 rounded-full px-2 xl:px-3 py-1.5 transition hover:text-gold-pale hover:bg-gold/5 flex items-center gap-1"
+              className="whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5 flex items-center gap-1"
             >
               <DiyaIcon size={13} />
               <span>Book Pooja</span>
             </Link>
             <Link
               href="/#upcoming"
-              className="whitespace-nowrap shrink-0 rounded-full px-2 xl:px-3 py-1.5 transition hover:text-gold-pale hover:bg-gold/5"
+              className="whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5"
             >
               Schedule
             </Link>
             <Link
               href="/#pandits"
-              className="whitespace-nowrap shrink-0 rounded-full px-2 xl:px-3 py-1.5 transition hover:text-gold-pale hover:bg-gold/5"
+              className="whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5"
             >
-              Verified Pandits
+              <span className="hidden xl:inline">Verified </span>Pandits
             </Link>
-            <Link
-              href="/about"
-              className="whitespace-nowrap shrink-0 rounded-full px-2 xl:px-3 py-1.5 transition hover:text-gold-pale hover:bg-gold/5"
-            >
-              About
-            </Link>
-            <Link
-              href="/faq"
-              className="whitespace-nowrap shrink-0 rounded-full px-2 xl:px-3 py-1.5 transition hover:text-gold-pale hover:bg-gold/5 flex items-center gap-1"
-            >
-              <HelpCircle className="w-3.5 h-3.5 text-gold-soft/80 shrink-0" />
-              <span>FAQ</span>
-            </Link>
+
+            {/* More Dropdown (About, FAQ, Ethics, Support) */}
+            <div className="relative shrink-0" ref={moreDropdownRef}>
+              <button
+                onClick={() => setMoreDropdownOpen(!moreDropdownOpen)}
+                className="whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5 flex items-center gap-1 font-semibold text-stone-300"
+                aria-label="More devotional links"
+              >
+                <span>More</span>
+                <ChevronDown className={`w-3 h-3 text-gold-soft transition-transform ${moreDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {moreDropdownOpen && (
+                <div className="navbar-more-dropdown absolute left-0 top-full mt-2 w-52 rounded-2xl p-2 z-[9999] text-xs bg-obsidian-soft border border-gold/25 shadow-2xl backdrop-blur-xl">
+                  <Link
+                    href="/about"
+                    onClick={() => setMoreDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
+                  >
+                    <OmIcon size={14} className="text-gold shrink-0" />
+                    <span>About Our Heritage</span>
+                  </Link>
+                  <Link
+                    href="/faq"
+                    onClick={() => setMoreDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5 text-gold shrink-0" />
+                    <span>Devotee FAQ</span>
+                  </Link>
+                  <Link
+                    href="/contact"
+                    onClick={() => setMoreDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
+                  >
+                    <PranamIcon size={14} className="text-gold shrink-0" />
+                    <span>Contact &amp; Support</span>
+                  </Link>
+                </div>
+              )}
+            </div>
           </nav>
 
-          {/* 3. User Controls & Role Actions (Never Crowded, Never Escaping Screen) */}
+          {/* 3. User Controls & Role Actions (Compact, Symmetrical, Never Squeezed) */}
           <div className="hidden lg:flex items-center gap-1.5 xl:gap-2 shrink-0">
             {/* Search Palette Trigger */}
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="flex items-center gap-1.5 h-9 px-2.5 rounded-full border border-gold/25 bg-obsidian-soft hover:bg-gold/10 text-stone-400 hover:text-gold-pale text-xs font-medium transition shadow-sm"
+              className="flex items-center justify-center 2xl:justify-start gap-1.5 h-8 w-8 2xl:w-auto 2xl:px-2.5 rounded-full border border-gold/25 bg-obsidian-soft hover:bg-gold/10 text-stone-400 hover:text-gold-pale text-xs font-medium transition shadow-sm"
               aria-label="Search pooja and aarti"
+              title="Search pooja, pandit, or aarti (/)"
             >
               <Search className="w-3.5 h-3.5 text-gold-soft shrink-0" />
-              <span className="hidden xl:inline">Search...</span>
-              <kbd className="px-1.5 py-0.5 rounded text-[10px] bg-obsidian text-stone-400 border border-gold/20 font-mono">/</kbd>
+              <span className="hidden 2xl:inline text-stone-300">Search...</span>
+              <kbd className="hidden 2xl:inline px-1 py-0.5 rounded text-[10px] bg-obsidian text-stone-400 border border-gold/20 font-mono">/</kbd>
             </button>
 
             {/* Theme Toggle Button (Surya Day / Sacred Night) */}
-            <ThemeToggle />
+            <ThemeToggle className="h-8 w-8" />
 
             {/* Quick Broadcaster Studio (Streamers only) */}
             {user?.role === 'STREAMER' && (
               <Link
                 href="/studio/create"
-                className="whitespace-nowrap shrink-0 flex items-center gap-1 rounded-full bg-gold/15 hover:bg-gold/25 border border-gold/30 px-2.5 py-1.5 text-xs font-bold text-gold-pale transition shadow-sm"
+                className="whitespace-nowrap shrink-0 flex items-center gap-1 rounded-full bg-gold/15 hover:bg-gold/25 border border-gold/30 h-8 px-2.5 text-xs font-bold text-gold-pale transition shadow-sm"
                 title="Open Studio"
               >
                 <Video className="w-3.5 h-3.5 text-gold shrink-0" />
-                <span>Studio</span>
+                <span className="hidden sm:inline">Studio</span>
               </Link>
             )}
 
@@ -222,7 +254,7 @@ export function Navbar() {
             {user?.role === 'ADMIN' && (
               <Link
                 href="/admin"
-                className="whitespace-nowrap shrink-0 flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-950/60 px-2.5 py-1.5 text-xs font-bold text-amber-300 hover:bg-amber-900/60 transition shadow-sm"
+                className="whitespace-nowrap shrink-0 flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-950/60 h-8 px-2.5 text-xs font-bold text-amber-300 hover:bg-amber-900/60 transition shadow-sm"
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                 <span>Admin</span>
@@ -234,23 +266,23 @@ export function Navbar() {
                 {/* Gold Coin Wallet Pill */}
                 <button
                   onClick={() => setTopupModalOpen(true)}
-                  className="whitespace-nowrap shrink-0 group flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold/10 px-2.5 py-1.5 text-xs font-bold text-gold-pale transition hover:border-gold/60 hover:bg-gold/20 shadow-sm"
+                  className="whitespace-nowrap shrink-0 group flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold/10 h-8 px-2.5 text-xs font-bold text-gold-pale transition hover:border-gold/60 hover:bg-gold/20 shadow-sm"
                   title="Your Sacred Coins (Click to Recharge)"
                 >
-                  <CoinIcon size={14} className="text-gold shrink-0 group-hover:scale-110 transition-transform" />
+                  <CoinIcon size={13} className="text-gold shrink-0 group-hover:scale-110 transition-transform" />
                   <span className="font-extrabold text-gold">{coinBalance !== null ? coinBalance : (user ? '...' : 100)}</span>
-                  <span className="hidden xl:inline text-[10px] text-stone-300 font-medium">Coins</span>
-                  <PlusCircle className="w-3.5 h-3.5 text-gold shrink-0 group-hover:text-gold-soft" />
+                  <span className="hidden 2xl:inline text-[10px] text-stone-300 font-medium">Coins</span>
+                  <PlusCircle className="w-3 h-3 text-gold shrink-0 group-hover:text-gold-soft" />
                 </button>
 
                 {/* Devotee / Pandit Profile with Solid High-Contrast Dropdown */}
                 <div className="relative shrink-0" ref={dropdownRef}>
                   <button
                     onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                    className="whitespace-nowrap shrink-0 flex items-center gap-1.5 text-xs font-semibold text-stone-200 hover:text-gold-pale transition px-2.5 py-1.5 rounded-full bg-obsidian-soft border border-gold/20 hover:border-gold/40 max-w-[130px]"
+                    className="whitespace-nowrap shrink-0 flex items-center gap-1.5 text-xs font-semibold text-stone-200 hover:text-gold-pale transition h-8 px-2.5 rounded-full bg-obsidian-soft border border-gold/20 hover:border-gold/40 max-w-[115px] sm:max-w-[130px]"
                     title="Devotee & Broadcaster Menu"
                   >
-                    <PranamIcon size={14} className="text-gold shrink-0" />
+                    <PranamIcon size={13} className="text-gold shrink-0" />
                     <span className="truncate">{user.name?.split(' ')[0] || user.name}</span>
                     <ChevronDown className="w-3 h-3 text-gold-soft shrink-0" />
                   </button>
@@ -399,7 +431,7 @@ export function Navbar() {
             )}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-full border border-gold/20 text-gold-pale hover:bg-stone-900 transition"
+              className="p-2 rounded-full border border-gold/25 text-gold-pale hover:bg-gold/10 transition"
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}

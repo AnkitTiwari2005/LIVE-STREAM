@@ -231,8 +231,8 @@ export default function SchedulePage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-80" />
 
                   {/* Scheduled badge */}
-                  <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-stone-900/90 border border-gold/30 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold-pale">
-                    <Calendar className="w-3 h-3 text-gold" />
+                  <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-black/85 backdrop-blur-md border border-amber-400/40 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-100 shadow-md">
+                    <Calendar className="w-3 h-3 text-amber-400" />
                     <span>{dateStr}</span>
                   </div>
 

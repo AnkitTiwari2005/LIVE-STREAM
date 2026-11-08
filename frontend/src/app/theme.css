@@ -877,11 +877,14 @@ html[data-theme="light"] .sd-theme .sun {
 }
 
 /* 9. =========================================================================
-   USER PROFILE DROPDOWN (.navbar-user-dropdown): 100% Solid & High-Contrast
+/* =========================================================================
+   USER PROFILE & MORE DROPDOWNS: 100% Solid & High-Contrast
    ========================================================================= */
 /* Dark Mode Solid Dropdown: Deep sacred obsidian */
 .navbar-user-dropdown,
-html[data-theme="dark"] .navbar-user-dropdown {
+.navbar-more-dropdown,
+html[data-theme="dark"] .navbar-user-dropdown,
+html[data-theme="dark"] .navbar-more-dropdown {
   background-color: #14100c !important;
   background-image: none !important;
   backdrop-filter: none !important;
@@ -898,7 +901,9 @@ html[data-theme="dark"] .navbar-user-dropdown .user-dropdown-header {
 
 /* Light Mode Solid Dropdown: Crisp porcelain white on blush */
 html:not([data-theme="dark"]) .navbar-user-dropdown,
-html[data-theme="light"] .navbar-user-dropdown {
+html:not([data-theme="dark"]) .navbar-more-dropdown,
+html[data-theme="light"] .navbar-user-dropdown,
+html[data-theme="light"] .navbar-more-dropdown {
   background-color: #ffffff !important;
   background-image: none !important;
   backdrop-filter: none !important;
@@ -921,12 +926,16 @@ html[data-theme="light"] .navbar-user-dropdown .user-name {
 }
 
 html:not([data-theme="dark"]) .navbar-user-dropdown a,
-html[data-theme="light"] .navbar-user-dropdown a {
+html:not([data-theme="dark"]) .navbar-more-dropdown a,
+html[data-theme="light"] .navbar-user-dropdown a,
+html[data-theme="light"] .navbar-more-dropdown a {
   color: #3a2e2e !important;
 }
 
 html:not([data-theme="dark"]) .navbar-user-dropdown a:hover,
-html[data-theme="light"] .navbar-user-dropdown a:hover {
+html:not([data-theme="dark"]) .navbar-more-dropdown a:hover,
+html[data-theme="light"] .navbar-user-dropdown a:hover,
+html[data-theme="light"] .navbar-more-dropdown a:hover {
   background-color: #fde8e9 !important;
   color: #c8102e !important;
 }
@@ -967,6 +976,45 @@ html[data-theme="light"] [class*="border-stone-8"]:not(.on-photo):not([class*="a
 html:not([data-theme="dark"]) [class*="border-stone-7"]:not(.on-photo):not([class*="aspect-"]):not(.player-container),
 html[data-theme="light"] [class*="border-stone-7"]:not(.on-photo):not([class*="aspect-"]):not(.player-container) {
   border-color: #eadada !important;
+}
+
+/* Photo & Media Overlay Badges: Always dark glass with golden text in both themes */
+html [class*="aspect-"] [class*="bg-black"],
+html .on-photo [class*="bg-black"],
+html:not([data-theme="dark"]) [class*="aspect-"] [class*="bg-black"],
+html:not([data-theme="dark"]) .on-photo [class*="bg-black"],
+html[data-theme="light"] [class*="aspect-"] [class*="bg-black"],
+html[data-theme="light"] .on-photo [class*="bg-black"] {
+  background-color: rgba(12, 10, 9, 0.85) !important;
+  border-color: rgba(245, 158, 11, 0.4) !important;
+  color: #fef3c7 !important;
+}
+
+html [class*="aspect-"] [class*="bg-black"] *,
+html .on-photo [class*="bg-black"] *,
+html:not([data-theme="dark"]) [class*="aspect-"] [class*="bg-black"] *,
+html[data-theme="light"] [class*="aspect-"] [class*="bg-black"] * {
+  color: #fef3c7 !important;
+}
+
+html [class*="aspect-"] [class*="bg-black"] .text-white,
+html .on-photo [class*="bg-black"] .text-white {
+  color: #ffffff !important;
+}
+
+html [class*="aspect-"] [class*="bg-black"] svg,
+html .on-photo [class*="bg-black"] svg {
+  color: #f59e0b !important;
+}
+
+/* Safety net: Prevent any pale yellow text on light/white backgrounds */
+html:not([data-theme="dark"]) [class*="bg-white"] .text-gold-pale,
+html:not([data-theme="dark"]) [class*="bg-stone-"] .text-gold-pale,
+html:not([data-theme="dark"]) .bg-obsidian-soft .text-gold-pale,
+html[data-theme="light"] [class*="bg-white"] .text-gold-pale,
+html[data-theme="light"] [class*="bg-stone-"] .text-gold-pale,
+html[data-theme="light"] .bg-obsidian-soft .text-gold-pale {
+  color: #81070f !important;
 }
 
 /* Inputs in Light Mode */

@@ -509,13 +509,13 @@ export default function HomePage() {
                       <span className="live-dot" style={{ width: '6px', height: '6px' }} />
                       LIVE
                     </span>
-                    <span className="rounded-full bg-stone-900/90 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-gold-pale border border-gold/20">
+                    <span className="rounded-full bg-black/80 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-amber-200 border border-amber-400/30 shadow-md">
                       Live HD
                     </span>
                   </div>
 
-                  <div className="absolute top-3.5 right-3.5 rounded-full bg-stone-900/90 backdrop-blur-md px-3 py-1 text-[11px] font-semibold text-stone-300 flex items-center gap-1.5 border border-stone-800">
-                    <Users className="w-3.5 h-3.5 text-gold" />
+                  <div className="absolute top-3.5 right-3.5 rounded-full bg-black/80 backdrop-blur-md px-3 py-1 text-[11px] font-semibold text-stone-200 flex items-center gap-1.5 border border-white/20 shadow-md">
+                    <Users className="w-3.5 h-3.5 text-amber-400" />
                     <span>{featuredStream.peakViewers || 1} watching</span>
                   </div>
 
@@ -557,18 +557,18 @@ export default function HomePage() {
 
                   {/* Top Overlay Badges */}
                   <div className="relative z-10 flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 rounded-full bg-stone-900/90 backdrop-blur-md px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gold-pale border border-gold/30 shadow-md">
-                      <DiyaIcon size={14} />
-                      Live Pooja Altar
+                    <span className="flex items-center gap-1.5 rounded-full bg-black/85 backdrop-blur-md px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-200 border border-amber-400/35 shadow-md">
+                      <DiyaIcon size={14} className="text-amber-400" />
+                      <span>Live Pooja Altar</span>
                     </span>
                     {nextUpcomingStream ? (
-                      <span className="flex items-center gap-1 rounded-full bg-stone-900/90 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-gold-pale border border-gold/30">
-                        <Clock className="w-3 h-3 text-gold" />
-                        Next: {new Date(nextUpcomingStream.scheduledAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} IST
+                      <span className="flex items-center gap-1.5 rounded-full bg-black/85 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-amber-100 border border-amber-400/35 shadow-md">
+                        <Clock className="w-3 h-3 text-amber-400" />
+                        <span>Next: {new Date(nextUpcomingStream.scheduledAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} IST</span>
                       </span>
                     ) : (
-                      <span className="rounded-full bg-stone-900/90 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-stone-200 border border-stone-800">
-                        Verified Vedic Acharyas
+                      <span className="rounded-full bg-black/85 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-stone-200 border border-white/20 shadow-md">
+                        <span>Verified Vedic Acharyas</span>
                       </span>
                     )}
                   </div>
@@ -585,18 +585,18 @@ export default function HomePage() {
                       Verified Vedic Pandits stream live whenever they conduct sacred rituals, havan poojas, or astrological discourses. Active broadcasts will appear here in real time.
                     </p>
                     {nextUpcomingStream && (
-                      <div className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-900/90 border border-gold/30 text-[11px] text-gold-pale shadow-sm">
-                        <span className="text-stone-400 font-medium">Upcoming:</span>
-                        <span className="font-semibold text-white truncate max-w-[220px]">{nextUpcomingStream.title}</span>
+                      <div className="mt-2.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/85 backdrop-blur-md border border-amber-400/40 text-[11px] shadow-md">
+                        <span className="text-amber-400 font-bold uppercase tracking-wider text-[10px]">Upcoming:</span>
+                        <span className="font-bold text-white truncate max-w-[220px]">{nextUpcomingStream.title}</span>
                       </div>
                     )}
                   </div>
 
                   {/* Bottom Action Footer */}
-                  <div className="relative z-10 pt-3 border-t border-stone-800/80 flex items-center justify-between">
+                  <div className="relative z-10 pt-3 border-t border-white/15 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <PranamIcon size={16} />
-                      <span className="text-xs font-semibold text-stone-300">
+                      <PranamIcon size={16} className="text-amber-400" />
+                      <span className="text-xs font-semibold text-stone-200">
                         85+ Verified Pandits
                       </span>
                     </div>
@@ -613,9 +613,9 @@ export default function HomePage() {
                       </button>
                       <Link
                         href="/schedule"
-                        className="rounded-full bg-stone-900/90 hover:bg-stone-800 border border-gold/30 text-gold-pale font-bold px-3 py-1.5 text-xs transition flex items-center gap-1"
+                        className="rounded-full bg-black/80 hover:bg-black backdrop-blur-md border border-amber-400/35 text-amber-100 hover:text-white font-bold px-3 py-1.5 text-xs transition flex items-center gap-1 shadow-md"
                       >
-                        <Calendar className="w-3.5 h-3.5 text-gold" />
+                        <Calendar className="w-3.5 h-3.5 text-amber-400" />
                         <span>Schedule</span>
                       </Link>
                     </div>
@@ -946,8 +946,8 @@ export default function HomePage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-80" />
 
                   {/* Scheduled badge */}
-                  <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-stone-900/90 border border-gold/30 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold-pale">
-                    <Calendar className="w-3 h-3 text-gold" />
+                  <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-black/85 backdrop-blur-md border border-amber-400/40 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-100 shadow-md">
+                    <Calendar className="w-3 h-3 text-amber-400" />
                     <span>{dateStr}</span>
                   </div>
 
