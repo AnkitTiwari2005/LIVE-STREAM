@@ -345,6 +345,7 @@ export default function HomePage() {
   };
 
   const featuredStream = liveStreams[0] || null;
+  const nextUpcomingStream = upcomingStreams[0] || null;
 
   return (
     <div className="min-h-screen bg-obsidian text-foreground">
@@ -373,10 +374,17 @@ export default function HomePage() {
           {/* Left Column: Sacred Copy & Value Props */}
           <div className="flex flex-col justify-center lg:col-span-7">
             <div>
-              <p className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.24em] text-gold-pale shadow-[0_0_20px_rgba(245,158,11,0.15)]">
-                <span className="live-dot" />
-                Live from Bharat&apos;s sacred sanctums
-              </p>
+              {liveStreams.length > 0 ? (
+                <p className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.24em] text-gold-pale shadow-[0_0_20px_rgba(245,158,11,0.15)]">
+                  <span className="live-dot" />
+                  Live from Bharat&apos;s sacred sanctums
+                </p>
+              ) : (
+                <p className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.24em] text-gold-pale shadow-[0_0_20px_rgba(245,158,11,0.15)]">
+                  <DiyaIcon size={14} />
+                  Direct from Bharat&apos;s Sacred Sanctums
+                </p>
+              )}
             </div>
 
             <h1 className="mt-6 max-w-2xl font-serif text-4xl sm:text-6xl lg:text-7xl font-bold leading-[1.08] tracking-tight">
@@ -390,15 +398,27 @@ export default function HomePage() {
 
             {/* Hero Action Buttons */}
             <div className="mt-8 flex flex-wrap items-center gap-4">
-              <Link
-                href={featuredStream ? `/stream/${featuredStream.id}` : '#live-section'}
-                className="group inline-flex items-center gap-3 rounded-full bg-gold px-8 py-3.5 text-sm font-bold text-obsidian shadow-[0_0_36px_rgba(245,158,11,0.4)] transition hover:bg-gold-deep hover:shadow-[0_0_48px_rgba(245,158,11,0.6)] hover:scale-[1.02]"
-              >
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-obsidian/20">
-                  <Play className="h-3.5 w-3.5 fill-obsidian text-obsidian ml-0.5" />
-                </span>
-                <span>Watch Live Darshan</span>
-              </Link>
+              {liveStreams.length > 0 && featuredStream ? (
+                <Link
+                  href={`/stream/${featuredStream.id}`}
+                  className="group inline-flex items-center gap-3 rounded-full bg-gold px-8 py-3.5 text-sm font-bold text-obsidian shadow-[0_0_36px_rgba(245,158,11,0.4)] transition hover:bg-gold-deep hover:shadow-[0_0_48px_rgba(245,158,11,0.6)] hover:scale-[1.02]"
+                >
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-obsidian/20">
+                    <Play className="h-3.5 w-3.5 fill-obsidian text-obsidian ml-0.5" />
+                  </span>
+                  <span>Watch Live Darshan</span>
+                </Link>
+              ) : (
+                <Link
+                  href="/schedule"
+                  className="group inline-flex items-center gap-3 rounded-full bg-gold px-8 py-3.5 text-sm font-bold text-obsidian shadow-[0_0_36px_rgba(245,158,11,0.4)] transition hover:bg-gold-deep hover:shadow-[0_0_48px_rgba(245,158,11,0.6)] hover:scale-[1.02]"
+                >
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-obsidian/20">
+                    <Calendar className="h-3.5 w-3.5 text-obsidian ml-0.5" />
+                  </span>
+                  <span>Explore Darshan Schedule</span>
+                </Link>
+              )}
 
               {user ? (
                 <button
@@ -448,62 +468,173 @@ export default function HomePage() {
             </dl>
           </div>
 
-          {/* Right Column: Hero Featured Live Stream Card */}
+          {/* Right Column: Hero Featured Live Stream or Placeholder Card */}
           <div className="lg:col-span-5">
-            <div className="on-photo relative rounded-3xl border border-gold/30 bg-gradient-to-b from-[#221810] to-obsidian p-3 shadow-[0_25px_70px_rgba(0,0,0,0.85)] group transition hover:border-gold/60">
-              <div className="relative aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden bg-black">
-                <img
-                  src={
-                    featuredStream?.thumbnailUrl ||
-                    '/images/photo-1678593628844-6ea49dee8ce3.webp'
-                  }
-                  alt={featuredStream?.title || 'Kashi Vishwanath Mangala Aarti'}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/40 to-transparent opacity-95" />
+            {featuredStream ? (
+              <div className="on-photo relative rounded-3xl border border-gold/30 bg-gradient-to-b from-[#221810] to-obsidian p-3 shadow-[0_25px_70px_rgba(0,0,0,0.85)] group transition hover:border-gold/60">
+                <div className="relative aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden bg-black">
+                  <img
+                    src={
+                      featuredStream.thumbnailUrl ||
+                      '/images/photo-1678593628844-6ea49dee8ce3.webp'
+                    }
+                    alt={featuredStream.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/40 to-transparent opacity-95" />
 
-                {/* Top Overlay Badges */}
-                <div className="absolute top-3.5 left-3.5 flex items-center gap-2">
-                  <span className="flex items-center gap-1.5 rounded-full bg-vermillion-deep/95 backdrop-blur-md px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-md">
-                    <span className="live-dot" style={{ width: '6px', height: '6px' }} />
-                    LIVE
-                  </span>
-                  <span className="rounded-full bg-black/70 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-gold-pale border border-gold/20">
-                    Live HD
-                  </span>
+                  {/* Top Overlay Badges */}
+                  <div className="absolute top-3.5 left-3.5 flex items-center gap-2">
+                    <span className="flex items-center gap-1.5 rounded-full bg-vermillion-deep/95 backdrop-blur-md px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-md">
+                      <span className="live-dot" style={{ width: '6px', height: '6px' }} />
+                      LIVE
+                    </span>
+                    <span className="rounded-full bg-black/70 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-gold-pale border border-gold/20">
+                      Live HD
+                    </span>
+                  </div>
+
+                  <div className="absolute top-3.5 right-3.5 rounded-full bg-black/70 backdrop-blur-md px-3 py-1 text-[11px] font-semibold text-stone-300 flex items-center gap-1.5 border border-stone-800">
+                    <Users className="w-3.5 h-3.5 text-gold" />
+                    <span>{featuredStream.peakViewers || 1} watching</span>
+                  </div>
+
+                  {/* Bottom Overlay Title & Join CTA */}
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-soft block mb-1">
+                      {featuredStream.category?.name || 'Live Aarti'}
+                    </span>
+                    <h3 className="font-serif text-xl sm:text-2xl font-bold text-white line-clamp-2 leading-snug">
+                      {featuredStream.title}
+                    </h3>
+                    <div className="mt-3.5 flex items-center justify-between pt-2 border-t border-stone-800/60">
+                      <div className="flex items-center gap-2">
+                        <PranamIcon size={16} />
+                        <span className="text-xs font-semibold text-stone-200">
+                          {featuredStream.streamer?.name || 'Vedic Pandit'}
+                        </span>
+                        <VerifiedPanditBadge size={14} />
+                      </div>
+                      <Link
+                        href={`/stream/${featuredStream.id}`}
+                        className="rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold px-4 py-2 text-xs shadow-lg transition-transform hover:scale-105 flex items-center gap-1"
+                      >
+                        <span>Join Darshan</span>
+                      </Link>
+                    </div>
+                  </div>
                 </div>
+              </div>
+            ) : nextUpcomingStream ? (
+              <div className="on-photo relative rounded-3xl border border-gold/30 bg-gradient-to-b from-[#221810] to-obsidian p-3 shadow-[0_25px_70px_rgba(0,0,0,0.85)] group transition hover:border-gold/60">
+                <div className="relative aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden bg-black">
+                  <img
+                    src={nextUpcomingStream.thumbnailUrl || '/images/photo-1681797849099-0053b1567d95.webp'}
+                    alt={nextUpcomingStream.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/45 to-transparent opacity-95" />
 
-                <div className="absolute top-3.5 right-3.5 rounded-full bg-black/70 backdrop-blur-md px-3 py-1 text-[11px] font-semibold text-stone-300 flex items-center gap-1.5 border border-stone-800">
-                  <Users className="w-3.5 h-3.5 text-gold" />
-                  <span>{featuredStream?.peakViewers || 248} watching</span>
+                  {/* Top Overlay Badges */}
+                  <div className="absolute top-3.5 left-3.5 flex items-center gap-2">
+                    <span className="flex items-center gap-1.5 rounded-full bg-amber-600/90 backdrop-blur-md px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-md">
+                      <Clock className="w-3.5 h-3.5 text-white" />
+                      Next Darshan
+                    </span>
+                    <span className="rounded-full bg-black/70 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-gold-pale border border-gold/20">
+                      Live HD
+                    </span>
+                  </div>
+
+                  {nextUpcomingStream.scheduledAt && (
+                    <div className="absolute top-3.5 right-3.5 rounded-full bg-black/70 backdrop-blur-md px-3 py-1 text-[11px] font-semibold text-gold-pale flex items-center gap-1.5 border border-gold/30">
+                      <Calendar className="w-3.5 h-3.5 text-gold" />
+                      <span>
+                        {new Date(nextUpcomingStream.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} IST
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Bottom Overlay Title & Remind CTA */}
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-soft block mb-1">
+                      {nextUpcomingStream.category?.name || 'Upcoming Sacred Aarti'}
+                    </span>
+                    <h3 className="font-serif text-xl sm:text-2xl font-bold text-white line-clamp-2 leading-snug">
+                      {nextUpcomingStream.title}
+                    </h3>
+                    <div className="mt-3.5 flex items-center justify-between pt-2 border-t border-stone-800/60">
+                      <div className="flex items-center gap-2">
+                        <PranamIcon size={16} />
+                        <span className="text-xs font-semibold text-stone-200">
+                          {nextUpcomingStream.streamer?.name || 'Vedic Pandit'}
+                        </span>
+                        <VerifiedPanditBadge size={14} />
+                      </div>
+                      <button
+                        onClick={() => handleRemindMe(nextUpcomingStream.id)}
+                        className="rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold px-4 py-2 text-xs shadow-lg transition-transform hover:scale-105 flex items-center gap-1.5"
+                      >
+                        <Bell className="w-3.5 h-3.5 fill-obsidian" />
+                        <span>Remind Me</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
+              </div>
+            ) : (
+              <div className="on-photo relative rounded-3xl border border-gold/30 bg-gradient-to-b from-[#221810] to-obsidian p-4 sm:p-5 shadow-[0_25px_70px_rgba(0,0,0,0.85)] group transition hover:border-gold/60">
+                <div className="relative aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden bg-black flex flex-col justify-between p-4 sm:p-6 border border-gold/15">
+                  <img
+                    src="/images/photo-1681797849099-0053b1567d95.webp"
+                    alt="Sanctum Repose"
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-40"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/75 to-obsidian/60" />
 
-                {/* Bottom Overlay Title & Join CTA */}
-                <div className="absolute bottom-4 left-4 right-4">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-soft block mb-1">
-                    {featuredStream?.category?.name || 'Mangala Aarti'}
-                  </span>
-                  <h3 className="font-serif text-xl sm:text-2xl font-bold text-white line-clamp-2 leading-snug">
-                    {featuredStream?.title || 'Mangala Aarti — Kashi Vishwanath'}
-                  </h3>
-                  <div className="mt-3.5 flex items-center justify-between pt-2 border-t border-stone-800/60">
+                  {/* Top Overlay Badges */}
+                  <div className="relative z-10 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 rounded-full bg-gold/15 backdrop-blur-md px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gold-pale border border-gold/30 shadow-md">
+                      <DiyaIcon size={14} />
+                      Sanctum in Repose
+                    </span>
+                    <span className="rounded-full bg-black/70 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-stone-300 border border-stone-800">
+                      Daily 04:30 AM – 10:00 PM IST
+                    </span>
+                  </div>
+
+                  {/* Center Sacred Diya & Message */}
+                  <div className="relative z-10 text-center py-2 sm:py-4">
+                    <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-gold/15 border border-gold/30 flex items-center justify-center text-gold shadow-[0_0_24px_rgba(245,158,11,0.25)]">
+                      <OmIcon size={24} />
+                    </div>
+                    <h3 className="font-serif text-xl sm:text-2xl font-bold text-white tracking-tight">
+                      Temple Sanctums Awaiting Next Aarti
+                    </h3>
+                    <p className="text-xs text-stone-300 mt-2 max-w-sm mx-auto leading-relaxed">
+                      All sanctums are currently in quiet repose. Morning Mangala Aartis from Kashi Vishwanath, Ujjain, and Haridwar resume at dawn.
+                    </p>
+                  </div>
+
+                  {/* Bottom Action Footer */}
+                  <div className="relative z-10 pt-3 border-t border-stone-800/80 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <PranamIcon size={16} />
-                      <span className="text-xs font-semibold text-stone-200">
-                        {featuredStream?.streamer?.name || 'Pandit Aarav Sharma'}
+                      <span className="text-xs font-semibold text-stone-300">
+                        85+ Verified Pandits
                       </span>
-                      <VerifiedPanditBadge size={14} />
                     </div>
                     <Link
-                      href={featuredStream ? `/stream/${featuredStream.id}` : (liveStreams.length > 0 ? `/stream/${liveStreams[0].id}` : '#live-section')}
-                      className="rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold px-4 py-2 text-xs shadow-lg transition-transform hover:scale-105 flex items-center gap-1"
+                      href="/schedule"
+                      className="rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold px-4 py-2 text-xs shadow-lg transition-transform hover:scale-105 flex items-center gap-1.5"
                     >
-                      <span>Join Darshan</span>
+                      <Calendar className="w-3.5 h-3.5 text-obsidian" />
+                      <span>View Schedule</span>
                     </Link>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Live Seva Activity Ticker (TEMP2 Real-Time Devotee Feed) */}
             <div className="glass rounded-3xl p-4 sm:p-5 mt-4 border border-gold/20 shadow-xl">
@@ -666,17 +797,30 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 3. Live Now Section ("Darshan streaming this very moment") */}
+      {/* 3. Live Now or Sanctum Highlights Section */}
       <section className="mx-auto max-w-7xl px-5 lg:px-8 py-8" id="live-streams-grid">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <span className="live-dot" />
-            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white">
-              Darshan streaming this very moment
-            </h2>
+            {liveStreams.length > 0 ? (
+              <>
+                <span className="live-dot" />
+                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white">
+                  Darshan streaming this very moment
+                </h2>
+              </>
+            ) : (
+              <>
+                <DiyaIcon size={22} />
+                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white">
+                  Sanctum Rituals &amp; Curated Darshans
+                </h2>
+              </>
+            )}
           </div>
           <span className="text-xs text-gold-soft/90 font-medium hidden sm:inline">
-            5 Coins / min metered darshan • Live HD
+            {liveStreams.length > 0
+              ? '5 Coins / min metered darshan • Live HD'
+              : 'Temples are between aarti timings • Next broadcasts resume shortly'}
           </span>
         </div>
 
@@ -772,9 +916,9 @@ export default function HomePage() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-80" />
 
-                {/* Sample Broadcast badge */}
-                <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-amber-600/90 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> Sample Broadcast
+                {/* Sanctum Highlight badge */}
+                <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-stone-900/90 border border-gold/30 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold-pale">
+                  <DiyaIcon size={12} /> Sanctum Highlight
                 </div>
 
                 {/* Quality & Coin Meter */}
@@ -819,8 +963,8 @@ export default function HomePage() {
                     <VerifiedPanditBadge size={14} />
                   </div>
                   <span className="flex items-center gap-1 text-stone-400 font-medium">
-                    <Users className="w-3.5 h-3.5 text-gold" />
-                    <span>{item.viewers}</span>
+                    <HeartHandshake className="w-3.5 h-3.5 text-gold" />
+                    <span>{item.viewers} blessed</span>
                   </span>
                 </div>
               </div>

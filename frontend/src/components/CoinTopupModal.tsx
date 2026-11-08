@@ -248,7 +248,7 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
           </div>
         ) : (
           <div className="relative z-10 mt-5 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               {packages.map((pkg) => {
                 const isSelected = selectedSku === pkg.sku;
                 return (
@@ -257,31 +257,55 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
                     onClick={() => setSelectedSku(pkg.sku)}
                     className={`relative p-4 rounded-2xl cursor-pointer transition-all border ${
                       isSelected
-                        ? 'bg-gold/10 border-gold shadow-lg shadow-gold/20'
+                        ? 'bg-gold/15 border-gold shadow-lg shadow-gold/25 ring-1 ring-gold/40'
                         : 'bg-obsidian-soft border-gold/15 hover:border-gold/40'
                     }`}
                   >
                     {pkg.badge && (
-                      <span className="absolute -top-2.5 right-3 px-2 py-0.5 text-[10px] font-bold rounded-full bg-gold text-obsidian shadow-sm">
+                      <span className="absolute -top-2.5 right-3 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full bg-gold text-obsidian shadow-sm">
                         {pkg.badge}
                       </span>
                     )}
 
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-semibold text-stone-300">{pkg.name}</span>
-                      <span className="font-serif text-base font-bold text-gold-pale">₹{pkg.priceInr}</span>
+                    {/* Top line: Package Name */}
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-bold uppercase tracking-wider text-stone-300">
+                        {pkg.name}
+                      </span>
+                      {isSelected && (
+                        <span className="text-[10px] font-bold text-gold-pale flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-gold" /> Selected
+                        </span>
+                      )}
                     </div>
 
-                    <div className="flex items-center gap-1.5 my-1">
-                      <CoinIcon size={20} />
-                      <span className="font-serif text-3xl font-bold text-white">{pkg.coins}</span>
-                      <span className="text-xs text-gold font-bold">Coins</span>
+                    {/* Prominent Rupee Price & Coin Count */}
+                    <div className="flex items-baseline justify-between my-2">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-lg sm:text-xl font-bold text-gold-pale">₹</span>
+                        <span className="font-serif text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+                          {pkg.priceInr.toLocaleString('en-IN')}
+                        </span>
+                        <span className="text-[11px] text-stone-400 font-medium ml-0.5">INR</span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 bg-gold/10 border border-gold/30 px-2.5 py-1 rounded-xl">
+                        <CoinIcon size={18} />
+                        <span className="font-serif text-lg font-bold text-gold-pale">{pkg.coins}</span>
+                        <span className="text-[10px] uppercase font-bold text-stone-300">Coins</span>
+                      </div>
                     </div>
 
-                    <p className="text-[11px] text-stone-400 flex items-center gap-1.5 mt-1">
-                      <DiyaIcon size={14} />
-                      {pkg.watchTime}
-                    </p>
+                    {/* Watch time & Rate */}
+                    <div className="flex items-center justify-between pt-2 border-t border-stone-800/80 text-[11px] text-stone-400">
+                      <span className="flex items-center gap-1 text-stone-300 font-medium">
+                        <DiyaIcon size={13} />
+                        {pkg.watchTime}
+                      </span>
+                      <span className="text-[10px] text-stone-500 font-medium">
+                        5 C / min
+                      </span>
+                    </div>
                   </div>
                 );
               })}
@@ -291,14 +315,16 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
               <button
                 onClick={handlePurchase}
                 disabled={loading}
-                className="w-full py-3.5 px-4 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full shadow-lg shadow-gold/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50 text-xs sm:text-sm"
+                className="w-full py-4 px-4 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full shadow-lg shadow-gold/25 flex items-center justify-center gap-2 transition-all disabled:opacity-50 text-sm tracking-wide"
               >
                 {loading ? (
                   <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-obsidian" />
                 ) : (
                   <>
                     <Zap className="w-4 h-4 fill-obsidian" />
-                    <span>Proceed to Recharge Now</span>
+                    <span>
+                      Proceed to Recharge ₹{(packages.find((p) => p.sku === selectedSku)?.priceInr || 1000).toLocaleString('en-IN')}
+                    </span>
                   </>
                 )}
               </button>
