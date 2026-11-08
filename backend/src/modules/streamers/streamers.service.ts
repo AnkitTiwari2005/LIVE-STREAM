@@ -262,9 +262,10 @@ export class StreamersService {
     }
   }
 
-  async getStreamerEarnings(userId: string) {
+  async getStreamerEarnings(userId: string, userRole?: string) {
+    const isAdmin = userRole === 'ADMIN';
     const streams = await this.prisma.stream.findMany({
-      where: { streamerId: userId },
+      where: isAdmin ? {} : { streamerId: userId },
       select: { id: true, title: true, startedAt: true, durationSeconds: true },
     });
     const streamIds = streams.map((s) => s.id);

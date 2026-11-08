@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { UserStatus, StreamStatus, UserRole } from '@prisma/client';
 import {
@@ -9,6 +9,8 @@ import { ChatService } from '../chat/chat.service';
 
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     @Inject(VIDEO_PROVIDER_TOKEN)
@@ -77,6 +79,27 @@ export class AdminService {
 
     if (user.role === UserRole.ADMIN) {
       throw new BadRequestException('Cannot modify status of another administrator');
+    }
+
+    // B-23: If banning or suspending, force-end any active broadcasts immediately
+    if (status === UserStatus.BANNED || status === UserStatus.SUSPENDED) {
+      try {
+        const activeStreams = await this.prisma.stream.findMany({
+          where: {
+            streamerId: userId,
+            status: { in: [StreamStatus.LIVE, StreamStatus.RECONNECTING_GRACE_PERIOD] },
+          },
+        });
+        for (const st of activeStreams) {
+          await this.videoProvider.endRoom(st.id).catch(() => {});
+          await this.prisma.stream.update({
+            where: { id: st.id },
+            data: { status: StreamStatus.ENDED, endedAt: new Date() },
+          });
+        }
+      } catch (err: any) {
+        this.logger.error(`Error terminating active streams for banned user ${userId}: ${err.message}`);
+      }
     }
 
     const updated = await this.prisma.$transaction([

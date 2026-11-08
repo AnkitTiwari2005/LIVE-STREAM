@@ -36,8 +36,8 @@ export class StreamersController {
   @Roles(UserRole.STREAMER)
   @Get('earnings')
   @ApiOperation({ summary: 'Get streamer earnings ledger and Dakshina performance (B-13)' })
-  async getEarnings(@CurrentUser('id') userId: string) {
-    return this.streamersService.getStreamerEarnings(userId);
+  async getEarnings(@CurrentUser() user: any) {
+    return this.streamersService.getStreamerEarnings(user.id, user.role);
   }
 
   @Roles(UserRole.ADMIN)

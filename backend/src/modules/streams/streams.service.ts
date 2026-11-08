@@ -289,8 +289,12 @@ export class StreamsService {
         );
       }
 
-      // If user is not the stream host/pandit, meter their darshan session
-      if (userId !== stream.streamerId) {
+      // If user is not the stream host/pandit or platform admin, meter their darshan session
+      const callerUser = userId
+        ? await this.prisma.user.findUnique({ where: { id: userId }, select: { role: true } })
+        : null;
+      const isExempt = userId === stream.streamerId || callerUser?.role === UserRole.ADMIN;
+      if (!isExempt) {
         viewingSession = await this.walletService.startViewingSession(userId, streamId, ip);
       }
     }

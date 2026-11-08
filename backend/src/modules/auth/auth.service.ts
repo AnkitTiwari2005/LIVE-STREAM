@@ -13,7 +13,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto, ResetPasswordDto, VerifyTotpDto } from './dto/login.dto';
 import { CryptoUtil } from '../../common/crypto.util';
 import * as bcrypt from 'bcrypt';
-import { UserRole, UserStatus, WalletTxType, WalletTxCategory } from '@prisma/client';
+import { Prisma, UserRole, UserStatus, WalletTxType, WalletTxCategory } from '@prisma/client';
 import { authenticator } from 'otplib';
 import * as qrcode from 'qrcode';
 
@@ -432,7 +432,10 @@ export class AuthService {
   }
 
   async deleteAccount(userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { streamerProfile: true },
+    });
     if (!user) throw new NotFoundException('User not found');
 
     const anonymizedEmail = `deleted_${Date.now()}_${user.id.slice(0, 8)}@shubhdarshan.privacy`;
@@ -447,6 +450,16 @@ export class AuthService {
         email: anonymizedEmail,
         name: 'Deleted Devotee',
         avatarUrl: null,
+        streamerProfile: user.streamerProfile
+          ? {
+              update: {
+                kycDocuments: Prisma.JsonNull,
+                bio: null,
+                specialties: [],
+                languages: [],
+              },
+            }
+          : undefined,
       },
     });
 
