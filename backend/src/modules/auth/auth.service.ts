@@ -14,7 +14,7 @@ import { StorageService } from '../storage/storage.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto, ResetPasswordDto, VerifyTotpDto } from './dto/login.dto';
 import { CryptoUtil } from '../../common/crypto.util';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { Prisma, UserRole, UserStatus, WalletTxType, WalletTxCategory } from '@prisma/client';
 import { authenticator } from 'otplib';
 import * as qrcode from 'qrcode';

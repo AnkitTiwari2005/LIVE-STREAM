@@ -10,7 +10,7 @@ import {
 import { PrismaService } from '../../database/prisma.service';
 import { CreatePrivateLinkDto, ClaimPrivateLinkDto } from './dto/create-private-link.dto';
 import { CryptoUtil } from '../../common/crypto.util';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import {
   IVideoProviderService,
   VIDEO_PROVIDER_TOKEN,
