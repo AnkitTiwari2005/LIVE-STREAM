@@ -49,6 +49,32 @@ export function Navbar() {
     };
   }, []);
 
+  // Re-read auth state whenever login/logout fires sd-auth-change
+  const refreshAuthState = () => {
+    const storedUser = localStorage.getItem('pooja_user');
+    const storedBalance = localStorage.getItem('pooja_wallet_balance');
+    if (storedBalance !== null && !isNaN(Number(storedBalance))) {
+      setCoinBalance(Number(storedBalance));
+    }
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        setUser(parsed);
+        if (parsed.wallet?.balanceCoins !== undefined && storedBalance === null) {
+          setCoinBalance(parsed.wallet.balanceCoins);
+        }
+      } catch {}
+    } else {
+      setUser(null);
+      setCoinBalance(null);
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener('sd-auth-change', refreshAuthState);
+    return () => window.removeEventListener('sd-auth-change', refreshAuthState);
+  }, []);
+
   useEffect(() => {
     // Check session & cached wallet balance immediately
     const storedUser = localStorage.getItem('pooja_user');

@@ -59,6 +59,7 @@ export default function LoginPage() {
 
       localStorage.setItem('pooja_user', JSON.stringify(data.user));
       localStorage.setItem('pooja_token', data.accessToken);
+      window.dispatchEvent(new Event('sd-auth-change'));
 
       const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
       const safeTarget = getSafeRedirect(params?.get('redirect'));
@@ -94,6 +95,7 @@ export default function LoginPage() {
 
       localStorage.setItem('pooja_user', JSON.stringify(data.user));
       localStorage.setItem('pooja_token', data.accessToken);
+      window.dispatchEvent(new Event('sd-auth-change'));
 
       const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
       const safeTarget = getSafeRedirect(params?.get('redirect'));
