@@ -656,7 +656,7 @@ export default function HomePage() {
                         <span className="devotee-seva-action font-semibold">{act.action}</span>
                       </div>
                     </div>
-                    <span className="text-[10px] text-stone-500 shrink-0 ml-2 font-mono">{act.time}</span>
+                    <span className="devotee-seva-time text-[10px] shrink-0 ml-2 font-mono">{act.time}</span>
                   </div>
                 ))}
               </div>

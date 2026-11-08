@@ -398,10 +398,10 @@ export function Navbar() {
                 </Link>
                 <Link
                   href="/register"
-                  className="whitespace-nowrap shrink-0 group inline-flex items-center gap-1.5 rounded-full bg-gold px-3.5 py-1.5 text-xs font-bold text-obsidian shadow-[0_0_24px_rgba(245,158,11,0.25)] transition hover:bg-gold-deep"
+                  className="nav-join-free-btn whitespace-nowrap shrink-0 group inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition hover:scale-105 active:scale-95 shadow-sm"
                 >
                   <span>Join Free</span>
-                  <span className="rounded-full bg-obsidian/20 px-1.5 py-0.5 text-[10px] font-extrabold text-obsidian shrink-0">
+                  <span className="nav-join-free-badge rounded-full px-1.5 py-0.5 text-[10px] font-black shrink-0">
                     +100 Coins
                   </span>
                 </Link>
@@ -498,21 +498,21 @@ export function Navbar() {
                   <Link
                     href="/studio/create"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-amber-900 dark:text-gold font-bold py-1.5 flex items-center gap-2"
+                    className="mobile-nav-link font-bold py-1.5 flex items-center gap-2"
                   >
-                    <Video className="w-4 h-4" /> Go Live (Studio)
+                    <Video className="w-4 h-4 text-amber-600 dark:text-gold" /> Go Live (Studio)
                   </Link>
                   <Link
                     href="/studio/streams"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-amber-900 dark:text-gold-pale font-bold py-1.5 flex items-center gap-2"
+                    className="mobile-nav-link font-bold py-1.5 flex items-center gap-2"
                   >
                     <DiyaIcon size={16} /> My Sacred Broadcasts
                   </Link>
                   <Link
                     href="/streamer/earnings"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-amber-900 dark:text-gold-pale font-bold py-1.5 flex items-center gap-2"
+                    className="mobile-nav-link font-bold py-1.5 flex items-center gap-2"
                   >
                     <CoinIcon size={16} /> Pandit Earnings &amp; Dakshina
                   </Link>
@@ -523,9 +523,9 @@ export function Navbar() {
                 <Link
                   href="/admin"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-amber-900 dark:text-amber-300 font-bold py-1.5 flex items-center gap-2"
+                  className="mobile-nav-link font-bold py-1.5 flex items-center gap-2"
                 >
-                  <ShieldCheck className="w-4 h-4" /> Admin Console
+                  <ShieldCheck className="w-4 h-4 text-amber-600 dark:text-amber-300" /> Admin Console
                 </Link>
               )}
 
@@ -534,14 +534,14 @@ export function Navbar() {
                   <Link
                     href="/streamer/apply"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-stone-900 dark:text-gold-pale font-semibold py-1.5 flex items-center gap-2"
+                    className="mobile-nav-link font-semibold py-1.5 flex items-center gap-2"
                   >
                     <DiyaIcon size={16} /> Become a Pandit
                   </Link>
                   <Link
                     href="/streamer/status"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-stone-900 dark:text-gold-pale font-semibold py-1.5 flex items-center gap-2"
+                    className="mobile-nav-link font-semibold py-1.5 flex items-center gap-2"
                   >
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Pandit KYC Status
                   </Link>

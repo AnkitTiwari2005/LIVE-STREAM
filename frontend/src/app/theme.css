@@ -1134,14 +1134,16 @@ html[data-theme="light"] .sd-toast button:hover {
    ========================================================================= */
 
 /* Hero Buttons */
-html[data-theme="light"] .hero-btn-schedule {
+html[data-theme="light"] .hero-btn-schedule,
+html[data-theme="light"] .hero-btn-schedule span {
   background-color: #fef3c7 !important;
   border-color: #fcd34d !important;
   color: #451a03 !important;
 }
-html[data-theme="dark"] .hero-btn-schedule {
-  background-color: rgba(245, 158, 11, 0.1) !important;
-  border-color: rgba(245, 158, 11, 0.35) !important;
+html[data-theme="dark"] .hero-btn-schedule,
+html[data-theme="dark"] .hero-btn-schedule span {
+  background-color: rgba(245, 158, 11, 0.12) !important;
+  border-color: rgba(245, 158, 11, 0.45) !important;
   color: #fef3c7 !important;
 }
 html[data-theme="light"] .hero-btn-schedule svg {
@@ -1151,15 +1153,23 @@ html[data-theme="dark"] .hero-btn-schedule svg {
   color: #fbbf24 !important;
 }
 
-html[data-theme="light"] .hero-btn-secondary {
+html[data-theme="light"] .hero-btn-secondary,
+html[data-theme="light"] .hero-btn-secondary span {
   background-color: #ffffff !important;
   border-color: #d6d3d1 !important;
   color: #1c1917 !important;
 }
-html[data-theme="dark"] .hero-btn-secondary {
-  background-color: #171210 !important;
-  border-color: #44403c !important;
-  color: #e7e5e4 !important;
+html[data-theme="dark"] .hero-btn-secondary,
+html[data-theme="dark"] .hero-btn-secondary span {
+  background-color: #1c1917 !important;
+  border-color: #57534e !important;
+  color: #f5f5f4 !important;
+}
+html[data-theme="light"] .hero-btn-secondary svg {
+  color: #d97706 !important;
+}
+html[data-theme="dark"] .hero-btn-secondary svg {
+  color: #fbbf24 !important;
 }
 
 /* Live Pooja Altar in Repose Card */
@@ -1222,6 +1232,13 @@ html[data-theme="dark"] .devotee-seva-action {
   color: #fbbf24 !important;
 }
 
+html[data-theme="light"] .devotee-seva-time {
+  color: #78716c !important;
+}
+html[data-theme="dark"] .devotee-seva-time {
+  color: #a8a29e !important;
+}
+
 /* Curated Pandits */
 html[data-theme="light"] .pandit-name {
   color: #1c1414 !important;
@@ -1237,12 +1254,14 @@ html[data-theme="dark"] .pandit-stats {
   color: #fbbf24 !important;
 }
 
-html[data-theme="light"] .pandit-btn-profile {
+html[data-theme="light"] .pandit-btn-profile,
+html[data-theme="light"] .pandit-btn-profile span {
   background-color: #fef3c7 !important;
   border-color: #fcd34d !important;
   color: #451a03 !important;
 }
-html[data-theme="dark"] .pandit-btn-profile {
+html[data-theme="dark"] .pandit-btn-profile,
+html[data-theme="dark"] .pandit-btn-profile span {
   background-color: rgba(245, 158, 11, 0.15) !important;
   border-color: rgba(245, 158, 11, 0.35) !important;
   color: #fef3c7 !important;
@@ -1331,12 +1350,16 @@ html[data-theme="dark"] .catalog-explore-btn {
 }
 
 /* Seva Booking Modal Step 4 */
-html[data-theme="light"] .modal-status-pill {
+html[data-theme="light"] .modal-status-pill,
+html[data-theme="light"] .modal-status-pill span,
+html[data-theme="light"] .modal-status-pill svg {
   background-color: #fef3c7 !important;
   border-color: #fcd34d !important;
-  color: #451a03 !important;
+  color: #78350f !important;
 }
-html[data-theme="dark"] .modal-status-pill {
+html[data-theme="dark"] .modal-status-pill,
+html[data-theme="dark"] .modal-status-pill span,
+html[data-theme="dark"] .modal-status-pill svg {
   background-color: rgba(69, 26, 3, 0.7) !important;
   border-color: rgba(245, 158, 11, 0.4) !important;
   color: #fef3c7 !important;
@@ -1378,4 +1401,45 @@ html[data-theme="light"] .chat-signin-link {
 }
 html[data-theme="dark"] .chat-signin-link {
   color: #fbbf24 !important;
+}
+
+/* Navbar Join Free CTA & Badge */
+html[data-theme="light"] .nav-join-free-btn,
+html:not([data-theme="dark"]) .nav-join-free-btn {
+  background: linear-gradient(135deg, #e70d1b 0%, #81070f 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 2px 10px rgba(231, 13, 27, 0.25) !important;
+}
+
+html[data-theme="light"] .nav-join-free-btn > span:first-child,
+html:not([data-theme="dark"]) .nav-join-free-btn > span:first-child {
+  color: #ffffff !important;
+}
+
+html[data-theme="light"] .nav-join-free-badge,
+html:not([data-theme="dark"]) .nav-join-free-badge {
+  background-color: #ffffff !important;
+  color: #81070f !important;
+  font-weight: 900 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+  border: none !important;
+}
+
+html[data-theme="dark"] .nav-join-free-btn {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  color: #0c0a09 !important;
+  border: 1px solid rgba(245, 158, 11, 0.4) !important;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.25) !important;
+}
+
+html[data-theme="dark"] .nav-join-free-btn > span:first-child {
+  color: #0c0a09 !important;
+}
+
+html[data-theme="dark"] .nav-join-free-badge {
+  background-color: rgba(12, 10, 9, 0.22) !important;
+  color: #0c0a09 !important;
+  border: 1px solid rgba(12, 10, 9, 0.18) !important;
+  font-weight: 900 !important;
 }
