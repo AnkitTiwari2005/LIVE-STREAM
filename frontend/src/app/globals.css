@@ -32,6 +32,15 @@ body > * {
   overflow-x: clip;
 }
 
+/* Mobile containment: sections and divs that are direct children of <main>
+   must not cause horizontal overflow. overflow-x: clip is used instead of
+   overflow: hidden so that sticky positioning still works correctly. */
+@media (max-width: 1023px) {
+  main > * {
+    overflow-x: clip;
+  }
+}
+
 /* Sacred Devotional Design Utilities */
 .glass {
   background: rgba(20, 15, 19, 0.72);

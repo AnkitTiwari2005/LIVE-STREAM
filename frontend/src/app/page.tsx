@@ -359,7 +359,7 @@ export default function HomePage() {
   const nextUpcomingStream = upcomingStreams[0] || null;
 
   return (
-    <div className="min-h-screen bg-obsidian text-foreground">
+    <div className="min-h-screen bg-obsidian text-foreground w-full overflow-x-clip">
       {/* 1. Sacred Hero Section */}
       <section className="relative overflow-hidden pt-3.5 pb-16 lg:pt-5 lg:pb-24 border-b border-gold/15 w-full max-w-full">
         {/* Background Image with Ambient Saffron Glow */}
@@ -383,7 +383,7 @@ export default function HomePage() {
 
         <div className="relative mx-auto grid max-w-7xl gap-12 px-5 lg:grid-cols-12 lg:gap-8 lg:px-8 items-center w-full overflow-x-clip">
           {/* Left Column: Sacred Copy & Value Props */}
-          <div className="flex flex-col justify-center lg:col-span-7">
+          <div className="flex flex-col justify-center lg:col-span-7 min-w-0 w-full">
             <div>
               {liveStreams.length > 0 ? (
                 <p className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3.5 sm:px-4 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider sm:tracking-[0.24em] text-gold-pale shadow-[0_0_20px_rgba(245,158,11,0.15)] max-w-full truncate">
@@ -398,12 +398,12 @@ export default function HomePage() {
               )}
             </div>
 
-            <h1 className="mt-5 sm:mt-6 max-w-2xl font-serif text-3xl sm:text-5xl lg:text-7xl font-bold leading-[1.12] sm:leading-[1.08] tracking-tight break-words">
+            <h1 className="mt-5 sm:mt-6 w-full max-w-2xl font-serif text-3xl sm:text-5xl lg:text-7xl font-bold leading-[1.12] sm:leading-[1.08] tracking-tight break-words overflow-hidden">
               Sacred Vedic rituals, <br />
               <span className="gold-text italic font-serif">one tap away</span>
             </h1>
 
-            <p className="mt-4 sm:mt-6 max-w-xl text-stone-300 text-sm sm:text-lg leading-relaxed">
+            <p className="mt-4 sm:mt-6 w-full max-w-xl text-stone-300 text-sm sm:text-lg leading-relaxed">
               Shubhdarshan connects you directly with Gurukul-verified Vedic Pandits for personalized poojas, havans, and spiritual counseling — in ultra-low latency HD, directly to your screen.
             </p>
 
