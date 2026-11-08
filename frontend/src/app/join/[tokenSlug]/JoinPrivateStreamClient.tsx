@@ -210,6 +210,7 @@ export default function JoinPrivateStreamClient() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Video Viewport (Col span 2) */}
           <div className="lg:col-span-2 flex flex-col gap-4">
+            {/* Video container — no absolute controls inside, keeps full viewable area */}
             <div className="relative w-full aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl border border-stone-800 flex items-center justify-center">
               <LiveKitRoom
                 serverUrl={serverUrl}
@@ -222,9 +223,6 @@ export default function JoinPrivateStreamClient() {
                 {/* RoomAudioRenderer ensures remote audio tracks are played via HTMLAudioElement */}
                 <RoomAudioRenderer />
                 <PrivateTwoWayConsultationRenderer onLeave={() => setToken(null)} />
-                <div className="absolute top-4 left-4 z-30">
-                  <StartAudio label="Click to Unmute Live Chanting & Mantras" />
-                </div>
               </LiveKitRoom>
 
               {/* Floating Auspicious Dakshina Alert */}
@@ -243,10 +241,13 @@ export default function JoinPrivateStreamClient() {
                   <PranamIcon size={18} />
                 </div>
               )}
+            </div>
 
-              {/* Floating Spiritual Reactions Overlay */}
+            {/* Spiritual Reactions + Controls — BELOW the video, never overlapping it */}
+            <div className="flex items-center justify-between gap-3 px-1">
+              {/* Emoji Reactions */}
               {streamId && (
-                <div className="absolute bottom-16 left-4 z-20">
+                <div className="flex-1 min-w-0">
                   <SpiritualReactions socket={socket} streamId={streamId} />
                 </div>
               )}
@@ -465,13 +466,14 @@ function PrivateTwoWayConsultationRenderer({ onLeave }: { onLeave: () => void })
   const remoteAudioTrack = audioTracks.find((t) => t.participant.identity !== localParticipant?.identity);
 
   return (
+    // Full video area — no floating control bar here, controls live outside this component
     <div className="relative w-full h-full bg-black cursor-pointer" onClick={unlockAudio}>
-      {/* Remote Audio Track Renderer guarantees audio is delivered to browser output */}
+      {/* Remote Audio Track Renderer */}
       {remoteAudioTrack && (
         <AudioTrack trackRef={remoteAudioTrack} />
       )}
 
-      {/* Prominent Audio Unlock Banner for Strict Browser Autoplay Policies */}
+      {/* Audio Unlock Banner — only shown when browser blocks autoplay */}
       {!isAudioPlaybackAllowed && (
         <button
           onClick={(e) => {
@@ -481,7 +483,7 @@ function PrivateTwoWayConsultationRenderer({ onLeave }: { onLeave: () => void })
           className="absolute top-4 left-4 z-40 px-4 py-2.5 bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-400 text-stone-950 font-extrabold text-xs rounded-2xl shadow-2xl flex items-center gap-2 animate-bounce border-2 border-yellow-200"
         >
           <Volume2 className="w-4 h-4" />
-          <span>Click to Hear Pandit Chanting & Mantras 🙏</span>
+          <span>Tap to Hear Pandit 🙏</span>
         </button>
       )}
 
@@ -495,9 +497,9 @@ function PrivateTwoWayConsultationRenderer({ onLeave }: { onLeave: () => void })
         </div>
       )}
 
-      {/* Devotee Self Camera Preview (Picture-in-Picture in Top Right) */}
+      {/* Devotee Self Camera Preview — PiP top-right, only when cam is on */}
       {isCameraEnabled && cameraTrack && (
-        <div className="absolute top-4 right-4 w-36 sm:w-48 aspect-video rounded-xl overflow-hidden border-2 border-orange-500/80 shadow-2xl z-20 bg-stone-950">
+        <div className="absolute top-4 right-4 w-28 sm:w-36 aspect-video rounded-xl overflow-hidden border-2 border-orange-500/80 shadow-2xl z-20 bg-stone-950">
           <VideoTrack
             trackRef={{
               participant: localParticipant,
@@ -507,62 +509,64 @@ function PrivateTwoWayConsultationRenderer({ onLeave }: { onLeave: () => void })
             className="w-full h-full object-cover"
           />
           <div className="absolute bottom-1 left-1 bg-black/70 px-1.5 py-0.5 rounded text-[9px] font-bold text-white">
-            You (Devotee)
+            You
           </div>
         </div>
       )}
 
-      {/* Bottom Floating Interactive Two-Way Controls Bar */}
+      {/* Controls bar — compact icon-only row at bottom of video, doesn't block content */}
       <div
-        className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2.5 bg-stone-950/85 backdrop-blur-md border border-stone-800 rounded-full px-4 py-2 shadow-2xl"
+        className="absolute bottom-0 left-0 right-0 z-30 flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-t from-black/80 to-transparent"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Devotee Mic Toggle */}
+        {/* Mic toggle — icon only, labelled via title tooltip */}
         <button
           onClick={toggleMic}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all shadow-md ${
+          title={isMicrophoneEnabled ? 'Mute mic' : 'Unmute mic (speak to Pandit)'}
+          className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg ${
             isMicrophoneEnabled
               ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
-              : 'bg-red-600 hover:bg-red-500 text-white animate-pulse'
+              : 'bg-stone-800/90 hover:bg-stone-700 text-stone-400'
           }`}
-          title={isMicrophoneEnabled ? 'Mute Microphone' : 'Unmute Microphone (Speak to Pandit)'}
         >
-          {isMicrophoneEnabled ? <Mic className="w-3.5 h-3.5" /> : <MicOff className="w-3.5 h-3.5" />}
-          <span>{isMicrophoneEnabled ? 'Mic: ON' : 'Mic: OFF'}</span>
+          {isMicrophoneEnabled ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
         </button>
 
-        {/* Devotee Camera Toggle */}
+        {/* Camera toggle — icon only */}
         <button
           onClick={toggleCamera}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all shadow-md ${
+          title={isCameraEnabled ? 'Turn off camera' : 'Turn on camera'}
+          className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg ${
             isCameraEnabled
-              ? 'bg-stone-800 hover:bg-stone-700 text-stone-200'
-              : 'bg-stone-800 hover:bg-stone-700 text-stone-400'
+              ? 'bg-stone-700 hover:bg-stone-600 text-white'
+              : 'bg-stone-800/90 hover:bg-stone-700 text-stone-400'
           }`}
-          title={isCameraEnabled ? 'Turn Off Camera' : 'Turn On Camera'}
         >
-          {isCameraEnabled ? <VideoIcon className="w-3.5 h-3.5" /> : <VideoOff className="w-3.5 h-3.5" />}
-          <span>{isCameraEnabled ? 'Cam: ON' : 'Cam: OFF'}</span>
+          {isCameraEnabled ? <VideoIcon className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
         </button>
 
-        {/* Audio Speaker Status / Unmute */}
-        <button
-          onClick={unlockAudio}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold bg-stone-800 hover:bg-stone-700 text-amber-300 transition-all shadow-md"
-          title="Click to ensure speaker audio is active"
-        >
-          <Volume2 className="w-3.5 h-3.5 text-amber-400" />
-          <span>Sound ON</span>
-        </button>
+        {/* Sound unlock — only shown when audio is blocked */}
+        {!isAudioPlaybackAllowed && (
+          <button
+            onClick={unlockAudio}
+            title="Unmute speaker"
+            className="w-9 h-9 rounded-full flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-stone-950 transition-all shadow-lg animate-pulse"
+          >
+            <Volume2 className="w-4 h-4" />
+          </button>
+        )}
 
-        {/* Leave Consultation */}
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Leave — text label since it's a destructive action */}
         <button
           onClick={onLeave}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-red-950 hover:bg-red-900 text-red-300 border border-red-800 transition-all shadow-md"
-          title="Leave Sacred Session"
+          title="Leave session"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-red-700/90 hover:bg-red-600 text-white border border-red-600 transition-all shadow-lg"
         >
           <PhoneOff className="w-3.5 h-3.5" />
-          <span>Leave</span>
+          <span className="hidden sm:inline">Leave</span>
         </button>
       </div>
     </div>

@@ -359,7 +359,7 @@ export default function HomePage() {
   const nextUpcomingStream = upcomingStreams[0] || null;
 
   return (
-    <div className="min-h-screen bg-obsidian text-foreground w-full overflow-x-clip">
+    <div className="min-h-screen bg-obsidian text-white w-full overflow-x-clip">
       {/* 1. Sacred Hero Section */}
       <section className="relative overflow-x-clip pt-3.5 pb-16 lg:pt-5 lg:pb-24 border-b border-gold/15 w-full max-w-full">
         {/* Background Image with Ambient Saffron Glow */}

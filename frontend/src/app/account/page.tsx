@@ -270,7 +270,7 @@ export default function AccountPage() {
   };
 
   return (
-    <div className="min-h-screen bg-obsidian text-foreground py-10 relative overflow-hidden">
+    <div className="min-h-screen bg-obsidian text-white py-10 relative overflow-hidden">
       <div className="mandala-bg absolute inset-0 opacity-20 pointer-events-none" />
 
       <div className="relative max-w-4xl mx-auto px-5 lg:px-8 w-full">
