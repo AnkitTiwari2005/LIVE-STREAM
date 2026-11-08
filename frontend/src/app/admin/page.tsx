@@ -43,6 +43,10 @@ export default function AdminConsolePage() {
   const [loading, setLoading] = useState(true);
   const [authToken, setAuthToken] = useState<string | null>(null);
 
+  // M-01: Inline rejection modal — replaces window.prompt() which is blocked in some
+  // browsers and leaks the admin URL in some CSP configurations.
+  const [rejectModal, setRejectModal] = useState<{ profileId: string; reason: string } | null>(null);
+
   // Occasion Announcement Banner State
   const [bannerConfig, setBannerConfig] = useState<{
     enabled: boolean;
@@ -176,14 +180,15 @@ export default function AdminConsolePage() {
   };
 
   const handleKycDecision = async (profileId: string, decision: 'APPROVED' | 'REJECTED') => {
-    const token = localStorage.getItem('pooja_token');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
-
-    let rejectionReason: string | undefined = undefined;
     if (decision === 'REJECTED') {
-      rejectionReason = prompt('Enter reason for rejection:') || 'Qualifications could not be verified.';
+      // M-01: Open inline modal instead of window.prompt()
+      setRejectModal({ profileId, reason: 'Qualifications could not be verified.' });
+      return;
     }
+    await submitKycDecision(profileId, 'APPROVED', undefined);
+  };
 
+  const submitKycDecision = async (profileId: string, decision: 'APPROVED' | 'REJECTED', rejectionReason?: string) => {
     try {
       await apiFetch(`/streamers/admin/applications/${profileId}`, {
         method: 'PATCH',
@@ -281,6 +286,44 @@ export default function AdminConsolePage() {
   return (
     <div className="min-h-screen bg-obsidian text-foreground py-8 relative overflow-hidden">
       <div className="mandala-bg absolute inset-0 opacity-20 pointer-events-none" />
+
+      {/* M-01: Inline KYC Rejection Reason Modal — replaces window.prompt() */}
+      {rejectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
+          <div className="w-full max-w-md bg-stone-900 border border-gold/25 rounded-2xl shadow-2xl p-6 space-y-4">
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <X className="w-5 h-5 text-red-400" /> Rejection Reason
+            </h3>
+            <p className="text-sm text-stone-400">Provide a clear reason. This will be sent to the applicant.</p>
+            <textarea
+              className="w-full bg-stone-800 border border-stone-700 rounded-xl px-4 py-3 text-sm text-white placeholder-stone-500 focus:outline-none focus:border-gold/50 resize-none"
+              rows={3}
+              autoFocus
+              value={rejectModal.reason}
+              onChange={(e) => setRejectModal({ ...rejectModal, reason: e.target.value })}
+              placeholder="e.g. Qualifications could not be verified."
+            />
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setRejectModal(null)}
+                className="px-4 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-sm font-semibold transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  const { profileId, reason } = rejectModal;
+                  setRejectModal(null);
+                  await submitKycDecision(profileId, 'REJECTED', reason || 'Qualifications could not be verified.');
+                }}
+                className="px-4 py-2 rounded-xl bg-red-700 hover:bg-red-600 text-white text-sm font-bold transition"
+              >
+                Confirm Rejection
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="relative max-w-7xl mx-auto px-5 lg:px-8">
         <div className="flex items-center justify-between mb-8 pb-4 border-b border-gold/15">

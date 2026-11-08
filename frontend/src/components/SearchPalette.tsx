@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, ChevronRight, X, Sparkles } from 'lucide-react';
+import { Search, ChevronRight, X, Radio } from 'lucide-react';
 
 interface SearchItem {
   title: string;
@@ -14,10 +14,9 @@ interface SearchItem {
   keywords: string;
 }
 
-const SEARCH_DIRECTORY: SearchItem[] = [
-  // R-04/M-10: Removed 7 entries that linked to /stream/demo (a dead/empty page).
-  // Live stream search results will come from the real API (/streams/public).
-  // Only keeping static site links that always exist.
+// M-10: Static directory now contains only stable site sections.
+// Live streams are fetched from the real API and merged at the top of results.
+const STATIC_DIRECTORY: SearchItem[] = [
   {
     title: 'Pandit Aarav Sharma',
     subtitle: 'Head Archak, Kashi Vishwanath Parampara',
@@ -95,6 +94,31 @@ export function SearchPalette({
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  // M-10: Live streams fetched from real API, merged at top of results
+  const [liveStreamItems, setLiveStreamItems] = useState<SearchItem[]>([]);
+
+  // M-10: Fetch live & upcoming streams from the real public API when palette opens
+  useEffect(() => {
+    if (!isOpen) return;
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    fetch(`${apiUrl}/streams/public`)
+      .then((r) => r.ok ? r.json() : [])
+      .then((streams: any[]) => {
+        const items: SearchItem[] = streams
+          .filter((s) => s.status === 'LIVE' || s.status === 'SCHEDULED')
+          .slice(0, 5)
+          .map((s) => ({
+            title: s.title || 'Live Pooja Broadcast',
+            subtitle: `${s.status === 'LIVE' ? '🔴 LIVE now' : '🗓 Scheduled'} · ${s.streamer?.name || 'Verified Pandit'}`,
+            category: s.status === 'LIVE' ? 'Live' : 'Scheduled',
+            url: `/stream/${s.id}`,
+            image: s.thumbnailUrl || '/images/photo-1681797849099-0053b1567d95.webp',
+            keywords: `${s.title} ${s.streamer?.name || ''} live stream aarti pooja`,
+          }));
+        setLiveStreamItems(items);
+      })
+      .catch(() => setLiveStreamItems([]));
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -125,8 +149,11 @@ export function SearchPalette({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  // M-10: Merge live API results (always at top) with static directory
+  const allItems = [...liveStreamItems, ...STATIC_DIRECTORY];
+
   const filteredItems = query.trim()
-    ? SEARCH_DIRECTORY.filter((item) => {
+    ? allItems.filter((item) => {
         const q = query.toLowerCase();
         return (
           item.title.toLowerCase().includes(q) ||
@@ -134,7 +161,7 @@ export function SearchPalette({
           item.keywords.toLowerCase().includes(q)
         );
       })
-    : SEARCH_DIRECTORY.slice(0, 7);
+    : allItems.slice(0, 7);
 
   const handleSelect = (url: string) => {
     onClose();
@@ -197,7 +224,14 @@ export function SearchPalette({
 
         {/* Results Header */}
         <div className="flex items-center justify-between px-4 py-2 text-[11px] font-semibold text-stone-500 dark:text-stone-400 border-b border-stone-200 dark:border-stone-800/60 bg-stone-100/70 dark:bg-stone-900/40">
-          <span>{query.trim() ? `${filteredItems.length} results found` : 'Popular sanctums & sevas'}</span>
+          <span>
+            {liveStreamItems.length > 0 && !query.trim() && (
+              <span className="inline-flex items-center gap-1 text-red-600 dark:text-red-400 font-bold mr-2">
+                <Radio className="w-3 h-3 animate-pulse" /> {liveStreamItems.length} Live
+              </span>
+            )}
+            {query.trim() ? `${filteredItems.length} results found` : 'Popular sanctums & sevas'}
+          </span>
           <span className="hidden sm:inline-flex items-center gap-1.5 font-mono text-[10px]">
             <kbd className="px-1.5 py-0.5 rounded border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300">↑↓</kbd> navigate
             <kbd className="px-1.5 py-0.5 rounded border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300">↵</kbd> select
@@ -215,6 +249,7 @@ export function SearchPalette({
           ) : (
             filteredItems.map((item, index) => {
               const isSelected = index === selectedIndex;
+              const isLive = item.category === 'Live';
               return (
                 <div
                   key={item.title + item.url}
@@ -226,17 +261,26 @@ export function SearchPalette({
                       : 'hover:bg-stone-100 dark:hover:bg-stone-900/70 text-stone-700 dark:text-stone-200 border border-transparent'
                   }`}
                 >
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="w-11 h-11 rounded-lg object-cover shrink-0 border border-stone-200 dark:border-gold/20"
-                  />
+                  <div className="relative shrink-0">
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="w-11 h-11 rounded-lg object-cover border border-stone-200 dark:border-gold/20"
+                    />
+                    {isLive && (
+                      <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-red-500 border-2 border-white dark:border-stone-900 animate-pulse" />
+                    )}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-xs sm:text-sm truncate text-stone-900 dark:text-white">
                         {item.title}
                       </span>
-                      <span className="text-[10px] font-bold text-amber-800 dark:text-gold-pale bg-amber-50 dark:bg-gold/10 px-2 py-0.5 rounded-full border border-amber-200 dark:border-gold/20 shrink-0">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${
+                        isLive
+                          ? 'text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800'
+                          : 'text-amber-800 dark:text-gold-pale bg-amber-50 dark:bg-gold/10 border-amber-200 dark:border-gold/20'
+                      }`}>
                         {item.category}
                       </span>
                     </div>

@@ -733,7 +733,7 @@ export default function AccountPage() {
             <div className="bg-obsidian-soft border border-gold/25 rounded-3xl p-6 sm:p-8 shadow-xl">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-stone-900 dark:text-white flex items-center gap-2">
                     <Shield className="w-5 h-5 text-emerald-400" /> Two-Factor Authentication (2FA)
                   </h2>
                   <p className="text-xs text-stone-400 mt-0.5">
@@ -778,9 +778,9 @@ export default function AccountPage() {
                       className="w-40 h-40 rounded-xl border border-stone-700 bg-white p-2"
                     />
                     <div className="space-y-2 text-xs text-stone-300">
-                      <p className="font-semibold text-foreground">Step 1: Scan with Authenticator</p>
+                      <p className="font-semibold text-stone-900 dark:text-white">Step 1: Scan with Authenticator</p>
                       <p>Scan this QR code using Google Authenticator, 1Password, or Microsoft Authenticator.</p>
-                      <p className="font-semibold text-foreground pt-2">Emergency Backup Codes:</p>
+                      <p className="font-semibold text-stone-900 dark:text-white pt-2">Emergency Backup Codes:</p>
                       <div className="grid grid-cols-2 gap-1.5 font-mono text-[11px] text-gold-pale bg-obsidian-soft p-2 rounded-lg border border-gold/20">
                         {twoFaData.backupCodes.map((c, i) => (
                           <span key={i}>{c}</span>
