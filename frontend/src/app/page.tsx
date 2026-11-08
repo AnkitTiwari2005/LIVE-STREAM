@@ -141,7 +141,7 @@ const SANCTUM_STREAMS = [
     streamer: 'Pandit Hariram Vyas',
     isVerified: true,
     viewers: 412,
-    quality: '4K SFU',
+    quality: 'Live HD',
     thumbnail: '/images/photo-1681797849099-0053b1567d95.webp',
   },
   {
@@ -154,7 +154,7 @@ const SANCTUM_STREAMS = [
     streamer: 'Pandit Aarav Sharma',
     isVerified: true,
     viewers: 248,
-    quality: '4K SFU',
+    quality: 'Live HD',
     thumbnail: '/images/photo-1678593628844-6ea49dee8ce3.webp',
   },
   {
@@ -167,7 +167,7 @@ const SANCTUM_STREAMS = [
     streamer: 'Pandit Vishwanath Bhatt',
     isVerified: true,
     viewers: 184,
-    quality: '1080p 60fps',
+    quality: 'Live HD',
     thumbnail: '/images/photo-1763479939733-eea29c578c17.webp',
   },
   {
@@ -180,7 +180,7 @@ const SANCTUM_STREAMS = [
     streamer: 'Acharya Devrat Sharma',
     isVerified: true,
     viewers: 329,
-    quality: '4K SFU',
+    quality: 'Live HD',
     thumbnail: '/images/photo-1763479168649-8ffb3bbb9103.webp',
   },
 ];
@@ -381,7 +381,7 @@ export default function HomePage() {
             </h1>
 
             <p className="mt-6 max-w-xl text-stone-300 text-base sm:text-lg leading-relaxed">
-              Shubhdarshan brings real-time temple Darshan, personalized Vedic poojas, and Gurukul-verified astrologers to devotees in 62 countries — in sub-second 4K, from the sacred ghats of Kashi to your living room.
+              Shubhdarshan brings real-time temple Darshan, personalized Vedic poojas, and Gurukul-verified astrologers to devotees in 62 countries — in ultra-low latency HD, from the sacred ghats of Kashi to your living room.
             </p>
 
             {/* Hero Action Buttons */}
@@ -465,7 +465,7 @@ export default function HomePage() {
                     LIVE
                   </span>
                   <span className="rounded-full bg-black/70 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-gold-pale border border-gold/20">
-                    Sub-second 4K
+                    Live HD
                   </span>
                 </div>
 
@@ -672,7 +672,7 @@ export default function HomePage() {
             </h2>
           </div>
           <span className="text-xs text-gold-soft/90 font-medium hidden sm:inline">
-            5 Coins / min metered darshan • Sub-second 4K
+            5 Coins / min metered darshan • Live HD
           </span>
         </div>
 
