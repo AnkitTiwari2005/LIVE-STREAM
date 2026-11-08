@@ -21,6 +21,7 @@ import {
   UpdateCategoryDto,
   AddWordFilterDto,
   UpdateStaticPageDto,
+  UpdateBannerDto,
 } from './dto/admin.dto';
 
 @ApiTags('Admin Panel')
@@ -135,5 +136,19 @@ export class AdminController {
     @Body() dto: UpdateStaticPageDto,
   ) {
     return this.adminService.updateStaticPage(slug, dto.title, dto.contentHtml);
+  }
+
+  // --- Occasion Announcement Banner (FR-M7) ---
+  @Public()
+  @Get('banner')
+  @ApiOperation({ summary: 'Get active occasion announcement banner config' })
+  async getBanner() {
+    return this.adminService.getBannerConfig();
+  }
+
+  @Patch('banner')
+  @ApiOperation({ summary: 'Update occasion announcement banner config (Admin only)' })
+  async updateBanner(@Body() dto: UpdateBannerDto) {
+    return this.adminService.updateBannerConfig(dto);
   }
 }

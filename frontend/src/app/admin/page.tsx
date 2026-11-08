@@ -18,14 +18,18 @@ import {
   Lock,
   Trash2,
   Plus,
+  Bell,
+  Eye,
+  Megaphone,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/components/Toast';
+import { DiyaIcon } from '@/components/icons/SpiritualIcons';
 
 export default function AdminConsolePage() {
   const router = useRouter();
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<'kpi' | 'kyc' | 'streams' | 'reports' | 'wordFilters' | 'users' | 'audit'>('kpi');
+  const [activeTab, setActiveTab] = useState<'kpi' | 'kyc' | 'streams' | 'reports' | 'wordFilters' | 'users' | 'audit' | 'banner'>('kpi');
   const [stats, setStats] = useState<any>(null);
   const [kycList, setKycList] = useState<any[]>([]);
   const [liveStreams, setLiveStreams] = useState<any[]>([]);
@@ -38,6 +42,26 @@ export default function AdminConsolePage() {
   const [searchUser, setSearchUser] = useState('');
   const [loading, setLoading] = useState(true);
   const [authToken, setAuthToken] = useState<string | null>(null);
+
+  // Occasion Announcement Banner State
+  const [bannerConfig, setBannerConfig] = useState<{
+    enabled: boolean;
+    occasion: string;
+    message: string;
+    mobileMessage: string;
+    ctaText: string;
+    ctaLink: string;
+    gradient: string;
+  }>({
+    enabled: false,
+    occasion: 'Deepotsav',
+    message: 'Join the Grand Deepotsav Mahotsav & Live Ganga Aarti from Bharat\'s sacred ghats',
+    mobileMessage: 'Live Aarti from sacred ghats',
+    ctaText: 'Watch Live Aarti',
+    ctaLink: '/#live-section',
+    gradient: 'amber-orange',
+  });
+  const [savingBanner, setSavingBanner] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('pooja_token');
@@ -87,10 +111,67 @@ export default function AdminConsolePage() {
       // 6. Audit Logs
       const auditRes = await fetch(`${apiUrl}/admin/audit-logs`, { headers });
       if (auditRes.ok) setAuditLogs(await auditRes.json());
+
+      // 7. Occasion Announcement Banner
+      const bannerRes = await fetch(`${apiUrl}/admin/banner`);
+      if (bannerRes.ok) {
+        const b = await bannerRes.json();
+        setBannerConfig({
+          enabled: Boolean(b.enabled),
+          occasion: b.occasion || 'Deepotsav',
+          message: b.message || 'Join the Grand Deepotsav Mahotsav & Live Ganga Aarti from Bharat\'s sacred ghats',
+          mobileMessage: b.mobileMessage || 'Live Aarti from sacred ghats',
+          ctaText: b.ctaText || 'Watch Live Aarti',
+          ctaLink: b.ctaLink || '/#live-section',
+          gradient: b.gradient || 'amber-orange',
+        });
+      }
     } catch (err) {
       console.error('Failed to load admin data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveBanner = async (newEnabled?: boolean) => {
+    setSavingBanner(true);
+    const token = localStorage.getItem('pooja_token');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    const payload = {
+      ...bannerConfig,
+      enabled: newEnabled !== undefined ? newEnabled : bannerConfig.enabled,
+    };
+
+    try {
+      const res = await fetch(`${apiUrl}/admin/banner`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to update banner configuration');
+      }
+
+      const updated = await res.json();
+      setBannerConfig((prev) => ({
+        ...prev,
+        ...updated,
+        enabled: Boolean(updated.enabled),
+      }));
+
+      if (payload.enabled) {
+        toast.success(`Occasion Banner for "${payload.occasion}" is now live sitewide!`);
+      } else {
+        toast.success('Occasion Banner is disabled and removed from the site.');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Error updating banner');
+    } finally {
+      setSavingBanner(false);
     }
   };
 
@@ -229,6 +310,7 @@ export default function AdminConsolePage() {
           { key: 'wordFilters', label: `Prohibited Words (${wordFilters.length})` },
           { key: 'users', label: 'User Directory' },
           { key: 'audit', label: 'Audit Log' },
+          { key: 'banner', label: `Occasion Banner ${bannerConfig.enabled ? '● Active' : ''}` },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -532,6 +614,237 @@ export default function AdminConsolePage() {
               </span>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Tab 8: Occasion Announcement Banner CMS */}
+      {activeTab === 'banner' && (
+        <div className="space-y-6 max-w-4xl">
+          {/* Card 1: Master Status & Toggle */}
+          <div className="bg-stone-900 border border-stone-800 p-6 rounded-2xl shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-stone-800">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Megaphone className="w-5 h-5 text-gold" />
+                  <h2 className="font-serif text-lg font-bold text-white">Occasion Announcement Banner</h2>
+                </div>
+                <p className="text-xs text-stone-400 mt-1">
+                  Control the time-limited festival banner displayed at the very top of the website for all devotees.
+                </p>
+              </div>
+
+              {/* Status Pill & Master Switch */}
+              <div className="flex items-center gap-3">
+                <span
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
+                    bannerConfig.enabled
+                      ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
+                      : 'bg-stone-800 text-stone-400 border border-stone-700'
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${bannerConfig.enabled ? 'bg-emerald-400 animate-pulse' : 'bg-stone-500'}`} />
+                  {bannerConfig.enabled ? 'Active on Website' : 'Disabled / Hidden'}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => handleSaveBanner(!bannerConfig.enabled)}
+                  disabled={savingBanner}
+                  className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all shadow-sm ${
+                    bannerConfig.enabled
+                      ? 'bg-red-600/80 hover:bg-red-600 text-white'
+                      : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                  }`}
+                >
+                  {bannerConfig.enabled ? 'Disable Banner Now' : 'Enable & Publish'}
+                </button>
+              </div>
+            </div>
+
+            {/* Form Fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-stone-300 mb-1.5">
+                  Occasion Name / Festival Tag
+                </label>
+                <input
+                  type="text"
+                  value={bannerConfig.occasion}
+                  onChange={(e) => setBannerConfig({ ...bannerConfig, occasion: e.target.value })}
+                  placeholder="e.g. Deepotsav, Maha Shivratri, Navratri"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-stone-950 border border-stone-800 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold transition"
+                />
+                <span className="text-[10px] text-stone-500 mt-1 block">
+                  Highlighted with golden drop-shadow at the start of the banner.
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-stone-300 mb-1.5">
+                  Gradient Color Scheme
+                </label>
+                <select
+                  value={bannerConfig.gradient}
+                  onChange={(e) => setBannerConfig({ ...bannerConfig, gradient: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-stone-950 border border-stone-800 text-xs text-white focus:outline-none focus:border-gold transition"
+                >
+                  <option value="amber-orange">Deepotsav Flame (Amber-Orange-Crimson)</option>
+                  <option value="kashi-gold">Kashi Sanctum (Rich Gold to Dark Amber)</option>
+                  <option value="vedic-saffron">Vedic Saffron (Vermillion Saffron to Crimson)</option>
+                </select>
+                <span className="text-[10px] text-stone-500 mt-1 block">
+                  Color gradient applied across both mobile and desktop viewports.
+                </span>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-stone-300 mb-1.5">
+                  Desktop Announcement Headline
+                </label>
+                <input
+                  type="text"
+                  value={bannerConfig.message}
+                  onChange={(e) => setBannerConfig({ ...bannerConfig, message: e.target.value })}
+                  placeholder="e.g. Join the Grand Deepotsav Mahotsav & Live Ganga Aarti from Bharat's sacred ghats"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-stone-950 border border-stone-800 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-stone-300 mb-1.5">
+                  Mobile Short Headline
+                </label>
+                <input
+                  type="text"
+                  value={bannerConfig.mobileMessage}
+                  onChange={(e) => setBannerConfig({ ...bannerConfig, mobileMessage: e.target.value })}
+                  placeholder="e.g. Live Aarti from sacred ghats"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-stone-950 border border-stone-800 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold transition"
+                />
+                <span className="text-[10px] text-stone-500 mt-1 block">
+                  Concise version that fits neatly on 360px–400px mobile screens.
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-300 mb-1.5">
+                    CTA Button Text
+                  </label>
+                  <input
+                    type="text"
+                    value={bannerConfig.ctaText}
+                    onChange={(e) => setBannerConfig({ ...bannerConfig, ctaText: e.target.value })}
+                    placeholder="e.g. Watch Live Aarti"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-stone-950 border border-stone-800 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-300 mb-1.5">
+                    CTA Target Link
+                  </label>
+                  <input
+                    type="text"
+                    value={bannerConfig.ctaLink}
+                    onChange={(e) => setBannerConfig({ ...bannerConfig, ctaLink: e.target.value })}
+                    placeholder="e.g. /#live-section or /pooja"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-stone-950 border border-stone-800 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold transition"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Live Visual Preview */}
+            <div className="mt-8 pt-6 border-t border-stone-800">
+              <span className="text-xs font-bold uppercase tracking-wider text-stone-400 mb-3 flex items-center gap-1.5">
+                <Eye className="w-3.5 h-3.5 text-gold" /> Live Sitewide Banner Preview
+              </span>
+
+              {/* Preview Container */}
+              <div className="rounded-2xl border border-stone-800 p-4 bg-stone-950 space-y-3">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block mb-1">
+                    Desktop View:
+                  </span>
+                  <div
+                    className={`flex items-center justify-between gap-3 px-4 py-2 text-xs rounded-xl text-white shadow-md border border-amber-600/30 ${
+                      bannerConfig.gradient === 'kashi-gold'
+                        ? 'bg-gradient-to-r from-amber-700 via-yellow-600 to-amber-800'
+                        : bannerConfig.gradient === 'vedic-saffron'
+                        ? 'bg-gradient-to-r from-red-700 via-rose-600 to-amber-700'
+                        : 'bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <DiyaIcon size={16} className="text-amber-200 shrink-0" />
+                      <span className="font-extrabold text-amber-100">{bannerConfig.occasion}:</span>
+                      <span className="font-medium truncate">{bannerConfig.message || 'Announcement message...'}</span>
+                    </div>
+                    <span className="px-3 py-1 rounded-full bg-amber-100 text-stone-950 font-extrabold text-[10px] whitespace-nowrap shrink-0">
+                      {bannerConfig.ctaText || 'Watch Now'}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block mb-1">
+                    Mobile View (Simulated Narrow):
+                  </span>
+                  <div
+                    className={`max-w-[340px] flex items-center justify-between gap-2 px-3 py-1.5 text-[11px] rounded-xl text-white shadow-md border border-amber-600/30 ${
+                      bannerConfig.gradient === 'kashi-gold'
+                        ? 'bg-gradient-to-r from-amber-700 via-yellow-600 to-amber-800'
+                        : bannerConfig.gradient === 'vedic-saffron'
+                        ? 'bg-gradient-to-r from-red-700 via-rose-600 to-amber-700'
+                        : 'bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 truncate">
+                      <DiyaIcon size={14} className="text-amber-200 shrink-0" />
+                      <span className="font-extrabold text-amber-100">{bannerConfig.occasion}:</span>
+                      <span className="font-medium truncate">{bannerConfig.mobileMessage || bannerConfig.message || 'Live broadcast...'}</span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full bg-amber-100 text-stone-950 font-extrabold text-[9px] whitespace-nowrap shrink-0">
+                      {bannerConfig.ctaText || 'Watch'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Actions */}
+            <div className="mt-6 pt-5 border-t border-stone-800 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleSaveBanner(true)}
+                  disabled={savingBanner}
+                  className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-obsidian text-xs font-black rounded-xl transition shadow-lg disabled:opacity-60"
+                >
+                  {savingBanner ? 'Saving...' : 'Save & Publish Live'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveBanner(false)}
+                  disabled={savingBanner}
+                  className="px-5 py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-bold rounded-xl transition border border-stone-700 disabled:opacity-60"
+                >
+                  {savingBanner ? 'Saving...' : 'Save as Disabled (Hidden)'}
+                </button>
+              </div>
+
+              {bannerConfig.enabled && (
+                <button
+                  type="button"
+                  onClick={() => handleSaveBanner(false)}
+                  disabled={savingBanner}
+                  className="px-4 py-2 text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-950/40 rounded-xl transition"
+                >
+                  Remove from Site Now
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       )}
       </div>

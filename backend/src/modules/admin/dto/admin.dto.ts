@@ -76,3 +76,45 @@ export class UpdateStaticPageDto {
   @IsNotEmpty()
   contentHtml: string;
 }
+
+export class UpdateBannerDto {
+  @ApiProperty({ example: false })
+  @IsBoolean()
+  enabled: boolean;
+
+  @ApiProperty({ required: false, example: 'Deepotsav' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  occasion?: string;
+
+  @ApiProperty({ required: false, example: 'Join the Grand Deepotsav Mahotsav & Live Ganga Aarti' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  message?: string;
+
+  @ApiProperty({ required: false, example: 'Live Aarti from sacred ghats' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  mobileMessage?: string;
+
+  @ApiProperty({ required: false, example: 'Watch Live Aarti' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  ctaText?: string;
+
+  @ApiProperty({ required: false, example: '/#live-section' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  ctaLink?: string;
+
+  @ApiProperty({ required: false, example: 'amber-orange' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  gradient?: string;
+}

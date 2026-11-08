@@ -240,4 +240,83 @@ export class AdminService {
       create: { slug, title, contentHtml: safeHtml },
     });
   }
+
+  // --- Occasion Announcement Banner CMS ---
+  async getBannerConfig() {
+    try {
+      const row = await this.prisma.staticPage.findUnique({
+        where: { slug: 'announcement-banner' },
+      });
+      if (!row) {
+        return {
+          enabled: false,
+          occasion: 'Deepotsav',
+          message: 'Join the Grand Deepotsav Mahotsav & Live Ganga Aarti from Bharat\'s sacred ghats',
+          mobileMessage: 'Live Aarti from sacred ghats',
+          ctaText: 'Watch Live Aarti',
+          ctaLink: '/#live-section',
+          gradient: 'amber-orange',
+        };
+      }
+      const data = JSON.parse(row.contentHtml);
+      return {
+        enabled: Boolean(data.enabled),
+        occasion: data.occasion || row.title || 'Deepotsav',
+        message: data.message || '',
+        mobileMessage: data.mobileMessage || '',
+        ctaText: data.ctaText || 'Watch Live Aarti',
+        ctaLink: data.ctaLink || '/#live-section',
+        gradient: data.gradient || 'amber-orange',
+        updatedAt: row.updatedAt,
+      };
+    } catch {
+      return {
+        enabled: false,
+        occasion: 'Deepotsav',
+        message: 'Join the Grand Deepotsav Mahotsav & Live Ganga Aarti from Bharat\'s sacred ghats',
+        mobileMessage: 'Live Aarti from sacred ghats',
+        ctaText: 'Watch Live Aarti',
+        ctaLink: '/#live-section',
+        gradient: 'amber-orange',
+      };
+    }
+  }
+
+  async updateBannerConfig(dto: {
+    enabled: boolean;
+    occasion?: string;
+    message?: string;
+    mobileMessage?: string;
+    ctaText?: string;
+    ctaLink?: string;
+    gradient?: string;
+  }) {
+    const payload = {
+      enabled: Boolean(dto.enabled),
+      occasion: dto.occasion || 'Special Occasion',
+      message: dto.message || '',
+      mobileMessage: dto.mobileMessage || '',
+      ctaText: dto.ctaText || 'Watch Now',
+      ctaLink: dto.ctaLink || '/#live-section',
+      gradient: dto.gradient || 'amber-orange',
+    };
+
+    const row = await this.prisma.staticPage.upsert({
+      where: { slug: 'announcement-banner' },
+      update: {
+        title: payload.occasion,
+        contentHtml: JSON.stringify(payload),
+      },
+      create: {
+        slug: 'announcement-banner',
+        title: payload.occasion,
+        contentHtml: JSON.stringify(payload),
+      },
+    });
+
+    return {
+      ...payload,
+      updatedAt: row.updatedAt,
+    };
+  }
 }
