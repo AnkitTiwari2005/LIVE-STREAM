@@ -573,17 +573,17 @@ export default function HomePage() {
           {CATEGORY_TILES.map((cat) => {
             const Icon = cat.icon;
             const isStudio = cat.id === 'studio';
+            const isStreamer = user?.role === 'STREAMER' || user?.role === 'ADMIN';
+            const title = isStudio && !isStreamer ? 'Become a Pandit' : cat.name;
+            const tag = isStudio && !isStreamer ? 'Pandit Seva' : cat.tag;
+            const desc = isStudio && !isStreamer ? 'Apply to conduct verified sanctum poojas' : cat.desc;
+            const actionText = isStudio ? (isStreamer ? 'Open Studio' : 'Apply as Pandit') : 'Explore';
+
             return (
               <div
                 key={cat.id}
                 onClick={() => {
                   if (isStudio) {
-                    const storedUser = typeof window !== 'undefined' ? localStorage.getItem('pooja_user') : null;
-                    let isStreamer = false;
-                    try {
-                      const parsed = storedUser ? JSON.parse(storedUser) : null;
-                      isStreamer = parsed?.role === 'STREAMER' || parsed?.role === 'ADMIN';
-                    } catch {}
                     window.location.href = isStreamer ? '/studio/create' : '/streamer/apply';
                     return;
                   }
@@ -612,18 +612,18 @@ export default function HomePage() {
                       <Icon size={18} />
                     </div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-gold-pale bg-gold/10 px-2 py-0.5 rounded-full border border-gold/20">
-                      {cat.tag}
+                      {tag}
                     </span>
                   </div>
                   <h3 className="font-serif text-sm sm:text-base font-bold text-white group-hover:text-gold-pale transition-colors">
-                    {cat.name}
+                    {title}
                   </h3>
                   <p className="text-[11px] text-stone-400 mt-1 line-clamp-1 leading-snug">
-                    {cat.desc}
+                    {desc}
                   </p>
                 </div>
                 <div className="mt-3 pt-2 border-t border-stone-800/60 flex items-center justify-between text-[11px] text-gold-soft font-semibold">
-                  <span>{isStudio ? 'Open Studio' : 'Explore'}</span>
+                  <span>{actionText}</span>
                   <ChevronRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>

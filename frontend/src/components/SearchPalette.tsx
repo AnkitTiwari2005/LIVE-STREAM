@@ -104,12 +104,20 @@ const SEARCH_DIRECTORY: SearchItem[] = [
     keywords: 'coins wallet recharge payment balance topup pack upi',
   },
   {
-    title: 'Pandit Studio',
-    subtitle: 'Broadcast your own sacred live darshan',
+    title: 'Become a Verified Pandit',
+    subtitle: 'Apply for Gurukul & Temple broadcast verification',
+    category: 'Streamer',
+    url: '/streamer/apply',
+    image: '/images/photo-1543934776-32d1cc654abb.webp',
+    keywords: 'apply pandit become acharya priest verification onboard',
+  },
+  {
+    title: 'Pandit Broadcaster Studio',
+    subtitle: 'For verified Pandits to go live & stream pooja',
     category: 'Streamer',
     url: '/studio/create',
     image: '/images/photo-1791727868124-c6ba8c28449a.webp',
-    keywords: 'studio broadcast pandit go live camera microphone',
+    keywords: 'studio broadcast pandit go live camera microphone acharya',
   },
   {
     title: 'Devotee Help & FAQ',
