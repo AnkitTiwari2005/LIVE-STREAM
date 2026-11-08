@@ -243,9 +243,28 @@ export class AuthService {
     return this.generateTokens(user);
   }
 
-  async setupAdmin2FA(userId: string) {
+  async setupAdmin2FA(userId: string, currentTotpToken?: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
+
+    // R-05: If 2FA is already active, require the current TOTP code before allowing reset.
+    // Without this check, anyone with a stolen access token can silently re-enroll 2FA
+    // and lock the real owner out or receive their 2FA codes on a different device.
+    if (user.isTwoFactorEnabled) {
+      if (!currentTotpToken) {
+        throw new BadRequestException(
+          '2FA is already enabled. Provide your current 6-digit authenticator code to re-enroll.',
+        );
+      }
+      if (!user.twoFactorSecretEnc) {
+        throw new BadRequestException('2FA secret is missing — contact support.');
+      }
+      const existingSecret = CryptoUtil.decryptAesGcm(user.twoFactorSecretEnc);
+      const isValid = authenticator.verify({ token: currentTotpToken, secret: existingSecret });
+      if (!isValid) {
+        throw new BadRequestException('Current 2FA code is incorrect. Re-enrollment denied.');
+      }
+    }
 
     const secret = authenticator.generateSecret();
     const otpAuthUrl = authenticator.keyuri(user.email, 'ShubhdarshanAdmin', secret);
@@ -371,6 +390,11 @@ export class AuthService {
         passwordHash,
         resetTokenHash: null,
         resetTokenExpiry: null,
+        // H-10: Record the time the password was changed. The JWT strategy compares
+        // the token's iat (issued-at) against this timestamp and rejects tokens issued
+        // before the reset, invalidating all existing sessions without needing a
+        // token blacklist or database-stored version counter.
+        passwordChangedAt: new Date(),
       },
     });
 

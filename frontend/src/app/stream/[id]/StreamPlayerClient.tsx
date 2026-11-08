@@ -83,6 +83,8 @@ export default function StreamPlayerClient() {
   const [reporting, setReporting] = useState(false);
 
   const meterIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // H-05: Track consecutive billing errors; fail-closed after 3 to prevent free-ride on network issues
+  const billingErrorCountRef = useRef<number>(0);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -242,9 +244,21 @@ export default function StreamPlayerClient() {
         }
 
         if (!res.ok) {
-          // B-10: Transient network error - don't treat as zero balance, allow retry on next interval
+          // H-05: Transient network error — count it. Fail-closed after 3 consecutive
+          // failures: stop the stream rather than letting the viewer watch for free
+          // while billing silently fails.
+          billingErrorCountRef.current += 1;
+          if (billingErrorCountRef.current >= 3) {
+            setIsZeroBalance(true);
+            setTopupModalOpen(true);
+            setToken(null);
+            if (meterIntervalRef.current) clearInterval(meterIntervalRef.current);
+          }
           return;
         }
+
+        // Reset error counter on any successful tick
+        billingErrorCountRef.current = 0;
 
         const data = await res.json();
         if (data.canContinue) {
@@ -534,7 +548,14 @@ export default function StreamPlayerClient() {
                   connect={true}
                   video={false}
                   audio={false}
-                  onDisconnected={() => setStreamEnded(true)}
+                  onDisconnected={() => {
+                    // H-06: LiveKit disconnects for two reasons:
+                    // 1. The pandit ended the stream — stream status will be ENDED.
+                    // 2. The 5-min viewer token expired — the stream is still LIVE, we just need a fresh token.
+                    // Try re-fetching first. fetchStreamAndToken() will set streamEnded=true
+                    // if the server confirms ENDED status, so this is safe in both cases.
+                    fetchStreamAndToken();
+                  }}
                   className="w-full h-full"
                 >
                   <RoomAudioRenderer />

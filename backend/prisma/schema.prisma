@@ -89,6 +89,7 @@ model User {
   emailVerifyTokenHash String?            
   resetTokenHash       String?            
   resetTokenExpiry     DateTime?
+  passwordChangedAt    DateTime?          @db.Timestamptz // H-10: invalidate pre-existing JWTs after password reset
   preferredLanguage    String             @default("en")
   emailNotification    Boolean            @default(true)
   twoFactorSecretEnc   String?            // AES-256-GCM encrypted TOTP secret

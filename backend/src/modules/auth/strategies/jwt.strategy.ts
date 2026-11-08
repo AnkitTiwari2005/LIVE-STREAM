@@ -10,6 +10,7 @@ export interface JwtPayload {
   role: string;
   purpose?: string;
   is2FAChallenge?: boolean;
+  iat?: number; // H-10: standard JWT issued-at, used to detect pre-reset tokens
 }
 
 @Injectable()
@@ -50,11 +51,22 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         status: true,
         isEmailVerified: true,
         isTwoFactorEnabled: true,
+        passwordChangedAt: true, // H-10: needed to reject tokens issued before a password reset
       },
     });
 
     if (!user) {
       throw new UnauthorizedException('User account no longer exists');
+    }
+
+    // H-10: Reject tokens that were issued before the most recent password reset.
+    // This invalidates all existing sessions (mobile, web, stolen tokens) the moment
+    // a user resets their password, without needing a database token blacklist.
+    if (user.passwordChangedAt && payload.iat) {
+      const issuedAt = new Date(payload.iat * 1000);
+      if (issuedAt < user.passwordChangedAt) {
+        throw new UnauthorizedException('Session expired after password change — please log in again.');
+      }
     }
 
     if (user.status === UserStatus.BANNED) {

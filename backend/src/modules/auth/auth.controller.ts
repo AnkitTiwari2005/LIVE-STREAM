@@ -74,8 +74,13 @@ export class AuthController {
 
   @Post('setup-2fa')
   @ApiOperation({ summary: 'Initialize TOTP 2FA for current user' })
-  async setup2FA(@CurrentUser('id') userId: string) {
-    return this.authService.setupAdmin2FA(userId);
+  async setup2FA(
+    @CurrentUser('id') userId: string,
+    @Body('currentToken') currentToken?: string,
+  ) {
+    // R-05: If 2FA is already enabled, currentToken (the existing TOTP code) is required
+    // to prevent a stolen access token from silently re-enrolling a new 2FA device.
+    return this.authService.setupAdmin2FA(userId, currentToken);
   }
 
   @Post('confirm-2fa')
