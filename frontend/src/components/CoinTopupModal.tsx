@@ -208,8 +208,8 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
-      <div className="relative w-full max-w-xl bg-white dark:bg-obsidian-deep border border-stone-200 dark:border-gold/30 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in overflow-y-auto">
+      <div className="relative w-full max-w-xl bg-white dark:bg-obsidian-deep border border-stone-200 dark:border-gold/30 rounded-3xl p-5 sm:p-8 shadow-2xl overflow-hidden my-auto">
         {/* Sacred ambient background glow */}
         <div className="mandala-bg absolute inset-0 opacity-20 pointer-events-none" />
 

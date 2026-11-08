@@ -15,7 +15,7 @@ import {
 import { Track } from 'livekit-client';
 import { io, Socket } from 'socket.io-client';
 import { ChatWidget } from '@/components/ChatWidget';
-import { SpiritualReactions } from '@/components/SpiritualReactions';
+import { DevotionalEmojiBar, FloatingReactionsOverlay } from '@/components/SpiritualReactions';
 import { DakshinaModal } from '@/components/DakshinaModal';
 import { useToast } from '@/components/Toast';
 import {
@@ -222,7 +222,7 @@ export default function JoinPrivateStreamClient() {
               >
                 {/* RoomAudioRenderer ensures remote audio tracks are played via HTMLAudioElement */}
                 <RoomAudioRenderer />
-                <PrivateTwoWayConsultationRenderer onLeave={() => setToken(null)} />
+                <PrivateTwoWayConsultationRenderer onLeave={() => setToken(null)} socket={socket} streamId={streamId} />
               </LiveKitRoom>
 
               {/* Floating Auspicious Dakshina Alert */}
@@ -248,7 +248,7 @@ export default function JoinPrivateStreamClient() {
               {/* Emoji Reactions */}
               {streamId && (
                 <div className="flex-1 min-w-0">
-                  <SpiritualReactions socket={socket} streamId={streamId} />
+                  <DevotionalEmojiBar socket={socket} streamId={streamId} />
                 </div>
               )}
             </div>
@@ -418,7 +418,7 @@ export default function JoinPrivateStreamClient() {
   );
 }
 
-function PrivateTwoWayConsultationRenderer({ onLeave }: { onLeave: () => void }) {
+function PrivateTwoWayConsultationRenderer({ onLeave, socket, streamId }: { onLeave: () => void; socket: Socket | null; streamId: string }) {
   const cameraTracks = useTracks([Track.Source.Camera]);
   const audioTracks = useTracks([Track.Source.Microphone]);
   const { localParticipant, isMicrophoneEnabled, isCameraEnabled, cameraTrack } = useLocalParticipant();
@@ -450,14 +450,32 @@ function PrivateTwoWayConsultationRenderer({ onLeave }: { onLeave: () => void })
   };
 
   const toggleMic = async () => {
-    if (localParticipant) {
+    if (!localParticipant) return;
+    try {
       await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
+    } catch (err: any) {
+      // Browser permission not yet granted — request it explicitly
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        await localParticipant.setMicrophoneEnabled(true);
+      } catch {
+        console.warn('Mic permission denied', err);
+      }
     }
   };
 
   const toggleCamera = async () => {
-    if (localParticipant) {
+    if (!localParticipant) return;
+    try {
       await localParticipant.setCameraEnabled(!isCameraEnabled);
+    } catch (err: any) {
+      // Browser permission not yet granted — request it explicitly
+      try {
+        await navigator.mediaDevices.getUserMedia({ video: true });
+        await localParticipant.setCameraEnabled(true);
+      } catch {
+        console.warn('Camera permission denied', err);
+      }
     }
   };
 
@@ -468,6 +486,8 @@ function PrivateTwoWayConsultationRenderer({ onLeave }: { onLeave: () => void })
   return (
     // Full video area — no floating control bar here, controls live outside this component
     <div className="relative w-full h-full bg-black cursor-pointer" onClick={unlockAudio}>
+      {/* Floating emoji reactions overlay — inside video so emojis float up over the stream */}
+      <FloatingReactionsOverlay socket={socket} streamId={streamId} />
       {/* Remote Audio Track Renderer */}
       {remoteAudioTrack && (
         <AudioTrack trackRef={remoteAudioTrack} />

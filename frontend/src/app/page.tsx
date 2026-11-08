@@ -299,25 +299,15 @@ export default function HomePage() {
   }, [searchQuery]);
 
   useEffect(() => {
-    async function loadData() {
+    async function loadStreams() {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
-
-        // Load Categories
-        const catRes = await fetch(`${apiUrl}/admin/categories`);
-        if (catRes.ok) {
-          const cats = await catRes.json();
-          setCategories(cats);
-        }
-
-        // Load Streams
         let streamUrl = `${apiUrl}/streams/public`;
         const params = new URLSearchParams();
         if (selectedCategory) params.append('categoryId', selectedCategory);
         if (debouncedSearch) params.append('search', debouncedSearch);
         if (params.toString()) streamUrl += `?${params.toString()}`;
-
-        const streamRes = await fetch(streamUrl);
+        const streamRes = await fetch(streamUrl, { cache: 'no-store' });
         if (streamRes.ok) {
           const data = await streamRes.json();
           setStreams(data);
@@ -329,7 +319,24 @@ export default function HomePage() {
       }
     }
 
+    async function loadData() {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+        // Load categories once
+        const catRes = await fetch(`${apiUrl}/admin/categories`);
+        if (catRes.ok) {
+          const cats = await catRes.json();
+          setCategories(cats);
+        }
+      } catch {}
+      await loadStreams();
+    }
+
     loadData();
+
+    // Poll streams every 30 seconds so live status updates automatically without cache-clear
+    const pollInterval = setInterval(loadStreams, 30_000);
+    return () => clearInterval(pollInterval);
   }, [selectedCategory, debouncedSearch]);
 
   const liveStreams = streams.filter((s) => s.status === 'LIVE');

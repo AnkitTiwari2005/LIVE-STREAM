@@ -7,8 +7,13 @@ interface IconProps extends React.SVGProps<SVGSVGElement> {
 
 /**
  * 1. Sacred Om Symbol (Aum) with Divine Solar/Saffron Radiant Aura
+ * Uses React.useId() so each SVG instance gets unique gradient IDs — prevents
+ * the duplicate-ID bug that makes icons invisible on mobile / multi-instance pages.
  */
 export function OmIcon({ size = 24, className = '', ...props }: IconProps) {
+  const uid = React.useId().replace(/:/g, '');
+  const g1 = `omGrad_${uid}`;
+  const g2 = `omHalo_${uid}`;
   return (
     <svg
       width={size}
@@ -20,39 +25,39 @@ export function OmIcon({ size = 24, className = '', ...props }: IconProps) {
       {...props}
     >
       <defs>
-        <linearGradient id="omGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id={g1} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#fbbf24" />
           <stop offset="50%" stopColor="#f59e0b" />
           <stop offset="100%" stopColor="#ea580c" />
         </linearGradient>
-        <radialGradient id="omHalo" cx="50%" cy="50%" r="50%">
+        <radialGradient id={g2} cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.4" />
           <stop offset="100%" stopColor="#ea580c" stopOpacity="0" />
         </radialGradient>
       </defs>
       {/* Background Divine Halo */}
-      <circle cx="24" cy="24" r="22" fill="url(#omHalo)" />
+      <circle cx="24" cy="24" r="22" fill={`url(#${g2})`} />
       {/* Sacred Om Devanagari Glyph Path */}
       <path
         d="M20.5 14.5C18.5 12 15 12.5 13 15C11 17.5 11.5 21 14.5 23C12 24.5 10.5 28 11.5 31.5C12.8 35.5 17.5 37 21.5 35.5C24.5 34.3 26 31.5 26 29C26 26.5 24 25 21.5 24.5C25.5 23 27 18 24.5 15.5C23.5 14.5 22 14.5 20.5 14.5ZM21.5 28.5C23.5 29.5 23 32.5 20.5 33C17.5 33.5 14.5 32 14 29.5C13.5 27 16 26 18.5 26.5C19.8 26.8 20.8 27.5 21.5 28.5ZM20 20C18 20.5 15.5 19.5 15 17.5C14.5 15.5 16.5 14.5 18.5 14.5C20.5 14.5 22 16 21.5 18C21.2 19 20.8 19.5 20 20Z"
-        fill="url(#omGrad)"
+        fill={`url(#${g1})`}
       />
       {/* Right Sweeping Curve */}
       <path
         d="M23 23C26.5 24 33 26 32 32C31.5 35 28.5 37 25 36"
-        stroke="url(#omGrad)"
+        stroke={`url(#${g1})`}
         strokeWidth="3"
         strokeLinecap="round"
       />
       {/* Upper Crescent (Chandrabindu base) */}
       <path
         d="M27 13.5C29 15.5 33.5 15.5 35.5 13.5"
-        stroke="url(#omGrad)"
+        stroke={`url(#${g1})`}
         strokeWidth="2.5"
         strokeLinecap="round"
       />
       {/* Bindu (The Sacred Supreme Consciousness Point) */}
-      <circle cx="31.2" cy="10" r="2" fill="url(#omGrad)" />
+      <circle cx="31.2" cy="10" r="2" fill={`url(#${g1})`} />
     </svg>
   );
 }
@@ -61,6 +66,10 @@ export function OmIcon({ size = 24, className = '', ...props }: IconProps) {
  * 2. Sacred Diya / Deepak (Traditional Brass Lamp with Glowing Flame)
  */
 export function DiyaIcon({ size = 24, className = '', ...props }: IconProps) {
+  const uid = React.useId().replace(/:/g, '');
+  const g1 = `brassGrad_${uid}`;
+  const g2 = `flameOuter_${uid}`;
+  const g3 = `flameCore_${uid}`;
   return (
     <svg
       width={size}
@@ -72,17 +81,17 @@ export function DiyaIcon({ size = 24, className = '', ...props }: IconProps) {
       {...props}
     >
       <defs>
-        <linearGradient id="brassGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+        <linearGradient id={g1} x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%" stopColor="#fde047" />
           <stop offset="50%" stopColor="#eab308" />
           <stop offset="100%" stopColor="#a16207" />
         </linearGradient>
-        <linearGradient id="flameOuter" x1="0%" y1="100%" x2="0%" y2="0%">
+        <linearGradient id={g2} x1="0%" y1="100%" x2="0%" y2="0%">
           <stop offset="0%" stopColor="#ea580c" />
           <stop offset="60%" stopColor="#f59e0b" />
           <stop offset="100%" stopColor="#fef08a" />
         </linearGradient>
-        <radialGradient id="flameCore" cx="50%" cy="60%" r="50%">
+        <radialGradient id={g3} cx="50%" cy="60%" r="50%">
           <stop offset="0%" stopColor="#ffffff" />
           <stop offset="60%" stopColor="#fef08a" />
           <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
@@ -91,19 +100,19 @@ export function DiyaIcon({ size = 24, className = '', ...props }: IconProps) {
       {/* Glowing Teardrop Flame */}
       <path
         d="M24 6C24 6 17 17 17 22C17 25.866 20.134 29 24 29C27.866 29 31 25.866 31 22C31 17 24 6 24 6Z"
-        fill="url(#flameOuter)"
+        fill={`url(#${g2})`}
       />
       {/* Flame Inner Luminous Core */}
-      <ellipse cx="24" cy="22" rx="4" ry="6" fill="url(#flameCore)" />
+      <ellipse cx="24" cy="22" rx="4" ry="6" fill={`url(#${g3})`} />
       {/* Brass Diya Vessel Bowl */}
       <path
         d="M8 28C8 28 11 40 24 40C37 40 40 28 40 28C40 28 35 32 24 32C13 32 8 28 8 28Z"
-        fill="url(#brassGrad)"
+        fill={`url(#${g1})`}
       />
       {/* Diya Base Stand */}
       <path
         d="M18 39H30L32 43H16L18 39Z"
-        fill="url(#brassGrad)"
+        fill={`url(#${g1})`}
       />
     </svg>
   );
@@ -113,6 +122,9 @@ export function DiyaIcon({ size = 24, className = '', ...props }: IconProps) {
  * 3. Sacred Gold Coin (Devotional Dakshina Coin with Embossed Vedic Aum)
  */
 export function CoinIcon({ size = 24, className = '', ...props }: IconProps) {
+  const uid = React.useId().replace(/:/g, '');
+  const g1 = `coinEdge_${uid}`;
+  const g2 = `coinFace_${uid}`;
   return (
     <svg
       width={size}
@@ -124,22 +136,22 @@ export function CoinIcon({ size = 24, className = '', ...props }: IconProps) {
       {...props}
     >
       <defs>
-        <linearGradient id="coinEdge" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id={g1} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#fef08a" />
           <stop offset="35%" stopColor="#eab308" />
           <stop offset="70%" stopColor="#ca8a04" />
           <stop offset="100%" stopColor="#854d0e" />
         </linearGradient>
-        <linearGradient id="coinFace" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id={g2} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#fef08a" />
           <stop offset="50%" stopColor="#f59e0b" />
           <stop offset="100%" stopColor="#b45309" />
         </linearGradient>
       </defs>
       {/* Coin Outer Bezel */}
-      <circle cx="24" cy="24" r="21" fill="url(#coinEdge)" stroke="#fef08a" strokeWidth="1.5" />
+      <circle cx="24" cy="24" r="21" fill={`url(#${g1})`} stroke="#fef08a" strokeWidth="1.5" />
       {/* Coin Inner Recessed Face */}
-      <circle cx="24" cy="24" r="17" fill="url(#coinFace)" stroke="#ca8a04" strokeWidth="1" />
+      <circle cx="24" cy="24" r="17" fill={`url(#${g2})`} stroke="#ca8a04" strokeWidth="1" />
       {/* Embossed Vedic Aum in Center */}
       <path
         d="M21.5 18C20 16.5 17.5 17 16 18.5C14.8 19.8 15 22 17 23C15 24 14 26.5 15 28.5C16 31 19 32 21.5 31C23.5 30 24.5 28 24.5 26.5C24.5 25 23 24 21.5 23.5C24 22.5 25 19.5 23.5 18C23 17.2 22.2 17.5 21.5 18Z"
@@ -155,6 +167,8 @@ export function CoinIcon({ size = 24, className = '', ...props }: IconProps) {
  * 4. Devotional Pranam / Anjali Mudra (Folded Hands with Kalava Wrist Thread)
  */
 export function PranamIcon({ size = 24, className = '', ...props }: IconProps) {
+  const uid = React.useId().replace(/:/g, '');
+  const g1 = `pranamSkin_${uid}`;
   return (
     <svg
       width={size}
@@ -166,7 +180,7 @@ export function PranamIcon({ size = 24, className = '', ...props }: IconProps) {
       {...props}
     >
       <defs>
-        <linearGradient id="pranamSkinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id={g1} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#fed7aa" />
           <stop offset="50%" stopColor="#fb923c" />
           <stop offset="100%" stopColor="#ea580c" />
@@ -175,14 +189,14 @@ export function PranamIcon({ size = 24, className = '', ...props }: IconProps) {
       {/* Left Hand / Palm */}
       <path
         d="M23 8C23 8 20 12 19 17C18 21 16 26 15 29C14 32 15 36 18 38C20 39.5 22 40 23 40V8Z"
-        fill="url(#pranamSkinGrad)"
+        fill={`url(#${g1})`}
         stroke="#ea580c"
         strokeWidth="1"
       />
       {/* Right Hand / Palm */}
       <path
         d="M25 8C25 8 28 12 29 17C30 21 32 26 33 29C34 32 33 36 30 38C28 39.5 26 40 25 40V8Z"
-        fill="url(#pranamSkinGrad)"
+        fill={`url(#${g1})`}
         stroke="#ea580c"
         strokeWidth="1"
       />
@@ -199,6 +213,8 @@ export function PranamIcon({ size = 24, className = '', ...props }: IconProps) {
  * 5. Temple Ghanti / Auspicious Brass Bell with Resonance Waves
  */
 export function BellIcon({ size = 24, className = '', ...props }: IconProps) {
+  const uid = React.useId().replace(/:/g, '');
+  const g1 = `bellBrass_${uid}`;
   return (
     <svg
       width={size}
@@ -210,19 +226,19 @@ export function BellIcon({ size = 24, className = '', ...props }: IconProps) {
       {...props}
     >
       <defs>
-        <linearGradient id="bellBrass" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id={g1} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#fef08a" />
           <stop offset="40%" stopColor="#f59e0b" />
           <stop offset="100%" stopColor="#92400e" />
         </linearGradient>
       </defs>
       {/* Top Handle Hook */}
-      <path d="M24 6V11" stroke="url(#bellBrass)" strokeWidth="3" strokeLinecap="round" />
-      <circle cx="24" cy="6" r="3" stroke="url(#bellBrass)" strokeWidth="2.5" fill="none" />
+      <path d="M24 6V11" stroke={`url(#${g1})`} strokeWidth="3" strokeLinecap="round" />
+      <circle cx="24" cy="6" r="3" stroke={`url(#${g1})`} strokeWidth="2.5" fill="none" />
       {/* Bell Dome Body */}
       <path
         d="M13 32C13 22 17 14 24 14C31 14 35 22 35 32C37 34 39 36 39 38H9C9 36 11 34 13 32Z"
-        fill="url(#bellBrass)"
+        fill={`url(#${g1})`}
       />
       {/* Clapper / Dangling Bead */}
       <circle cx="24" cy="41" r="3.5" fill="#78350f" stroke="#fde047" strokeWidth="1.5" />
@@ -236,6 +252,9 @@ export function BellIcon({ size = 24, className = '', ...props }: IconProps) {
  * 6. Sacred Lotus (Padma Flower with Blooming Petals)
  */
 export function LotusIcon({ size = 24, className = '', ...props }: IconProps) {
+  const uid = React.useId().replace(/:/g, '');
+  const g1 = `lotusCenter_${uid}`;
+  const g2 = `lotusSide_${uid}`;
   return (
     <svg
       width={size}
@@ -247,41 +266,26 @@ export function LotusIcon({ size = 24, className = '', ...props }: IconProps) {
       {...props}
     >
       <defs>
-        <linearGradient id="lotusCenter" x1="0%" y1="100%" x2="0%" y2="0%">
+        <linearGradient id={g1} x1="0%" y1="100%" x2="0%" y2="0%">
           <stop offset="0%" stopColor="#f43f5e" />
           <stop offset="60%" stopColor="#fb7185" />
           <stop offset="100%" stopColor="#fecdd3" />
         </linearGradient>
-        <linearGradient id="lotusSide" x1="0%" y1="100%" x2="0%" y2="0%">
+        <linearGradient id={g2} x1="0%" y1="100%" x2="0%" y2="0%">
           <stop offset="0%" stopColor="#e11d48" />
           <stop offset="100%" stopColor="#fda4af" />
         </linearGradient>
       </defs>
       {/* Center Main Upright Petal */}
-      <path
-        d="M24 8C20 16 19 25 24 35C29 25 28 16 24 8Z"
-        fill="url(#lotusCenter)"
-      />
+      <path d="M24 8C20 16 19 25 24 35C29 25 28 16 24 8Z" fill={`url(#${g1})`} />
       {/* Left Mid Petal */}
-      <path
-        d="M17 15C13 21 14 28 23 35C17 31 13 24 17 15Z"
-        fill="url(#lotusSide)"
-      />
+      <path d="M17 15C13 21 14 28 23 35C17 31 13 24 17 15Z" fill={`url(#${g2})`} />
       {/* Right Mid Petal */}
-      <path
-        d="M31 15C35 21 34 28 25 35C31 31 35 24 31 15Z"
-        fill="url(#lotusSide)"
-      />
+      <path d="M31 15C35 21 34 28 25 35C31 31 35 24 31 15Z" fill={`url(#${g2})`} />
       {/* Left Low Flared Petal */}
-      <path
-        d="M10 24C8 30 13 36 22 36C14 36 9 31 10 24Z"
-        fill="url(#lotusSide)"
-      />
+      <path d="M10 24C8 30 13 36 22 36C14 36 9 31 10 24Z" fill={`url(#${g2})`} />
       {/* Right Low Flared Petal */}
-      <path
-        d="M38 24C40 30 35 36 26 36C34 36 39 31 38 24Z"
-        fill="url(#lotusSide)"
-      />
+      <path d="M38 24C40 30 35 36 26 36C34 36 39 31 38 24Z" fill={`url(#${g2})`} />
       {/* Water Base Lily Pad curve */}
       <path d="M14 39C20 41 28 41 34 39" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
     </svg>
@@ -292,6 +296,9 @@ export function LotusIcon({ size = 24, className = '', ...props }: IconProps) {
  * 7. Sacred Conch Shell (Shankha)
  */
 export function ConchIcon({ size = 24, className = '', ...props }: IconProps) {
+  const uid = React.useId().replace(/:/g, '');
+  const g1 = `conchBody_${uid}`;
+  const g2 = `conchGold_${uid}`;
   return (
     <svg
       width={size}
@@ -303,12 +310,12 @@ export function ConchIcon({ size = 24, className = '', ...props }: IconProps) {
       {...props}
     >
       <defs>
-        <linearGradient id="conchBody" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id={g1} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#ffffff" />
           <stop offset="50%" stopColor="#f3f4f6" />
           <stop offset="100%" stopColor="#d1d5db" />
         </linearGradient>
-        <linearGradient id="conchGold" x1="0%" y1="0%" x2="100%" y2="0%">
+        <linearGradient id={g2} x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stopColor="#fbbf24" />
           <stop offset="100%" stopColor="#d97706" />
         </linearGradient>
@@ -316,19 +323,19 @@ export function ConchIcon({ size = 24, className = '', ...props }: IconProps) {
       {/* Shell Spiraling Conical Body */}
       <path
         d="M36 14C36 9 29 8 23 11C17 14 11 20 10 27C9 34 14 40 21 40C28 40 37 34 37 25C37 19 32 17 30 18"
-        fill="url(#conchBody)"
-        stroke="url(#conchGold)"
+        fill={`url(#${g1})`}
+        stroke={`url(#${g2})`}
         strokeWidth="1.5"
       />
       {/* Inner Spiral Ridge */}
       <path
         d="M23 11C28 15 30 22 28 28C26 34 20 36 17 33"
-        stroke="url(#conchGold)"
+        stroke={`url(#${g2})`}
         strokeWidth="2"
         strokeLinecap="round"
         fill="none"
       />
-      <circle cx="28" cy="16" r="2" fill="url(#conchGold)" />
+      <circle cx="28" cy="16" r="2" fill={`url(#${g2})`} />
     </svg>
   );
 }
@@ -337,6 +344,8 @@ export function ConchIcon({ size = 24, className = '', ...props }: IconProps) {
  * 8. Verified Vedic Pandit Badge (Saffron Shield with Gold Rim & Emerald Checkmark)
  */
 export function VerifiedPanditBadge({ size = 18, className = '', ...props }: IconProps) {
+  const uid = React.useId().replace(/:/g, '');
+  const g1 = `shieldGrad_${uid}`;
   return (
     <svg
       width={size}
@@ -348,7 +357,7 @@ export function VerifiedPanditBadge({ size = 18, className = '', ...props }: Ico
       {...props}
     >
       <defs>
-        <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id={g1} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#ea580c" />
           <stop offset="100%" stopColor="#b45309" />
         </linearGradient>
@@ -356,7 +365,7 @@ export function VerifiedPanditBadge({ size = 18, className = '', ...props }: Ico
       {/* Sacred Shield */}
       <path
         d="M12 2L4 5V11.5C4 16.5 7.5 21.2 12 22.5C16.5 21.2 20 16.5 20 11.5V5L12 2Z"
-        fill="url(#shieldGrad)"
+        fill={`url(#${g1})`}
         stroke="#f59e0b"
         strokeWidth="1.2"
       />
@@ -376,6 +385,8 @@ export function VerifiedPanditBadge({ size = 18, className = '', ...props }: Ico
  * 9. Auspicious Aarti Thali with Camphor Flame
  */
 export function AartiThaliIcon({ size = 24, className = '', ...props }: IconProps) {
+  const uid = React.useId().replace(/:/g, '');
+  const g1 = `thaliGold_${uid}`;
   return (
     <svg
       width={size}
@@ -387,14 +398,14 @@ export function AartiThaliIcon({ size = 24, className = '', ...props }: IconProp
       {...props}
     >
       <defs>
-        <linearGradient id="thaliGold" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id={g1} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#fef08a" />
           <stop offset="50%" stopColor="#f59e0b" />
           <stop offset="100%" stopColor="#b45309" />
         </linearGradient>
       </defs>
       {/* Circular Thali Plate Rim */}
-      <ellipse cx="24" cy="30" rx="19" ry="10" fill="url(#thaliGold)" stroke="#fef08a" strokeWidth="1.5" />
+      <ellipse cx="24" cy="30" rx="19" ry="10" fill={`url(#${g1})`} stroke="#fef08a" strokeWidth="1.5" />
       <ellipse cx="24" cy="30" rx="15" ry="7" fill="#78350f" fillOpacity="0.4" />
       {/* Central Flame / Camphor Diya */}
       <path
