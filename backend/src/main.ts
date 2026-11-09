@@ -19,6 +19,12 @@ async function bootstrap() {
   // B-08 & N-11: Boot-time Production Secret Enforcement
   validateProductionSecrets('Bootstrap');
 
+  // R-08: Resolve the canonical site origin once at startup.
+  // All sitemap, robots.txt, llms.txt and private-link URLs are built from this value.
+  // Set FRONTEND_ORIGIN in Hostinger env vars (e.g. https://shubhdarshan.com).
+  // Falls back to the current staging host only for local dev convenience.
+  const siteOrigin = (process.env.FRONTEND_ORIGIN || 'https://darkturquoise-louse-359917.hostingersite.com').replace(/\/$/, '');
+
   const app = await NestFactory.create(AppModule, {
     rawBody: true, // Required for cryptographic SHA-256 HMAC LiveKit Webhook verification
   });
@@ -46,8 +52,17 @@ async function bootstrap() {
   // Root Express discovery endpoints for AI agents and search engines
   expressApp.get('/robots.txt', (_req: any, res: any) => {
     res.type('text/plain; charset=utf-8');
+    // R-08: Use siteOrigin (from FRONTEND_ORIGIN env var) so search engines get the correct domain.
+    // Also disallow private/admin/api paths from indexing.
     res.send(`User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /api
+Disallow: /studio
+Disallow: /account
+Disallow: /wallet
+Disallow: /join
+Disallow: /streamer
 
 User-agent: GPTBot
 Allow: /
@@ -61,12 +76,14 @@ Allow: /
 User-agent: Googlebot
 Allow: /
 
-Sitemap: https://darkturquoise-louse-359917.hostingersite.com/sitemap.xml
+Sitemap: ${siteOrigin}/sitemap.xml
 `);
   });
 
   expressApp.get('/llms.txt', (_req: any, res: any) => {
     res.type('text/plain; charset=utf-8');
+    // R-08: All URLs built from siteOrigin — no hardcoded staging domain.
+    // Also removed /api/docs from the public endpoints list (disabled in production).
     res.send(`# Shubhdarshan - Sacred Pooja & Astrology Live Streaming Platform
 
 > Shubhdarshan is a real-time devotional live-streaming and spiritual consultation platform in India, connecting devotees worldwide with verified Vedic priests, temples, and astrologers for live sacred rituals, aarti, sankalp, and Vedic astrological consultations.
@@ -82,90 +99,87 @@ Sitemap: https://darkturquoise-louse-359917.hostingersite.com/sitemap.xml
 - **Verified Streamers**: Strict government-ID and priesthood credential KYC verification by platform administrators before broadcast privileges are granted.
 
 ## Key Public Endpoints
-- Portal: https://darkturquoise-louse-359917.hostingersite.com/
-- Interactive API Docs: https://darkturquoise-louse-359917.hostingersite.com/api/docs
-- Live Health Status: https://darkturquoise-louse-359917.hostingersite.com/api/v1/health/live
-- Database Ready Status: https://darkturquoise-louse-359917.hostingersite.com/api/v1/health/ready
-- Categories API: https://darkturquoise-louse-359917.hostingersite.com/api/v1/admin/categories
-- Sitemap: https://darkturquoise-louse-359917.hostingersite.com/sitemap.xml
+- Portal: ${siteOrigin}/
+- Live Health Status: ${siteOrigin}/api/v1/health/live
+- Database Ready Status: ${siteOrigin}/api/v1/health/ready
+- Categories API: ${siteOrigin}/api/v1/admin/categories
+- Sitemap: ${siteOrigin}/sitemap.xml
 `);
   });
 
   expressApp.get('/sitemap.xml', (_req: any, res: any) => {
+    // R-08: Build all URLs from siteOrigin (FRONTEND_ORIGIN env var).
+    // Removed /api/docs — it is disabled in production (ENABLE_SWAGGER gate).
+    // Date is generated at request time so it stays current after deploys.
+    const today = new Date().toISOString().slice(0, 10);
     res.type('application/xml; charset=utf-8');
     res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://darkturquoise-louse-359917.hostingersite.com/</loc>
-    <lastmod>2026-11-07</lastmod>
+    <loc>${siteOrigin}/</loc>
+    <lastmod>${today}</lastmod>
     <changefreq>hourly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://darkturquoise-louse-359917.hostingersite.com/wallet/topup</loc>
-    <lastmod>2026-11-07</lastmod>
+    <loc>${siteOrigin}/pooja</loc>
+    <lastmod>${today}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://darkturquoise-louse-359917.hostingersite.com/about</loc>
-    <lastmod>2026-11-07</lastmod>
+    <loc>${siteOrigin}/schedule</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>${siteOrigin}/about</loc>
+    <lastmod>${today}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://darkturquoise-louse-359917.hostingersite.com/faq</loc>
-    <lastmod>2026-11-07</lastmod>
+    <loc>${siteOrigin}/faq</loc>
+    <lastmod>${today}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://darkturquoise-louse-359917.hostingersite.com/pandit-guidelines</loc>
-    <lastmod>2026-11-07</lastmod>
+    <loc>${siteOrigin}/contact</loc>
+    <lastmod>${today}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://darkturquoise-louse-359917.hostingersite.com/terms</loc>
-    <lastmod>2026-11-07</lastmod>
+    <loc>${siteOrigin}/pandit-guidelines</loc>
+    <lastmod>${today}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://darkturquoise-louse-359917.hostingersite.com/privacy</loc>
-    <lastmod>2026-11-07</lastmod>
+    <loc>${siteOrigin}/terms</loc>
+    <lastmod>${today}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://darkturquoise-louse-359917.hostingersite.com/refund</loc>
-    <lastmod>2026-11-07</lastmod>
+    <loc>${siteOrigin}/privacy</loc>
+    <lastmod>${today}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://darkturquoise-louse-359917.hostingersite.com/grievance</loc>
-    <lastmod>2026-11-07</lastmod>
+    <loc>${siteOrigin}/refund</loc>
+    <lastmod>${today}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://darkturquoise-louse-359917.hostingersite.com/contact</loc>
-    <lastmod>2026-11-07</lastmod>
+    <loc>${siteOrigin}/grievance</loc>
+    <lastmod>${today}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://darkturquoise-louse-359917.hostingersite.com/api/docs</loc>
-    <lastmod>2026-11-07</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://darkturquoise-louse-359917.hostingersite.com/llms.txt</loc>
-    <lastmod>2026-11-07</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
   </url>
 </urlset>`);
   });

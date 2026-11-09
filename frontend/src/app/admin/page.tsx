@@ -85,6 +85,40 @@ export default function AdminConsolePage() {
     loadAdminData();
   }, [router]);
 
+  /**
+   * N-02: Open a KYC document via an authenticated fetch rather than a plain <a href>.
+   * Previously the token was appended as ?token=<jwt> in the URL, which ended up in
+   * nginx access logs and browser history. jwt.strategy.ts no longer reads tokens from
+   * URL parameters (R-02 fix), so those links returned 401.
+   * Now we fetch the blob with the Authorization header and open it via createObjectURL —
+   * the token never touches the browser's address bar or history.
+   */
+  const openKycDoc = async (storageKey: string) => {
+    const token = localStorage.getItem('pooja_token');
+    if (!token) {
+      toast.error('Please sign in again.');
+      return;
+    }
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const res = await fetch(`${apiUrl}/storage/kyc-document?key=${encodeURIComponent(storageKey)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        toast.error('Could not open the document. It may have been removed or access was denied.');
+        return;
+      }
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      window.open(objectUrl, '_blank', 'noopener,noreferrer');
+      // Release the object URL after 60 seconds to free memory
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+    } catch {
+      toast.error('Network error while loading the document. Please try again.');
+    }
+  };
+
   const loadAdminData = async () => {
     setLoading(true);
     const token = localStorage.getItem('pooja_token');
@@ -414,22 +448,21 @@ export default function AdminConsolePage() {
                   <p className="text-xs text-stone-300 mt-2 bg-stone-950 p-2.5 rounded-xl border border-stone-800">{app.bio}</p>
                   {app.kycDocuments && Array.isArray(app.kycDocuments) && app.kycDocuments.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-2">
-                      {app.kycDocuments.map((doc: any, i: number) => {
-                        const baseDocUrl = doc.publicUrl || (doc.storageKey ? `/api/v1/storage/kyc-document?key=${encodeURIComponent(doc.storageKey)}` : '');
-                        const authenticatedDocUrl = authToken && baseDocUrl ? `${baseDocUrl}${baseDocUrl.includes('?') ? '&' : '?'}token=${encodeURIComponent(authToken)}` : baseDocUrl;
-                        return (
-                          <a
-                            key={i}
-                            href={authenticatedDocUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1 bg-stone-800 hover:bg-stone-700 text-orange-400 rounded-lg text-xs font-semibold border border-stone-700 transition"
-                          >
-                            <FileText className="w-3.5 h-3.5" />
-                            View Credentials Document ({doc.documentType || 'KYC'})
-                          </a>
-                        );
-                      })}
+                      {app.kycDocuments.map((doc: any, i: number) => (
+                        // N-02: Use authenticated fetch (openKycDoc) instead of a plain <a href>.
+                        // Previously ?token=<jwt> was appended to the URL, leaking the admin token
+                        // into nginx logs and browser history. jwt.strategy.ts no longer reads
+                        // tokens from URL params (R-02 fix), so those links returned 401.
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => openKycDoc(doc.storageKey)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 bg-stone-800 hover:bg-stone-700 text-orange-400 rounded-lg text-xs font-semibold border border-stone-700 transition"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          View Credentials Document ({doc.documentType || 'KYC'})
+                        </button>
+                      ))}
                     </div>
                   )}
                 </div>

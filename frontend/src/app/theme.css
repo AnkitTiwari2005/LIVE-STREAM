@@ -1459,3 +1459,67 @@ html[data-theme="dark"] .nav-join-free-badge {
   border: 1px solid rgba(12, 10, 9, 0.18) !important;
   font-weight: 900 !important;
 }
+
+
+/* =========================================================================
+   D-02: Light Mode Contrast Fixes
+   Pale amber/orange classes (text-amber-400, text-orange-400) are unreadable
+   on white backgrounds (1.39–2.26:1). These rules remap them to darker values
+   that meet WCAG AA (4.5:1) in light mode while keeping the dark-mode originals.
+   ========================================================================= */
+
+/* Section numbers / chapter labels on legal pages (/terms, /privacy, /refund, /grievance) */
+html:not([data-theme="dark"]) .text-amber-400.font-mono,
+html[data-theme="light"] .text-amber-400.font-mono {
+  color: #92400e !important; /* amber-800 — 7.3:1 on white */
+}
+
+/* General amber-400 text in light mode (badges, labels, accents) */
+html:not([data-theme="dark"]) .text-amber-400:not(.dark\:text-amber-400),
+html[data-theme="light"] .text-amber-400:not(.dark\:text-amber-400) {
+  color: #92400e !important; /* amber-800 — 7.3:1 on white */
+}
+
+/* General orange-400 text in light mode (FAQ/contact labels, "Official Document" tags) */
+html:not([data-theme="dark"]) .text-orange-400:not(.dark\:text-orange-400),
+html[data-theme="light"] .text-orange-400:not(.dark\:text-orange-400) {
+  color: #9a3412 !important; /* orange-800 — 7.1:1 on white */
+}
+
+/* D-02: "Spiritual & Astrological Disclaimer" box on /terms
+   In dark mode: bg-amber-950/40 + text-amber-200/90 = fine.
+   In light mode: dark-bg becomes near-transparent on white, text stays amber-200 = 1.18:1.
+   Fix: give the disclaimer panel a readable light-mode appearance. */
+html:not([data-theme="dark"]) .bg-amber-950\/40,
+html[data-theme="light"] .bg-amber-950\/40 {
+  background-color: #fef3c7 !important; /* amber-100 */
+  border-color: #fbbf24 !important;     /* amber-400 border visible on cream */
+}
+html:not([data-theme="dark"]) .text-amber-200\/90,
+html[data-theme="light"] .text-amber-200\/90 {
+  color: #78350f !important; /* amber-900 — 10.2:1 on amber-100 */
+}
+
+/* Admin console "ADMIN" badge in navbar */
+html:not([data-theme="dark"]) .text-amber-300,
+html[data-theme="light"] .text-amber-300 {
+  color: #92400e !important; /* amber-800 */
+}
+
+/* Streamer status "Additional information required" panel */
+html:not([data-theme="dark"]) .bg-orange-950\/40,
+html[data-theme="light"] .bg-orange-950\/40 {
+  background-color: #fff7ed !important; /* orange-50 */
+  border-color: #fed7aa !important;     /* orange-200 */
+}
+html:not([data-theme="dark"]) .text-orange-200,
+html[data-theme="light"] .text-orange-200 {
+  color: #7c2d12 !important; /* orange-900 — 10.5:1 on orange-50 */
+}
+
+/* D-03: Bump the muted grey used for subtitles and footer text to pass AA.
+   theme.css:95 previously set color: #8a7d7d (3.95:1). Updated to #6b5f5f (6.1:1). */
+html:not([data-theme="dark"]) .text-stone-500,
+html[data-theme="light"] .text-stone-500 {
+  color: #6b5f5f !important; /* 6.1:1 on #fbf8f8 body background */
+}

@@ -5,16 +5,16 @@ import { Logger } from '@nestjs/common';
  * Ensures secure production credentials and fails fast against insecure defaults.
  * R-01: Removed all hardcoded credential fallbacks — the app now refuses to start
  * if LiveKit keys or JWT secrets are missing or still set to known-insecure values.
+ * N-04: Removed the JWT_2FA_SECRET alias — it must be set independently and must
+ * differ from JWT_ACCESS_SECRET. A single leaked secret cannot forge both sessions
+ * and two-factor challenges.
  */
 export function validateProductionSecrets(context: string = 'Bootstrap'): void {
   const logger = new Logger(context);
 
-  // R-01: In ALL environments, ensure JWT_2FA_SECRET is set independently.
-  // We no longer silently alias it to JWT_ACCESS_SECRET — secrets must be distinct.
-  if (!process.env.JWT_2FA_SECRET && process.env.JWT_ACCESS_SECRET) {
-    // Acceptable only in local dev; production guard below will catch it if secrets are shared
-    process.env.JWT_2FA_SECRET = process.env.JWT_ACCESS_SECRET;
-  }
+  // N-04: DO NOT alias JWT_2FA_SECRET to JWT_ACCESS_SECRET.
+  // Previously this was done silently in dev, which meant one leaked access secret
+  // could also forge two-factor challenges. Each secret must be set independently.
 
   // R-01: REMOVED hardcoded LiveKit credential fallbacks.
   // Previously this code set LIVEKIT_API_KEY = 'API2RCSWowptwZY' — a real credential.
@@ -53,6 +53,12 @@ export function validateProductionSecrets(context: string = 'Bootstrap'): void {
         logger.warn(`[DEV] Missing env var ${item.name} — set it in .env or the app may malfunction.`);
       }
     }
+    // N-04: Warn in dev if 2FA secret is missing or same as access secret
+    const accessSecret = process.env.JWT_ACCESS_SECRET;
+    const twoFaSecret = process.env.JWT_2FA_SECRET;
+    if (twoFaSecret && accessSecret && twoFaSecret === accessSecret) {
+      logger.warn('[DEV] JWT_2FA_SECRET is the same as JWT_ACCESS_SECRET — these must be distinct in production.');
+    }
     return;
   }
 
@@ -76,5 +82,15 @@ export function validateProductionSecrets(context: string = 'Bootstrap'): void {
       logger.error(`FATAL: ${item.name} is too short — must be at least 32 characters in production.`);
       throw new Error(`Production requires ${item.name} to be at least 32 characters.`);
     }
+  }
+
+  // N-04: Require all three JWT secrets to be distinct in production.
+  // If two secrets are identical, a single compromise breaks two security layers.
+  const jwtSecrets = ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET', 'JWT_2FA_SECRET'].map(
+    (k) => process.env[k] ?? '',
+  );
+  if (new Set(jwtSecrets).size !== 3) {
+    logger.error('FATAL: JWT_ACCESS_SECRET, JWT_REFRESH_SECRET and JWT_2FA_SECRET must all be different!');
+    throw new Error('Production requires JWT_ACCESS_SECRET, JWT_REFRESH_SECRET and JWT_2FA_SECRET to be distinct.');
   }
 }

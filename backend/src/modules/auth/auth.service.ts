@@ -367,6 +367,17 @@ export class AuthService {
       throw new UnauthorizedException('User account is no longer active');
     }
 
+    // N-03: Apply the same passwordChangedAt check as jwt.strategy.ts validate().
+    // Without this, a stolen refresh token could keep minting fresh access tokens for
+    // up to 30 days even after the account owner has reset their password.
+    // Compare in whole seconds (Math.floor) so a login in the same second as the reset
+    // is not incorrectly rejected.
+    if (user.passwordChangedAt && payload.iat) {
+      if (Math.floor(payload.iat) < Math.floor(user.passwordChangedAt.getTime() / 1000)) {
+        throw new UnauthorizedException('Session expired after password change — please log in again.');
+      }
+    }
+
     return this.generateTokens(user);
   }
 

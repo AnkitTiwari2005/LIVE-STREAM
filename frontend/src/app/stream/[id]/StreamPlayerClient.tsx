@@ -83,8 +83,13 @@ export default function StreamPlayerClient() {
   const [reporting, setReporting] = useState(false);
 
   const meterIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  // H-05: Track consecutive billing errors; fail-closed after 3 to prevent free-ride on network issues
+  // N-05: Track consecutive *transient* billing failures separately from auth/balance failures.
+  // A 5xx during a deploy, a 429, or a brief network blip should NOT show "out of coins" —
+  // the server watchdog (90 s) is the authoritative removal mechanism.
+  // Only 401 (expired session) and 402 / canContinue:false are acted on immediately.
   const billingErrorCountRef = useRef<number>(0);
+  // N-05: Show a small non-intrusive connection warning instead of the top-up dialog on transient errors.
+  const [connectionWarning, setConnectionWarning] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -236,29 +241,47 @@ export default function StreamPlayerClient() {
           }),
         });
 
+        // N-05: 401 means the user's session has expired — send them to login.
+        // Previously this was treated as a transient error and silently swallowed;
+        // the watchdog then removed the viewer with no explanation after 90 seconds.
+        if (res.status === 401) {
+          if (meterIntervalRef.current) clearInterval(meterIntervalRef.current);
+          window.location.href = `/login?redirect=/stream/${id}`;
+          return;
+        }
+
+        // N-05: 402 or server says canContinue:false → genuine zero balance, show top-up.
         if (res.status === 402) {
           setIsZeroBalance(true);
           setTopupModalOpen(true);
+          setConnectionWarning(false);
           if (meterIntervalRef.current) clearInterval(meterIntervalRef.current);
           return;
         }
 
+        // N-05: Any other non-OK (5xx deploy blip, 429 rate limit) → show a small warning
+        // banner and keep playing. The server watchdog is the authoritative removal mechanism —
+        // we do NOT remove the viewer client-side on transient infrastructure errors.
+        // We escalate to stop only after 5 consecutive non-401/402 failures.
         if (!res.ok) {
-          // H-05: Transient network error — count it. Fail-closed after 3 consecutive
-          // failures: stop the stream rather than letting the viewer watch for free
-          // while billing silently fails.
           billingErrorCountRef.current += 1;
-          if (billingErrorCountRef.current >= 3) {
+          if (billingErrorCountRef.current >= 5) {
+            // After 5 sustained failures the billing server is genuinely unreachable.
+            // Stop to avoid an indefinite free ride while the server is down.
             setIsZeroBalance(true);
-            setTopupModalOpen(true);
+            setTopupModalOpen(false);
+            setConnectionWarning(false);
             setToken(null);
             if (meterIntervalRef.current) clearInterval(meterIntervalRef.current);
+          } else {
+            setConnectionWarning(true);
           }
           return;
         }
 
-        // Reset error counter on any successful tick
+        // Successful tick — clear warning and error counter
         billingErrorCountRef.current = 0;
+        setConnectionWarning(false);
 
         const data = await res.json();
         if (data.canContinue) {
@@ -267,12 +290,23 @@ export default function StreamPlayerClient() {
             setAvailableMinutes(data.availableMinutes);
           }
         } else {
-          setIsZeroBalance(true);
-          setTopupModalOpen(true);
-          setToken(null);
+          // N-05: Distinguish reason: STREAM_ENDED vs ZERO_BALANCE vs other.
+          // Previously canContinue:false always showed the top-up dialog even when
+          // the stream had ended or the watchdog had closed the session.
+          if (data.reason === 'STREAM_ENDED') {
+            setStreamEnded(true);
+            setToken(null);
+          } else {
+            setIsZeroBalance(true);
+            setTopupModalOpen(true);
+            setToken(null);
+          }
           if (meterIntervalRef.current) clearInterval(meterIntervalRef.current);
         }
       } catch (err) {
+        // Network-level failure (offline, DNS) — treat as transient
+        billingErrorCountRef.current += 1;
+        setConnectionWarning(true);
         console.error('Meter tick error:', err);
       }
     }, 60000); // 60 seconds
@@ -344,6 +378,22 @@ export default function StreamPlayerClient() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* N-05: Transient connection warning — shown on 5xx/429/network errors, NOT on low balance */}
+      {connectionWarning && !isZeroBalance && (
+        <div className="mb-4 p-3 bg-stone-800/90 border border-stone-600/70 rounded-2xl flex items-center justify-between gap-3 text-stone-300 shadow-lg">
+          <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold">
+            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>Connection issue detected — retrying billing. Your stream continues.</span>
+          </div>
+          <button
+            onClick={() => setConnectionWarning(false)}
+            className="p-1 hover:bg-stone-700 rounded-lg transition"
+            aria-label="Dismiss"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
       {/* Low Balance Warning Banner (< 15 coins / 3 mins) */}
       {remainingCoins !== null && remainingCoins <= 15 && remainingCoins > 0 && !isZeroBalance && (
         <div className="mb-4 p-3 bg-amber-950/90 border border-amber-600/70 rounded-2xl flex items-center justify-between gap-3 text-amber-200 animate-pulse shadow-lg">

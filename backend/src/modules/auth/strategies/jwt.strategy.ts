@@ -16,9 +16,12 @@ export interface JwtPayload {
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private readonly prisma: PrismaService) {
-    const accessSecret = process.env.JWT_ACCESS_SECRET || 'jwt_default_insecure_access_secret_key';
-    if (process.env.NODE_ENV === 'production' && (!process.env.JWT_ACCESS_SECRET || process.env.JWT_ACCESS_SECRET.includes('insecure'))) {
-      throw new Error('JWT_ACCESS_SECRET must be securely configured in production');
+    // N-04: No insecure fallback — if JWT_ACCESS_SECRET is missing the app should
+    // have already failed at validateProductionSecrets(). Using a hardcoded default
+    // here would let the app start in production with a known, forgeable secret.
+    const accessSecret = process.env.JWT_ACCESS_SECRET ?? '';
+    if (!accessSecret) {
+      throw new Error('JWT_ACCESS_SECRET is required but was not set');
     }
 
     super({

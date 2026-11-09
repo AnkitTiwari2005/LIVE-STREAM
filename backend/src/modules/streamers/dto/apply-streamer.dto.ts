@@ -12,9 +12,10 @@ import { KycStatus } from '@prisma/client';
 export class KycDocDto {
   @ApiProperty({ example: 'PAN_CARD', description: 'Type of identity document' })
   @IsString()
-  @IsIn(['PAN_CARD', 'AADHAAR', 'PASSPORT', 'DEGREE_CERTIFICATE', 'TEACHING_CERTIFICATE', 'OTHER'], {
-    message: 'documentType must be one of the allowed document type values',
-  })
+  @IsIn(
+    ['PAN_OR_CERTIFICATE', 'PAN_CARD', 'AADHAAR', 'PASSPORT', 'DEGREE_CERTIFICATE', 'TEACHING_CERTIFICATE', 'OTHER'],
+    { message: 'documentType must be one of the allowed document type values' },
+  )
   documentType: string;
 
   @ApiProperty({ example: 'kyc/abc123def456.pdf', description: 'Storage key from our own upload endpoint — never an external URL' })

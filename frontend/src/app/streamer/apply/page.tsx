@@ -159,7 +159,10 @@ export default function StreamerApplyPage() {
           bio,
           languages: languages.split(',').map((s) => s.trim()).filter(Boolean),
           specialties: specialties.split(',').map((s) => s.trim()).filter(Boolean),
-          kycDocuments: [{ documentType: 'PAN_OR_CERTIFICATE', storageKey: documentKey, publicUrl: documentUrl }],
+          // N-01: documentType must match one of the allowed values in KycDocDto @IsIn list.
+          // publicUrl is NOT sent — it is a forbidden extra property (forbidNonWhitelisted).
+          // The storageKey is the value returned by the presigned-upload endpoint (kyc/<userId>_<random>.<ext>).
+          kycDocuments: documentKey ? [{ documentType: 'PAN_CARD', storageKey: documentKey }] : [],
         }),
       });
 

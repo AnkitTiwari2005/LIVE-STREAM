@@ -3,6 +3,7 @@ import {
   BadRequestException,
   NotFoundException,
   ConflictException,
+  ForbiddenException,
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
@@ -29,6 +30,20 @@ export class StreamersService {
 
     if (user.streamerProfile?.kycStatus === KycStatus.PENDING) {
       throw new ConflictException('Your streamer verification application is already pending review');
+    }
+
+    // N-01: Verify that every submitted KYC document was uploaded by this user.
+    // The presigned-upload endpoint creates keys in the form kyc/<userId>_<random>.<ext>.
+    // Rejecting any key that does not start with kyc/<userId>_ prevents one user from
+    // referencing another user's documents (or attacker-crafted paths) in their application.
+    if (dto.kycDocuments && dto.kycDocuments.length > 0) {
+      for (const doc of dto.kycDocuments) {
+        if (!doc.storageKey.startsWith(`kyc/${userId}_`)) {
+          throw new ForbiddenException(
+            'One or more KYC documents do not belong to this account. Please re-upload your documents.',
+          );
+        }
+      }
     }
 
     const profile = await this.prisma.streamerProfile.upsert({
