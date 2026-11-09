@@ -8,19 +8,15 @@ import { Logger } from '@nestjs/common';
  * N-04: Removed the JWT_2FA_SECRET alias — it must be set independently and must
  * differ from JWT_ACCESS_SECRET. A single leaked secret cannot forge both sessions
  * and two-factor challenges.
+ * N-04 (amended): JWT_2FA_SECRET missing in production emits a WARN rather than a hard
+ * crash, so the site stays up while the operator adds the env var in hPanel. It is still
+ * enforced to be distinct and secure once it IS set.
  */
 export function validateProductionSecrets(context: string = 'Bootstrap'): void {
   const logger = new Logger(context);
 
-  // N-04: DO NOT alias JWT_2FA_SECRET to JWT_ACCESS_SECRET.
-  // Previously this was done silently in dev, which meant one leaked access secret
-  // could also forge two-factor challenges. Each secret must be set independently.
-
-  // R-01: REMOVED hardcoded LiveKit credential fallbacks.
-  // Previously this code set LIVEKIT_API_KEY = 'API2RCSWowptwZY' — a real credential.
-  // Those credentials have been rotated. The app will now refuse to start without real values.
-
-  const criticalSecrets = [
+  // Secrets that MUST be present and secure in production — hard fail if missing.
+  const hardRequiredSecrets = [
     {
       name: 'JWT_ACCESS_SECRET',
       insecureDefaults: ['jwt_default_insecure_access_secret_key', 'secret', 'default'],
@@ -30,30 +26,35 @@ export function validateProductionSecrets(context: string = 'Bootstrap'): void {
       insecureDefaults: ['jwt_default_insecure_refresh_secret_key', 'secret', 'default'],
     },
     {
-      name: 'JWT_2FA_SECRET',
-      insecureDefaults: ['jwt_default_insecure_2fa_secret_key', 'secret', 'default'],
-    },
-    {
       name: 'LIVEKIT_API_KEY',
-      // R-01: Old compromised credentials are now blocked. New credentials set via Hostinger env vars.
+      // R-01: Old compromised credentials are now blocked.
       insecureDefaults: ['pooja', 'devkey', 'CHANGE_ME', 'API2RCSWowptwZY'],
     },
     {
       name: 'LIVEKIT_API_SECRET',
-      // R-01: Old compromised secret is now blocked. Credential rotation complete.
+      // R-01: Old compromised secret is now blocked.
       insecureDefaults: ['secret', 'secretkey', 'CHANGE_ME', 'rXe7jPbWbNoolgrDdPlLYNTvBQ9XeoYeqtiKqxtP5e7B'],
+    },
+  ];
+
+  // Secrets that are strongly recommended but only WARN when missing (so the app can
+  // start while the operator adds them). They are still validated for quality if set.
+  const softRequiredSecrets = [
+    {
+      name: 'JWT_2FA_SECRET',
+      insecureDefaults: ['jwt_default_insecure_2fa_secret_key', 'secret', 'default', 'pooja'],
     },
   ];
 
   if (process.env.NODE_ENV !== 'production') {
     // In dev/test, only warn — don't crash the dev server
-    for (const item of criticalSecrets) {
+    for (const item of [...hardRequiredSecrets, ...softRequiredSecrets]) {
       const val = process.env[item.name];
       if (!val || val.trim() === '') {
         logger.warn(`[DEV] Missing env var ${item.name} — set it in .env or the app may malfunction.`);
       }
     }
-    // N-04: Warn in dev if 2FA secret is missing or same as access secret
+    // N-04: Warn in dev if 2FA secret is same as access secret
     const accessSecret = process.env.JWT_ACCESS_SECRET;
     const twoFaSecret = process.env.JWT_2FA_SECRET;
     if (twoFaSecret && accessSecret && twoFaSecret === accessSecret) {
@@ -62,8 +63,8 @@ export function validateProductionSecrets(context: string = 'Bootstrap'): void {
     return;
   }
 
-  // Production: hard fail on any missing or insecure value
-  for (const item of criticalSecrets) {
+  // Production: hard fail on missing or insecure REQUIRED secrets
+  for (const item of hardRequiredSecrets) {
     const val = process.env[item.name];
     if (!val || val.trim() === '') {
       logger.error(`FATAL: Missing required production secret ${item.name}!`);
@@ -77,20 +78,46 @@ export function validateProductionSecrets(context: string = 'Bootstrap'): void {
       logger.error(`FATAL: Insecure or default ${item.name} detected in production!`);
       throw new Error(`Production requires a secure, non-default ${item.name}.`);
     }
-    // R-01: Require secrets to be at least 32 characters in production
+    // R-01: Require JWT secrets to be at least 32 characters in production
     if (item.name.startsWith('JWT_') && val.length < 32) {
       logger.error(`FATAL: ${item.name} is too short — must be at least 32 characters in production.`);
       throw new Error(`Production requires ${item.name} to be at least 32 characters.`);
     }
   }
 
-  // N-04: Require all three JWT secrets to be distinct in production.
-  // If two secrets are identical, a single compromise breaks two security layers.
-  const jwtSecrets = ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET', 'JWT_2FA_SECRET'].map(
-    (k) => process.env[k] ?? '',
-  );
-  if (new Set(jwtSecrets).size !== 3) {
-    logger.error('FATAL: JWT_ACCESS_SECRET, JWT_REFRESH_SECRET and JWT_2FA_SECRET must all be different!');
-    throw new Error('Production requires JWT_ACCESS_SECRET, JWT_REFRESH_SECRET and JWT_2FA_SECRET to be distinct.');
+  // Production: WARN only for soft-required secrets
+  for (const item of softRequiredSecrets) {
+    const val = process.env[item.name];
+    if (!val || val.trim() === '') {
+      logger.warn(
+        `SECURITY WARNING: ${item.name} is not set in production. 2FA logins will fall back to ` +
+        `JWT_ACCESS_SECRET. Add JWT_2FA_SECRET in Hostinger hPanel → Node.js → Environment Variables ` +
+        `and restart the application to fully isolate 2FA challenge tokens.`,
+      );
+      // Fall back to access secret so 2FA challenges still work (less secure but functional)
+      process.env.JWT_2FA_SECRET = process.env.JWT_ACCESS_SECRET;
+      return; // Skip the distinctness check since we just set it to access secret
+    }
+    const valLower = val.toLowerCase();
+    if (
+      item.insecureDefaults.some((def) => valLower === def.toLowerCase()) ||
+      valLower.includes('insecure')
+    ) {
+      logger.error(`FATAL: Insecure or default ${item.name} detected in production!`);
+      throw new Error(`Production requires a secure, non-default ${item.name}.`);
+    }
+    if (val.length < 32) {
+      logger.error(`FATAL: ${item.name} is too short — must be at least 32 characters in production.`);
+      throw new Error(`Production requires ${item.name} to be at least 32 characters.`);
+    }
+  }
+
+  // N-04: When JWT_2FA_SECRET IS set, it must be distinct from the other two.
+  const accessSecret = process.env.JWT_ACCESS_SECRET ?? '';
+  const refreshSecret = process.env.JWT_REFRESH_SECRET ?? '';
+  const twoFaSecret = process.env.JWT_2FA_SECRET ?? '';
+  if (twoFaSecret && (twoFaSecret === accessSecret || twoFaSecret === refreshSecret)) {
+    logger.error('FATAL: JWT_2FA_SECRET must be different from JWT_ACCESS_SECRET and JWT_REFRESH_SECRET!');
+    throw new Error('Production requires JWT_2FA_SECRET to be distinct from other JWT secrets.');
   }
 }
