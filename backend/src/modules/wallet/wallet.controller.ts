@@ -5,6 +5,7 @@ import {
   Body,
   HttpCode,
   HttpStatus,
+  Header,
 } from '@nestjs/common';
 import { WalletService } from './wallet.service';
 import { MeterTickDto } from './dto/meter-tick.dto';
@@ -19,6 +20,7 @@ export class WalletController {
   constructor(private readonly walletService: WalletService) {}
 
   @Get('balance')
+  @Header('Cache-Control', 'no-store, no-cache, must-revalidate, private')
   @ApiOperation({ summary: 'Get current user coin wallet balance and watch minutes' })
   async getBalance(@CurrentUser('id') userId: string) {
     return this.walletService.getWalletBalance(userId);
@@ -61,6 +63,7 @@ export class WalletController {
   }
 
   @Get('transactions')
+  @Header('Cache-Control', 'no-store, no-cache, must-revalidate, private')
   @ApiOperation({ summary: 'Get devotee coin transaction history' })
   async getTransactions(@CurrentUser('id') userId: string) {
     return this.walletService.getTransactionHistory(userId);

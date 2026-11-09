@@ -33,8 +33,8 @@ export default function WalletHistoryPage() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
     try {
       const [balRes, txRes] = await Promise.all([
-        fetch(`${apiUrl}/wallet/balance`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${apiUrl}/wallet/transactions`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${apiUrl}/wallet/balance`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' }),
+        fetch(`${apiUrl}/wallet/transactions`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' }),
       ]);
 
       if (balRes.ok) setBalance(await balRes.json());
