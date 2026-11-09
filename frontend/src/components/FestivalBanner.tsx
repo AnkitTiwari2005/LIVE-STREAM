@@ -36,7 +36,9 @@ export function FestivalBanner() {
         if (!isMounted) return;
 
         if (data && data.enabled) {
-          const dismissKey = `sd-fest-${data.updatedAt || data.occasion || 'active'}`;
+          // Bug #7 fix: namespace dismiss key with userId so each account gets its own dismiss state
+          const userId = (() => { try { return JSON.parse(localStorage.getItem('pooja_user') || '{}')?.id || 'guest'; } catch { return 'guest'; } })();
+          const dismissKey = `sd-fest-${data.updatedAt || data.occasion || 'active'}_${userId}`;
           try {
             if (localStorage.getItem(dismissKey) === 'x') {
               setDismissed(true);
@@ -61,7 +63,9 @@ export function FestivalBanner() {
   const handleDismiss = () => {
     setDismissed(true);
     if (banner) {
-      const dismissKey = `sd-fest-${banner.updatedAt || banner.occasion || 'active'}`;
+      // Bug #7 fix: same user-scoped key for writing as for reading
+      const userId = (() => { try { return JSON.parse(localStorage.getItem('pooja_user') || '{}')?.id || 'guest'; } catch { return 'guest'; } })();
+      const dismissKey = `sd-fest-${banner.updatedAt || banner.occasion || 'active'}_${userId}`;
       try {
         localStorage.setItem(dismissKey, 'x');
       } catch {}

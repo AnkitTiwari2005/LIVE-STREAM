@@ -51,6 +51,11 @@ export function Navbar() {
 
   // Re-read auth state whenever login/logout fires sd-auth-change
   const refreshAuthState = () => {
+    // Bug #3 fix: Clear React state FIRST to prevent flash of stale role-based UI
+    // (e.g., Admin Console visible briefly for a Viewer after account switch)
+    setUser(null);
+    setCoinBalance(null);
+
     const storedUser = localStorage.getItem('pooja_user');
     const storedBalance = localStorage.getItem('pooja_wallet_balance');
     if (storedBalance !== null && !isNaN(Number(storedBalance))) {
@@ -144,6 +149,9 @@ export function Navbar() {
         credentials: 'include',
       });
     } catch {}
+    // Bug #2 fix: Clear all user-scoped state on logout so next login starts clean.
+    // Note: We do NOT clear shubhdarshan_bookings_<userId> — bookings are preserved
+    // per-user and will reappear when the same account logs back in.
     localStorage.removeItem('pooja_user');
     localStorage.removeItem('pooja_token');
     localStorage.removeItem('pooja_wallet_balance');

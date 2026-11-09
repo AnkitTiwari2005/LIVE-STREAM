@@ -58,12 +58,17 @@ export default function AccountPage() {
   const [rebookModalOpen, setRebookModalOpen] = useState(false);
   const [rebookPoojaId, setRebookPoojaId] = useState<string | undefined>(undefined);
 
-  const loadBookings = () => {
+  // Bug #1 & #6 fix: Accept userId param so bookings are always read from the correct per-user key.
+  // Falls back to 'guest' if called before profile loads, but init() below ensures userId is known first.
+  const loadBookings = (userId?: string) => {
     if (typeof window === 'undefined') return;
     try {
-      const stored = localStorage.getItem('shubhdarshan_bookings');
+      const key = `shubhdarshan_bookings_${userId || 'guest'}`;
+      const stored = localStorage.getItem(key);
       if (stored) {
         setBookings(JSON.parse(stored));
+      } else {
+        setBookings([]);
       }
       // R-04: Removed fake seed booking "SHUBH-749210" for "Ankit Sharma".
       // The seed made devotees believe their booking was submitted to a real pandit.
@@ -77,7 +82,8 @@ export default function AccountPage() {
     const updated = bookings.map((b) => (b.id === id ? { ...b, ...updates } : b));
     setBookings(updated);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('shubhdarshan_bookings', JSON.stringify(updated));
+      const userId = JSON.parse(localStorage.getItem('pooja_user') || '{}')?.id || 'guest';
+      localStorage.setItem(`shubhdarshan_bookings_${userId}`, JSON.stringify(updated));
     }
   };
 
@@ -110,7 +116,8 @@ export default function AccountPage() {
     const updated = bookings.filter((b) => b.id !== id);
     setBookings(updated);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('shubhdarshan_bookings', JSON.stringify(updated));
+      const userId = JSON.parse(localStorage.getItem('pooja_user') || '{}')?.id || 'guest';
+      localStorage.setItem(`shubhdarshan_bookings_${userId}`, JSON.stringify(updated));
     }
     toast.info('Booking request removed.');
   };
@@ -133,6 +140,8 @@ export default function AccountPage() {
         setUser(data);
         setNameInput(data.name || '');
         localStorage.setItem('pooja_user', JSON.stringify(data));
+        // Bug #6 fix: reload bookings with the confirmed real user ID from the API response
+        loadBookings(data.id);
       } else {
         router.push('/login');
       }
@@ -144,8 +153,15 @@ export default function AccountPage() {
   };
 
   useEffect(() => {
+    // Bug #6 fix: Read cached userId immediately so bookings load from correct key right away,
+    // then loadProfile() validates/refreshes from API in parallel.
+    const cachedUser = typeof window !== 'undefined'
+      ? JSON.parse(localStorage.getItem('pooja_user') || 'null')
+      : null;
+    if (cachedUser?.id) {
+      loadBookings(cachedUser.id);
+    }
     loadProfile();
-    loadBookings();
   }, []);
 
   const handleUpdateName = async (e: React.FormEvent) => {

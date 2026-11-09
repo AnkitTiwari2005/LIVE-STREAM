@@ -57,6 +57,9 @@ export default function LoginPage() {
         return;
       }
 
+      // Bug #2 & #4 fix: Clear previous user's cached wallet balance before writing new session.
+      // This prevents the old balance from briefly flashing in the navbar for the new account.
+      localStorage.removeItem('pooja_wallet_balance');
       localStorage.setItem('pooja_user', JSON.stringify(data.user));
       localStorage.setItem('pooja_token', data.accessToken);
       window.dispatchEvent(new Event('sd-auth-change'));
@@ -93,6 +96,8 @@ export default function LoginPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Invalid 2FA code');
 
+      // Bug #2 & #4 fix: same as handleLogin — clear previous session's cached balance
+      localStorage.removeItem('pooja_wallet_balance');
       localStorage.setItem('pooja_user', JSON.stringify(data.user));
       localStorage.setItem('pooja_token', data.accessToken);
       window.dispatchEvent(new Event('sd-auth-change'));

@@ -101,9 +101,9 @@ export default function SevaBookingModal({
         if (stored) {
           const parsed = JSON.parse(stored);
           setUser(parsed);
-          if (!devoteeName) {
-            setDevoteeName(parsed.name || parsed.fullName || parsed.email?.split('@')[0] || '');
-          }
+          // Bug #5 fix: Always overwrite devoteeName from current auth — no !devoteeName guard
+          // so switching accounts always pre-fills the right user's name
+          setDevoteeName(parsed.name || parsed.fullName || parsed.email?.split('@')[0] || '');
         } else {
           setUser(null);
         }
@@ -196,12 +196,14 @@ export default function SevaBookingModal({
       roomLink: `/join/invite`,
     };
 
-    // Save to user bookings storage
+    // Bug #1 fix: Save to per-user scoped bookings key so each account has its own booking list
     try {
-      const existing = localStorage.getItem('shubhdarshan_bookings');
+      const userId = user?.id || 'guest';
+      const bookingKey = `shubhdarshan_bookings_${userId}`;
+      const existing = localStorage.getItem(bookingKey);
       const list: BookingRecord[] = existing ? JSON.parse(existing) : [];
       list.unshift(newBooking);
-      localStorage.setItem('shubhdarshan_bookings', JSON.stringify(list));
+      localStorage.setItem(bookingKey, JSON.stringify(list));
     } catch (e) {
       console.warn('Booking storage fallback:', e);
     }
