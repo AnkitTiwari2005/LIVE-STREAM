@@ -746,7 +746,7 @@ export default function AccountPage() {
           </div>
 
             {/* Two-Factor Authentication (2FA) */}
-            <div className="bg-obsidian-soft border border-gold/25 rounded-3xl p-6 sm:p-8 shadow-xl">
+            <div id="2fa" className="bg-obsidian-soft border border-gold/25 rounded-3xl p-6 sm:p-8 shadow-xl scroll-mt-24">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-lg font-bold text-stone-900 dark:text-white flex items-center gap-2">
@@ -762,6 +762,15 @@ export default function AccountPage() {
                   </span>
                 )}
               </div>
+
+              {user?.role === 'ADMIN' && !user?.isTwoFactorEnabled && (
+                <div className="p-3.5 mb-4 bg-amber-500/15 border border-amber-500/40 rounded-xl text-xs text-amber-900 dark:text-amber-200 flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <span>
+                    <strong>Platform Administrator Requirement:</strong> Two-factor authentication (2FA) is mandatory to access the Admin Console. Click below to scan and activate your authenticator.
+                  </span>
+                </div>
+              )}
 
               {twoFaSuccess && (
                 <div className="p-3 mb-4 bg-emerald-950/50 border border-emerald-500/30 rounded-xl text-xs text-emerald-400">

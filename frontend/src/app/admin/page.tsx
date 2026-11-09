@@ -82,6 +82,12 @@ export default function AdminConsolePage() {
       return;
     }
 
+    if (!user.isTwoFactorEnabled) {
+      toast.error('Two-factor authentication is required for Platform Administrators. Please set up 2FA.');
+      router.push('/account#2fa');
+      return;
+    }
+
     loadAdminData();
   }, [router]);
 

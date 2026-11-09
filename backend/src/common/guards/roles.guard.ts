@@ -28,8 +28,13 @@ export class RolesGuard implements CanActivate {
     if (!user) {
       throw new ForbiddenException('User session required for this action');
     }
-    // Admins bypass standard role constraints
+    // R-05: Admins have access to admin actions ONLY when 2FA is active
     if (user.role === UserRole.ADMIN) {
+      if (!user.isTwoFactorEnabled) {
+        throw new ForbiddenException(
+          'Two-factor authentication is required for administrator operations. Please enable 2FA in your Account Settings.',
+        );
+      }
       return true;
     }
     const hasRole = requiredRoles.includes(user.role);

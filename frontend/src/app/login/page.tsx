@@ -69,7 +69,11 @@ export default function LoginPage() {
       if (safeTarget) {
         router.push(safeTarget);
       } else if (data.user?.role === 'ADMIN') {
-        router.push('/admin');
+        if (!data.user?.isTwoFactorEnabled) {
+          router.push('/account#2fa');
+        } else {
+          router.push('/admin');
+        }
       } else {
         router.push('/');
       }
