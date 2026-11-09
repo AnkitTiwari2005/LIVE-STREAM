@@ -83,6 +83,11 @@ export default function StreamPlayerClient() {
   const [reporting, setReporting] = useState(false);
 
   const meterIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // N-06: Reconnect backoff state — cap retries and use exponential delay so a
+  // rejected or ended room does not spin in a tight loop requesting new tokens.
+  const reconnectAttemptsRef = useRef<number>(0);
+  const reconnectTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [showManualReconnect, setShowManualReconnect] = useState(false);
   // N-05: Track consecutive *transient* billing failures separately from auth/balance failures.
   // A 5xx during a deploy, a 429, or a brief network blip should NOT show "out of coins" —
   // the server watchdog (90 s) is the authoritative removal mechanism.
@@ -214,6 +219,12 @@ export default function StreamPlayerClient() {
 
   useEffect(() => {
     fetchStreamAndToken();
+    // Reset reconnect counter on fresh mount / id change
+    reconnectAttemptsRef.current = 0;
+    setShowManualReconnect(false);
+    return () => {
+      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+    };
   }, [id]);
 
   // 60-Second Heartbeat Meter Loop
@@ -391,6 +402,25 @@ export default function StreamPlayerClient() {
             aria-label="Dismiss"
           >
             <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+      {/* N-06: Manual reconnect button after backoff exhausted */}
+      {showManualReconnect && !streamEnded && (
+        <div className="mb-4 p-3 bg-stone-800/90 border border-amber-600/40 rounded-2xl flex items-center justify-between gap-3 text-stone-300 shadow-lg">
+          <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold">
+            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>Stream connection lost. Click to reconnect.</span>
+          </div>
+          <button
+            onClick={() => {
+              reconnectAttemptsRef.current = 0;
+              setShowManualReconnect(false);
+              fetchStreamAndToken();
+            }}
+            className="px-3 py-1.5 bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold rounded-lg shadow transition"
+          >
+            Reconnect
           </button>
         </div>
       )}
@@ -599,12 +629,21 @@ export default function StreamPlayerClient() {
                   video={false}
                   audio={false}
                   onDisconnected={() => {
-                    // H-06: LiveKit disconnects for two reasons:
-                    // 1. The pandit ended the stream — stream status will be ENDED.
-                    // 2. The 5-min viewer token expired — the stream is still LIVE, we just need a fresh token.
-                    // Try re-fetching first. fetchStreamAndToken() will set streamEnded=true
-                    // if the server confirms ENDED status, so this is safe in both cases.
-                    fetchStreamAndToken();
+                    // N-06: Backoff reconnect — cap at 5 attempts with exponential delay.
+                    // Previously called fetchStreamAndToken() immediately on every disconnect,
+                    // causing a tight loop if the room rejected the connection (e.g. stream ended).
+                    reconnectAttemptsRef.current += 1;
+                    const attempt = reconnectAttemptsRef.current;
+                    if (attempt > 5) {
+                      // Too many failures — show a manual reconnect button and stop.
+                      setShowManualReconnect(true);
+                      return;
+                    }
+                    // Delays: 2s, 4s, 8s, 16s, 32s
+                    const delayMs = Math.min(2000 * Math.pow(2, attempt - 1), 32000);
+                    reconnectTimerRef.current = setTimeout(() => {
+                      fetchStreamAndToken();
+                    }, delayMs);
                   }}
                   className="w-full h-full"
                 >

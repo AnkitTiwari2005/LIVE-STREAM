@@ -210,7 +210,7 @@ export default function SevaBookingModal({
 
     setCreatedBooking(newBooking);
     setStep(4);
-    toast.success('Pooja request transmitted to Panditji! Awaiting schedule confirmation.');
+    toast.success('Booking request saved. We will notify you once a pandit confirms availability.');
   };
 
   const handleResetAndClose = () => {
@@ -631,7 +631,7 @@ export default function SevaBookingModal({
                   <span>Awaiting Panditji&apos;s Schedule Confirmation</span>
                 </span>
                 <h3 className="modal-value font-serif text-2xl font-bold mt-2">
-                  Pooja Request Transmitted to Poojari!
+                  Booking Request Saved
                 </h3>
               </div>
 

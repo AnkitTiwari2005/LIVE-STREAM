@@ -42,8 +42,12 @@ async function bootstrap() {
     }),
   );
 
+  // H-09: Removed '*' wildcard fallback — FRONTEND_ORIGIN is now required at boot
+  // (validate-env.ts enforces this in production). In local dev, set FRONTEND_ORIGIN
+  // in .env.local to http://localhost:3000. The '*' fallback allowed any origin to
+  // send credentialed requests in dev builds that leaked to staging/prod.
   app.enableCors({
-    origin: process.env.FRONTEND_ORIGIN || '*',
+    origin: process.env.FRONTEND_ORIGIN,
     credentials: true,
   });
 

@@ -58,12 +58,8 @@ interface Stream {
   };
 }
 
-const LIVE_SEVA_ACTIVITIES = [
-  { initials: 'MI', name: 'Meera Iyer', action: 'booked Maha Rudrabhishek with Pandit Aarav', time: '2m ago' },
-  { initials: 'PD', name: 'Priya Dave', action: 'consecrated Gotra Sankalp with Acharya Devrat', time: '5m ago' },
-  { initials: 'VJ', name: 'Vikram Joshi', action: 'booked 1-on-1 Kundli Milan with Pandit Vishwanath', time: '8m ago' },
-  { initials: 'LV', name: 'Lakshmi V.', action: 'joined live Satyanarayan Katha with Pandit Hariram', time: '11m ago' },
-];
+// R-04: Removed LIVE_SEVA_ACTIVITIES — this was a hardcoded fake activity feed
+// showing invented devotee names and actions to create a false sense of real usage.
 
 const CATEGORY_TILES = [
   {
@@ -192,8 +188,7 @@ const CURATED_PANDITS = [
     name: 'Pandit Aarav Sharma',
     title: 'Head Archak, Kashi Vishwanath Parampara',
     experience: '22 Years Seva',
-    rating: '4.98',
-    reviews: '1,420',
+    // R-04: Removed invented rating (4.98) and review count (1,420)
     specialties: ['Rudrabhishek', 'Mahamrityunjaya Jaap', 'Ganga Aarti'],
     image: '/images/photo-1543934776-32d1cc654abb.webp',
   },
@@ -202,8 +197,7 @@ const CURATED_PANDITS = [
     name: 'Pandit Hariram Vyas',
     title: 'Senior Purohit, Haridwar Ganga Sabha',
     experience: '18 Years Seva',
-    rating: '4.95',
-    reviews: '980',
+    // R-04: Removed invented rating (4.95) and review count (980)
     specialties: ['Sandhya Aarti', 'Navgrah Shanti', 'Kavach Path'],
     image: '/images/photo-1544186196-6908a9d76ab3.webp',
   },
@@ -212,8 +206,7 @@ const CURATED_PANDITS = [
     name: 'Pandit Vishwanath Bhatt',
     title: 'Vedic Scholar, Tirupati Devasthanam Tradition',
     experience: '26 Years Seva',
-    rating: '5.0',
-    reviews: '2,140',
+    // R-04: Removed invented rating (5.0) and review count (2,140)
     specialties: ['Vishnu Sahasranama', 'Satyanarayan Katha', 'Vedic Chanting'],
     image: '/images/photo-1596604820148-da737958af16.webp',
   },
@@ -222,8 +215,7 @@ const CURATED_PANDITS = [
     name: 'Acharya Devrishi',
     title: 'Sanskrit Acharya, Rishikesh Gurukul',
     experience: '15 Years Seva',
-    rating: '4.92',
-    reviews: '810',
+    // R-04: Removed invented rating (4.92) and review count (810)
     specialties: ['Vedic Astrology', 'Kundli Milan', 'Vastu Shanti'],
     image: '/images/photo-1762838105804-c3264c29a390.webp',
   },
@@ -466,14 +458,8 @@ export default function HomePage() {
               )}
             </div>
 
-            {/* Platform Stats Row with Grand Gold Serif Numbers */}
+            {/* Platform Stats Row — R-04: replaced invented numbers with honest platform facts */}
             <dl className="mt-8 sm:mt-12 grid grid-cols-2 gap-x-3 sm:gap-x-6 gap-y-4 sm:gap-y-6 border-t border-gold/15 pt-5 sm:pt-8 sm:grid-cols-4">
-              <div>
-                <dd className="font-serif text-2xl sm:text-4xl font-bold text-gold-pale">85+</dd>
-                <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-normal sm:tracking-[0.16em] text-stone-400">
-                  Verified Pandits
-                </dt>
-              </div>
               <div>
                 <dd className="font-serif text-2xl sm:text-4xl font-bold text-gold-pale">100%</dd>
                 <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-normal sm:tracking-[0.16em] text-stone-400">
@@ -481,17 +467,21 @@ export default function HomePage() {
                 </dt>
               </div>
               <div>
-                <dd className="font-serif text-2xl sm:text-4xl font-bold text-gold-pale">62+</dd>
+                <dd className="font-serif text-2xl sm:text-4xl font-bold text-gold-pale">100%</dd>
                 <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-normal sm:tracking-[0.16em] text-stone-400">
-                  Countries Reached
+                  KYC Screened
                 </dt>
               </div>
               <div>
-                <dd className="font-serif text-2xl sm:text-4xl font-bold text-gold-pale flex items-center gap-1">
-                  4.9 <Star className="w-4 h-4 sm:w-5 sm:h-5 text-gold fill-gold" />
-                </dd>
+                <dd className="font-serif text-2xl sm:text-4xl font-bold text-gold-pale">&lt;300ms</dd>
                 <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-normal sm:tracking-[0.16em] text-stone-400">
-                  Devotee Rating
+                  Live Latency
+                </dt>
+              </div>
+              <div>
+                <dd className="font-serif text-2xl sm:text-4xl font-bold text-gold-pale">24/7</dd>
+                <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-normal sm:tracking-[0.16em] text-stone-400">
+                  Devotee Support
                 </dt>
               </div>
             </dl>
@@ -606,7 +596,7 @@ export default function HomePage() {
                     <div className="flex items-center gap-1.5 sm:gap-2">
                       <PranamIcon size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
                       <span className="text-xs font-semibold text-stone-700 dark:text-stone-200 whitespace-nowrap">
-                        85+ Verified Pandits
+                        Gurukul-Verified Pandits
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 sm:gap-2 w-full xs:w-auto justify-end">
@@ -633,41 +623,10 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* Live Seva Activity Ticker (TEMP2 Real-Time Devotee Feed) */}
-            <div className="glass rounded-3xl p-4 sm:p-5 mt-4 border border-gold/20 shadow-xl overflow-hidden">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-gold"></span>
-                  </span>
-                  <span className="devotee-seva-header text-xs uppercase tracking-widest font-black">
-                    Worldwide Devotee Seva
-                  </span>
-                </div>
-                <span className="text-[11px] text-stone-600 dark:text-stone-400 font-medium">Real-time offerings</span>
-              </div>
-              <div className="space-y-2">
-                {LIVE_SEVA_ACTIVITIES.map((act, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between text-xs py-1.5 px-3 rounded-xl bg-white dark:bg-obsidian-soft border border-stone-200 dark:border-gold/15 hover:border-amber-500/40 dark:hover:border-gold/30 transition-colors shadow-sm min-w-0 overflow-hidden"
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
-                      <div className="w-6 h-6 rounded-full bg-amber-500/15 dark:bg-gold/15 flex items-center justify-center text-amber-800 dark:text-gold text-[10px] font-bold shrink-0">
-                        {act.initials}
-                      </div>
-                      <p className="truncate min-w-0 flex-1 text-xs">
-                        <span className="devotee-seva-name font-bold">{act.name}</span>
-                        <span className="text-stone-400 mx-1">•</span>
-                        <span className="devotee-seva-action font-semibold">{act.action}</span>
-                      </p>
-                    </div>
-                    <span className="devotee-seva-time text-[10px] shrink-0 ml-2 font-mono">{act.time}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* R-04: Removed "Worldwide Devotee Seva" ticker — it displayed
+                invented devotee names and fake bookings to simulate activity.
+                Replaced with nothing; the right column already shows the
+                featured live stream card or the platform description card. */}
           </div>
         </div>
       </section>
@@ -1123,8 +1082,8 @@ export default function HomePage() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
                 <div className="absolute top-3 right-3 rounded-full bg-black/80 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-amber-200 flex items-center gap-1 border border-amber-400/40 shadow-md">
-                  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                  <span className="text-amber-200">{p.rating}</span>
+                  <VerifiedPanditBadge size={12} />
+                  <span className="text-amber-200">Verified</span>
                 </div>
                 <div className="absolute bottom-3 left-3 right-3">
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md border border-amber-400/40 text-amber-200 font-bold text-xs shadow-md">
@@ -1139,7 +1098,7 @@ export default function HomePage() {
                 <p className="text-[11px] text-stone-600 dark:text-stone-400 leading-tight">{p.title}</p>
                 <div className="pandit-stats flex items-center justify-between text-[11px] pt-1 font-semibold">
                   <span>{p.experience}</span>
-                  <span>{p.reviews} sevas conducted</span>
+                  {/* R-04: Removed fake review count */}
                 </div>
                 <div className="flex flex-wrap gap-1 pt-2">
                   {p.specialties.map((s) => (

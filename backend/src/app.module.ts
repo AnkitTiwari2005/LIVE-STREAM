@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD, APP_FILTER } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 
 import { PrismaModule } from './database/prisma.module';
 import { VideoModule } from './modules/video/video.module';
@@ -26,6 +27,9 @@ import { CronTasksService } from './jobs/cron-tasks.service';
 @Module({
   imports: [
     ScheduleModule.forRoot(),
+    // H-09: Global rate limit — 100 requests per 60 s per IP by default.
+    // Sensitive auth endpoints are further restricted via @Throttle() on their controllers.
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
     PrismaModule,
     VideoModule,
     AuthModule,
@@ -44,6 +48,12 @@ import { CronTasksService } from './jobs/cron-tasks.service';
   ],
   providers: [
     CronTasksService,
+    // H-09: ThrottlerGuard runs before JWT and Roles so rate-limiting fires even on
+    // unauthenticated endpoints (login, register, forgot-password).
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

@@ -11,6 +11,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto, ForgotPasswordDto, ResetPasswordDto, VerifyTotpDto } from './dto/login.dto';
@@ -25,6 +26,8 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
+  // H-09: Tight limit — 10 registration attempts per minute per IP
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('register')
   @ApiOperation({ summary: 'Register a new viewer account (FR-A1, FR-A2)' })
   async register(@Body() dto: RegisterDto) {
@@ -39,6 +42,8 @@ export class AuthController {
   }
 
   @Public()
+  // H-09: 10 login attempts per minute per IP prevents credential stuffing
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Authenticate user and set secure HttpOnly cookies (FR-A1, FR-A3)' })
@@ -57,6 +62,8 @@ export class AuthController {
   }
 
   @Public()
+  // H-09: 5 TOTP attempts per minute per IP (in-memory per-user limit is 5 per challenge)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('verify-totp')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Verify 2FA TOTP code for admin login' })
@@ -119,6 +126,8 @@ export class AuthController {
   }
 
   @Public()
+  // H-09: 5 forgot-password requests per minute per IP prevents email bombing
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Request password reset link via email (FR-A3)' })
@@ -127,6 +136,8 @@ export class AuthController {
   }
 
   @Public()
+  // H-09: 5 reset-password attempts per minute per IP
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reset password using token (FR-A3)' })

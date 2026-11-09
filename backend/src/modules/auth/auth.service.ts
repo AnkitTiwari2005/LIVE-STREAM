@@ -209,7 +209,14 @@ export class AuthService {
       throw new UnauthorizedException('Your account is temporarily suspended. Please contact support.');
     }
 
-    // If 2FA enabled for admin, require 2FA challenge
+    // R-05: Admins MUST have 2FA enabled — block login if not set up yet
+    if (user.role === UserRole.ADMIN && !user.isTwoFactorEnabled) {
+      throw new ForbiddenException(
+        'Admin accounts must have two-factor authentication enabled. Please contact the platform owner to set up 2FA before signing in.',
+      );
+    }
+
+    // If 2FA enabled, require 2FA challenge
     if (user.isTwoFactorEnabled) {
       const secret = process.env.JWT_2FA_SECRET || process.env.JWT_ACCESS_SECRET;
       return {
