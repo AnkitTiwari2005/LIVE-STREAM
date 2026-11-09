@@ -1504,10 +1504,24 @@ html[data-theme="light"] .text-amber-200\/90 {
   color: #78350f !important; /* amber-900 — 10.2:1 on amber-100 */
 }
 
-/* Admin console "ADMIN" badge in navbar */
+/* Admin console "ADMIN" badge and general amber text in light mode */
+html:not([data-theme="dark"]) .text-amber-200,
+html:not([data-theme="dark"]) .text-amber-200\/90,
 html:not([data-theme="dark"]) .text-amber-300,
-html[data-theme="light"] .text-amber-300 {
-  color: #92400e !important; /* amber-800 */
+html:not([data-theme="dark"]) .text-amber-300\/90,
+html[data-theme="light"] .text-amber-200,
+html[data-theme="light"] .text-amber-200\/90,
+html[data-theme="light"] .text-amber-300,
+html[data-theme="light"] .text-amber-300\/90 {
+  color: #92400e !important; /* amber-800 — high contrast on light backgrounds */
+}
+
+/* Ensure any unclassed text/spans in amber alert boxes have strong contrast */
+html:not([data-theme="dark"]) [class*="bg-amber-950"]:not(.video-overlay) span,
+html:not([data-theme="dark"]) [class*="bg-amber-950"]:not(.video-overlay) p,
+html[data-theme="light"] [class*="bg-amber-950"]:not(.video-overlay) span,
+html[data-theme="light"] [class*="bg-amber-950"]:not(.video-overlay) p {
+  color: #78350f !important; /* amber-900 */
 }
 
 /* Streamer status "Additional information required" panel */

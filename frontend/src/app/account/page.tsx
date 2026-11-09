@@ -556,7 +556,7 @@ export default function AccountPage() {
                         }`}
                       >
                         {/* Top Meta Line: Status Badge & Ref Code */}
-                        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-stone-800">
+                        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-stone-200 dark:border-stone-800">
                           <div className="flex items-center gap-2">
                             {isPending && (
                               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-950/80 text-amber-300 border border-amber-500/40">
@@ -573,12 +573,12 @@ export default function AccountPage() {
                                 <AlertTriangle className="w-3.5 h-3.5" /> Pandit Unavailable for Slot
                               </span>
                             )}
-                            <span className="font-mono text-xs text-stone-400 bg-obsidian-soft px-2.5 py-0.5 rounded border border-stone-800">
+                            <span className="font-mono text-xs text-stone-600 dark:text-stone-400 bg-stone-100 dark:bg-obsidian-soft px-2.5 py-0.5 rounded border border-stone-200 dark:border-stone-800">
                               {b.refCode}
                             </span>
                           </div>
 
-                          <div className="text-[11px] text-stone-400">
+                          <div className="text-[11px] text-stone-500 dark:text-stone-400">
                             Requested on: {new Date(b.createdAt || Date.now()).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                           </div>
                         </div>
@@ -648,26 +648,26 @@ export default function AccountPage() {
                         </div>
 
                         {/* Bottom Status Banner & Devotee Action Strip */}
-                        <div className="pt-3 border-t border-stone-800/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                        <div className="pt-3 border-t border-stone-200 dark:border-stone-800/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                           {/* Left Status Message */}
                           <div className="text-xs">
                             {isPending && (
-                              <p className="text-amber-300/90 flex items-center gap-1.5">
-                                <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                              <p className="text-amber-800 dark:text-amber-300/90 flex items-center gap-1.5 font-medium">
+                                <Clock className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400 shrink-0" />
                                 <span>Panditji is verifying his sanctum altar schedule. You will be notified once confirmed.</span>
                               </p>
                             )}
                             {isApproved && (
-                              <p className="text-emerald-300 flex items-center gap-1.5">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                              <p className="text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 font-medium">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400 shrink-0" />
                                 <span>
                                   <strong>Slot Confirmed!</strong> Join the private sanctum room at your scheduled time.
                                 </span>
                               </p>
                             )}
                             {isDeclined && (
-                              <p className="text-red-300/90 flex items-center gap-1.5">
-                                <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                              <p className="text-red-800 dark:text-red-300/90 flex items-center gap-1.5 font-medium">
+                                <AlertTriangle className="w-3.5 h-3.5 text-red-700 dark:text-red-400 shrink-0" />
                                 <span>
                                   {b.declineReason || 'Panditji had a conflicting sanctum duty for this specific slot.'}
                                 </span>

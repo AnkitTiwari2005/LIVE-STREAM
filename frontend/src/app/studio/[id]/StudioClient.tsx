@@ -344,12 +344,12 @@ export default function StudioClient() {
       )}
 
       {activeConflict && (
-        <div className="mb-6 p-4 rounded-2xl bg-amber-950/80 border border-amber-600 text-amber-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+        <div className="mb-6 p-4 rounded-2xl bg-amber-950/80 border border-amber-600 text-amber-900 dark:text-amber-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
           <div className="flex items-center gap-2.5">
-            <AlertCircle className="w-5 h-5 text-amber-400 shrink-0" />
+            <AlertCircle className="w-5 h-5 text-amber-700 dark:text-amber-400 shrink-0" />
             <div>
-              <span className="font-bold text-amber-300 block text-sm">Previous Live Session Still Active</span>
-              <span>You have another live broadcast running. Would you like to end the previous broadcast and go live with this session now?</span>
+              <span className="font-bold text-amber-950 dark:text-amber-300 block text-sm">Previous Live Session Still Active</span>
+              <span className="text-amber-800 dark:text-amber-200 font-medium">You have another live broadcast running. Would you like to end the previous broadcast and go live with this session now?</span>
             </div>
           </div>
           <button
@@ -363,12 +363,12 @@ export default function StudioClient() {
       )}
 
       {stream?.status === 'ENDED' && (
-        <div className="mb-6 p-4 rounded-2xl bg-amber-950/70 border border-amber-700/60 text-amber-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="mb-6 p-4 rounded-2xl bg-amber-950/70 border border-amber-700/60 text-amber-900 dark:text-amber-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <DiyaIcon size={24} />
+            <DiyaIcon size={24} className="text-amber-700 dark:text-amber-400 shrink-0" />
             <div>
-              <span className="font-bold text-amber-300 block text-sm">Previous Live Broadcast Concluded</span>
-              <span>This sacred ritual session has ended. To go live again, configure a fresh broadcast.</span>
+              <span className="font-bold text-amber-950 dark:text-amber-300 block text-sm">Previous Live Broadcast Concluded</span>
+              <span className="text-amber-800 dark:text-amber-200 font-medium">This sacred ritual session has ended. To go live again, configure a fresh broadcast.</span>
             </div>
           </div>
           <Link

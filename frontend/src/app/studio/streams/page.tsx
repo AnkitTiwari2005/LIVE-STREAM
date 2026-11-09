@@ -319,47 +319,47 @@ export default function MyStreamsPage() {
       {/* Edit Stream Modal */}
       {editStream && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#1c140d] border border-gold/30 rounded-3xl p-6 max-w-lg w-full shadow-2xl relative text-xs">
+          <div className="bg-white dark:bg-[#1c140d] border border-stone-200 dark:border-gold/30 rounded-3xl p-6 max-w-lg w-full shadow-2xl relative text-xs">
             <button
               onClick={() => setEditStream(null)}
-              className="absolute top-4 right-4 text-stone-400 hover:text-white p-1"
+              className="absolute top-4 right-4 text-stone-400 hover:text-stone-700 dark:hover:text-white p-1 transition"
             >
               <X className="w-4 h-4" />
             </button>
 
-            <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-              <Edit className="w-4 h-4 text-gold" /> Edit Broadcast Details
+            <h3 className="text-base font-bold text-stone-900 dark:text-white mb-4 flex items-center gap-2">
+              <Edit className="w-4 h-4 text-amber-600 dark:text-gold" /> Edit Broadcast Details
             </h3>
 
             <form onSubmit={handleSaveEdit} className="space-y-4">
               <div>
-                <label className="block font-semibold text-stone-200 mb-1.5">Broadcast Title</label>
+                <label className="block font-semibold text-stone-700 dark:text-stone-200 mb-1.5">Broadcast Title</label>
                 <input
                   type="text"
                   required
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-obsidian border border-gold/20 text-stone-200 focus:outline-none focus:border-gold"
+                  className="w-full p-2.5 rounded-xl bg-stone-50 dark:bg-obsidian border border-stone-200 dark:border-gold/20 text-stone-900 dark:text-stone-200 focus:outline-none focus:border-amber-500 dark:focus:border-gold"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-stone-200 mb-1.5">Description (Optional)</label>
+                <label className="block font-semibold text-stone-700 dark:text-stone-200 mb-1.5">Description (Optional)</label>
                 <textarea
                   rows={3}
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-obsidian border border-gold/20 text-stone-200 focus:outline-none focus:border-gold resize-none"
+                  className="w-full p-2.5 rounded-xl bg-stone-50 dark:bg-obsidian border border-stone-200 dark:border-gold/20 text-stone-900 dark:text-stone-200 focus:outline-none focus:border-amber-500 dark:focus:border-gold resize-none"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-stone-200 mb-1.5">Scheduled Time</label>
+                <label className="block font-semibold text-stone-700 dark:text-stone-200 mb-1.5">Scheduled Time</label>
                 <input
                   type="datetime-local"
                   value={editScheduledAt}
                   onChange={(e) => setEditScheduledAt(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-obsidian border border-gold/20 text-stone-200 focus:outline-none focus:border-gold"
+                  className="w-full p-2.5 rounded-xl bg-stone-50 dark:bg-obsidian border border-stone-200 dark:border-gold/20 text-stone-900 dark:text-stone-200 focus:outline-none focus:border-amber-500 dark:focus:border-gold"
                 />
               </div>
 
@@ -367,14 +367,14 @@ export default function MyStreamsPage() {
                 <button
                   type="button"
                   onClick={() => setEditStream(null)}
-                  className="px-4 py-2 rounded-xl border border-stone-700 text-stone-300 hover:bg-stone-800 font-semibold"
+                  className="px-4 py-2 rounded-xl border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 font-semibold transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={savingEdit}
-                  className="px-4 py-2 rounded-xl bg-gold hover:bg-gold-deep text-obsidian font-bold disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-gold hover:bg-gold-deep text-obsidian font-bold disabled:opacity-50 transition shadow-md"
                 >
                   {savingEdit ? 'Saving...' : 'Save Changes'}
                 </button>
