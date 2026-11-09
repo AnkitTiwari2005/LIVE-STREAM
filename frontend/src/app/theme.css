@@ -894,8 +894,12 @@ html[data-theme="dark"] .navbar-more-dropdown {
 
 html[data-theme="dark"] .navbar-user-dropdown .user-dropdown-header {
   background-color: #241a12 !important;
-  background-image: none !important; /* kill the Tailwind amber-50→orange-50 gradient in dark mode */
+  background-image: none !important; /* kill any Tailwind bg class in dark mode */
   border: 1px solid rgba(245, 158, 11, 0.25) !important;
+}
+
+html[data-theme="dark"] .navbar-user-dropdown .user-dropdown-header .user-name {
+  color: #f5f5f4 !important; /* ensure name is readable on dark #241a12 background */
 }
 
 /* Light Mode Solid Dropdown: Crisp porcelain white on blush */

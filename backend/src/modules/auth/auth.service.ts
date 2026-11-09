@@ -23,6 +23,35 @@ import * as qrcode from 'qrcode';
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
+  /**
+   * R-05: In-memory TOTP attempt counter, keyed by userId.
+   * Each entry stores { count, resetAt } and is scoped to the 5-minute challenge window.
+   * We deliberately use a plain Map (not Redis) to avoid adding a Redis dependency to
+   * the auth module. Because the 2FA challenge token expires in 5 minutes anyway, the
+   * window is naturally bounded — a process restart clears all stale entries.
+   * Max 5 wrong codes per challenge; on the 6th the user must restart the login flow.
+   */
+  private readonly totpFailures = new Map<string, { count: number; resetAt: number }>();
+
+  private getTotpFailCount(userId: string): number {
+    const entry = this.totpFailures.get(userId);
+    if (!entry || Date.now() > entry.resetAt) return 0;
+    return entry.count;
+  }
+
+  private incrementTotpFail(userId: string): number {
+    const now = Date.now();
+    const entry = this.totpFailures.get(userId);
+    const count = entry && now <= entry.resetAt ? entry.count + 1 : 1;
+    // Window matches the 5-minute 2FA challenge token TTL
+    this.totpFailures.set(userId, { count, resetAt: now + 5 * 60 * 1000 });
+    return count;
+  }
+
+  private clearTotpFail(userId: string): void {
+    this.totpFailures.delete(userId);
+  }
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
@@ -213,6 +242,17 @@ export class AuthService {
     }
 
     const userId = payload.sub;
+
+    // R-05: Enforce a maximum of 5 wrong TOTP codes per challenge.
+    // A 6-digit TOTP at 3-code window gives ~2.7% success per guess; 5 attempts ≈ 0.013%.
+    // On the 6th wrong attempt the user must restart the login flow (get a new tempToken).
+    const failCount = this.getTotpFailCount(userId);
+    if (failCount >= 5) {
+      throw new UnauthorizedException(
+        'Too many incorrect verification codes. Please sign in again to start a new 2FA challenge.',
+      );
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: { streamerProfile: true, wallet: true },
@@ -229,7 +269,14 @@ export class AuthService {
       const tokenHash = CryptoUtil.hashSha256(dto.token);
       const backupIndex = user.twoFactorBackupCodes.indexOf(tokenHash);
       if (backupIndex === -1) {
-        throw new UnauthorizedException('Invalid authenticator verification code');
+        // R-05: Count this failed attempt
+        const fails = this.incrementTotpFail(userId);
+        const remaining = Math.max(0, 5 - fails);
+        throw new UnauthorizedException(
+          remaining > 0
+            ? `Invalid authenticator verification code. ${remaining} attempt(s) remaining.`
+            : 'Too many incorrect codes. Please sign in again to start a new 2FA challenge.',
+        );
       }
       // Remove used backup code
       const updatedCodes = [...user.twoFactorBackupCodes];
@@ -240,6 +287,8 @@ export class AuthService {
       });
     }
 
+    // R-05: Successful verification — clear failure counter
+    this.clearTotpFail(userId);
     return this.generateTokens(user);
   }
 

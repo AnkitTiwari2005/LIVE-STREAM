@@ -324,7 +324,7 @@ export function Navbar() {
                   {userDropdownOpen && (
                     <div className="navbar-user-dropdown absolute right-0 top-full mt-2 w-64 rounded-2xl p-2.5 z-[9999] text-xs bg-white dark:bg-obsidian-soft border border-stone-200 dark:border-gold/25 shadow-2xl">
                       {/* Opaque user info header */}
-                      <div className="user-dropdown-header p-3 rounded-xl bg-amber-50 dark:bg-[#241a12] border border-amber-200 dark:border-gold/25 mb-2 shadow-sm">
+                      <div className="user-dropdown-header p-3 rounded-xl mb-2 shadow-sm">
                         <div className="user-name font-bold text-stone-900 dark:text-white text-sm truncate">{user.name}</div>
                         <div className="flex items-center justify-between mt-1">
                           <span className="text-[10px] text-amber-700 dark:text-gold font-bold uppercase tracking-wider">{user.role || 'DEVOTEE'}</span>
