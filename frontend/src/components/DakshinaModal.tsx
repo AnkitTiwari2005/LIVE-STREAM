@@ -178,7 +178,7 @@ export const DakshinaModal: React.FC<DakshinaModalProps> = ({
             <h2 className="text-2xl font-bold text-white mb-1 flex items-center justify-center gap-2">
               <OmIcon size={24} /> Dakshina Accepted
             </h2>
-            <p className="text-orange-400 text-sm font-semibold mb-3 flex items-center justify-center gap-1.5">
+            <p className="text-orange-700 dark:text-orange-400 text-sm font-semibold mb-3 flex items-center justify-center gap-1.5">
               <span>May the divine blessings of {streamerName} be upon you</span>
               <PranamIcon size={16} />
             </p>
@@ -195,7 +195,7 @@ export const DakshinaModal: React.FC<DakshinaModalProps> = ({
               )}
               <div className="flex justify-between text-stone-400">
                 <span>Offered Amount:</span>
-                <span className="font-bold text-amber-400 text-sm">₹{Number(successOffering.amount)}</span>
+                <span className="font-bold text-amber-800 dark:text-amber-400 text-sm">₹{Number(successOffering.amount)}</span>
               </div>
               {successOffering.prayerMessage && (
                 <div className="pt-2 border-t border-stone-800 text-stone-300 italic">
@@ -205,7 +205,7 @@ export const DakshinaModal: React.FC<DakshinaModalProps> = ({
             </div>
             <button
               onClick={handleReset}
-              className="w-full py-3 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-xl text-sm transition shadow-lg"
+              className="w-full py-3 bg-orange-700 hover:bg-orange-600 text-white font-bold rounded-xl text-sm transition shadow-lg"
             >
               Return to Sacred Darshan
             </button>
@@ -335,8 +335,8 @@ export const DakshinaModal: React.FC<DakshinaModalProps> = ({
               )}
             </button>
 
-            <div className="flex items-center justify-center gap-2 text-[10px] text-stone-500 pt-2">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+            <div className="flex items-center justify-center gap-2 text-[10px] text-stone-600 dark:text-stone-400 pt-2">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
               <span>Encrypted via Razorpay • 100% Goes Directly to Vedic Rituals</span>
             </div>
           </form>

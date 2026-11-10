@@ -21,9 +21,9 @@ async function bootstrap() {
 
   // R-08: Resolve the canonical site origin once at startup.
   // All sitemap, robots.txt, llms.txt and private-link URLs are built from this value.
-  // Set FRONTEND_ORIGIN in Hostinger env vars (e.g. https://shubhdarshan.com).
-  // Falls back to the current staging host only for local dev convenience.
-  const siteOrigin = (process.env.FRONTEND_ORIGIN || 'https://darkturquoise-louse-359917.hostingersite.com').replace(/\/$/, '');
+  // Set FRONTEND_ORIGIN in production (e.g. https://shubhdarshan.com).
+  // Falls back to http://localhost:3000 in non-production local dev only (validate-env requires FRONTEND_ORIGIN in prod).
+  const siteOrigin = (process.env.FRONTEND_ORIGIN || 'http://localhost:3000').replace(/\/$/, '');
 
   const app = await NestFactory.create(AppModule, {
     rawBody: true, // Required for cryptographic SHA-256 HMAC LiveKit Webhook verification
@@ -38,7 +38,24 @@ async function bootstrap() {
   app.use(cookieParser());
   app.use(
     helmet({
-      contentSecurityPolicy: false, // Handled with custom policy via reverse proxy
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          baseUri: ["'self'"],
+          objectSrc: ["'none'"],
+          frameAncestors: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'", 'https://checkout.razorpay.com'],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
+          mediaSrc: ["'self'", 'https:', 'blob:'],
+          connectSrc: ["'self'", 'https:', 'wss:'],
+          fontSrc: ["'self'", 'data:'],
+          frameSrc: ["'self'", 'https://api.razorpay.com', 'https://checkout.razorpay.com'],
+          formAction: ["'self'", 'https://api.razorpay.com', 'https://checkout.razorpay.com'],
+          workerSrc: ["'self'", 'blob:'],
+          upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null,
+        },
+      },
     }),
   );
 
@@ -47,7 +64,7 @@ async function bootstrap() {
   // in .env.local to http://localhost:3000. The '*' fallback allowed any origin to
   // send credentialed requests in dev builds that leaked to staging/prod.
   app.enableCors({
-    origin: process.env.FRONTEND_ORIGIN,
+    origin: siteOrigin,
     credentials: true,
   });
 
@@ -60,13 +77,18 @@ async function bootstrap() {
     // Also disallow private/admin/api paths from indexing.
     res.send(`User-agent: *
 Allow: /
+Disallow: /account
 Disallow: /admin
 Disallow: /api
-Disallow: /studio
-Disallow: /account
-Disallow: /wallet
+Disallow: /forgot-password
 Disallow: /join
+Disallow: /login
+Disallow: /register
+Disallow: /reset-password
 Disallow: /streamer
+Disallow: /studio
+Disallow: /verify-email
+Disallow: /wallet
 
 User-agent: GPTBot
 Allow: /
@@ -94,7 +116,7 @@ Sitemap: ${siteOrigin}/sitemap.xml
 
 ## Core Services
 - **Public Temple Live Broadcasts**: Real-time WebRTC and HLS live streams from registered temples and spiritual sanctuaries across India.
-- **Private Interactive Pooja Sessions**: Password-protected, 128-bit encrypted sankalp rituals for families and individuals worldwide with interactive video and low-latency spiritual reactions (Pranam, Aarti, Shankha).
+- **Private Interactive Pooja Sessions**: Password-protected, 128-bit encrypted sankalp rituals for families and individuals worldwide with interactive video and real-time spiritual reactions (Pranam, Aarti, Shankha).
 - **Vedic Astrology Consultations**: Direct live consultations with certified astrologers and Jyotish acharyas.
 - **Temple Prasad & Community**: Devotee donations, community live chat with Sanskrit profanity filtering, and temple prasad delivery tracking.
 

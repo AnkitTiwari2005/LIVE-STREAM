@@ -87,13 +87,12 @@ html[data-theme="light"] .text-stone-300\/90 {
 
 html:not([data-theme="dark"]) .text-stone-400,
 html[data-theme="light"] .text-stone-400 {
-  color: #6f6464 !important;
+  color: #57534e !important;
 }
 
 html:not([data-theme="dark"]) .text-stone-500,
 html[data-theme="light"] .text-stone-500 {
-  /* D-03: Darkened from #8a7d7d (contrast ~3.1:1 on white — fails WCAG AA for body text)
-     to #6b7280 (stone-500 natural, contrast ~4.6:1 on white — passes WCAG AA). */
+  /* D-02: High-contrast stone-600 (#57534e) for ~7.1:1 on white/blush backgrounds */
   color: #57534e !important;
 }
 
@@ -129,12 +128,49 @@ html:not([data-theme="dark"]) .text-emerald-200,
 html:not([data-theme="dark"]) .text-emerald-300,
 html:not([data-theme="dark"]) .text-emerald-400,
 html:not([data-theme="dark"]) .text-emerald-400\/70,
+html:not([data-theme="dark"]) .text-emerald-500,
+html:not([data-theme="dark"]) .text-emerald-600,
 html[data-theme="light"] .text-emerald-100\/90,
 html[data-theme="light"] .text-emerald-200,
 html[data-theme="light"] .text-emerald-300,
 html[data-theme="light"] .text-emerald-400,
-html[data-theme="light"] .text-emerald-400\/70 {
-  color: #068313 !important;
+html[data-theme="light"] .text-emerald-400\/70,
+html[data-theme="light"] .text-emerald-500,
+html[data-theme="light"] .text-emerald-600 {
+  color: #047857 !important;
+}
+
+html:not([data-theme="dark"]) .text-green-500,
+html:not([data-theme="dark"]) .text-green-600,
+html[data-theme="light"] .text-green-500,
+html[data-theme="light"] .text-green-600 {
+  color: #15803d !important;
+}
+
+html:not([data-theme="dark"]) .text-amber-500,
+html:not([data-theme="dark"]) .text-amber-600,
+html[data-theme="light"] .text-amber-500,
+html[data-theme="light"] .text-amber-600 {
+  color: #92400e !important;
+}
+
+html:not([data-theme="dark"]) .text-orange-500,
+html:not([data-theme="dark"]) .text-orange-600,
+html[data-theme="light"] .text-orange-500,
+html[data-theme="light"] .text-orange-600 {
+  color: #9a3412 !important;
+}
+
+html:not([data-theme="dark"]) .text-red-500,
+html[data-theme="light"] .text-red-500 {
+  color: #b91c1c !important;
+}
+
+html:not([data-theme="dark"]) .text-rose-500,
+html:not([data-theme="dark"]) .text-rose-600,
+html[data-theme="light"] .text-rose-500,
+html[data-theme="light"] .text-rose-600 {
+  color: #be123c !important;
 }
 
 html:not([data-theme="dark"]) .text-blue-400,
@@ -434,7 +470,7 @@ html:not([data-theme="dark"]) .bg-gold,
 html:not([data-theme="dark"]) .hover\:bg-gold:hover,
 html[data-theme="light"] .bg-gold,
 html[data-theme="light"] .hover\:bg-gold:hover {
-  background-image: linear-gradient(135deg, #e70d1b 0%, #81070f 100%) !important;
+  background-image: linear-gradient(135deg, #c8102e 0%, #81070f 100%) !important;
   background-color: #c8102e !important;
   color: #ffffff !important;
 }
@@ -743,8 +779,8 @@ html[data-theme="light"] .on-photo [class*="bg-black"] svg {
   color: #f59e0b !important;
 }
 
-html .on-photo svg,
-html .video-overlay svg {
+html .on-photo svg:not(button svg):not(a svg),
+html .video-overlay svg:not(button svg):not(a svg) {
   color: #f59e0b !important;
 }
 
@@ -1139,7 +1175,7 @@ html[data-theme="light"] .sd-toast p {
 
 html:not([data-theme="dark"]) .sd-toast button,
 html[data-theme="light"] .sd-toast button {
-  color: #78716c !important;
+  color: #57534e !important;
 }
 
 html:not([data-theme="dark"]) .sd-toast button:hover,
@@ -1253,7 +1289,7 @@ html[data-theme="dark"] .devotee-seva-action {
 }
 
 html[data-theme="light"] .devotee-seva-time {
-  color: #78716c !important;
+  color: #57534e !important;
 }
 html[data-theme="dark"] .devotee-seva-time {
   color: #a8a29e !important;
@@ -1426,10 +1462,10 @@ html[data-theme="dark"] .chat-signin-link {
 /* Navbar Join Free CTA & Badge */
 html[data-theme="light"] .nav-join-free-btn,
 html:not([data-theme="dark"]) .nav-join-free-btn {
-  background: linear-gradient(135deg, #e70d1b 0%, #81070f 100%) !important;
+  background: linear-gradient(135deg, #c8102e 0%, #81070f 100%) !important;
   color: #ffffff !important;
   border: 1px solid rgba(255, 255, 255, 0.25) !important;
-  box-shadow: 0 2px 10px rgba(231, 13, 27, 0.25) !important;
+  box-shadow: 0 2px 10px rgba(200, 16, 46, 0.25) !important;
 }
 
 html[data-theme="light"] .nav-join-free-btn > span:first-child,
@@ -1535,9 +1571,90 @@ html[data-theme="light"] .text-orange-200 {
   color: #7c2d12 !important; /* orange-900 — 10.5:1 on orange-50 */
 }
 
-/* D-03: Bump the muted grey used for subtitles and footer text to pass AA.
-   theme.css:95 previously set color: #8a7d7d (3.95:1). Updated to #6b5f5f (6.1:1). */
+/* D-02: Bump the muted grey used for subtitles and footer text to pass AA.
+   theme.css:95 previously set color: #8a7d7d (3.95:1). Updated to #57534e (7.1:1). */
 html:not([data-theme="dark"]) .text-stone-500,
 html[data-theme="light"] .text-stone-500 {
-  color: #6b5f5f !important; /* 6.1:1 on #fbf8f8 body background */
+  color: #57534e !important; /* 7.1:1 on #fbf8f8 and #f7f1f1 */
+}
+
+/* =========================================================================
+   D-02: Dark Mode Muted Text + Solid CTA Contrast + Light Mode Overlay Protection
+   ========================================================================= */
+
+/* Dark mode: bump stone-500 (#78716c, 3.7–4.2:1) on dark obsidian surfaces to stone-400 (#a8a29e, >7:1) */
+html[data-theme="dark"] .text-stone-500:not(input):not(textarea):not([class*="bg-white"]):not([class*="bg-amber-"]):not([class*="bg-stone-1"]):not([class*="bg-stone-2"]) {
+  color: #a8a29e !important;
+}
+
+/* Solid CTA buttons always maintain AA foreground contrast in both themes */
+html .bg-orange-600.text-white {
+  background-color: #c2410c !important; /* orange-700 — 5.18:1 with white */
+}
+html .bg-green-600.text-white {
+  background-color: #15803d !important; /* green-700 — 5.13:1 with white */
+}
+html .bg-emerald-600.text-white {
+  background-color: #047857 !important; /* emerald-700 — 5.48:1 with white */
+}
+
+html:not([data-theme="dark"]) :is(.bg-red-600, .bg-red-700, .bg-red-600\/90, .bg-red-700\/90, .bg-red-700\/95, .bg-orange-600, .bg-orange-700, .bg-emerald-600, .bg-emerald-700, .bg-emerald-600\/90, .bg-emerald-700\/95, .bg-green-600, .bg-green-700, .bg-vermillion-deep, .bg-vermillion-deep\/95, .from-orange-600, .from-orange-700, .from-red-600, .from-red-700).text-white,
+html[data-theme="light"] :is(.bg-red-600, .bg-red-700, .bg-red-600\/90, .bg-red-700\/90, .bg-red-700\/95, .bg-orange-600, .bg-orange-700, .bg-emerald-600, .bg-emerald-700, .bg-emerald-600\/90, .bg-emerald-700\/95, .bg-green-600, .bg-green-700, .bg-vermillion-deep, .bg-vermillion-deep\/95, .from-orange-600, .from-orange-700, .from-red-600, .from-red-700).text-white,
+html:not([data-theme="dark"]) :is(.bg-red-600, .bg-red-700, .bg-red-600\/90, .bg-red-700\/90, .bg-red-700\/95, .bg-orange-600, .bg-orange-700, .bg-emerald-600, .bg-emerald-700, .bg-emerald-600\/90, .bg-emerald-700\/95, .bg-green-600, .bg-green-700, .bg-vermillion-deep, .bg-vermillion-deep\/95, .from-orange-600, .from-orange-700, .from-red-600, .from-red-700, .bg-gold) .text-white,
+html[data-theme="light"] :is(.bg-red-600, .bg-red-700, .bg-red-600\/90, .bg-red-700\/90, .bg-red-700\/95, .bg-orange-600, .bg-orange-700, .bg-emerald-600, .bg-emerald-700, .bg-emerald-600\/90, .bg-emerald-700\/95, .bg-green-600, .bg-green-700, .bg-vermillion-deep, .bg-vermillion-deep\/95, .from-orange-600, .from-orange-700, .from-red-600, .from-red-700, .bg-gold) .text-white,
+html:not([data-theme="dark"]) :is(.bg-red-600, .bg-red-700, .bg-red-600\/90, .bg-red-700\/90, .bg-red-700\/95, .bg-orange-600, .bg-orange-700, .bg-emerald-600, .bg-emerald-700, .bg-emerald-600\/90, .bg-emerald-700\/95, .bg-green-600, .bg-green-700, .bg-vermillion-deep, .bg-vermillion-deep\/95, .from-orange-600, .from-orange-700, .from-red-600, .from-red-700).text-white :is(span, svg),
+html[data-theme="light"] :is(.bg-red-600, .bg-red-700, .bg-red-600\/90, .bg-red-700\/90, .bg-red-700\/95, .bg-orange-600, .bg-orange-700, .bg-emerald-600, .bg-emerald-700, .bg-emerald-600\/90, .bg-emerald-700\/95, .bg-green-600, .bg-green-700, .bg-vermillion-deep, .bg-vermillion-deep\/95, .from-orange-600, .from-orange-700, .from-red-600, .from-red-700).text-white :is(span, svg) {
+  color: #ffffff !important;
+}
+
+/* Final high-specificity overlay protection so studio preview & stream player remain crisp in light mode */
+html:not([data-theme="dark"]) :is(.player-container, .video-overlay, .on-photo) :is(.bg-stone-950, .bg-stone-900, .bg-obsidian),
+html[data-theme="light"] :is(.player-container, .video-overlay, .on-photo) :is(.bg-stone-950, .bg-stone-900, .bg-obsidian) {
+  background-color: #0c0a09 !important;
+}
+html:not([data-theme="dark"]) :is(.player-container, .video-overlay, .on-photo) :is(.bg-stone-800, .bg-stone-800\/90, .bg-stone-700),
+html[data-theme="light"] :is(.player-container, .video-overlay, .on-photo) :is(.bg-stone-800, .bg-stone-800\/90, .bg-stone-700) {
+  background-color: rgba(41, 37, 36, 0.92) !important;
+  color: #f5f5f4 !important;
+  border-color: rgba(120, 113, 108, 0.5) !important;
+}
+html:not([data-theme="dark"]) :is(.video-overlay, .on-photo) :is(.text-white, .text-stone-100, .text-gold-pale):not(.text-stone-950):not(.text-obsidian),
+html[data-theme="light"] :is(.video-overlay, .on-photo) :is(.text-white, .text-stone-100, .text-gold-pale):not(.text-stone-950):not(.text-obsidian) {
+  color: #ffffff !important;
+}
+html:not([data-theme="dark"]) :is(.video-overlay, .on-photo) :is(.text-stone-200, .text-stone-300, .text-stone-400, .text-stone-500),
+html[data-theme="light"] :is(.video-overlay, .on-photo) :is(.text-stone-200, .text-stone-300, .text-stone-400, .text-stone-500) {
+  color: #e7e5e4 !important;
+}
+html:not([data-theme="dark"]) :is(.video-overlay, .on-photo) :is(.text-amber-100, .text-amber-200, .text-amber-300, .text-amber-400):not(.bg-amber-400):not(.bg-amber-500),
+html[data-theme="light"] :is(.video-overlay, .on-photo) :is(.text-amber-100, .text-amber-200, .text-amber-300, .text-amber-400):not(.bg-amber-400):not(.bg-amber-500) {
+  color: #fde68a !important;
+}
+html:not([data-theme="dark"]) :is(.video-overlay, .on-photo) :is(.text-orange-200, .text-orange-300, .text-orange-400),
+html[data-theme="light"] :is(.video-overlay, .on-photo) :is(.text-orange-200, .text-orange-300, .text-orange-400) {
+  color: #fed7aa !important;
+}
+html:not([data-theme="dark"]) :is(.video-overlay, .on-photo) :is(.text-red-300, .text-red-400),
+html[data-theme="light"] :is(.video-overlay, .on-photo) :is(.text-red-300, .text-red-400) {
+  color: #fca5a5 !important;
+}
+html:not([data-theme="dark"]) :is(.video-overlay, .on-photo) :is(.text-emerald-300, .text-emerald-400),
+html[data-theme="light"] :is(.video-overlay, .on-photo) :is(.text-emerald-300, .text-emerald-400) {
+  color: #6ee7b7 !important;
+}
+html:not([data-theme="dark"]) :is(.video-overlay, .on-photo) :is(.text-stone-950, .text-obsidian),
+html[data-theme="light"] :is(.video-overlay, .on-photo) :is(.text-stone-950, .text-obsidian),
+html:not([data-theme="dark"]) :is(.video-overlay, .on-photo) .bg-gold,
+html[data-theme="light"] :is(.video-overlay, .on-photo) .bg-gold,
+html:not([data-theme="dark"]) :is(.video-overlay, .on-photo) .bg-gold span,
+html[data-theme="light"] :is(.video-overlay, .on-photo) .bg-gold span {
+  color: #0c0a09 !important;
+}
+html:not([data-theme="dark"]) :is(.video-overlay, .on-photo) .bg-gold {
+  background-image: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  background-color: #f59e0b !important;
+}
+html:not([data-theme="dark"]) :is(.video-overlay, .on-photo) .bg-gold svg,
+html[data-theme="light"] :is(.video-overlay, .on-photo) .bg-gold svg {
+  color: #0c0a09 !important;
 }

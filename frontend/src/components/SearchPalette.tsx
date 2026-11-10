@@ -35,11 +35,11 @@ const STATIC_DIRECTORY: SearchItem[] = [
   },
   {
     title: 'Acharya Devrishi',
-    subtitle: 'Sanskrit Acharya, Rishikesh Gurukul',
+    subtitle: 'Sanskrit & Jyotish Acharya, Rishikesh',
     category: 'Pandit',
     url: '/#pandits',
     image: '/images/photo-1762838105804-c3264c29a390.webp',
-    keywords: 'acharya devrishi rishikesh gurukul katha vedic',
+    keywords: 'acharya devrishi rishikesh katha vedic jyotish',
   },
   {
     title: 'Sacred Coin Wallet',
@@ -51,11 +51,11 @@ const STATIC_DIRECTORY: SearchItem[] = [
   },
   {
     title: 'Become a Verified Pandit',
-    subtitle: 'Apply for Gurukul & Temple broadcast verification',
+    subtitle: 'Apply for KYC & Pandit broadcast verification',
     category: 'Streamer',
     url: '/streamer/apply',
     image: '/images/photo-1543934776-32d1cc654abb.webp',
-    keywords: 'apply pandit become acharya priest verification onboard',
+    keywords: 'apply pandit become acharya priest verification onboard kyc',
   },
   {
     title: 'Pandit Broadcaster Studio',
@@ -79,7 +79,7 @@ const STATIC_DIRECTORY: SearchItem[] = [
     category: 'About',
     url: '/about',
     image: '/images/photo-1681797849099-0053b1567d95.webp',
-    keywords: 'about mission company team pandit gurukul',
+    keywords: 'about mission company team pandit kyc heritage',
   },
 ];
 
@@ -300,8 +300,8 @@ export function SearchPalette({
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-2.5 bg-stone-50 dark:bg-stone-950/80 border-t border-stone-200 dark:border-gold/20 text-center text-[11px] text-stone-500 dark:text-stone-400">
-          Sub-second live devotional broadcasts &amp; verified pandits worldwide
+        <div className="px-4 py-2.5 bg-stone-50 dark:bg-stone-950/80 border-t border-stone-200 dark:border-gold/20 text-center text-[11px] text-stone-600 dark:text-stone-400">
+          Real-time devotional broadcasts &amp; KYC-verified pandits worldwide
         </div>
       </div>
     </div>

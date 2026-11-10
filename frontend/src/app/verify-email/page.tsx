@@ -65,12 +65,12 @@ function VerifyEmailContent() {
 
         {status === 'success' && (
           <div>
-            <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-3" />
+            <CheckCircle2 className="w-12 h-12 text-emerald-700 dark:text-emerald-400 mx-auto mb-3" />
             <h2 className="text-xl font-bold text-white mb-2">Email Verified Successfully!</h2>
             <p className="text-xs text-stone-300 leading-relaxed mb-6">{message}</p>
             <Link
               href="/login"
-              className="inline-flex items-center gap-1.5 py-2.5 px-6 bg-orange-600 hover:bg-orange-500 text-white font-semibold rounded-xl text-xs transition-colors"
+              className="inline-flex items-center gap-1.5 py-2.5 px-6 bg-orange-700 hover:bg-orange-600 text-white font-semibold rounded-xl text-xs transition-colors"
             >
               <span>Sign In to Your Account</span>
               <PranamIcon size={16} />
@@ -80,9 +80,9 @@ function VerifyEmailContent() {
 
         {status === 'error' && (
           <div>
-            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+            <AlertCircle className="w-12 h-12 text-red-600 dark:text-red-400 mx-auto mb-3" />
             <h2 className="text-xl font-bold text-white mb-2">Verification Failed</h2>
-            <p className="text-xs text-red-300 leading-relaxed mb-6">{message}</p>
+            <p className="text-xs text-red-700 dark:text-red-300 leading-relaxed mb-6">{message}</p>
             <Link
               href="/login"
               className="inline-block py-2.5 px-6 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-xl text-xs transition-colors"

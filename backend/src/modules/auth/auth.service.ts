@@ -14,6 +14,7 @@ import { StorageService } from '../storage/storage.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto, ResetPasswordDto, VerifyTotpDto } from './dto/login.dto';
 import { CryptoUtil } from '../../common/crypto.util';
+import { resolveTwoFactorSecret } from '../../common/config/validate-env';
 import * as bcrypt from 'bcryptjs';
 import { Prisma, UserRole, UserStatus, WalletTxType, WalletTxCategory } from '@prisma/client';
 import { authenticator } from 'otplib';
@@ -35,16 +36,42 @@ export class AuthService {
 
   private getTotpFailCount(userId: string): number {
     const entry = this.totpFailures.get(userId);
-    if (!entry || Date.now() > entry.resetAt) return 0;
+    if (!entry) return 0;
+    if (Date.now() > entry.resetAt) {
+      this.totpFailures.delete(userId);
+      return 0;
+    }
     return entry.count;
+  }
+
+  private getTotpLockRemainingSeconds(userId: string): number {
+    const entry = this.totpFailures.get(userId);
+    if (!entry) return 0;
+    const remainingMs = entry.resetAt - Date.now();
+    if (remainingMs <= 0) {
+      this.totpFailures.delete(userId);
+      return 0;
+    }
+    if (entry.count < 5) return 0;
+    return Math.ceil(remainingMs / 1000);
+  }
+
+  private formatTotpWaitTime(seconds: number): string {
+    if (seconds <= 60) {
+      return `${Math.max(1, seconds)} second${seconds === 1 ? '' : 's'}`;
+    }
+    const mins = Math.ceil(seconds / 60);
+    return `${mins} minute${mins === 1 ? '' : 's'}`;
   }
 
   private incrementTotpFail(userId: string): number {
     const now = Date.now();
     const entry = this.totpFailures.get(userId);
-    const count = entry && now <= entry.resetAt ? entry.count + 1 : 1;
-    // Window matches the 5-minute 2FA challenge token TTL
-    this.totpFailures.set(userId, { count, resetAt: now + 5 * 60 * 1000 });
+    const inWindow = entry && now <= entry.resetAt;
+    const count = inWindow ? entry.count + 1 : 1;
+    // Keep resetAt fixed from the first failure in this 5-minute window so repeated guesses never extend the lock
+    const resetAt = inWindow ? entry.resetAt : now + 5 * 60 * 1000;
+    this.totpFailures.set(userId, { count, resetAt });
     return count;
   }
 
@@ -209,9 +236,15 @@ export class AuthService {
       throw new UnauthorizedException('Your account is temporarily suspended. Please contact support.');
     }
 
-    // If 2FA enabled, require 2FA challenge
+    // If 2FA enabled, require 2FA challenge (unless currently locked from brute-force attempts)
     if (user.isTwoFactorEnabled) {
-      const secret = process.env.JWT_2FA_SECRET || process.env.JWT_ACCESS_SECRET;
+      const waitSeconds = this.getTotpLockRemainingSeconds(user.id);
+      if (waitSeconds > 0) {
+        throw new UnauthorizedException(
+          `Too many incorrect 2FA verification codes. Please wait ${this.formatTotpWaitTime(waitSeconds)} before trying again.`,
+        );
+      }
+      const secret = resolveTwoFactorSecret();
       return {
         requires2FA: true,
         tempToken: this.jwtService.sign(
@@ -229,12 +262,12 @@ export class AuthService {
       throw new BadRequestException('tempToken is required for 2FA verification');
     }
 
-    const secret = process.env.JWT_2FA_SECRET || process.env.JWT_ACCESS_SECRET;
+    const secret = resolveTwoFactorSecret();
     let payload: any;
     try {
       payload = this.jwtService.verify(dto.tempToken, { secret });
     } catch {
-      throw new UnauthorizedException('2FA challenge token has expired or is invalid. Please sign in again.');
+      throw new UnauthorizedException('2FA challenge token has expired or is invalid. Please return to sign in.');
     }
 
     if (payload.purpose !== '2fa_challenge' && !payload.is2FAChallenge) {
@@ -243,13 +276,11 @@ export class AuthService {
 
     const userId = payload.sub;
 
-    // R-05: Enforce a maximum of 5 wrong TOTP codes per challenge.
-    // A 6-digit TOTP at 3-code window gives ~2.7% success per guess; 5 attempts ≈ 0.013%.
-    // On the 6th wrong attempt the user must restart the login flow (get a new tempToken).
-    const failCount = this.getTotpFailCount(userId);
-    if (failCount >= 5) {
+    // R-05: Enforce a maximum of 5 wrong TOTP codes per 5-minute window without extending resetAt.
+    const lockWait = this.getTotpLockRemainingSeconds(userId);
+    if (lockWait > 0) {
       throw new UnauthorizedException(
-        'Too many incorrect verification codes. Please sign in again to start a new 2FA challenge.',
+        `Too many incorrect verification codes. Please wait ${this.formatTotpWaitTime(lockWait)} before trying again.`,
       );
     }
 
@@ -269,13 +300,17 @@ export class AuthService {
       const tokenHash = CryptoUtil.hashSha256(dto.token);
       const backupIndex = user.twoFactorBackupCodes.indexOf(tokenHash);
       if (backupIndex === -1) {
-        // R-05: Count this failed attempt
+        // R-05: Count this failed attempt (window stays anchored to first failure)
         const fails = this.incrementTotpFail(userId);
         const remaining = Math.max(0, 5 - fails);
+        if (remaining > 0) {
+          throw new UnauthorizedException(
+            `Invalid authenticator verification code. ${remaining} attempt(s) remaining.`,
+          );
+        }
+        const waitAfterLock = this.getTotpLockRemainingSeconds(userId);
         throw new UnauthorizedException(
-          remaining > 0
-            ? `Invalid authenticator verification code. ${remaining} attempt(s) remaining.`
-            : 'Too many incorrect codes. Please sign in again to start a new 2FA challenge.',
+          `Too many incorrect verification codes. Please wait ${this.formatTotpWaitTime(waitAfterLock)} before trying again.`,
         );
       }
       // Remove used backup code
@@ -487,6 +522,7 @@ export class AuthService {
         name: user.name,
         role: user.role,
         isEmailVerified: user.isEmailVerified,
+        isTwoFactorEnabled: user.isTwoFactorEnabled === true,
         avatarUrl: user.avatarUrl,
         streamerProfile: user.streamerProfile,
         wallet: user.wallet ? {

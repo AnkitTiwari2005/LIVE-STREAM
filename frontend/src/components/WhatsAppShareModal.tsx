@@ -48,7 +48,7 @@ export function WhatsAppShareModal({
         </button>
 
         <div className="flex items-center gap-2 mb-4">
-          <Share2 className="w-5 h-5 text-green-600 dark:text-green-500" />
+          <Share2 className="w-5 h-5 text-green-700 dark:text-green-400" />
           <h3 className="text-lg font-bold text-stone-900 dark:text-foreground">Share Private Pooja Invitation</h3>
         </div>
 
@@ -69,7 +69,7 @@ export function WhatsAppShareModal({
               href={whatsAppPart1Url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-1.5 bg-green-600 hover:bg-green-500 text-white text-xs font-semibold py-2 px-3 rounded-lg transition-colors"
+              className="flex-1 flex items-center justify-center gap-1.5 bg-green-700 hover:bg-green-600 text-white text-xs font-semibold py-2 px-3 rounded-lg transition-colors"
             >
               <ExternalLink className="w-3.5 h-3.5" /> Share to WhatsApp
             </a>
@@ -77,7 +77,7 @@ export function WhatsAppShareModal({
               onClick={() => copyToClipboard(joinUrl, 'link')}
               className="flex items-center gap-1 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 border border-stone-200 dark:border-transparent text-xs py-2 px-3 rounded-lg transition-colors"
             >
-              {copiedLink ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+              {copiedLink ? <Check className="w-3.5 h-3.5 text-green-700 dark:text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
               {copiedLink ? 'Copied' : 'Copy'}
             </button>
           </div>
@@ -95,13 +95,13 @@ export function WhatsAppShareModal({
               </span>
               <button
                 onClick={() => copyToClipboard(password, 'pass')}
-                className="text-xs text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white flex items-center gap-1"
+                className="text-xs text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white flex items-center gap-1"
               >
-                {copiedPass ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedPass ? <Check className="w-3.5 h-3.5 text-green-700 dark:text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
                 {copiedPass ? 'Copied' : 'Copy'}
               </button>
             </div>
-            <p className="text-[11px] text-stone-500">
+            <p className="text-[11px] text-stone-600 dark:text-stone-400">
               Send this secret password only to authorized participants.
             </p>
           </div>

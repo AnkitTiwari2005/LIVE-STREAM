@@ -201,7 +201,7 @@ export default function StreamerApplyPage() {
                 You are Already a Verified Vedic Pandit
               </h1>
               <p className="text-xs sm:text-sm text-stone-300 max-w-md mx-auto leading-relaxed">
-                Your account is already accredited with Gurukul verification and holds full live broadcasting privileges on Shubhdarshan. You do not need to re-apply.
+                Your account is already KYC verified and holds full live broadcasting privileges on Shubhdarshan. You do not need to re-apply.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
                 <Link
@@ -250,7 +250,7 @@ export default function StreamerApplyPage() {
                 Application Under Active Review
               </h1>
               <p className="text-xs sm:text-sm text-stone-300 max-w-md mx-auto leading-relaxed">
-                Your Pandit verification application has already been submitted and is currently being audited by our Acharya council.
+                Your Pandit verification application has already been submitted and is currently being reviewed by our platform verification team.
               </p>
               <div className="pt-3">
                 <Link
@@ -325,7 +325,7 @@ export default function StreamerApplyPage() {
                     Application Submitted for Review
                   </h2>
                   <p className="text-xs text-stone-300 leading-relaxed mb-6">
-                    Our Acharya council will review your spiritual credentials and certificates. Once approved, you will receive the Verified Streamer badge and unlock the Pandit Studio. Redirecting to application tracking...
+                    Our platform verification team will review your spiritual credentials and certificates. Once approved, you will receive the Verified Streamer badge and unlock the Pandit Studio. Redirecting to application tracking...
                   </p>
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                     <Link

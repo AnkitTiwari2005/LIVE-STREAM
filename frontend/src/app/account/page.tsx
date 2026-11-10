@@ -315,16 +315,16 @@ export default function AccountPage() {
             <div className="bg-obsidian-soft border border-gold/15 rounded-3xl p-6 sm:p-8 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <User className="w-5 h-5 text-orange-400" /> Account Overview
+                <User className="w-5 h-5 text-orange-700 dark:text-orange-400" /> Account Overview
               </h2>
               {/* Role Badge */}
               <div>
                 {user?.role === 'ADMIN' ? (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 bg-amber-950/60 px-3 py-1 rounded-full border border-amber-500/30">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-3 py-1 rounded-full border border-amber-300 dark:border-amber-500/30">
                     <Shield className="w-3.5 h-3.5" /> Platform Administrator
                   </span>
                 ) : user?.role === 'STREAMER' ? (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-orange-400 bg-orange-950/60 px-3 py-1 rounded-full border border-orange-500/30">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-orange-800 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/60 px-3 py-1 rounded-full border border-orange-300 dark:border-orange-500/30">
                     <VerifiedPanditBadge size={16} /> Verified Vedic Pandit
                   </span>
                 ) : (
@@ -346,7 +346,7 @@ export default function AccountPage() {
                         setNameInput(user?.name || '');
                         setIsEditingName(true);
                       }}
-                      className="text-[11px] text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 font-semibold flex items-center gap-1"
+                      className="text-[11px] text-orange-700 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-300 font-semibold flex items-center gap-1"
                     >
                       <Edit2 className="w-3 h-3" /> Edit Name
                     </button>
@@ -365,7 +365,7 @@ export default function AccountPage() {
                     <button
                       type="submit"
                       disabled={nameSaving}
-                      className="p-1.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg transition disabled:opacity-50"
+                      className="p-1.5 bg-orange-700 hover:bg-orange-600 text-white rounded-lg transition disabled:opacity-50"
                       title="Save Name"
                     >
                       <Check className="w-3.5 h-3.5" />
@@ -382,7 +382,7 @@ export default function AccountPage() {
                 ) : (
                   <span className="text-sm font-bold text-stone-900 dark:text-white block">{user?.name}</span>
                 )}
-                {nameMsg && <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1">{nameMsg}</p>}
+                {nameMsg && <p className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-1">{nameMsg}</p>}
               </div>
 
               <div className="p-4 bg-stone-50 dark:bg-stone-950 rounded-2xl border border-stone-200 dark:border-stone-800/80">
@@ -390,19 +390,19 @@ export default function AccountPage() {
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-semibold text-stone-900 dark:text-white truncate">{user?.email}</span>
                   {user?.isEmailVerified ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-500/30 shrink-0">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-500/30 shrink-0">
                       <CheckCircle2 className="w-3 h-3" /> Verified
                     </span>
                   ) : (
                     <button
                       onClick={handleResendVerify}
-                      className="text-[11px] font-bold text-amber-400 bg-amber-950/60 hover:bg-amber-900/60 px-2 py-0.5 rounded-full border border-amber-500/30 transition shrink-0"
+                      className="text-[11px] font-bold text-amber-800 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 dark:hover:bg-amber-900/60 px-2 py-0.5 rounded-full border border-amber-300 dark:border-amber-500/30 transition shrink-0"
                     >
                       Verify Email
                     </button>
                   )}
                 </div>
-                {verifyMsg && <p className="text-xs text-emerald-400 mt-2">{verifyMsg}</p>}
+                {verifyMsg && <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-2">{verifyMsg}</p>}
               </div>
             </div>
 
@@ -501,7 +501,7 @@ export default function AccountPage() {
                     <span
                       className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full transition-colors ${
                         isSelected
-                          ? 'bg-white/25 text-white'
+                          ? 'bg-white/25 text-white dark:bg-stone-950/20 dark:text-stone-950'
                           : 'bg-stone-200 text-stone-800 dark:bg-gold/15 dark:text-gold-pale dark:border dark:border-gold/25'
                       }`}
                     >
@@ -549,27 +549,27 @@ export default function AccountPage() {
                         key={b.id}
                         className={`rounded-2xl border p-5 sm:p-6 transition-all duration-300 shadow-lg space-y-4 ${
                           isApproved
-                            ? 'bg-gradient-to-br from-emerald-950/20 via-obsidian to-obsidian border-emerald-500/40 shadow-[0_4px_24px_rgba(16,185,129,0.08)]'
+                            ? 'bg-emerald-50/70 dark:bg-emerald-950/20 dark:bg-gradient-to-br dark:from-emerald-950/20 dark:via-obsidian dark:to-obsidian border-emerald-300 dark:border-emerald-500/40 shadow-[0_4px_24px_rgba(16,185,129,0.08)]'
                             : isDeclined
-                            ? 'bg-gradient-to-br from-red-950/20 via-obsidian to-obsidian border-red-500/40'
-                            : 'bg-gradient-to-br from-amber-950/20 via-obsidian to-obsidian border-amber-500/35 shadow-[0_4px_24px_rgba(245,158,11,0.08)]'
+                            ? 'bg-red-50/70 dark:bg-red-950/20 dark:bg-gradient-to-br dark:from-red-950/20 dark:via-obsidian dark:to-obsidian border-red-300 dark:border-red-500/40'
+                            : 'bg-amber-50/70 dark:bg-amber-950/20 dark:bg-gradient-to-br dark:from-amber-950/20 dark:via-obsidian dark:to-obsidian border-amber-300 dark:border-amber-500/35 shadow-[0_4px_24px_rgba(245,158,11,0.08)]'
                         }`}
                       >
                         {/* Top Meta Line: Status Badge & Ref Code */}
                         <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-stone-200 dark:border-stone-800">
                           <div className="flex items-center gap-2">
                             {isPending && (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-950/80 text-amber-300 border border-amber-500/40">
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-500/40">
                                 <Clock className="w-3.5 h-3.5 animate-spin" /> Awaiting Pandit Confirmation
                               </span>
                             )}
                             {isApproved && (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-500/40">
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/40">
                                 <CheckCircle2 className="w-3.5 h-3.5" /> Consecrated &amp; Approved by Panditji
                               </span>
                             )}
                             {isDeclined && (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-950/80 text-red-300 border border-red-500/40">
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-100 dark:bg-red-950/80 text-red-900 dark:text-red-300 border border-red-300 dark:border-red-500/40">
                                 <AlertTriangle className="w-3.5 h-3.5" /> Pandit Unavailable for Slot
                               </span>
                             )}
@@ -578,7 +578,7 @@ export default function AccountPage() {
                             </span>
                           </div>
 
-                          <div className="text-[11px] text-stone-500 dark:text-stone-400">
+                          <div className="text-[11px] text-stone-600 dark:text-stone-400">
                             Requested on: {new Date(b.createdAt || Date.now()).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                           </div>
                         </div>
@@ -684,7 +684,7 @@ export default function AccountPage() {
                                     impression that a real pandit had responded to their booking. */}
                                 <button
                                   onClick={() => handleDeleteBooking(b.id)}
-                                  className="p-1.5 text-stone-500 hover:text-red-400 transition"
+                                  className="p-1.5 text-stone-600 dark:text-stone-400 hover:text-red-600 dark:hover:text-red-400 transition"
                                   title="Cancel Request"
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -729,7 +729,7 @@ export default function AccountPage() {
                                 </button>
                                 <button
                                   onClick={() => handleDeleteBooking(b.id)}
-                                  className="p-1.5 text-stone-500 hover:text-red-400 transition"
+                                  className="p-1.5 text-stone-600 dark:text-stone-400 hover:text-red-600 dark:hover:text-red-400 transition"
                                   title="Dismiss Record"
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -750,14 +750,14 @@ export default function AccountPage() {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-lg font-bold text-stone-900 dark:text-white flex items-center gap-2">
-                    <Shield className="w-5 h-5 text-emerald-400" /> Two-Factor Authentication (2FA)
+                    <Shield className="w-5 h-5 text-emerald-700 dark:text-emerald-400" /> Two-Factor Authentication (2FA)
                   </h2>
                   <p className="text-xs text-stone-400 mt-0.5">
                     Add a strong cryptographic layer to safeguard your sacred account
                   </p>
                 </div>
                 {user?.isTwoFactorEnabled && (
-                  <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-400 bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-500/30">
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-300 dark:border-emerald-500/30">
                     <CheckCircle2 className="w-3.5 h-3.5" /> Active
                   </span>
                 )}
@@ -765,7 +765,7 @@ export default function AccountPage() {
 
               {user?.role === 'ADMIN' && !user?.isTwoFactorEnabled && (
                 <div className="p-3.5 mb-4 bg-amber-500/15 border border-amber-500/40 rounded-xl text-xs text-amber-900 dark:text-amber-200 flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <Shield className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0" />
                   <span>
                     <strong>Platform Administrator Requirement:</strong> Two-factor authentication (2FA) is mandatory to access the Admin Console. Click below to scan and activate your authenticator.
                   </span>
@@ -773,7 +773,7 @@ export default function AccountPage() {
               )}
 
               {twoFaSuccess && (
-                <div className="p-3 mb-4 bg-emerald-950/50 border border-emerald-500/30 rounded-xl text-xs text-emerald-400">
+                <div className="p-3 mb-4 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-500/30 rounded-xl text-xs text-emerald-800 dark:text-emerald-400">
                   {twoFaSuccess}
                 </div>
               )}
@@ -838,32 +838,32 @@ export default function AccountPage() {
 
             {/* DPDP Act 2023 Compliance & Data Deletion */}
             <div className="bg-obsidian-soft border border-red-500/30 rounded-3xl p-6 sm:p-8 shadow-xl">
-              <h2 className="text-lg font-bold text-red-400 flex items-center gap-2 mb-1">
+              <h2 className="text-lg font-bold text-red-700 dark:text-red-400 flex items-center gap-2 mb-1">
                 <Trash2 className="w-5 h-5" /> Data Privacy & Account Erasure
               </h2>
-              <p className="text-xs text-stone-400 mb-4">
+              <p className="text-xs text-stone-600 dark:text-stone-400 mb-4">
                 Under Section 12(3) of the Digital Personal Data Protection Act (DPDP Act, 2023), you have the absolute statutory right to request erasure of your personal data and account records.
               </p>
 
               {deleteConfirm ? (
-                <div className="p-4 bg-red-950/50 border border-red-500/30 rounded-2xl space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-bold text-red-400">
+                <div className="p-4 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-500/30 rounded-2xl space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-bold text-red-700 dark:text-red-400">
                     <AlertTriangle className="w-4 h-4" /> Are you certain you want to permanently erase your account?
                   </div>
-                  <p className="text-[11px] text-stone-300">
+                  <p className="text-[11px] text-stone-700 dark:text-stone-300">
                     This action will immediately revoke all access, anonymize personal identification records, and clear remaining darshan coins. This action is irreversible.
                   </p>
                   <div className="flex gap-2">
                     <button
                       onClick={handleDeleteAccount}
                       disabled={deleteLoading}
-                      className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-bold transition"
+                      className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-xl text-xs font-bold transition"
                     >
                       {deleteLoading ? 'Erasing...' : 'Confirm Permanent Deletion'}
                     </button>
                     <button
                       onClick={() => setDeleteConfirm(false)}
-                      className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-xl text-xs font-semibold"
+                      className="px-4 py-2 bg-stone-200 hover:bg-stone-300 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-300 rounded-xl text-xs font-semibold"
                     >
                       Cancel
                     </button>
@@ -872,7 +872,7 @@ export default function AccountPage() {
               ) : (
                 <button
                   onClick={() => setDeleteConfirm(true)}
-                  className="px-4 py-2 bg-red-950/60 hover:bg-red-900/60 text-red-400 border border-red-800/60 rounded-xl text-xs font-semibold transition"
+                  className="px-4 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/60 dark:hover:bg-red-900/60 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/60 rounded-xl text-xs font-semibold transition"
                 >
                   Request Account Deletion (DPDP Act)
                 </button>

@@ -231,6 +231,18 @@ export default function LoginPage() {
             >
               {loading ? 'Verifying...' : 'Verify 2FA'}
             </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setTempToken(null);
+                setTotpToken('');
+                setError(null);
+              }}
+              className="w-full py-2.5 rounded-full border border-stone-700 hover:border-gold/40 text-stone-300 hover:text-white text-xs font-semibold transition"
+            >
+              Back to Sign In
+            </button>
           </form>
         )}
 

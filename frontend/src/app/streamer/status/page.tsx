@@ -130,7 +130,7 @@ export default function StreamerStatusPage() {
                 <p className="text-xs text-stone-300 mt-2 leading-relaxed">
                   Our compliance desk is currently validating your Vedic lineage, temple affiliation, and submitted government identity documents under the DPDP Act 2023.
                 </p>
-                <p className="text-[11px] text-stone-500 mt-2">
+                <p className="text-[11px] text-stone-600 dark:text-stone-400 mt-2">
                   Reviews typically conclude within 24 to 48 hours. You will receive an email upon decision.
                 </p>
               </div>

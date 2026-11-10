@@ -218,7 +218,7 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
             <CoinIcon size={32} />
             <div>
               <h2 className="font-serif text-xl sm:text-2xl font-bold text-stone-900 dark:text-white">Recharge Sacred Coins</h2>
-              <p className="text-xs text-stone-500 dark:text-stone-400">5 Coins = 1 Minute of Auspicious Public Live Darshan</p>
+              <p className="text-xs text-stone-600 dark:text-stone-400">5 Coins = 1 Minute of Auspicious Public Live Darshan</p>
             </div>
           </div>
           <button
@@ -237,7 +237,7 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
 
         {successMessage ? (
           <div className="relative z-10 my-8 text-center py-6">
-            <div className="w-16 h-16 mx-auto mb-4 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-full flex items-center justify-center">
               <CheckCircle2 className="w-10 h-10" />
             </div>
             <h3 className="font-serif text-2xl font-bold text-white mb-2">{successMessage}</h3>
@@ -297,12 +297,12 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
                     </div>
 
                     {/* Watch time & Rate */}
-                    <div className="flex items-center justify-between pt-2 border-t border-stone-800/80 text-[11px] text-stone-400">
-                      <span className="flex items-center gap-1 text-stone-300 font-medium">
+                    <div className="flex items-center justify-between pt-2 border-t border-stone-200 dark:border-stone-800/80 text-[11px] text-stone-600 dark:text-stone-400">
+                      <span className="flex items-center gap-1 text-stone-700 dark:text-stone-300 font-medium">
                         <DiyaIcon size={13} />
                         {pkg.watchTime}
                       </span>
-                      <span className="text-[10px] text-stone-500 font-medium">
+                      <span className="text-[10px] text-stone-600 dark:text-stone-400 font-medium">
                         5 C / min
                       </span>
                     </div>
@@ -311,7 +311,7 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
               })}
             </div>
 
-            <div className="pt-4 border-t border-stone-800 flex flex-col gap-3">
+            <div className="pt-4 border-t border-stone-200 dark:border-stone-800 flex flex-col gap-3">
               <button
                 onClick={handlePurchase}
                 disabled={loading}
@@ -329,9 +329,9 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
                 )}
               </button>
 
-              <div className="flex items-center justify-center gap-4 text-[11px] text-stone-400">
+              <div className="flex items-center justify-center gap-4 text-[11px] text-stone-600 dark:text-stone-400">
                 <span className="flex items-center gap-1">
-                  <Shield className="w-3 h-3 text-emerald-400" /> Instant UPI &amp; Net Banking
+                  <Shield className="w-3 h-3 text-emerald-700 dark:text-emerald-400" /> Instant UPI &amp; Net Banking
                 </span>
                 <span>•</span>
                 <span>100% Encrypted &amp; Safe</span>

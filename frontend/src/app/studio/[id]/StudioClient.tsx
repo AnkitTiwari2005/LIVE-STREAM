@@ -23,6 +23,7 @@ import {
 import { io, Socket } from 'socket.io-client';
 import { ChatWidget } from '@/components/ChatWidget';
 import { WhatsAppShareModal } from '@/components/WhatsAppShareModal';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 import {
@@ -56,6 +57,8 @@ export default function StudioClient() {
 
   const [stream, setStream] = useState<any>(null);
   const [isLive, setIsLive] = useState(false);
+  const [confirmEndOpen, setConfirmEndOpen] = useState(false);
+  const [endingStream, setEndingStream] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [serverUrl, setServerUrl] = useState<string>('');
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -279,17 +282,23 @@ export default function StudioClient() {
     }
   };
 
-  const handleEndStream = async () => {
-    if (!confirm('Are you sure you wish to conclude this live pooja session?')) return;
+  const handleEndStream = () => {
+    setConfirmEndOpen(true);
+  };
 
+  const confirmEndStream = async () => {
+    setEndingStream(true);
     try {
       await apiFetch(`/streams/${streamId}/end`, { method: 'POST' });
       setIsLive(false);
       setToken(null);
+      setConfirmEndOpen(false);
       toast.success('Pooja session concluded successfully.');
       router.push('/');
     } catch (err: any) {
       toast.error(err.message || 'Failed to end stream');
+    } finally {
+      setEndingStream(false);
     }
   };
 
@@ -301,15 +310,15 @@ export default function StudioClient() {
         {/* Top Banner & Emergency Actions */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 bg-obsidian-soft border border-gold/20 p-4 rounded-2xl shadow-lg">
         <div className="flex items-center gap-3">
-          <div className={`p-2.5 rounded-xl ${isLive ? 'bg-red-600 text-white animate-pulse' : 'bg-stone-800 text-stone-300'}`}>
+          <div className={`p-2.5 rounded-xl ${isLive ? 'bg-red-600 text-white animate-pulse' : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700'}`}>
             <Radio className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-white flex items-center gap-2">
+            <h1 className="text-lg font-bold text-stone-900 dark:text-white flex items-center gap-2">
               {stream?.title || 'Pandit Live Studio'}
-              {isLive && <span className="text-xs bg-red-600 px-2 py-0.5 rounded-full font-bold">LIVE ON AIR</span>}
+              {isLive && <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-full font-bold">LIVE ON AIR</span>}
             </h1>
-            <p className="text-xs text-stone-400">
+            <p className="text-xs text-stone-600 dark:text-stone-400">
               {stream?.visibility === 'PRIVATE' ? 'Private Sacred Consultation' : 'Public Live Darshan'} • Quality: {stream?.videoQuality || '480p'}
             </p>
           </div>
@@ -319,7 +328,7 @@ export default function StudioClient() {
           {stream?.visibility === 'PRIVATE' && privateLinkData && (
             <button
               onClick={() => setShareModalOpen(true)}
-              className="flex items-center gap-1.5 bg-green-600 hover:bg-green-500 text-white text-xs font-semibold py-2 px-3.5 rounded-xl transition-colors shadow-md"
+              className="flex items-center gap-1.5 bg-green-700 hover:bg-green-600 text-white text-xs font-semibold py-2 px-3.5 rounded-xl transition-colors shadow-md"
             >
               <Share2 className="w-4 h-4" /> WhatsApp Invite Link
             </button>
@@ -328,7 +337,7 @@ export default function StudioClient() {
           {isLive && (
             <button
               onClick={handleEndStream}
-              className="flex items-center gap-1.5 bg-red-600 hover:bg-red-500 text-white text-xs font-semibold py-2 px-3.5 rounded-xl transition-colors shadow-md"
+              className="flex items-center gap-1.5 bg-red-700 hover:bg-red-600 text-white text-xs font-semibold py-2 px-3.5 rounded-xl transition-colors shadow-md"
             >
               <StopCircle className="w-4 h-4" /> End Live Stream
             </button>
@@ -337,25 +346,25 @@ export default function StudioClient() {
       </div>
 
       {error && (
-        <div className="mb-6 p-4 rounded-2xl bg-red-950/90 border border-red-800 text-red-200 text-xs flex items-center gap-2">
-          <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+        <div className="mb-6 p-4 rounded-2xl bg-red-50 dark:bg-red-950/90 border border-red-300 dark:border-red-800 text-red-900 dark:text-red-200 text-xs flex items-center gap-2">
+          <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {activeConflict && (
-        <div className="mb-6 p-4 rounded-2xl bg-amber-950/80 border border-amber-600 text-amber-900 dark:text-amber-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+        <div className="mb-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/80 border border-amber-400 dark:border-amber-600 text-amber-900 dark:text-amber-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
           <div className="flex items-center gap-2.5">
-            <AlertCircle className="w-5 h-5 text-amber-700 dark:text-amber-400 shrink-0" />
+            <AlertCircle className="w-5 h-5 text-amber-800 dark:text-amber-400 shrink-0" />
             <div>
               <span className="font-bold text-amber-950 dark:text-amber-300 block text-sm">Previous Live Session Still Active</span>
-              <span className="text-amber-800 dark:text-amber-200 font-medium">You have another live broadcast running. Would you like to end the previous broadcast and go live with this session now?</span>
+              <span className="text-amber-900 dark:text-amber-200 font-medium">You have another live broadcast running. Would you like to end the previous broadcast and go live with this session now?</span>
             </div>
           </div>
           <button
             onClick={() => handleGoLive(true)}
             disabled={loading}
-            className="px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold rounded-xl text-xs transition shadow-md shrink-0"
+            className="px-4 py-2 bg-gradient-to-r from-orange-700 to-amber-700 hover:from-orange-600 hover:to-amber-600 text-white font-bold rounded-xl text-xs transition shadow-md shrink-0"
           >
             {loading ? 'Starting...' : 'End Previous & Start Live Now'}
           </button>
@@ -363,17 +372,17 @@ export default function StudioClient() {
       )}
 
       {stream?.status === 'ENDED' && (
-        <div className="mb-6 p-4 rounded-2xl bg-amber-950/70 border border-amber-700/60 text-amber-900 dark:text-amber-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="mb-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/70 border border-amber-300 dark:border-amber-700/60 text-amber-900 dark:text-amber-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <DiyaIcon size={24} className="text-amber-700 dark:text-amber-400 shrink-0" />
+            <DiyaIcon size={24} className="text-amber-800 dark:text-amber-400 shrink-0" />
             <div>
               <span className="font-bold text-amber-950 dark:text-amber-300 block text-sm">Previous Live Broadcast Concluded</span>
-              <span className="text-amber-800 dark:text-amber-200 font-medium">This sacred ritual session has ended. To go live again, configure a fresh broadcast.</span>
+              <span className="text-amber-900 dark:text-amber-200 font-medium">This sacred ritual session has ended. To go live again, configure a fresh broadcast.</span>
             </div>
           </div>
           <Link
             href="/studio/create"
-            className="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-xl text-xs transition-colors shrink-0 shadow-md text-center"
+            className="px-4 py-2 bg-orange-700 hover:bg-orange-600 text-white font-bold rounded-xl text-xs transition-colors shrink-0 shadow-md text-center"
           >
             Setup New Broadcast
           </Link>
@@ -384,18 +393,18 @@ export default function StudioClient() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Video Publisher / Preview Area */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="relative aspect-video bg-black rounded-2xl overflow-hidden border border-stone-800 shadow-2xl flex items-center justify-center">
+          <div className="player-container video-overlay relative aspect-video bg-black rounded-2xl overflow-hidden border border-stone-800 shadow-2xl flex items-center justify-center">
             {!isLive ? (
               // Stage 1: Local Device Preview
-              <div className="relative w-full h-full flex items-center justify-center bg-stone-950">
+              <div className="video-overlay relative w-full h-full flex items-center justify-center bg-stone-950">
                 <div ref={previewRef} className="w-full h-full object-cover" />
-                <div className="absolute top-4 left-4 bg-amber-500/90 text-black text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider backdrop-blur-sm z-10">
+                <div className="absolute top-4 left-4 bg-amber-400 text-stone-950 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow z-10">
                   STUDIO PREVIEW (OFF AIR)
                 </div>
                 {!previewTracks.video && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 bg-black/75">
+                  <div className="video-overlay absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 bg-black/80">
                     <Camera className="w-10 h-10 text-amber-400 mb-3 animate-pulse" />
-                    <p className="text-stone-300 text-xs sm:text-sm font-semibold mb-3">
+                    <p className="text-stone-200 text-xs sm:text-sm font-semibold mb-3">
                       Camera preview initializing or access needed
                     </p>
                     <button
@@ -506,7 +515,7 @@ export default function StudioClient() {
                         setError('Please grant camera and microphone permissions in your browser to broadcast.');
                       }
                     }}
-                    className="px-3 py-1.5 bg-orange-600/30 hover:bg-orange-600/50 text-orange-300 font-semibold text-xs rounded-lg transition-colors"
+                    className="px-3 py-1.5 bg-orange-100 hover:bg-orange-200 dark:bg-orange-600/30 dark:hover:bg-orange-600/50 text-orange-950 dark:text-orange-300 border border-orange-300 dark:border-orange-500/30 font-semibold text-xs rounded-lg transition-colors"
                   >
                     Grant Camera & Mic Access
                   </button>
@@ -516,7 +525,7 @@ export default function StudioClient() {
               {stream?.status === 'ENDED' ? (
                 <Link
                   href="/studio/create"
-                  className="w-full py-3.5 bg-gradient-to-r from-orange-600 via-amber-600 to-orange-500 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold rounded-xl text-base shadow-xl transition-all flex items-center justify-center gap-2 text-center"
+                  className="w-full py-3.5 bg-gradient-to-r from-orange-700 via-amber-700 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-extrabold rounded-xl text-base shadow-xl transition-all flex items-center justify-center gap-2 text-center"
                 >
                   <Sparkles className="w-5 h-5" />
                   <span>Setup New Broadcast</span>
@@ -525,7 +534,7 @@ export default function StudioClient() {
                 <button
                   onClick={() => handleGoLive(false)}
                   disabled={loading}
-                  className="w-full py-3.5 bg-gradient-to-r from-orange-600 via-red-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold rounded-xl text-base shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full py-3.5 bg-gradient-to-r from-orange-700 via-red-700 to-amber-700 hover:from-orange-600 hover:to-amber-600 text-white font-extrabold rounded-xl text-base shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <Radio className="w-5 h-5 animate-pulse" />
                   {loading ? 'Starting Broadcast Engine...' : (<span className="flex items-center gap-1.5">START LIVE BROADCAST NOW <PranamIcon size={18} /></span>)}
@@ -563,6 +572,18 @@ export default function StudioClient() {
           joinUrl={privateLinkData.joinUrl}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={confirmEndOpen}
+        title="Conclude Live Pooja Session"
+        description="Are you sure you wish to conclude this live pooja session? Connected devotees will see the broadcast conclusion screen."
+        confirmLabel="Yes, End Broadcast"
+        cancelLabel="Stay Live"
+        variant="danger"
+        loading={endingStream}
+        onConfirm={confirmEndStream}
+        onCancel={() => setConfirmEndOpen(false)}
+      />
       </div>
     </div>
   );
@@ -598,17 +619,17 @@ function PublisherTrackRenderer() {
           className="w-full h-full object-contain bg-black"
         />
       ) : (
-        <div className="w-full h-full flex flex-col items-center justify-center text-stone-400 bg-stone-950">
+        <div className="video-overlay w-full h-full flex flex-col items-center justify-center text-stone-200 bg-stone-950">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-orange-500 mb-3" />
-          <span className="text-xs font-semibold">Broadcasting Live Video & Audio...</span>
+          <span className="text-xs font-semibold text-stone-200">Broadcasting Live Video &amp; Audio...</span>
         </div>
       )}
 
       {/* Devotee Remote Video (PIP in Top Right for 2-Way Private Consultation) */}
       {remoteDevoteeTrack && (
-        <div className="absolute top-4 right-4 w-40 sm:w-56 aspect-video rounded-2xl overflow-hidden border-2 border-orange-500 shadow-2xl z-30 bg-stone-950">
+        <div className="video-overlay absolute top-4 right-4 w-40 sm:w-56 aspect-video rounded-2xl overflow-hidden border-2 border-orange-500 shadow-2xl z-30 bg-stone-950">
           <VideoTrack trackRef={remoteDevoteeTrack} className="w-full h-full object-cover" />
-          <div className="absolute bottom-1 left-2 bg-stone-950/80 px-2 py-0.5 rounded text-[10px] font-bold text-orange-300">
+          <div className="absolute bottom-1 left-2 bg-black/85 px-2 py-0.5 rounded text-[10px] font-bold text-orange-300">
             Devotee Video
           </div>
         </div>
@@ -624,8 +645,8 @@ function PublisherTrackRenderer() {
           onClick={toggleMic}
           className={`text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-lg transition-colors backdrop-blur-md ${
             isMicrophoneEnabled
-              ? 'bg-emerald-600/90 hover:bg-emerald-500 text-white'
-              : 'bg-red-600/90 hover:bg-red-500 text-white animate-bounce'
+              ? 'bg-emerald-700/95 hover:bg-emerald-600 text-white'
+              : 'bg-red-700/95 hover:bg-red-600 text-white animate-bounce'
           }`}
           title="Click to toggle microphone"
         >

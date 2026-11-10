@@ -15,6 +15,7 @@ import { CreateDakshinaDto } from './dto/create-dakshina.dto';
 import { VerifyPaymentDto } from './dto/verify-payment.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @Controller('payments')
 export class PaymentsController {
@@ -38,6 +39,7 @@ export class PaymentsController {
   }
 
   @Public()
+  @SkipThrottle()
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
   async handleWebhook(

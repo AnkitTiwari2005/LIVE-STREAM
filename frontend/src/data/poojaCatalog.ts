@@ -16,7 +16,7 @@ export interface PanditPricing {
   panditId: string;
   name: string;
   title: string;
-  gurukul: string;
+  lineage: string;
   experience: string;
   rating: string;
   reviewsCount: string;
@@ -357,7 +357,7 @@ export const PANDIT_PRICING_CATALOG: PanditPricing[] = [
     panditId: '73b080c9-8bfb-41e6-8c5a-dba40c9409c5',
     name: 'Pandit Aarav Sharma',
     title: 'Head Archak, Kashi Vishwanath Parampara',
-    gurukul: 'Sampurnanand Sanskrit Vishwavidyalaya, Varanasi',
+    lineage: 'Sampurnanand Sanskrit Vishwavidyalaya, Varanasi',
     experience: '22 Years Seva',
     rating: '4.98',
     reviewsCount: '1,420',
@@ -370,7 +370,7 @@ export const PANDIT_PRICING_CATALOG: PanditPricing[] = [
     panditId: '8cfb4f7f-f337-4475-8885-d0d91ae0939e',
     name: 'Acharya Devrat Sharma',
     title: 'Shukla Yajurveda Acharya & Jyotish Visharad',
-    gurukul: 'Haridwar Gurukul Kangri Vishwavidyalaya',
+    lineage: 'Haridwar Sanskrit Vishwavidyalaya Tradition',
     experience: '18 Years Seva',
     rating: '4.94',
     reviewsCount: '920',
@@ -383,7 +383,7 @@ export const PANDIT_PRICING_CATALOG: PanditPricing[] = [
     panditId: 'pandit_vyas',
     name: 'Pandit Hariram Vyas',
     title: 'Senior Purohit, Haridwar Ganga Sabha',
-    gurukul: 'Rishikesh Parampara',
+    lineage: 'Rishikesh Parampara',
     experience: '20 Years Seva',
     rating: '4.95',
     reviewsCount: '980',
@@ -396,7 +396,7 @@ export const PANDIT_PRICING_CATALOG: PanditPricing[] = [
     panditId: 'pandit_bhatt',
     name: 'Pandit Vishwanath Bhatt',
     title: 'Vedic Scholar, Tirupati Tradition',
-    gurukul: 'Tirumala Veda Pathashala',
+    lineage: 'Tirumala Veda Pathashala',
     experience: '26 Years Seva',
     rating: '5.0',
     reviewsCount: '2,140',

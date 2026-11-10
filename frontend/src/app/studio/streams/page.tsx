@@ -20,6 +20,7 @@ import {
 import { OmIcon, DiyaIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/components/Toast';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 const toLocalDatetimeInputValue = (dateInput: string | Date): string => {
   const d = new Date(dateInput);
@@ -49,6 +50,8 @@ export default function MyStreamsPage() {
   const [editScheduledAt, setEditScheduledAt] = useState('');
   const [originalScheduledAt, setOriginalScheduledAt] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
+  const [cancelTargetId, setCancelTargetId] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState(false);
 
   const loadStreams = async () => {
     setLoading(true);
@@ -71,14 +74,22 @@ export default function MyStreamsPage() {
     loadStreams();
   }, []);
 
-  const handleCancelStream = async (streamId: string) => {
-    if (!confirm('Are you sure you want to cancel this scheduled darshan broadcast?')) return;
+  const handleCancelStream = (streamId: string) => {
+    setCancelTargetId(streamId);
+  };
+
+  const confirmCancelStream = async () => {
+    if (!cancelTargetId) return;
+    setCancelling(true);
     try {
-      await apiFetch(`/streams/${streamId}`, { method: 'DELETE' });
+      await apiFetch(`/streams/${cancelTargetId}`, { method: 'DELETE' });
       toast.success('Scheduled broadcast cancelled successfully.');
+      setCancelTargetId(null);
       loadStreams();
     } catch (err: any) {
       toast.error(err.message || 'Failed to cancel broadcast');
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -180,7 +191,7 @@ export default function MyStreamsPage() {
         </div>
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 text-stone-500 gap-3">
+          <div className="flex flex-col items-center justify-center py-20 text-stone-600 dark:text-stone-400 gap-3">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-gold" />
             <span className="text-xs uppercase tracking-wider font-semibold">Loading broadcasts...</span>
           </div>
@@ -383,6 +394,18 @@ export default function MyStreamsPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={Boolean(cancelTargetId)}
+        title="Cancel Scheduled Broadcast"
+        description="Are you sure you want to cancel this scheduled darshan broadcast? Devotees will no longer be able to view or set reminders for this session."
+        confirmLabel="Yes, Cancel Broadcast"
+        cancelLabel="Keep Scheduled"
+        variant="danger"
+        loading={cancelling}
+        onConfirm={confirmCancelStream}
+        onCancel={() => setCancelTargetId(null)}
+      />
     </div>
   );
 }

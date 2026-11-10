@@ -12,6 +12,7 @@ import { MeterTickDto } from './dto/meter-tick.dto';
 import { CreateTopupOrderDto, VerifyTopupDto } from './dto/topup-order.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
+import { SkipThrottle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 
 @ApiTags('Wallet')
@@ -26,6 +27,7 @@ export class WalletController {
     return this.walletService.getWalletBalance(userId);
   }
 
+  @SkipThrottle()
   @Post('meter-tick')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Process 60-second public live darshan heartbeat meter tick' })

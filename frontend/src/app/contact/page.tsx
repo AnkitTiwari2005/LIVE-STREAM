@@ -43,7 +43,7 @@ export default function ContactPage() {
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="text-center mb-12">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-600/20 text-orange-400 text-xs font-bold border border-orange-500/30 mb-3">
-          <MessageSquare className="w-3.5 h-3.5" /> 24/7 Devotee Desk
+          <MessageSquare className="w-3.5 h-3.5" /> Devotee Support Desk
         </div>
         <div className="flex items-center justify-center gap-3 mb-3">
           <OmIcon size={36} />
@@ -71,12 +71,12 @@ export default function ContactPage() {
           </div>
 
           <div className="p-5 bg-obsidian-soft border border-gold/20 rounded-3xl shadow-lg">
-            <div className="w-10 h-10 rounded-xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center mb-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-600/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center mb-3">
               <Phone className="w-5 h-5" />
             </div>
             <h3 className="text-sm font-bold text-stone-900 dark:text-white mb-1">Devotee Support Desk</h3>
-            <p className="text-xs text-stone-400 mb-2">Instant assistance during live streams & rituals:</p>
-            <span className="text-xs font-semibold text-emerald-400">
+            <p className="text-xs text-stone-600 dark:text-stone-400 mb-2">Support hours: 6:00 AM – 10:00 PM IST daily:</p>
+            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
               +91 11 4019 7800
             </span>
           </div>
@@ -120,7 +120,7 @@ export default function ContactPage() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g. Aarav Sharma"
-                      className="w-full px-4 py-2.5 bg-stone-950 border border-stone-800 rounded-xl text-sm text-white placeholder-stone-600 focus:outline-none focus:border-orange-500"
+                      className="w-full px-4 py-2.5 bg-stone-950 border border-stone-800 rounded-xl text-sm text-white placeholder-stone-400 focus:outline-none focus:border-orange-500"
                     />
                   </div>
                   <div>
@@ -131,7 +131,7 @@ export default function ContactPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="devotee@domain.com"
-                      className="w-full px-4 py-2.5 bg-stone-950 border border-stone-800 rounded-xl text-sm text-white placeholder-stone-600 focus:outline-none focus:border-orange-500"
+                      className="w-full px-4 py-2.5 bg-stone-950 border border-stone-800 rounded-xl text-sm text-white placeholder-stone-400 focus:outline-none focus:border-orange-500"
                     />
                   </div>
                 </div>
@@ -159,7 +159,7 @@ export default function ContactPage() {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Describe how our support team can assist you..."
-                    className="w-full px-4 py-2.5 bg-stone-950 border border-stone-800 rounded-xl text-sm text-white placeholder-stone-600 focus:outline-none focus:border-orange-500"
+                    className="w-full px-4 py-2.5 bg-stone-950 border border-stone-800 rounded-xl text-sm text-white placeholder-stone-400 focus:outline-none focus:border-orange-500"
                   />
                 </div>
 

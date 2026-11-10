@@ -90,7 +90,7 @@ function ResetPasswordContent() {
             <div className="pt-4">
               <Link
                 href="/login"
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-xl text-sm font-semibold transition shadow-lg"
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-orange-700 to-amber-700 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl text-sm font-semibold transition shadow-lg"
               >
                 Sign In Now
                 <ArrowRight className="w-4 h-4" />
@@ -126,7 +126,7 @@ function ResetPasswordContent() {
                 New Password
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-stone-500 absolute left-3 top-3" />
+                <Lock className="w-4 h-4 text-stone-600 dark:text-stone-400 absolute left-3 top-3" />
                 <input
                   type="password"
                   required
@@ -144,7 +144,7 @@ function ResetPasswordContent() {
                 Confirm New Password
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-stone-500 absolute left-3 top-3" />
+                <Lock className="w-4 h-4 text-stone-600 dark:text-stone-400 absolute left-3 top-3" />
                 <input
                   type="password"
                   required
@@ -160,7 +160,7 @@ function ResetPasswordContent() {
             <button
               type="submit"
               disabled={loading || !token}
-              className="w-full py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-semibold rounded-xl text-sm shadow-md transition-all disabled:opacity-50"
+              className="w-full py-2.5 bg-gradient-to-r from-orange-700 to-amber-700 hover:from-orange-600 hover:to-amber-600 text-white font-semibold rounded-xl text-sm shadow-md transition-all disabled:opacity-50"
             >
               {loading ? 'Updating Password...' : 'Save New Password'}
             </button>

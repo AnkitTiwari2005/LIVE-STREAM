@@ -211,7 +211,7 @@ export default function JoinPrivateStreamClient() {
           {/* Main Video Viewport (Col span 2) */}
           <div className="lg:col-span-2 flex flex-col gap-4">
             {/* Video container — no absolute controls inside, keeps full viewable area */}
-            <div className="relative w-full aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl border border-stone-800 flex items-center justify-center">
+            <div className="player-container video-overlay relative w-full aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl border border-stone-800 flex items-center justify-center">
               <LiveKitRoom
                 serverUrl={serverUrl}
                 token={token}
@@ -343,15 +343,15 @@ export default function JoinPrivateStreamClient() {
               <OmIcon size={44} />
             </div>
             <h2 className="text-xl font-bold text-stone-900 dark:text-foreground tracking-tight">Private Pooja Consultation</h2>
-            <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+            <p className="text-xs text-stone-600 dark:text-stone-400 mt-1">
               {metadata?.streamTitle ? `"${metadata.streamTitle}" by ${metadata.streamerName}` : 'Enter your details to join'}
             </p>
           </div>
 
           {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 text-xs flex flex-col gap-2">
+            <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-400 text-xs flex flex-col gap-2">
               <div className="flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-red-500 dark:text-red-400 shrink-0" />
+                <AlertCircle className="w-4 h-4 text-red-700 dark:text-red-400 shrink-0" />
                 <span>{error}</span>
               </div>
               {(error.includes('logged into your account') || error.includes('Unauthorized')) && (
@@ -372,7 +372,7 @@ export default function JoinPrivateStreamClient() {
                 Your Devotee Name *
               </label>
               <div className="relative">
-                <User className="w-4 h-4 text-stone-400 dark:text-stone-500 absolute left-3 top-3" />
+                <User className="w-4 h-4 text-stone-600 dark:text-stone-400 absolute left-3 top-3" />
                 <input
                   type="text"
                   required
@@ -390,7 +390,7 @@ export default function JoinPrivateStreamClient() {
                   Secret Session Password *
                 </label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-stone-400 dark:text-stone-500 absolute left-3 top-3" />
+                  <Lock className="w-4 h-4 text-stone-600 dark:text-stone-400 absolute left-3 top-3" />
                   <input
                     type="password"
                     required
@@ -511,9 +511,9 @@ function PrivateTwoWayConsultationRenderer({ onLeave, socket, streamId }: { onLe
       {remoteCameraTrack ? (
         <VideoTrack trackRef={remoteCameraTrack} className="w-full h-full object-contain bg-black" />
       ) : (
-        <div className="w-full h-full flex flex-col items-center justify-center text-stone-400 bg-stone-950">
+        <div className="video-overlay w-full h-full flex flex-col items-center justify-center text-stone-200 bg-stone-950">
           <DiyaIcon size={44} className="mb-2" />
-          <span className="text-sm font-medium">Awaiting Pandit video transmission...</span>
+          <span className="text-sm font-medium text-stone-200">Awaiting Pandit video transmission...</span>
         </div>
       )}
 
@@ -545,8 +545,8 @@ function PrivateTwoWayConsultationRenderer({ onLeave, socket, streamId }: { onLe
           title={isMicrophoneEnabled ? 'Mute mic' : 'Unmute mic (speak to Pandit)'}
           className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg ${
             isMicrophoneEnabled
-              ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
-              : 'bg-stone-800/90 hover:bg-stone-700 text-stone-400'
+              ? 'bg-emerald-700 hover:bg-emerald-600 text-white'
+              : 'bg-stone-800/90 hover:bg-stone-700 text-stone-200'
           }`}
         >
           {isMicrophoneEnabled ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
@@ -559,7 +559,7 @@ function PrivateTwoWayConsultationRenderer({ onLeave, socket, streamId }: { onLe
           className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg ${
             isCameraEnabled
               ? 'bg-stone-700 hover:bg-stone-600 text-white'
-              : 'bg-stone-800/90 hover:bg-stone-700 text-stone-400'
+              : 'bg-stone-800/90 hover:bg-stone-700 text-stone-200'
           }`}
         >
           {isCameraEnabled ? <VideoIcon className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}

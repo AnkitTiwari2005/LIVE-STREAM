@@ -2,26 +2,26 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://darkturquoise-louse-359917.hostingersite.com/</loc>
-    <lastmod>2026-11-06</lastmod>
+    <lastmod>2026-11-10</lastmod>
     <changefreq>hourly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://darkturquoise-louse-359917.hostingersite.com/login</loc>
-    <lastmod>2026-11-06</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <loc>https://darkturquoise-louse-359917.hostingersite.com/pooja</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://darkturquoise-louse-359917.hostingersite.com/register</loc>
-    <lastmod>2026-11-06</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <loc>https://darkturquoise-louse-359917.hostingersite.com/schedule</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://darkturquoise-louse-359917.hostingersite.com/streamer/apply</loc>
-    <lastmod>2026-11-06</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://darkturquoise-louse-359917.hostingersite.com/about</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>

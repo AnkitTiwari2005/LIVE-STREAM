@@ -55,8 +55,12 @@ export class MailerService {
     }
   }
 
+  private getOrigin(): string {
+    return (process.env.FRONTEND_ORIGIN || 'http://localhost:3000').replace(/\/$/, '');
+  }
+
   async sendVerificationEmail(to: string, name: string, token: string) {
-    const origin = process.env.FRONTEND_ORIGIN || 'https://platform-domain.com';
+    const origin = this.getOrigin();
     const link = `${origin}/verify-email?token=${token}`;
     return this.sendEmail({
       to,
@@ -77,7 +81,7 @@ export class MailerService {
   }
 
   async sendPasswordResetEmail(to: string, name: string, token: string) {
-    const origin = process.env.FRONTEND_ORIGIN || 'https://platform-domain.com';
+    const origin = this.getOrigin();
     const link = `${origin}/reset-password?token=${token}`;
     return this.sendEmail({
       to,
@@ -98,7 +102,7 @@ export class MailerService {
   }
 
   async send15MinuteReminder(to: string, name: string, streamTitle: string, streamerName: string, streamId: string) {
-    const origin = process.env.FRONTEND_ORIGIN || 'https://platform-domain.com';
+    const origin = this.getOrigin();
     const streamUrl = `${origin}/stream/${streamId}`;
     return this.sendEmail({
       to,
@@ -119,7 +123,7 @@ export class MailerService {
   }
 
   async sendStreamLiveAlert(to: string, name: string, streamTitle: string, streamerName: string, streamId: string) {
-    const origin = process.env.FRONTEND_ORIGIN || 'https://platform-domain.com';
+    const origin = this.getOrigin();
     const streamUrl = `${origin}/stream/${streamId}`;
     return this.sendEmail({
       to,

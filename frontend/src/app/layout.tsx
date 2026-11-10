@@ -90,7 +90,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Shubhdarshan - Sacred Live Pooja & Aarti Broadcast',
     description:
-      'Sub-second live devotional broadcasts, online pooja sankalp, and Vedic astrological consultations with verified Acharyas.',
+      'Real-time live devotional broadcasts, online pooja sankalp, and Vedic astrological consultations with verified Acharyas.',
   },
   icons: {
     icon: '/logo.png',

@@ -91,7 +91,7 @@ export default function PoojaCatalogPage() {
               Book Personalized Vedic Poojas &amp; Kathas
             </h1>
             <p className="mt-3 text-xs sm:text-sm text-stone-300 leading-relaxed">
-              Explore 24+ sacred rituals, Vedic kathas, and astrological remedies conducted live by Gurukul-verified Pandits. Select your preferred Acharya, schedule your family gotra invocation, and receive divine blessings in sub-second HD.
+              Explore 24+ sacred rituals, Vedic kathas, and astrological remedies conducted by KYC-verified Pandits. Select your preferred Acharya and review ritual traditions in real-time interactive HD.
             </p>
           </div>
 
@@ -149,8 +149,8 @@ export default function PoojaCatalogPage() {
               Showing <strong className="text-white">{filteredPoojas.length}</strong> consecrated poojas &amp; consults
             </p>
             <span className="text-xs text-gold-soft flex items-center gap-1">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              100% Gurukul-Verified Pandits
+              <ShieldCheck className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+              100% KYC-Verified Pandits
             </span>
           </div>
 
@@ -237,23 +237,23 @@ export default function PoojaCatalogPage() {
         <div className="my-16 rounded-3xl border border-gold/30 bg-gradient-to-r from-obsidian via-obsidian-soft to-obsidian p-8 sm:p-12 text-center shadow-2xl relative overflow-hidden">
           <div className="max-w-2xl mx-auto space-y-4">
             <span className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-gold-soft">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" /> Sacred Devotional Guarantee
+              <ShieldCheck className="w-4 h-4 text-emerald-700 dark:text-emerald-400" /> Sacred Devotional Guarantee
             </span>
             <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white">
               Authentic Vedic Precision, Straight From Sacred Sanctums
             </h2>
             <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
-              Every Acharya on Shubhdarshan is verified with traditional Gurukul credentials (Sampurnanand, Tirupati, Haridwar, Kashi). When you book a pooja, the Pandit chants your exact gotra and names in real time.
+              Every Acharya on Shubhdarshan undergoes government identity KYC review and profile verification before receiving broadcasting privileges.
             </p>
             <div className="pt-2 flex flex-wrap items-center justify-center gap-6 text-xs text-stone-300">
               <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-gold" /> Sub-Second LiveKit SFU HD
+                <CheckCircle2 className="w-4 h-4 text-gold" /> Real-Time LiveKit SFU HD
               </span>
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-gold" /> Transparent Coin Dakshina
               </span>
               <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-gold" /> Gotra Sankalp Certificate
+                <CheckCircle2 className="w-4 h-4 text-gold" /> KYC-Verified Broadcasters
               </span>
             </div>
           </div>

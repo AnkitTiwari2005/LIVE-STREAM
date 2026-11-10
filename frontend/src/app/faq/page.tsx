@@ -22,8 +22,8 @@ const FAQS = [
     category: 'Coins & Wallet',
   },
   {
-    q: 'Why is there zero delay or lag in live video and audio chanting?',
-    a: 'Unlike traditional social media feeds with 15–30 second broadcast lag, Shubhdarshan utilizes a custom-built WebRTC Selective Forwarding Unit (SFU) powered by LiveKit Cloud. Video and crystal-clear chanting audio reach your screen in sub-300 milliseconds, allowing you to chant mantras, ring temple bells, and offer aarti along with the Pandit in real time.',
+    q: 'How does real-time interactive video and audio chanting work?',
+    a: 'Unlike traditional buffered video feeds with long broadcast lag, Shubhdarshan uses WebRTC media transport powered by LiveKit SFU. Video and chanting audio stream in real time, allowing devotees to participate and send reactions alongside the ritual.',
     category: 'Live Darshan',
   },
   {
@@ -33,12 +33,12 @@ const FAQS = [
   },
   {
     q: 'How are Pandits and Astrologers verified before broadcasting?',
-    a: 'We enforce stringent 7-step vetting for all spiritual broadcasters. Pandits must provide credential proof from recognized Vedic Sanskrit Gurukuls, Vidyapeeths, or established temple trusts, along with verified government photo KYC. All priests strictly abide by our Anti-Superstition Code, which prohibits fear-based coercions and false worldly guarantees.',
+    a: 'All aspiring broadcasters submit their Vedic bio, specialties, languages, and government photo KYC documents for review by platform administrators. Only approved applicants receive streaming privileges. All priests strictly abide by our Anti-Superstition Code, which prohibits fear-based coercions and false worldly guarantees.',
     category: 'Pandits & Trust',
   },
   {
-    q: 'What does the blue tick on a pandit profile mean?',
-    a: 'The blue checkmark signifies that the pandit has completed biometric identity verification, Gurukul degree auditing, and Sanskrit recitation evaluation by our Acharya council.',
+    q: 'What does the Verified Pandit badge mean?',
+    a: 'The Verified Pandit badge signifies that the broadcaster submitted government identity KYC and Vedic background details that were reviewed and approved by a Shubhdarshan platform administrator.',
     category: 'Pandits & Trust',
   },
   {

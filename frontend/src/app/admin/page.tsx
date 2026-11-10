@@ -25,6 +25,7 @@ import {
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 import { DiyaIcon } from '@/components/icons/SpiritualIcons';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 export default function AdminConsolePage() {
   const router = useRouter();
@@ -46,6 +47,8 @@ export default function AdminConsolePage() {
   // M-01: Inline rejection modal — replaces window.prompt() which is blocked in some
   // browsers and leaks the admin URL in some CSP configurations.
   const [rejectModal, setRejectModal] = useState<{ profileId: string; reason: string } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'endStream' | 'deleteWord'; id: string } | null>(null);
+  const [confirmBusy, setConfirmBusy] = useState(false);
 
   // Occasion Announcement Banner State
   const [bannerConfig, setBannerConfig] = useState<{
@@ -68,27 +71,55 @@ export default function AdminConsolePage() {
   const [savingBanner, setSavingBanner] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('pooja_token');
-    const storedUser = localStorage.getItem('pooja_user');
-    if (!token || !storedUser) {
-      router.push('/login');
-      return;
-    }
-    setAuthToken(token);
-    const user = JSON.parse(storedUser);
-    if (user.role !== 'ADMIN') {
-      toast.error('Access restricted to platform operators only.');
-      router.push('/');
-      return;
+    let cancelled = false;
+
+    async function verifyAdminSession() {
+      const token = localStorage.getItem('pooja_token');
+      if (!token) {
+        router.push('/login?redirect=/admin');
+        return;
+      }
+
+      try {
+        // N-07: Always validate role & 2FA status against /auth/me rather than trusting stale localStorage
+        const me = await apiFetch<any>('/auth/me');
+        if (cancelled) return;
+
+        localStorage.setItem('pooja_user', JSON.stringify(me));
+        window.dispatchEvent(new Event('sd-auth-change'));
+
+        if (me.role !== 'ADMIN') {
+          toast.error('Access restricted to platform operators only.');
+          router.push('/');
+          return;
+        }
+
+        if (!me.isTwoFactorEnabled) {
+          toast.error('Two-factor authentication is required for Platform Administrators. Please set up 2FA.');
+          router.push('/account#2fa');
+          return;
+        }
+
+        setAuthToken(token);
+        loadAdminData();
+      } catch (err: any) {
+        if (cancelled) return;
+        if (err?.status === 401 || err?.status === 403) {
+          localStorage.removeItem('pooja_token');
+          localStorage.removeItem('pooja_user');
+          router.push('/login?redirect=/admin');
+          return;
+        }
+        toast.error(err?.message || 'Unable to verify administrator session. Please retry.');
+        setLoading(false);
+      }
     }
 
-    if (!user.isTwoFactorEnabled) {
-      toast.error('Two-factor authentication is required for Platform Administrators. Please set up 2FA.');
-      router.push('/account#2fa');
-      return;
-    }
+    verifyAdminSession();
 
-    loadAdminData();
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   /**
@@ -241,18 +272,8 @@ export default function AdminConsolePage() {
     }
   };
 
-  const handleForceEndStream = async (streamId: string) => {
-    if (!confirm('Emergency Action: Force end this stream immediately on LiveKit SFU?')) return;
-
-    try {
-      await apiFetch(`/admin/streams/${streamId}/force-end`, {
-        method: 'POST',
-      });
-      loadAdminData();
-      toast.success('Stream ended successfully.');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to force end stream.');
-    }
+  const handleForceEndStream = (streamId: string) => {
+    setConfirmAction({ type: 'endStream', id: streamId });
   };
 
   const handleSearchUsers = async () => {
@@ -310,16 +331,33 @@ export default function AdminConsolePage() {
     }
   };
 
-  const handleDeleteWord = async (id: string) => {
-    if (!confirm('Remove this word from chat filter?')) return;
+  const handleDeleteWord = (id: string) => {
+    setConfirmAction({ type: 'deleteWord', id });
+  };
+
+  const executeConfirmAction = async () => {
+    if (!confirmAction) return;
+    setConfirmBusy(true);
     try {
-      await apiFetch(`/admin/word-filters/${id}`, {
-        method: 'DELETE',
-      });
-      setWordFilters((prev) => prev.filter((w) => w.id !== id));
-      toast.success('Word removed from chat filter.');
+      if (confirmAction.type === 'endStream') {
+        await apiFetch(`/admin/streams/${confirmAction.id}/force-end`, { method: 'POST' });
+        setConfirmAction(null);
+        loadAdminData();
+        toast.success('Stream ended successfully.');
+      } else {
+        const wordId = confirmAction.id;
+        await apiFetch(`/admin/word-filters/${wordId}`, { method: 'DELETE' });
+        setWordFilters((prev) => prev.filter((w) => w.id !== wordId));
+        setConfirmAction(null);
+        toast.success('Word removed from chat filter.');
+      }
     } catch (err: any) {
-      toast.error(err.message || 'Failed to remove word');
+      toast.error(
+        err?.message ||
+          (confirmAction.type === 'endStream' ? 'Failed to force end stream.' : 'Failed to remove word'),
+      );
+    } finally {
+      setConfirmBusy(false);
     }
   };
 
@@ -384,7 +422,7 @@ export default function AdminConsolePage() {
         </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-stone-800 pb-3 mb-8 overflow-x-auto w-full max-w-full min-w-0 no-scrollbar">
+      <div className="flex items-center gap-2 border-b border-stone-200 dark:border-stone-800 pb-3 mb-8 overflow-x-auto w-full max-w-full min-w-0 no-scrollbar">
         {[
           { key: 'kpi', label: 'Overview Metrics' },
           { key: 'kyc', label: `Pending KYC (${kycList.length})` },
@@ -400,7 +438,7 @@ export default function AdminConsolePage() {
             onClick={() => setActiveTab(tab.key as any)}
             className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
               activeTab === tab.key
-                ? 'bg-orange-600 text-white shadow-sm'
+                ? 'bg-orange-700 text-white shadow-sm'
                 : 'text-stone-600 dark:text-stone-400 hover:text-stone-950 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-900'
             }`}
           >
@@ -413,27 +451,27 @@ export default function AdminConsolePage() {
       {activeTab === 'kpi' && stats && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
-            <span className="text-[11px] text-stone-500 dark:text-stone-400 uppercase font-semibold block">Total Users</span>
+            <span className="text-[11px] text-stone-600 dark:text-stone-400 uppercase font-semibold block">Total Users</span>
             <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{stats.totalUsers}</span>
           </div>
           <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
-            <span className="text-[11px] text-orange-600 dark:text-orange-400 uppercase font-semibold block">Approved Pandits</span>
+            <span className="text-[11px] text-orange-700 dark:text-orange-400 uppercase font-semibold block">Approved Pandits</span>
             <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{stats.totalStreamers}</span>
           </div>
           <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
-            <span className="text-[11px] text-red-600 dark:text-red-400 uppercase font-semibold block">Live Right Now</span>
+            <span className="text-[11px] text-red-700 dark:text-red-400 uppercase font-semibold block">Live Right Now</span>
             <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{stats.activeLiveStreams}</span>
           </div>
           <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
-            <span className="text-[11px] text-stone-500 dark:text-stone-400 uppercase font-semibold block">Total Broadcasts</span>
+            <span className="text-[11px] text-stone-600 dark:text-stone-400 uppercase font-semibold block">Total Broadcasts</span>
             <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{stats.totalStreams}</span>
           </div>
           <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
-            <span className="text-[11px] text-amber-600 dark:text-amber-400 uppercase font-semibold block">Pending KYC</span>
+            <span className="text-[11px] text-amber-800 dark:text-amber-400 uppercase font-semibold block">Pending KYC</span>
             <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{stats.pendingKyc}</span>
           </div>
           <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
-            <span className="text-[11px] text-rose-600 dark:text-rose-400 uppercase font-semibold block">Open Reports</span>
+            <span className="text-[11px] text-rose-700 dark:text-rose-400 uppercase font-semibold block">Open Reports</span>
             <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{stats.openReports}</span>
           </div>
         </div>
@@ -463,7 +501,7 @@ export default function AdminConsolePage() {
                           key={i}
                           type="button"
                           onClick={() => openKycDoc(doc.storageKey)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1 bg-stone-800 hover:bg-stone-700 text-orange-400 rounded-lg text-xs font-semibold border border-stone-700 transition"
+                          className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-50 hover:bg-orange-100 dark:bg-stone-800 dark:hover:bg-stone-700 text-orange-800 dark:text-orange-400 rounded-lg text-xs font-semibold border border-orange-200 dark:border-stone-700 transition"
                         >
                           <FileText className="w-3.5 h-3.5" />
                           View Credentials Document ({doc.documentType || 'KYC'})
@@ -475,13 +513,13 @@ export default function AdminConsolePage() {
                 <div className="flex sm:flex-col gap-2 shrink-0 justify-center">
                   <button
                     onClick={() => handleKycDecision(app.id, 'APPROVED')}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-xs font-semibold"
+                    className="flex items-center gap-1.5 px-4 py-2 bg-green-700 hover:bg-green-600 text-white rounded-xl text-xs font-semibold"
                   >
                     <Check className="w-3.5 h-3.5" /> Approve & Verify
                   </button>
                   <button
                     onClick={() => handleKycDecision(app.id, 'REJECTED')}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-semibold"
+                    className="flex items-center gap-1.5 px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-xl text-xs font-semibold"
                   >
                     <X className="w-3.5 h-3.5" /> Reject
                   </button>
@@ -501,13 +539,13 @@ export default function AdminConsolePage() {
             liveStreams.map((s) => (
               <div key={s.id} className="bg-stone-900 border border-stone-800 p-5 rounded-2xl flex items-center justify-between gap-4">
                 <div>
-                  <span className="text-[11px] font-bold text-red-500 uppercase tracking-wider block">● LIVE ON AIR</span>
+                  <span className="text-[11px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider block">● LIVE ON AIR</span>
                   <h3 className="text-base font-bold text-white mt-0.5">{s.title}</h3>
                   <p className="text-xs text-stone-400">Streamer: {s.streamer.name} ({s.streamer.email}) • Category: {s.category.name}</p>
                 </div>
                 <button
                   onClick={() => handleForceEndStream(s.id)}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-bold shadow-lg"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-xl text-xs font-bold shadow-lg"
                 >
                   <StopCircle className="w-4 h-4" /> Force End Stream (Kill)
                 </button>
@@ -527,13 +565,13 @@ export default function AdminConsolePage() {
               <div key={r.id} className="bg-stone-900 border border-stone-800 p-5 rounded-2xl flex flex-col sm:flex-row justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">{r.targetType} REPORT: {r.status}</span>
-                    <span className="text-xs text-stone-400">By {r.reporter?.name || 'Anonymous Devotee'}</span>
+                    <span className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider">{r.targetType} REPORT: {r.status}</span>
+                    <span className="text-xs text-stone-600 dark:text-stone-400">By {r.reporter?.name || 'Anonymous Devotee'}</span>
                   </div>
                   <h4 className="font-semibold text-white text-sm">{r.reason}</h4>
-                  {r.details && <p className="text-xs text-stone-400 mt-1">{r.details}</p>}
+                  {r.details && <p className="text-xs text-stone-600 dark:text-stone-400 mt-1">{r.details}</p>}
                   {r.chatMessage && (
-                    <p className="text-xs text-red-300 mt-2 bg-stone-950 p-2.5 rounded-xl border border-stone-800 font-mono">
+                    <p className="text-xs text-red-800 dark:text-red-300 mt-2 bg-red-50 dark:bg-stone-950 p-2.5 rounded-xl border border-red-200 dark:border-stone-800 font-mono">
                       Flagged message: "{r.chatMessage.message}"
                     </p>
                   )}
@@ -542,13 +580,13 @@ export default function AdminConsolePage() {
                   <div className="flex sm:flex-col gap-2 shrink-0 justify-center">
                     <button
                       onClick={() => handleResolveReport(r.id, 'ACTION_TAKEN')}
-                      className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-semibold shadow transition"
+                      className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-xl text-xs font-semibold shadow transition"
                     >
                       Resolve & Action
                     </button>
                     <button
                       onClick={() => handleResolveReport(r.id, 'DISMISSED')}
-                      className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-xl text-xs font-semibold border border-stone-700 transition"
+                      className="px-4 py-2 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-300 rounded-xl text-xs font-semibold border border-stone-300 dark:border-stone-700 transition"
                     >
                       Dismiss Report
                     </button>
@@ -588,7 +626,7 @@ export default function AdminConsolePage() {
               </select>
               <button
                 type="submit"
-                className="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-semibold shadow transition inline-flex items-center justify-center gap-1.5 shrink-0"
+                className="px-4 py-2 bg-orange-700 hover:bg-orange-600 text-white rounded-xl text-xs font-semibold shadow transition inline-flex items-center justify-center gap-1.5 shrink-0"
               >
                 <Plus className="w-3.5 h-3.5" /> Add Word
               </button>
@@ -596,9 +634,9 @@ export default function AdminConsolePage() {
           </div>
 
           <div className="bg-stone-900 border border-stone-800 rounded-2xl overflow-hidden shadow-xl">
-            <div className="p-4 bg-stone-950/60 border-b border-stone-800 flex items-center justify-between">
+              <div className="p-4 bg-stone-950/60 border-b border-stone-800 flex items-center justify-between">
               <h3 className="text-sm font-bold text-white">Active Chat Filters ({wordFilters.length})</h3>
-              <span className="text-xs text-stone-500 font-mono">Real-time socket matcher</span>
+              <span className="text-xs text-stone-400 font-mono">Real-time socket matcher</span>
             </div>
 
             {wordFilters.length === 0 ? (
@@ -613,13 +651,13 @@ export default function AdminConsolePage() {
                       <span className="font-mono font-bold text-white bg-stone-950 border border-stone-800 px-2 py-1 rounded">
                         {wf.word}
                       </span>
-                      <span className="text-[10px] text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-800/60 font-semibold">
+                      <span className="text-[10px] text-amber-800 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-300 dark:border-amber-800/60 font-semibold">
                         {wf.severity || 'BLOCKED'}
                       </span>
                     </div>
                     <button
                       onClick={() => handleDeleteWord(wf.id)}
-                      className="p-1.5 text-stone-500 hover:text-red-400 hover:bg-stone-800 rounded-lg transition"
+                      className="p-1.5 text-stone-600 dark:text-stone-400 hover:text-red-400 hover:bg-stone-800 rounded-lg transition"
                       title="Remove filter"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -645,7 +683,7 @@ export default function AdminConsolePage() {
             />
             <button
               onClick={handleSearchUsers}
-              className="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-semibold"
+              className="px-4 py-2 bg-orange-700 hover:bg-orange-600 text-white rounded-xl text-xs font-semibold"
             >
               Search
             </button>
@@ -662,14 +700,14 @@ export default function AdminConsolePage() {
                   {u.status === 'ACTIVE' ? (
                     <button
                       onClick={() => handleUserStatus(u.id, 'BANNED')}
-                      className="px-3 py-1 bg-red-600/80 hover:bg-red-600 text-white rounded-lg text-xs font-semibold"
+                      className="px-3 py-1 bg-red-700 hover:bg-red-600 text-white rounded-lg text-xs font-semibold"
                     >
                       Ban User
                     </button>
                   ) : (
                     <button
                       onClick={() => handleUserStatus(u.id, 'ACTIVE')}
-                      className="px-3 py-1 bg-green-600/80 hover:bg-green-600 text-white rounded-lg text-xs font-semibold"
+                      className="px-3 py-1 bg-green-700 hover:bg-green-600 text-white rounded-lg text-xs font-semibold"
                     >
                       Restore User
                     </button>
@@ -687,11 +725,11 @@ export default function AdminConsolePage() {
           {auditLogs.map((log) => (
             <div key={log.id} className="bg-stone-900 border border-stone-800 p-3 rounded-xl text-xs flex items-center justify-between">
               <div>
-                <span className="font-semibold text-orange-400 mr-2">[{log.action}]</span>
+                <span className="font-semibold text-orange-700 dark:text-orange-400 mr-2">[{log.action}]</span>
                 <span className="text-white">{log.targetResource}</span>
-                <span className="text-stone-400 block text-[11px] mt-0.5">By: {log.actorEmail || 'System'}</span>
+                <span className="text-stone-600 dark:text-stone-400 block text-[11px] mt-0.5">By: {log.actorEmail || 'System'}</span>
               </div>
-              <span className="text-stone-500 font-mono text-[11px]">
+              <span className="text-stone-400 font-mono text-[11px]">
                 {new Date(log.createdAt).toLocaleString()}
               </span>
             </div>
@@ -720,8 +758,8 @@ export default function AdminConsolePage() {
                 <span
                   className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
                     bannerConfig.enabled
-                      ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
-                      : 'bg-stone-800 text-stone-400 border border-stone-700'
+                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800'
+                      : 'bg-stone-100 text-stone-700 border border-stone-300 dark:bg-stone-800 dark:text-stone-400 dark:border-stone-700'
                   }`}
                 >
                   <span className={`w-2 h-2 rounded-full ${bannerConfig.enabled ? 'bg-emerald-400 animate-pulse' : 'bg-stone-500'}`} />
@@ -734,8 +772,8 @@ export default function AdminConsolePage() {
                   disabled={savingBanner}
                   className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all shadow-sm ${
                     bannerConfig.enabled
-                      ? 'bg-red-600/80 hover:bg-red-600 text-white'
-                      : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                      ? 'bg-red-700 hover:bg-red-600 text-white'
+                      : 'bg-emerald-700 hover:bg-emerald-600 text-white'
                   }`}
                 >
                   {bannerConfig.enabled ? 'Disable Banner Now' : 'Enable & Publish'}
@@ -756,7 +794,7 @@ export default function AdminConsolePage() {
                   placeholder="e.g. Deepotsav, Maha Shivratri, Navratri"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-stone-950 border border-stone-800 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold transition"
                 />
-                <span className="text-[10px] text-stone-500 mt-1 block">
+                <span className="text-[10px] text-stone-600 dark:text-stone-400 mt-1 block">
                   Highlighted with golden drop-shadow at the start of the banner.
                 </span>
               </div>
@@ -774,7 +812,7 @@ export default function AdminConsolePage() {
                   <option value="kashi-gold">Kashi Sanctum (Rich Gold to Dark Amber)</option>
                   <option value="vedic-saffron">Vedic Saffron (Vermillion Saffron to Crimson)</option>
                 </select>
-                <span className="text-[10px] text-stone-500 mt-1 block">
+                <span className="text-[10px] text-stone-600 dark:text-stone-400 mt-1 block">
                   Color gradient applied across both mobile and desktop viewports.
                 </span>
               </div>
@@ -803,7 +841,7 @@ export default function AdminConsolePage() {
                   placeholder="e.g. Live Aarti from sacred ghats"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-stone-950 border border-stone-800 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold transition"
                 />
-                <span className="text-[10px] text-stone-500 mt-1 block">
+                <span className="text-[10px] text-stone-600 dark:text-stone-400 mt-1 block">
                   Concise version that fits neatly on 360px–400px mobile screens.
                 </span>
               </div>
@@ -845,7 +883,7 @@ export default function AdminConsolePage() {
               {/* Preview Container */}
               <div className="rounded-2xl border border-stone-800 p-4 bg-stone-950 space-y-3">
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block mb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-1">
                     Desktop View:
                   </span>
                   <div
@@ -869,7 +907,7 @@ export default function AdminConsolePage() {
                 </div>
 
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block mb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-1">
                     Mobile View (Simulated Narrow):
                   </span>
                   <div
@@ -929,6 +967,21 @@ export default function AdminConsolePage() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        isOpen={Boolean(confirmAction)}
+        title={confirmAction?.type === 'endStream' ? 'Emergency Force-End Stream' : 'Remove Chat Filter Word'}
+        description={
+          confirmAction?.type === 'endStream'
+            ? 'Emergency Action: Force end this stream immediately on LiveKit SFU? Connected participants will be disconnected right away.'
+            : 'Remove this word from the prohibited chat filter list?'
+        }
+        confirmLabel={confirmAction?.type === 'endStream' ? 'Force End Stream' : 'Remove Word'}
+        cancelLabel="Cancel"
+        variant="danger"
+        loading={confirmBusy}
+        onConfirm={executeConfirmAction}
+        onCancel={() => setConfirmAction(null)}
+      />
       </div>
     </div>
   );

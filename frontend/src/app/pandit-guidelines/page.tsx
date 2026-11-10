@@ -41,19 +41,19 @@ export default function PanditGuidelinesPage() {
               <span className="text-amber-400 font-mono">1.</span> Mandatory Verification Criteria
             </h2>
             <p>
-              Before any spiritual streamer is granted broadcasting privileges and awarded the sacred <VerifiedPanditBadge size={16} className="inline ml-1 mr-1 align-text-bottom" /> <strong>Verified Pandit Badge</strong>, our ecclesiastical review board validates:
+              Before any spiritual streamer is granted broadcasting privileges and awarded the sacred <VerifiedPanditBadge size={16} className="inline ml-1 mr-1 align-text-bottom" /> <strong>Verified Pandit Badge</strong>, platform administrators review:
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
               <div className="p-4 bg-obsidian-deep border border-gold/15 rounded-xl">
                 <div className="flex items-center gap-2 text-amber-400 font-bold text-xs mb-1">
-                  <BookOpen className="w-4 h-4" /> Scriptural Credentials
+                  <BookOpen className="w-4 h-4" /> Scriptural Background
                 </div>
                 <p className="text-[11px] text-stone-400">
-                  Certification from recognized Vedic Sanskrit Gurukuls, Vidyapeeths, Jyotish academies, or established temple trusts.
+                  Declared training from recognized Sanskrit Pathshalas, Vidyapeeths, Jyotish academies, or established temple traditions.
                 </p>
               </div>
               <div className="p-4 bg-obsidian-deep border border-gold/15 rounded-xl">
-                <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs mb-1">
+                <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-bold text-xs mb-1">
                   <ShieldCheck className="w-4 h-4" /> Government Identity KYC
                 </div>
                 <p className="text-[11px] text-stone-400">

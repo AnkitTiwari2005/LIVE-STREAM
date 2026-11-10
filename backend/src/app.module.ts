@@ -27,9 +27,10 @@ import { CronTasksService } from './jobs/cron-tasks.service';
 @Module({
   imports: [
     ScheduleModule.forRoot(),
-    // H-09: Global rate limit — 100 requests per 60 s per IP by default.
-    // Sensitive auth endpoints are further restricted via @Throttle() on their controllers.
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+    // H-09 / N-08: Global rate limit — configurable per-IP cap (default 300 req/min).
+    // Infrastructure endpoints (health, webhooks, meter-tick) use @SkipThrottle();
+    // sensitive auth endpoints are further restricted via @Throttle() on their controllers.
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: Number(process.env.THROTTLE_LIMIT) || 300 }]),
     PrismaModule,
     VideoModule,
     AuthModule,

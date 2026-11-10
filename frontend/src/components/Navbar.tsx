@@ -264,8 +264,8 @@ export function Navbar() {
               aria-label="Search pooja and aarti"
               title="Search pooja, pandit, or aarti (/)"
             >
-              <Search className="w-3.5 h-3.5 text-amber-600 dark:text-gold-soft shrink-0" />
-              <span className="hidden 2xl:inline text-stone-600 dark:text-stone-300">Search...</span>
+              <Search className="w-3.5 h-3.5 text-amber-700 dark:text-gold-soft shrink-0" />
+              <span className="hidden 2xl:inline text-stone-700 dark:text-stone-300">Search...</span>
               <kbd className="hidden 2xl:inline px-1 py-0.5 rounded text-[10px] bg-stone-100 dark:bg-obsidian text-stone-600 dark:text-stone-400 border border-stone-200 dark:border-gold/20 font-mono">/</kbd>
             </button>
 
@@ -288,9 +288,9 @@ export function Navbar() {
             {user?.role === 'ADMIN' && (
               <Link
                 href="/admin"
-                className="whitespace-nowrap shrink-0 flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-950/60 h-8 px-2.5 text-xs font-bold text-amber-300 hover:bg-amber-900/60 transition shadow-sm"
+                className="whitespace-nowrap shrink-0 flex items-center gap-1 rounded-full border border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-950/60 h-8 px-2.5 text-xs font-bold text-amber-900 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition shadow-sm"
               >
-                <ShieldCheck className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400 shrink-0" />
                 <span>Admin</span>
               </Link>
             )}
@@ -305,8 +305,8 @@ export function Navbar() {
                 >
                   <CoinIcon size={14} className="shrink-0 group-hover:scale-110 transition-transform" />
                   <span className="font-extrabold text-amber-900 dark:text-gold">{coinBalance !== null ? coinBalance : (user ? '...' : 100)}</span>
-                  <span className="hidden 2xl:inline text-[10px] text-stone-500 dark:text-stone-300 font-medium">Coins</span>
-                  <PlusCircle className="w-3 h-3 text-amber-600 dark:text-gold shrink-0 group-hover:text-amber-700 dark:group-hover:text-gold-soft" />
+                  <span className="hidden 2xl:inline text-[10px] text-stone-600 dark:text-stone-300 font-medium">Coins</span>
+                  <PlusCircle className="w-3 h-3 text-amber-700 dark:text-gold shrink-0 group-hover:text-amber-800 dark:group-hover:text-gold-soft" />
                 </button>
 
                 {/* Devotee / Pandit Profile with Solid High-Contrast Dropdown */}
@@ -316,9 +316,9 @@ export function Navbar() {
                     className="whitespace-nowrap shrink-0 flex items-center gap-1.5 text-xs font-semibold text-stone-700 dark:text-stone-200 hover:text-stone-950 dark:hover:text-gold-pale transition h-8 px-2.5 rounded-full bg-white dark:bg-obsidian-soft border border-stone-200 dark:border-gold/20 hover:border-amber-400 dark:hover:border-gold/40 max-w-[115px] sm:max-w-[130px] shadow-sm"
                     title="Devotee & Broadcaster Menu"
                   >
-                    <PranamIcon size={13} className="text-amber-600 dark:text-gold shrink-0" />
+                    <PranamIcon size={13} className="text-amber-700 dark:text-gold shrink-0" />
                     <span className="truncate">{user.name?.split(' ')[0] || user.name}</span>
-                    <ChevronDown className="w-3 h-3 text-stone-500 dark:text-gold-soft shrink-0" />
+                    <ChevronDown className="w-3 h-3 text-stone-600 dark:text-gold-soft shrink-0" />
                   </button>
 
                   {userDropdownOpen && (
@@ -365,9 +365,9 @@ export function Navbar() {
                           <Link
                             href="/admin"
                             onClick={() => setUserDropdownOpen(false)}
-                            className="flex items-center gap-2.5 px-3 py-2 text-amber-300 hover:bg-amber-950/40 rounded-xl transition font-medium"
+                            className="flex items-center gap-2.5 px-3 py-2 text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-xl transition font-medium"
                           >
-                            <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+                            <ShieldCheck className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0" />
                             <span>Admin Console</span>
                           </Link>
                         )}
@@ -386,7 +386,7 @@ export function Navbar() {
                               onClick={() => setUserDropdownOpen(false)}
                               className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
                             >
-                              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                              <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" />
                               <span>Pandit KYC Status</span>
                             </Link>
                           </>
@@ -494,7 +494,7 @@ export function Navbar() {
                 onClick={() => setMobileMenuOpen(false)}
                 className="mobile-nav-link flex items-center gap-2 font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
               >
-                <DiyaIcon size={16} className="text-amber-500" />
+                <DiyaIcon size={16} className="text-amber-700 dark:text-amber-400" />
                 <span>Book Pooja &amp; Kathas</span>
               </Link>
               <Link
@@ -533,7 +533,7 @@ export function Navbar() {
                     onClick={() => setMobileMenuOpen(false)}
                     className="mobile-nav-link font-bold py-1.5 flex items-center gap-2"
                   >
-                    <Video className="w-4 h-4 text-amber-600 dark:text-gold" /> Go Live (Studio)
+                    <Video className="w-4 h-4 text-amber-700 dark:text-gold" /> Go Live (Studio)
                   </Link>
                   <Link
                     href="/studio/streams"
@@ -558,7 +558,7 @@ export function Navbar() {
                   onClick={() => setMobileMenuOpen(false)}
                   className="mobile-nav-link font-bold py-1.5 flex items-center gap-2"
                 >
-                  <ShieldCheck className="w-4 h-4 text-amber-600 dark:text-amber-300" /> Admin Console
+                  <ShieldCheck className="w-4 h-4 text-amber-700 dark:text-amber-300" /> Admin Console
                 </Link>
               )}
 
@@ -576,7 +576,7 @@ export function Navbar() {
                     onClick={() => setMobileMenuOpen(false)}
                     className="mobile-nav-link font-semibold py-1.5 flex items-center gap-2"
                   >
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Pandit KYC Status
+                    <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400" /> Pandit KYC Status
                   </Link>
                 </>
               )}

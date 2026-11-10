@@ -4,7 +4,7 @@
 
 ## Core Services
 - **Public Temple Live Broadcasts**: Real-time WebRTC and HLS live streams from registered temples and spiritual sanctuaries across India.
-- **Private Interactive Pooja Sessions**: Password-protected, 128-bit encrypted sankalp rituals for families and individuals worldwide with interactive video and low-latency spiritual reactions (Pranam, Aarti, Shankha).
+- **Private Interactive Pooja Sessions**: Password-protected, 128-bit encrypted sankalp rituals for families and individuals worldwide with interactive video and real-time spiritual reactions (Pranam, Aarti, Shankha).
 - **Vedic Astrology Consultations**: Direct live consultations with certified astrologers and Jyotish acharyas.
 - **Temple Prasad & Community**: Devotee donations, community live chat with Sanskrit profanity filtering, and temple prasad delivery tracking.
 
@@ -19,4 +19,3 @@
 - Terms of Service: https://darkturquoise-louse-359917.hostingersite.com/terms
 - Privacy Policy: https://darkturquoise-louse-359917.hostingersite.com/privacy
 - Grievance Redressal Officer: https://darkturquoise-louse-359917.hostingersite.com/grievance
-- REST API Documentation: https://darkturquoise-louse-359917.hostingersite.com/api/docs

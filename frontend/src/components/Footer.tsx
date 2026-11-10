@@ -38,18 +38,18 @@ export function Footer() {
                 <span className="block font-serif text-2xl font-bold tracking-wide text-gold-pale">
                   Shubhdarshan
                 </span>
-                <span className="block text-[9px] font-bold uppercase tracking-[0.28em] text-gold-soft/80">
+                <span className="block text-[9px] font-bold uppercase tracking-[0.28em] text-gold-soft">
                   Sacred Darshan Network
                 </span>
               </span>
             </Link>
 
             <p className="text-stone-300 text-xs sm:text-sm leading-relaxed max-w-sm">
-              Connecting devotees worldwide with verified Vedic pandits and sanctums for live Aarti, Darshan, personalized poojas, and authentic spiritual counseling in ultra-low latency.
+              Connecting devotees worldwide with verified Vedic pandits and sanctums for live Aarti, Darshan, personalized poojas, and authentic spiritual counseling in real time.
             </p>
 
             <div className="flex items-center gap-2 pt-2 text-xs text-stone-400">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <ShieldCheck className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
               <span>DPDP Act 2023 &amp; IT Rules 2021 Compliant</span>
             </div>
           </div>
@@ -180,14 +180,14 @@ export function Footer() {
         </div>
 
         {/* Bottom Bar with Sanskrit Shloka */}
-        <div className="mt-8 pt-6 border-t border-stone-800/60 flex flex-col sm:flex-row items-center justify-between text-xs text-stone-500 gap-4">
+        <div className="mt-8 pt-6 border-t border-stone-800/60 flex flex-col sm:flex-row items-center justify-between text-xs text-stone-400 gap-4">
           {/* M-08: Dynamic year — was hardcoded as 2026 */}
           <p>© {new Date().getFullYear()} Shubhdarshan Devotional Media Private Limited. All rights reserved.</p>
-          <p className="font-serif text-sm italic text-gold-soft/80 tracking-wide">
+          <p className="font-serif text-sm italic text-gold-soft tracking-wide">
             ॐ असतो मा सद्गमय तमसो मा ज्योतिर्गमय
           </p>
-          <p className="text-[11px] text-stone-500">
-            Ultra-low latency live media powered by LiveKit SFU
+          <p className="text-[11px] text-stone-400">
+            Real-time interactive media powered by LiveKit SFU
           </p>
         </div>
       </div>

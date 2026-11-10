@@ -157,7 +157,7 @@ export default function WalletTopupPage() {
                     <span>{pkg.minutesDarshan} Mins Live Darshan</span>
                   </div>
                   {pkg.bonusCoins > 0 && (
-                    <div className="flex items-center gap-2 text-emerald-400 font-semibold">
+                    <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-semibold">
                       <DiyaIcon size={14} />
                       <span>+{pkg.bonusCoins} Bonus Coins</span>
                     </div>
@@ -190,7 +190,7 @@ export default function WalletTopupPage() {
               </p>
             </div>
             <div className="flex flex-col items-center">
-              <ShieldCheck className="w-7 h-7 text-emerald-400 mb-3" />
+              <ShieldCheck className="w-7 h-7 text-emerald-700 dark:text-emerald-400 mb-3" />
               <span className="font-serif text-base font-bold text-white mb-1">RBI Closed-Loop Wallet</span>
               <p className="text-stone-400 text-xs leading-relaxed">
                 Strict compliance with RBI PPI circulars: platform currency strictly dedicated to devotional darshan.

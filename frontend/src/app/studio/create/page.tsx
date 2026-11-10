@@ -242,14 +242,14 @@ export default function CreateStreamPage() {
             <div className="flex items-center gap-2 pt-1 border-t border-amber-800/40">
               <Link
                 href="/streamer/apply"
-                className="px-3 py-1.5 bg-orange-600 hover:bg-orange-500 text-white font-semibold rounded-lg text-xs transition-colors inline-flex items-center gap-1"
+                className="px-3 py-1.5 bg-orange-700 hover:bg-orange-600 text-white font-semibold rounded-lg text-xs transition-colors inline-flex items-center gap-1"
               >
                 <Sparkles className="w-3.5 h-3.5" /> Apply as Pandit
               </Link>
               <button
                 type="button"
                 onClick={handleSwitchAccount}
-                className="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 font-semibold rounded-lg text-xs transition-colors inline-flex items-center gap-1"
+                className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 border border-stone-300 dark:border-stone-700 font-semibold rounded-lg text-xs transition-colors inline-flex items-center gap-1"
               >
                 <LogIn className="w-3.5 h-3.5" /> Sign in as Pandit
               </button>
@@ -267,7 +267,7 @@ export default function CreateStreamPage() {
               <button
                 type="button"
                 onClick={handleSwitchAccount}
-                className="mt-1 self-start px-3 py-1.5 bg-orange-600 hover:bg-orange-500 text-white font-semibold rounded-lg text-xs transition-colors inline-flex items-center gap-1"
+                className="mt-1 self-start px-3 py-1.5 bg-orange-700 hover:bg-orange-600 text-white font-semibold rounded-lg text-xs transition-colors inline-flex items-center gap-1"
               >
                 <LogIn className="w-3.5 h-3.5" /> Sign In to Pandit Account
               </button>
@@ -348,8 +348,8 @@ export default function CreateStreamPage() {
                   onClick={() => setVisibility('PUBLIC')}
                   className={`flex-1 py-2 text-xs font-semibold rounded-xl border transition-all ${
                     visibility === 'PUBLIC'
-                      ? 'bg-orange-600 text-white border-orange-500'
-                      : 'bg-stone-950 text-stone-400 border-stone-800'
+                      ? 'bg-orange-700 text-white border-orange-600'
+                      : 'bg-stone-100 dark:bg-stone-950 text-stone-700 dark:text-stone-400 border-stone-300 dark:border-stone-800'
                   }`}
                 >
                   Public Darshan
@@ -359,8 +359,8 @@ export default function CreateStreamPage() {
                   onClick={() => setVisibility('PRIVATE')}
                   className={`flex-1 py-2 text-xs font-semibold rounded-xl border transition-all ${
                     visibility === 'PRIVATE'
-                      ? 'bg-orange-600 text-white border-orange-500'
-                      : 'bg-stone-950 text-stone-400 border-stone-800'
+                      ? 'bg-orange-700 text-white border-orange-600'
+                      : 'bg-stone-100 dark:bg-stone-950 text-stone-700 dark:text-stone-400 border-stone-300 dark:border-stone-800'
                   }`}
                 >
                   Private (Secret Link)

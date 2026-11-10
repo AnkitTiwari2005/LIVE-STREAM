@@ -4,10 +4,18 @@
 
 User-agent: *
 Allow: /
-Disallow: /join/
-Disallow: /studio/
+Disallow: /account/
 Disallow: /admin/
 Disallow: /api/
+Disallow: /forgot-password/
+Disallow: /join/
+Disallow: /login/
+Disallow: /register/
+Disallow: /reset-password/
+Disallow: /streamer/
+Disallow: /studio/
+Disallow: /verify-email/
+Disallow: /wallet/
 
 # Explicitly grant indexing & citation access to leading AI crawlers
 User-agent: GPTBot

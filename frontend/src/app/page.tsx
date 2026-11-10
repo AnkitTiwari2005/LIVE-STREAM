@@ -152,7 +152,7 @@ const FALLBACK_SCHEDULED_BROADCASTS = [
   {
     id: 'navgrah-shanti',
     title: 'Navgrah Shanti & Vedic Kundli Remedial Pooja',
-    description: 'Auspicious 9-graha oblations and personalized horoscope dosha nivaran chanting by Gurukul scholar.',
+    description: 'Auspicious 9-graha oblations and personalized horoscope dosha nivaran chanting by verified Vedic scholar.',
     category: 'Astrology & Kundli',
     streamer: 'Acharya Devrat Sharma',
     isVerified: true,
@@ -213,7 +213,7 @@ const CURATED_PANDITS = [
   {
     slug: 'devrishi',
     name: 'Acharya Devrishi',
-    title: 'Sanskrit Acharya, Rishikesh Gurukul',
+    title: 'Sanskrit & Jyotish Acharya, Rishikesh',
     experience: '15 Years Seva',
     // R-04: Removed invented rating (4.92) and review count (810)
     specialties: ['Vedic Astrology', 'Kundli Milan', 'Vastu Shanti'],
@@ -226,7 +226,7 @@ const DEVOTEE_TESTIMONIALS = [
     name: 'Dr. Ramesh Sundaram',
     location: 'London, United Kingdom',
     quote:
-      'Living in London, participating in Kashi Vishwanath Mangala Aarti live at 4 AM IST with sub-second audio clarity felt like sitting right inside the temple sanctum. Shubhdarshan is a divine blessing.',
+      'Living in London, participating in Kashi Vishwanath Mangala Aarti live at 4 AM IST with clear real-time audio felt like sitting right inside the temple sanctum. Shubhdarshan is a divine blessing.',
     ritual: 'Kashi Mangala Aarti',
   },
   {
@@ -387,12 +387,12 @@ export default function HomePage() {
               {liveStreams.length > 0 ? (
                 <p className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3.5 sm:px-4 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider sm:tracking-[0.24em] text-gold-pale shadow-[0_0_20px_rgba(245,158,11,0.15)] max-w-full truncate">
                   <span className="live-dot shrink-0" />
-                  <span className="truncate">Live Vedic Broadcasts • Gurukul Verified</span>
+                  <span className="truncate">Live Vedic Broadcasts • KYC-Verified Pandits</span>
                 </p>
               ) : (
                 <p className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3.5 sm:px-4 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider sm:tracking-[0.24em] text-gold-pale shadow-[0_0_20px_rgba(245,158,11,0.15)] max-w-full truncate">
                   <DiyaIcon size={14} className="shrink-0" />
-                  <span className="truncate">Live Vedic Broadcasts &bull; Gurukul Verified</span>
+                  <span className="truncate">Live Vedic Broadcasts &bull; KYC-Verified Pandits</span>
                 </p>
               )}
             </div>
@@ -403,7 +403,7 @@ export default function HomePage() {
             </h1>
 
             <p className="mt-4 sm:mt-6 w-full max-w-xl text-stone-300 text-sm sm:text-lg leading-relaxed">
-              Shubhdarshan connects you directly with Gurukul-verified Vedic Pandits for personalized poojas, havans, and spiritual counseling — in ultra-low latency HD, directly to your screen.
+              Shubhdarshan connects you directly with KYC-verified Vedic Pandits for personalized poojas, havans, and spiritual counseling — in live interactive HD, directly to your screen.
             </p>
 
             {/* Hero Action Buttons */}
@@ -458,30 +458,30 @@ export default function HomePage() {
               )}
             </div>
 
-            {/* Platform Stats Row — R-04: replaced invented numbers with honest platform facts */}
+            {/* Platform Stats Row — honest code-backed platform facts */}
             <dl className="mt-8 sm:mt-12 grid grid-cols-2 gap-x-3 sm:gap-x-6 gap-y-4 sm:gap-y-6 border-t border-gold/15 pt-5 sm:pt-8 sm:grid-cols-4">
               <div>
                 <dd className="font-serif text-2xl sm:text-4xl font-bold text-gold-pale">100%</dd>
                 <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-normal sm:tracking-[0.16em] text-stone-400">
-                  Gurukul Verified
+                  KYC Verified
                 </dt>
               </div>
               <div>
-                <dd className="font-serif text-2xl sm:text-4xl font-bold text-gold-pale">100%</dd>
+                <dd className="font-serif text-2xl sm:text-4xl font-bold text-gold-pale">5 Coins</dd>
                 <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-normal sm:tracking-[0.16em] text-stone-400">
-                  KYC Screened
+                  Per Minute
                 </dt>
               </div>
               <div>
-                <dd className="font-serif text-2xl sm:text-4xl font-bold text-gold-pale">&lt;300ms</dd>
+                <dd className="font-serif text-2xl sm:text-4xl font-bold text-gold-pale">100 Coins</dd>
                 <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-normal sm:tracking-[0.16em] text-stone-400">
-                  Live Latency
+                  Welcome Bonus
                 </dt>
               </div>
               <div>
-                <dd className="font-serif text-2xl sm:text-4xl font-bold text-gold-pale">24/7</dd>
+                <dd className="font-serif text-2xl sm:text-4xl font-bold text-gold-pale">HD</dd>
                 <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-normal sm:tracking-[0.16em] text-stone-400">
-                  Devotee Support
+                  Live WebRTC
                 </dt>
               </div>
             </dl>
@@ -596,7 +596,7 @@ export default function HomePage() {
                     <div className="flex items-center gap-1.5 sm:gap-2">
                       <PranamIcon size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
                       <span className="text-xs font-semibold text-stone-700 dark:text-stone-200 whitespace-nowrap">
-                        Gurukul-Verified Pandits
+                        KYC-Verified Pandits
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 sm:gap-2 w-full xs:w-auto justify-end">
@@ -642,7 +642,7 @@ export default function HomePage() {
               Book Personalized Vedic Poojas &amp; Consultations
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-stone-400 max-w-xl">
-              Select a sacred ritual, choose your preferred Gurukul-verified Pandit, and book a live personal broadcast.
+              Select a sacred ritual, choose your preferred KYC-verified Pandit, and book a live personal broadcast.
             </p>
           </div>
 
@@ -796,7 +796,7 @@ export default function HomePage() {
           <span className="text-xs text-gold-soft/90 font-medium hidden sm:inline">
             {liveStreams.length > 0
               ? '5 Coins / min metered darshan • Live HD'
-              : 'Upcoming live broadcasts scheduled by Gurukul-verified Pandits'}
+              : 'Upcoming live broadcasts scheduled by KYC-verified Pandits'}
           </span>
         </div>
 
@@ -1044,7 +1044,7 @@ export default function HomePage() {
                     <Bell className="w-3.5 h-3.5 shrink-0" />
                     <span className="font-black">Remind Me</span>
                   </button>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">
                     Live HD
                   </span>
                 </div>
@@ -1058,13 +1058,13 @@ export default function HomePage() {
       <section className="mx-auto max-w-7xl px-5 lg:px-8 py-16 border-t border-gold/15 scroll-mt-4" id="pandits">
         <div className="text-center max-w-2xl mx-auto mb-12">
           <p className="text-xs font-bold uppercase tracking-[0.28em] text-gold-soft">
-            Gurukul Verification
+            Identity &amp; KYC Verification
           </p>
           <h2 className="mt-2 font-serif text-3xl sm:text-4xl font-bold text-white">
             Meet the custodians of tradition
           </h2>
           <p className="mt-3 text-stone-400 text-xs sm:text-sm leading-relaxed">
-            Every pandit on Shubhdarshan undergoes rigorous background verification, Gurukul lineage scrutiny, and Sanskrit pronunciation auditing before being authorized to broadcast.
+            Every pandit on Shubhdarshan undergoes government identity KYC review and profile verification before being authorized to broadcast.
           </p>
         </div>
 
@@ -1088,7 +1088,7 @@ export default function HomePage() {
                 <div className="absolute bottom-3 left-3 right-3">
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md border border-amber-400/40 text-amber-200 font-bold text-xs shadow-md">
                     <VerifiedPanditBadge size={14} />
-                    <span className="text-amber-200">Gurukul Verified</span>
+                    <span className="text-amber-200">KYC Verified</span>
                   </div>
                 </div>
               </div>
@@ -1138,27 +1138,27 @@ export default function HomePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="rounded-2xl bg-obsidian-soft border border-gold/15 p-6 shadow-xl relative">
-            <span className="font-serif text-5xl font-black text-amber-600/70 block mb-2 step-num">01</span>
+            <span className="font-serif text-5xl font-black text-amber-700/80 dark:text-amber-500/70 block mb-2 step-num">01</span>
             <h3 className="font-serif text-xl font-bold text-white mb-2">
               Select Ritual &amp; Verified Pandit
             </h3>
             <p className="text-xs sm:text-sm text-stone-400 leading-relaxed">
-              Choose from authentic Vedic rituals — Rudrabhishek, Navgrah Shanti, Kundli guidance, or Family Sankalp. Select your preferred Gurukul-verified Pandit.
+              Choose from authentic Vedic rituals — Rudrabhishek, Navgrah Shanti, Kundli guidance, or Family Sankalp. Select your preferred KYC-verified Pandit.
             </p>
           </div>
 
           <div className="rounded-2xl bg-obsidian-soft border border-gold/15 p-6 shadow-xl relative">
-            <span className="font-serif text-5xl font-black text-amber-600/70 block mb-2 step-num">02</span>
+            <span className="font-serif text-5xl font-black text-amber-700/80 dark:text-amber-500/70 block mb-2 step-num">02</span>
             <h3 className="font-serif text-xl font-bold text-white mb-2">
               Join Live Consecrated Broadcast
             </h3>
             <p className="text-xs sm:text-sm text-stone-400 leading-relaxed">
-              Connect to our ultra-low latency WebRTC stream with zero audio lag. Hear authentic Vedic mantras and ritual chants with pure acoustics directly on your screen.
+              Connect to our live WebRTC stream with crisp sacred audio. Hear authentic Vedic mantras and ritual chants with pure acoustics directly on your screen.
             </p>
           </div>
 
           <div className="rounded-2xl bg-obsidian-soft border border-gold/15 p-6 shadow-xl relative">
-            <span className="font-serif text-5xl font-black text-amber-600/70 block mb-2 step-num">03</span>
+            <span className="font-serif text-5xl font-black text-amber-700/80 dark:text-amber-500/70 block mb-2 step-num">03</span>
             <h3 className="font-serif text-xl font-bold text-white mb-2">
               Offer Sankalp &amp; Dakshina
             </h3>
@@ -1279,7 +1279,7 @@ export default function HomePage() {
             </h2>
 
             <p className="text-stone-300 text-xs sm:text-base leading-relaxed">
-              Experience authentic Vedic rituals and personalized poojas today. Join over 40,000 devotees across the globe receiving live blessings from Gurukul-verified Pandits.
+              Experience authentic Vedic rituals and personalized poojas today. Join devotees across the globe receiving live blessings from KYC-verified Pandits.
             </p>
 
             <div className="pt-2 flex flex-wrap items-center justify-center gap-4">

@@ -34,6 +34,8 @@ import {
   getPanditDakshinaForPooja,
 } from '@/data/poojaCatalog';
 
+const BOOKINGS_ENABLED = process.env.NEXT_PUBLIC_BOOKINGS_ENABLED === 'true';
+
 export interface BookingRecord {
   id: string;
   refCode: string;
@@ -63,7 +65,73 @@ interface SevaBookingModalProps {
   initialSevaId?: string;
 }
 
-export default function SevaBookingModal({
+export default function SevaBookingModal(props: SevaBookingModalProps) {
+  if (BOOKINGS_ENABLED) {
+    return <SevaBookingFlow {...props} />;
+  }
+  if (!props.isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in"
+      onClick={props.onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="seva-coming-soon-title"
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-md rounded-3xl bg-white dark:bg-obsidian-soft border border-stone-200 dark:border-gold/30 p-6 sm:p-8 shadow-2xl text-center space-y-4"
+      >
+        <button
+          type="button"
+          onClick={props.onClose}
+          className="rounded-full p-2 text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-gold/10 transition absolute top-4 right-4"
+          aria-label="Close"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto">
+          <DiyaIcon size={28} />
+        </div>
+
+        <div className="space-y-1.5">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-800 dark:text-gold-soft">
+            Launching Soon
+          </p>
+          <h2 id="seva-coming-soon-title" className="font-serif text-xl sm:text-2xl font-bold text-stone-900 dark:text-white">
+            Private Pooja Booking &mdash; Coming Soon
+          </h2>
+        </div>
+
+        <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 leading-relaxed">
+          Private 1-on-1 pandit booking and custom sankalp scheduling is not yet live. Browse our upcoming live broadcasts and join a ceremony from the daily schedule.
+        </p>
+
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link
+            href="/schedule"
+            onClick={props.onClose}
+            className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold text-xs shadow-md transition inline-flex items-center justify-center gap-1.5"
+          >
+            <Calendar className="w-4 h-4" />
+            <span>View Live Schedule</span>
+          </Link>
+          <button
+            type="button"
+            onClick={props.onClose}
+            className="w-full sm:w-auto px-5 py-2.5 rounded-full border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 font-semibold text-xs transition"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SevaBookingFlow({
   isOpen,
   onClose,
   initialSevaId,
@@ -247,19 +315,19 @@ export default function SevaBookingModal({
 
         {/* Step Progress Bar */}
         <div className="px-6 py-2.5 bg-obsidian border-b border-gold/10 flex items-center justify-between text-xs overflow-x-auto no-scrollbar">
-          <span className={`font-semibold shrink-0 ${step >= 1 ? 'text-gold' : 'text-stone-500'}`}>
+          <span className={`font-semibold shrink-0 ${step >= 1 ? 'text-gold' : 'text-stone-600 dark:text-stone-400'}`}>
             1. Select Pooja
           </span>
-          <ChevronRight className="w-3.5 h-3.5 text-stone-600 shrink-0" />
-          <span className={`font-semibold shrink-0 ${step >= 2 ? 'text-gold' : 'text-stone-500'}`}>
+          <ChevronRight className="w-3.5 h-3.5 text-stone-500 dark:text-stone-400 shrink-0" />
+          <span className={`font-semibold shrink-0 ${step >= 2 ? 'text-gold' : 'text-stone-600 dark:text-stone-400'}`}>
             2. Choose Pandit &amp; Dakshina
           </span>
-          <ChevronRight className="w-3.5 h-3.5 text-stone-600 shrink-0" />
-          <span className={`font-semibold shrink-0 ${step >= 3 ? 'text-gold' : 'text-stone-500'}`}>
+          <ChevronRight className="w-3.5 h-3.5 text-stone-500 dark:text-stone-400 shrink-0" />
+          <span className={`font-semibold shrink-0 ${step >= 3 ? 'text-gold' : 'text-stone-600 dark:text-stone-400'}`}>
             3. Devotee Sankalp
           </span>
-          <ChevronRight className="w-3.5 h-3.5 text-stone-600 shrink-0" />
-          <span className={`font-semibold shrink-0 ${step >= 4 ? 'text-gold' : 'text-stone-500'}`}>
+          <ChevronRight className="w-3.5 h-3.5 text-stone-500 dark:text-stone-400 shrink-0" />
+          <span className={`font-semibold shrink-0 ${step >= 4 ? 'text-gold' : 'text-stone-600 dark:text-stone-400'}`}>
             4. Pandit Status
           </span>
         </div>
@@ -350,7 +418,7 @@ export default function SevaBookingModal({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-gold/10">
                 <div>
                   <h3 className="font-serif text-base font-bold text-white">
-                    Step 2: Choose Your Gurukul-Verified Vedic Pandit
+                    Step 2: Choose Your Verified Vedic Pandit
                   </h3>
                   <div className="flex flex-wrap items-center gap-2 mt-0.5">
                     <p className="text-xs text-stone-400">
@@ -405,7 +473,7 @@ export default function SevaBookingModal({
                             {pandit.title}
                           </p>
                           <p className="text-[10px] text-stone-400 truncate mb-2">
-                            {pandit.gurukul}
+                            {pandit.lineage}
                           </p>
 
                           <div className="flex flex-wrap gap-1">
@@ -722,7 +790,7 @@ export default function SevaBookingModal({
                 className={`px-6 py-2.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 shadow-md ${
                   devoteeName
                     ? 'bg-gold hover:bg-gold-deep text-obsidian shadow-[0_0_20px_rgba(245,158,11,0.3)]'
-                    : 'bg-stone-800 text-stone-500 cursor-not-allowed'
+                    : 'bg-stone-200 dark:bg-stone-800 text-stone-600 dark:text-stone-400 cursor-not-allowed'
                 }`}
               >
                 <DiyaIcon size={14} />

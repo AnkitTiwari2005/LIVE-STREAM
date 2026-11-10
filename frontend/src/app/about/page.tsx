@@ -7,7 +7,7 @@ import { OmIcon, DiyaIcon, LotusIcon, CoinIcon, VerifiedPanditBadge } from '@/co
 export const metadata: Metadata = {
   title: 'About Us - Sacred Devotion Meets Modern Technology',
   description:
-    'Discover the vision behind Shubhdarshan: connecting millions of devotees worldwide with authentic Vedic rituals, live temple aartis, and certified astrologers in real-time.',
+    'Discover the vision behind Shubhdarshan: connecting devotees worldwide with authentic Vedic rituals, live temple aartis, and verified astrologers in real time.',
   alternates: { canonical: '/about' },
 };
 
@@ -28,12 +28,12 @@ export default function AboutPage() {
             <span className="gold-text italic font-serif">modern hands</span>
           </h1>
           <p className="mt-5 text-stone-300 text-sm sm:text-lg max-w-2xl mx-auto leading-relaxed">
-            Bridging timeless Vedic traditions with real-time WebRTC technology to bring the sacred darshan of Bharat’s holiest sanctums into devotees’ homes across 62 countries.
+            Bridging timeless Vedic traditions with real-time WebRTC technology to bring the sacred darshan of Bharat’s holy sanctums into devotees’ homes around the world.
           </p>
         </div>
 
         {/* Hero Temple Image Banner */}
-        <div className="relative rounded-3xl overflow-hidden border border-gold/25 mb-16 shadow-2xl">
+        <div className="on-photo relative rounded-3xl overflow-hidden border border-gold/25 mb-16 shadow-2xl">
           <img
             src="/images/photo-1561361058-c24cecae35ca.webp"
             alt="Morning bathers at the sacred ghats of Varanasi"
@@ -71,15 +71,15 @@ export default function AboutPage() {
             <div className="w-12 h-12 rounded-2xl bg-gold/10 border border-gold/30 flex items-center justify-center text-gold mb-4">
               <Zap className="w-6 h-6 text-gold" />
             </div>
-            <h3 className="font-serif text-xl font-bold text-white mb-2">Sub-Second LiveKit SFU</h3>
+            <h3 className="font-serif text-xl font-bold text-white mb-2">Real-Time LiveKit SFU</h3>
             <p className="text-stone-400 text-xs sm:text-sm leading-relaxed">
-              Unlike delayed social media video streams, our dedicated WebRTC SFU delivers sub-second video and acoustic chanting, allowing devotees to chant along in real time.
+              Unlike buffered social media video feeds, our dedicated WebRTC SFU delivers real-time video and clear acoustic chanting so devotees can participate along with the ritual.
             </p>
           </div>
 
           <div className="bg-obsidian-soft border border-gold/15 rounded-3xl p-6 shadow-xl relative">
             <div className="w-12 h-12 rounded-2xl bg-gold/10 border border-gold/30 flex items-center justify-center text-gold mb-4">
-              <Shield className="w-6 h-6 text-emerald-400" />
+              <Shield className="w-6 h-6 text-emerald-700 dark:text-emerald-400" />
             </div>
             <h3 className="font-serif text-xl font-bold text-white mb-2">DPDP Act 2023 Compliant</h3>
             <p className="text-stone-400 text-xs sm:text-sm leading-relaxed">
@@ -88,17 +88,17 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Gurukul 7-Step Verification Section */}
+        {/* KYC & Compliance Verification Section */}
         <div className="bg-obsidian-soft border border-gold/25 rounded-3xl p-8 sm:p-12 mb-16 shadow-2xl relative overflow-hidden">
           <div className="max-w-2xl mb-8">
             <p className="text-xs font-bold uppercase tracking-[0.24em] text-gold-soft">
               Priesthood Integrity
             </p>
             <h2 className="mt-1 font-serif text-3xl font-bold text-white">
-              The Gurukul 7-step verification every pandit must pass
+              KYC &amp; platform verification before going live
             </h2>
             <p className="mt-2 text-stone-300 text-xs sm:text-sm leading-relaxed">
-              We hold religious sanctity to the highest possible standard. No unauthorized or unvetted broadcaster can stream on Shubhdarshan.
+              Every broadcaster passes administrator identity review before receiving streaming privileges on Shubhdarshan.
             </p>
           </div>
 
@@ -106,48 +106,32 @@ export default function AboutPage() {
             <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-obsidian border border-gold/10">
               <CheckCircle2 className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold text-white text-xs sm:text-sm block">1. Government Identity Verification</span>
-                <span className="text-[11px] text-stone-400">Aadhaar/PAN KYC with biometric matching.</span>
+                <span className="font-bold text-white text-xs sm:text-sm block">1. Government Identity KYC</span>
+                <span className="text-[11px] text-stone-400">Submitted government photo identification documents reviewed by administrators.</span>
               </div>
             </div>
 
             <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-obsidian border border-gold/10">
               <CheckCircle2 className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold text-white text-xs sm:text-sm block">2. Gurukul Certificate Audit</span>
-                <span className="text-[11px] text-stone-400">Authentic credentials from recognized Sanskrit Pathshalas.</span>
+                <span className="font-bold text-white text-xs sm:text-sm block">2. Lineage &amp; Temple Background</span>
+                <span className="text-[11px] text-stone-400">Applicants declare ritual specialties, years of experience, and temple affiliation.</span>
               </div>
             </div>
 
             <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-obsidian border border-gold/10">
               <CheckCircle2 className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold text-white text-xs sm:text-sm block">3. Vedic Mantra Pronunciation Test</span>
-                <span className="text-[11px] text-stone-400">Evaluated by senior Varanasi &amp; Haridwar Acharyas.</span>
+                <span className="font-bold text-white text-xs sm:text-sm block">3. Anti-Superstition &amp; Ethics Pledge</span>
+                <span className="text-[11px] text-stone-400">Strict adherence to our policy prohibiting fear-based coercions and false guarantees.</span>
               </div>
             </div>
 
             <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-obsidian border border-gold/10">
               <CheckCircle2 className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold text-white text-xs sm:text-sm block">4. Temple Affiliation Reference</span>
-                <span className="text-[11px] text-stone-400">Written recommendation from registered temple trust.</span>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-obsidian border border-gold/10">
-              <CheckCircle2 className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
-              <div>
-                <span className="font-bold text-white text-xs sm:text-sm block">5. Zero Commercial Exploitation Pledge</span>
-                <span className="text-[11px] text-stone-400">Legal commitment to transparent, fair seva fees.</span>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-obsidian border border-gold/10">
-              <CheckCircle2 className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
-              <div>
-                <span className="font-bold text-white text-xs sm:text-sm block">6. Broadcast Studio Hardware Check</span>
-                <span className="text-[11px] text-stone-400">HD optics and acoustic microphone certification.</span>
+                <span className="font-bold text-white text-xs sm:text-sm block">4. Active Moderation &amp; Emergency Controls</span>
+                <span className="text-[11px] text-stone-400">Ongoing safety reporting, chat word filters, and admin broadcast controls.</span>
               </div>
             </div>
           </div>

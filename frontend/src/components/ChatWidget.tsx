@@ -215,10 +215,10 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
       {/* Chat Header */}
       <div className="p-4 border-b border-stone-200 dark:border-stone-800 bg-stone-50/80 dark:bg-stone-950/60 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <OmIcon size={20} className="text-amber-600 dark:text-amber-400" />
+          <OmIcon size={20} className="text-amber-700 dark:text-amber-400" />
           <h2 className="text-sm font-bold text-stone-900 dark:text-white tracking-tight">Sacred Live Chat</h2>
         </div>
-        <span className="text-[10px] text-stone-500 font-medium">Max 500 chars</span>
+        <span className="text-[10px] text-stone-600 dark:text-stone-400 font-medium">Max 500 chars</span>
       </div>
 
       {/* Pinned Message Banner */}
@@ -255,8 +255,8 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
       {/* Message List */}
       <div ref={chatContainerRef} className="flex-1 p-3 overflow-y-auto space-y-2.5 text-xs">
         {messages.length === 0 && (
-          <div className="h-full flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 text-center px-4 py-8">
-            <DiyaIcon size={36} className="mb-2 text-amber-500 shrink-0" />
+          <div className="h-full flex flex-col items-center justify-center text-stone-600 dark:text-stone-400 text-center px-4 py-8">
+            <DiyaIcon size={36} className="mb-2 text-amber-700 dark:text-amber-400 shrink-0" />
             <span className="text-xs">No messages yet. Send a prayer or chant to start the conversation!</span>
           </div>
         )}
@@ -275,7 +275,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
                     <span>{msg.user.name}</span>
                   </div>
                   {msg.createdAt && (
-                    <span className="text-[9px] text-stone-500 dark:text-stone-400 font-mono">
+                    <span className="text-[9px] text-stone-600 dark:text-stone-400 font-mono">
                       {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   )}
@@ -296,10 +296,10 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
                 <span
                   className={`font-semibold mr-1.5 inline-flex items-center gap-1 ${
                     msg.user.role === 'STREAMER'
-                      ? 'text-orange-600 dark:text-orange-400 font-bold'
+                      ? 'text-orange-700 dark:text-orange-400 font-bold'
                       : msg.user.role === 'ADMIN'
-                      ? 'text-amber-700 dark:text-amber-400 font-bold'
-                      : 'text-stone-600 dark:text-stone-300'
+                      ? 'text-amber-800 dark:text-amber-400 font-bold'
+                      : 'text-stone-700 dark:text-stone-300'
                   }`}
                 >
                   {msg.user.role === 'STREAMER' && <OmIcon size={14} />}
@@ -307,7 +307,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
                 </span>
                 <span className="text-stone-900 dark:text-stone-100 break-words">{msg.message}</span>
                 {msg.createdAt && (
-                  <span className="text-[9px] text-stone-400 dark:text-stone-500 ml-1.5 font-mono select-none">
+                  <span className="text-[9px] text-stone-600 dark:text-stone-400 ml-1.5 font-mono select-none">
                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 )}
@@ -320,7 +320,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
                     <button
                       onClick={() => handlePin(msg.id)}
                       title="Pin message"
-                      className="p-1 hover:text-amber-600 dark:hover:text-amber-400"
+                      className="p-1 text-stone-600 dark:text-stone-400 hover:text-amber-700 dark:hover:text-amber-400"
                     >
                       <Pin className="w-3 h-3" />
                     </button>
@@ -328,7 +328,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
                       <button
                         onClick={() => handleMute(msg.user.id)}
                         title="Mute user for 15 mins"
-                        className="p-1 hover:text-red-500 dark:hover:text-red-400"
+                        className="p-1 text-stone-600 dark:text-stone-400 hover:text-red-700 dark:hover:text-red-400"
                       >
                         <VolumeX className="w-3 h-3" />
                       </button>
@@ -336,7 +336,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
                     <button
                       onClick={() => handleDelete(msg.id)}
                       title="Delete message"
-                      className="p-1 hover:text-red-500 dark:hover:text-red-400"
+                      className="p-1 text-stone-600 dark:text-stone-400 hover:text-red-700 dark:hover:text-red-400"
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>
@@ -346,7 +346,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
                 <button
                   onClick={() => handleReportMessage(msg)}
                   title="Report inappropriate message"
-                  className="p-1 hover:text-amber-600 dark:hover:text-amber-400 text-stone-400 dark:text-stone-500"
+                  className="p-1 hover:text-amber-700 dark:hover:text-amber-400 text-stone-600 dark:text-stone-400"
                 >
                   <Flag className="w-3 h-3" />
                 </button>
@@ -366,11 +366,11 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
               onChange={(e) => setInput(e.target.value)}
               placeholder="Chant Har Har Mahadev, Jai Shri Ram..."
               maxLength={500}
-              className="flex-1 px-3.5 py-2 bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-800 rounded-xl text-xs text-stone-900 dark:text-white placeholder-stone-400 dark:placeholder-stone-500 focus:outline-none focus:border-amber-500 dark:focus:border-orange-500 shadow-sm"
+              className="flex-1 px-3.5 py-2 bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-800 rounded-xl text-xs text-stone-900 dark:text-white placeholder-stone-500 dark:placeholder-stone-400 focus:outline-none focus:border-amber-600 dark:focus:border-orange-500 shadow-sm"
             />
             <button
               type="submit"
-              className="bg-orange-600 hover:bg-orange-500 text-white p-2.5 rounded-xl transition-colors shadow-md shrink-0"
+              className="bg-orange-700 hover:bg-orange-600 text-white p-2.5 rounded-xl transition-colors shadow-md shrink-0"
               title="Send Message"
             >
               <Send className="w-4 h-4" />
@@ -380,7 +380,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
           <div className="text-center py-1">
             <a href="/login" className="chat-signin-link text-xs hover:underline font-bold inline-flex items-center gap-1.5">
               <span className="font-bold">Sign in to participate in sacred live chat</span>
-              <PranamIcon size={14} className="text-amber-500" />
+              <PranamIcon size={14} className="text-amber-700 dark:text-amber-400" />
             </a>
           </div>
         )}

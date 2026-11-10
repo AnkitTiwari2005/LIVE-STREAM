@@ -20,6 +20,7 @@ import {
 } from '@/components/icons/SpiritualIcons';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/components/Toast';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 interface PanditData {
   id?: string;
@@ -84,13 +85,13 @@ const CURATED_SHOWCASE: Record<string, PanditData> = {
   },
   'devrishi': {
     name: 'Acharya Devrishi',
-    title: 'Sanskrit Acharya, Rishikesh Gurukul',
+    title: 'Sanskrit & Jyotish Acharya, Rishikesh',
     experience: '15 Years Seva',
     specialties: ['Vedic Astrology', 'Kundli Milan', 'Vastu Shanti'],
     languages: ['Hindi', 'Sanskrit', 'English'],
     image: '/images/photo-1762838105804-c3264c29a390.webp',
-    bio: 'Gurukul-certified Jyotish Acharya providing astronomical Kundli analysis, Vastu energy alignments, and Vedic muhurta calculations.',
-    temple: 'Rishikesh Tapovan Gurukul',
+    bio: 'Trusted Jyotish Acharya providing astronomical Kundli analysis, Vastu energy alignments, and Vedic muhurta calculations.',
+    temple: 'Rishikesh Tapovan Tradition',
     followerCount: 0,
     isCurated: true,
     upcoming: [],
@@ -120,6 +121,13 @@ export default function PanditProfileClient() {
   const [followerCount, setFollowerCount] = useState(0);
   const [followingAction, setFollowingAction] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [loginPromptOpen, setLoginPromptOpen] = useState(false);
+
+  useEffect(() => {
+    if (pandit?.name) {
+      document.title = `${pandit.name} | Shubhdarshan`;
+    }
+  }, [pandit?.name]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -211,9 +219,7 @@ export default function PanditProfileClient() {
     if (!pandit) return;
 
     if (!currentUser) {
-      if (confirm('Please sign in to follow verified Pandits and receive live darshan alerts.')) {
-        router.push(`/login?redirect=/pandit/${id}`);
-      }
+      setLoginPromptOpen(true);
       return;
     }
 
@@ -272,7 +278,7 @@ export default function PanditProfileClient() {
         <AlertCircle className="w-12 h-12 text-gold mx-auto mb-4" />
         <h1 className="font-serif text-2xl font-bold text-white mb-2">Pandit Profile Not Found</h1>
         <p className="text-xs text-stone-400 mb-6">
-          The requested Pandit profile ID does not exist or has not yet completed Gurukul verification.
+          The requested Pandit profile ID does not exist or has not yet completed verification.
         </p>
         <Link
           href="/#pandits"
@@ -302,7 +308,7 @@ export default function PanditProfileClient() {
         {/* Profile Header Card */}
         <div className="bg-obsidian-soft border border-gold/25 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden mb-8">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-6 sm:gap-8">
-            <div className="relative w-36 h-36 sm:w-44 sm:h-44 rounded-3xl overflow-hidden border-2 border-gold/40 shadow-xl shrink-0 bg-stone-900">
+            <div className="on-photo relative w-36 h-36 sm:w-44 sm:h-44 rounded-3xl overflow-hidden border-2 border-gold/40 shadow-xl shrink-0 bg-stone-900">
               <img src={pandit.image} alt={pandit.name} className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
             </div>
@@ -310,7 +316,7 @@ export default function PanditProfileClient() {
             <div className="flex-1 text-center md:text-left space-y-3">
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
                 <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-gold/15 text-gold border border-gold/30">
-                  <VerifiedPanditBadge size={14} /> Gurukul Verified
+                  <VerifiedPanditBadge size={14} /> KYC Verified Pandit
                 </span>
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-stone-900 border border-stone-800 text-stone-300">
                   <Sparkles className="w-3 h-3 text-gold" /> {pandit.experience}
@@ -370,7 +376,7 @@ export default function PanditProfileClient() {
                     </span>
                   ))
                 ) : (
-                  <span className="text-stone-500 italic">Vedic Pooja &amp; Hawan</span>
+                  <span className="text-stone-600 dark:text-stone-400 italic">Vedic Pooja &amp; Hawan</span>
                 )}
               </div>
             </div>
@@ -441,6 +447,20 @@ export default function PanditProfileClient() {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={loginPromptOpen}
+        title="Sign In to Follow Pandit"
+        description="Please sign in to follow verified Pandits and receive email notifications when their live darshans begin."
+        confirmLabel="Sign In"
+        cancelLabel="Not Now"
+        variant="default"
+        onConfirm={() => {
+          setLoginPromptOpen(false);
+          router.push(`/login?redirect=/pandit/${id}`);
+        }}
+        onCancel={() => setLoginPromptOpen(false)}
+      />
     </div>
   );
 }

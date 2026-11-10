@@ -119,8 +119,8 @@ export default function WalletHistoryPage() {
             <div className="bg-obsidian-soft border border-gold/15 p-5 rounded-2xl shadow-lg">
               <span className="text-xs font-semibold text-stone-400 block">Lifetime Coins Received</span>
               <div className="flex items-center gap-2 mt-2">
-                <ArrowDownLeft className="w-5 h-5 text-emerald-400" />
-                <span className="font-serif text-3xl font-bold text-emerald-400">{balance.lifetimeEarned} Coins</span>
+                <ArrowDownLeft className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
+                <span className="font-serif text-3xl font-bold text-emerald-700 dark:text-emerald-400">{balance.lifetimeEarned} Coins</span>
               </div>
               <span className="text-[11px] text-stone-400 mt-1 block">Through signup &amp; recharges</span>
             </div>
@@ -144,7 +144,7 @@ export default function WalletHistoryPage() {
               <span>Ledger Entries</span>
             </h2>
             <div className="flex items-center gap-2 text-[11px] text-stone-400">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <ShieldCheck className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
               <span>Double-entry cryptographic ledger</span>
             </div>
           </div>
@@ -184,7 +184,7 @@ export default function WalletHistoryPage() {
                     const isCredit = tx.type === 'CREDIT';
                     return (
                       <tr key={tx.id} className="hover:bg-stone-50 dark:hover:bg-stone-900/40 transition">
-                        <td className="py-4 px-5 whitespace-nowrap text-stone-500 dark:text-stone-400">
+                        <td className="py-4 px-5 whitespace-nowrap text-stone-600 dark:text-stone-400">
                           {new Date(tx.createdAt).toLocaleString([], {
                             dateStyle: 'medium',
                             timeStyle: 'short',
@@ -210,7 +210,7 @@ export default function WalletHistoryPage() {
                                 {formatCategory(tx.category)}
                               </span>
                               {tx.referenceId && (
-                                <span className="text-[10px] text-stone-500 font-mono">
+                                <span className="text-[10px] text-stone-600 dark:text-stone-400 font-mono">
                                   Ref: {tx.referenceId}
                                 </span>
                               )}
@@ -220,7 +220,7 @@ export default function WalletHistoryPage() {
                         <td className="py-4 px-4 text-right whitespace-nowrap">
                           <span
                             className={`font-serif text-base font-bold ${
-                              isCredit ? 'text-emerald-400' : 'text-stone-300'
+                              isCredit ? 'text-emerald-700 dark:text-emerald-400' : 'text-stone-300'
                             }`}
                           >
                             {isCredit ? '+' : '-'}

@@ -121,7 +121,7 @@ export default function SchedulePage() {
             Upcoming Vedic Broadcasts &amp; Darshans
           </h1>
           <p className="text-xs sm:text-base text-stone-300 max-w-2xl mx-auto leading-relaxed">
-            Gurukul-verified Vedic Pandits schedule sacred poojas, havans, and spiritual counseling in real time. Set reminders or book your personal live session.
+            KYC-verified Vedic Pandits schedule sacred poojas, havans, and spiritual counseling in real time. Set email reminders for upcoming broadcasts.
           </p>
 
           <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
@@ -171,8 +171,8 @@ export default function SchedulePage() {
               </div>
               <h3 className="font-serif text-2xl font-bold text-white">No Broadcasts Scheduled Yet</h3>
               <p className="text-stone-400 text-sm max-w-sm leading-relaxed">
-                Our Gurukul-verified Pandits are preparing upcoming live poojas and darshans.
-                Check back soon or book a personal private session.
+                Our KYC-verified Pandits are preparing upcoming live poojas and darshans.
+                Check back soon for new scheduled broadcasts.
               </p>
               <button
                 onClick={() => setBookingModalOpen(true)}

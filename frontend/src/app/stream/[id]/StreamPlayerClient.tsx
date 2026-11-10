@@ -18,6 +18,7 @@ import { DakshinaModal } from '@/components/DakshinaModal';
 import { CoinTopupModal } from '@/components/CoinTopupModal';
 import { Users, AlertCircle, Share2, Sparkles, Zap, Calendar, Bell, CheckCircle2, Clock, MessageSquare, Info, LogIn, Gift, Flame, Flag, X, ArrowRight } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { classifyTick } from '@/lib/meter-tick';
 import {
   OmIcon,
   DiyaIcon,
@@ -93,8 +94,15 @@ export default function StreamPlayerClient() {
   // the server watchdog (90 s) is the authoritative removal mechanism.
   // Only 401 (expired session) and 402 / canContinue:false are acted on immediately.
   const billingErrorCountRef = useRef<number>(0);
+  const recoveryAttemptsRef = useRef<number>(0);
   // N-05: Show a small non-intrusive connection warning instead of the top-up dialog on transient errors.
   const [connectionWarning, setConnectionWarning] = useState(false);
+
+  useEffect(() => {
+    if (stream?.title) {
+      document.title = `${stream.title} | Shubhdarshan`;
+    }
+  }, [stream?.title]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -219,13 +227,41 @@ export default function StreamPlayerClient() {
 
   useEffect(() => {
     fetchStreamAndToken();
-    // Reset reconnect counter on fresh mount / id change
+    // Reset reconnect & recovery counters on fresh mount / id change
     reconnectAttemptsRef.current = 0;
+    recoveryAttemptsRef.current = 0;
+    billingErrorCountRef.current = 0;
     setShowManualReconnect(false);
     return () => {
       if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
     };
   }, [id]);
+
+  // H-06: Poll scheduled stream status so waiting viewers auto-enter when Pandit goes live
+  useEffect(() => {
+    if (!isScheduled || !id || id === 'demo' || streamEnded) return;
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const res = await fetch(`${apiUrl}/streams/${id}`);
+        if (!res.ok) return;
+        const latest = await res.json();
+        if (latest.status === 'LIVE') {
+          clearInterval(pollInterval);
+          setIsScheduled(false);
+          await fetchStreamAndToken();
+        } else if (latest.status === 'ENDED' || latest.status === 'CANCELLED') {
+          clearInterval(pollInterval);
+          setIsScheduled(false);
+          setStreamEnded(true);
+          checkActiveLiveStreams(id);
+        }
+      } catch {}
+    }, 5000);
+
+    return () => clearInterval(pollInterval);
+  }, [isScheduled, id, streamEnded]);
 
   // 60-Second Heartbeat Meter Loop
   useEffect(() => {
@@ -252,70 +288,73 @@ export default function StreamPlayerClient() {
           }),
         });
 
-        // N-05: 401 means the user's session has expired — send them to login.
-        // Previously this was treated as a transient error and silently swallowed;
-        // the watchdog then removed the viewer with no explanation after 90 seconds.
-        if (res.status === 401) {
-          if (meterIntervalRef.current) clearInterval(meterIntervalRef.current);
-          window.location.href = `/login?redirect=/stream/${id}`;
-          return;
-        }
+        const data = await res.json().catch(() => null);
+        const action = classifyTick(res.status, data);
 
-        // N-05: 402 or server says canContinue:false → genuine zero balance, show top-up.
-        if (res.status === 402) {
-          setIsZeroBalance(true);
-          setTopupModalOpen(true);
-          setConnectionWarning(false);
-          if (meterIntervalRef.current) clearInterval(meterIntervalRef.current);
-          return;
-        }
-
-        // N-05: Any other non-OK (5xx deploy blip, 429 rate limit) → show a small warning
-        // banner and keep playing. The server watchdog is the authoritative removal mechanism —
-        // we do NOT remove the viewer client-side on transient infrastructure errors.
-        // We escalate to stop only after 5 consecutive non-401/402 failures.
-        if (!res.ok) {
-          billingErrorCountRef.current += 1;
-          if (billingErrorCountRef.current >= 5) {
-            // After 5 sustained failures the billing server is genuinely unreachable.
-            // Stop to avoid an indefinite free ride while the server is down.
-            setIsZeroBalance(true);
-            setTopupModalOpen(false);
-            setConnectionWarning(false);
-            setToken(null);
+        switch (action) {
+          case 'LOGIN': {
             if (meterIntervalRef.current) clearInterval(meterIntervalRef.current);
-          } else {
-            setConnectionWarning(true);
+            window.location.href = `/login?redirect=/stream/${id}`;
+            return;
           }
-          return;
-        }
-
-        // Successful tick — clear warning and error counter
-        billingErrorCountRef.current = 0;
-        setConnectionWarning(false);
-
-        const data = await res.json();
-        if (data.canContinue) {
-          setRemainingCoins(data.remainingCoins);
-          if (typeof data.availableMinutes === 'number') {
-            setAvailableMinutes(data.availableMinutes);
-          }
-        } else {
-          // N-05: Distinguish reason: STREAM_ENDED vs ZERO_BALANCE vs other.
-          // Previously canContinue:false always showed the top-up dialog even when
-          // the stream had ended or the watchdog had closed the session.
-          if (data.reason === 'STREAM_ENDED') {
-            setStreamEnded(true);
-            setToken(null);
-          } else {
+          case 'TOPUP': {
+            billingErrorCountRef.current = 0;
+            recoveryAttemptsRef.current = 0;
             setIsZeroBalance(true);
             setTopupModalOpen(true);
             setToken(null);
+            setConnectionWarning(false);
+            if (meterIntervalRef.current) clearInterval(meterIntervalRef.current);
+            return;
           }
-          if (meterIntervalRef.current) clearInterval(meterIntervalRef.current);
+          case 'ENDED': {
+            billingErrorCountRef.current = 0;
+            recoveryAttemptsRef.current = 0;
+            setStreamEnded(true);
+            setToken(null);
+            setConnectionWarning(false);
+            if (meterIntervalRef.current) clearInterval(meterIntervalRef.current);
+            return;
+          }
+          case 'RECOVER': {
+            billingErrorCountRef.current = 0;
+            setConnectionWarning(false);
+            if (meterIntervalRef.current) clearInterval(meterIntervalRef.current);
+            recoveryAttemptsRef.current += 1;
+            if (recoveryAttemptsRef.current > 3) {
+              setToken(null);
+              setError('Your viewing session expired and could not be restored automatically. Please reload the page.');
+              return;
+            }
+            await fetchStreamAndToken();
+            return;
+          }
+          case 'OK': {
+            billingErrorCountRef.current = 0;
+            recoveryAttemptsRef.current = 0;
+            setConnectionWarning(false);
+            setRemainingCoins(data.remainingCoins);
+            if (typeof data.availableMinutes === 'number') {
+              setAvailableMinutes(data.availableMinutes);
+            }
+            return;
+          }
+          case 'TRANSIENT':
+          default: {
+            billingErrorCountRef.current += 1;
+            if (billingErrorCountRef.current >= 5) {
+              setConnectionWarning(false);
+              setToken(null);
+              setError('Unable to reach the billing server. Please reload the page to continue.');
+              if (meterIntervalRef.current) clearInterval(meterIntervalRef.current);
+            } else {
+              setConnectionWarning(true);
+            }
+            return;
+          }
         }
       } catch (err) {
-        // Network-level failure (offline, DNS) — treat as transient
+        // Network-level failure (offline, DNS) — treat as transient, never open top-up dialog
         billingErrorCountRef.current += 1;
         setConnectionWarning(true);
         console.error('Meter tick error:', err);
@@ -391,14 +430,14 @@ export default function StreamPlayerClient() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* N-05: Transient connection warning — shown on 5xx/429/network errors, NOT on low balance */}
       {connectionWarning && !isZeroBalance && (
-        <div className="mb-4 p-3 bg-stone-800/90 border border-stone-600/70 rounded-2xl flex items-center justify-between gap-3 text-stone-300 shadow-lg">
+        <div className="mb-4 p-3 bg-amber-50 dark:bg-stone-800/90 border border-amber-300 dark:border-stone-600/70 rounded-2xl flex items-center justify-between gap-3 text-stone-900 dark:text-stone-200 shadow-lg">
           <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold">
-            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+            <AlertCircle className="w-4 h-4 text-amber-800 dark:text-amber-400 shrink-0" />
             <span>Connection issue detected — retrying billing. Your stream continues.</span>
           </div>
           <button
             onClick={() => setConnectionWarning(false)}
-            className="p-1 hover:bg-stone-700 rounded-lg transition"
+            className="p-1 hover:bg-amber-200/70 dark:hover:bg-stone-700 rounded-lg transition"
             aria-label="Dismiss"
           >
             <X className="w-3.5 h-3.5" />
@@ -407,9 +446,9 @@ export default function StreamPlayerClient() {
       )}
       {/* N-06: Manual reconnect button after backoff exhausted */}
       {showManualReconnect && !streamEnded && (
-        <div className="mb-4 p-3 bg-stone-800/90 border border-amber-600/40 rounded-2xl flex items-center justify-between gap-3 text-stone-300 shadow-lg">
+        <div className="mb-4 p-3 bg-amber-50 dark:bg-stone-800/90 border border-amber-400 dark:border-amber-600/40 rounded-2xl flex items-center justify-between gap-3 text-stone-900 dark:text-stone-200 shadow-lg">
           <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold">
-            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+            <AlertCircle className="w-4 h-4 text-amber-800 dark:text-amber-400 shrink-0" />
             <span>Stream connection lost. Click to reconnect.</span>
           </div>
           <button
@@ -426,7 +465,7 @@ export default function StreamPlayerClient() {
       )}
       {/* Low Balance Warning Banner (< 15 coins / 3 mins) */}
       {remainingCoins !== null && remainingCoins <= 15 && remainingCoins > 0 && !isZeroBalance && (
-        <div className="mb-4 p-3 bg-amber-950/90 border border-amber-600/70 rounded-2xl flex items-center justify-between gap-3 text-amber-200 animate-pulse shadow-lg">
+        <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-950/90 border border-amber-400 dark:border-amber-600/70 rounded-2xl flex items-center justify-between gap-3 text-amber-950 dark:text-amber-200 animate-pulse shadow-lg">
           <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold">
             <CoinIcon size={18} />
             <span>
@@ -444,11 +483,11 @@ export default function StreamPlayerClient() {
 
       {/* Banner if another Pandit is currently live */}
       {activeOtherLiveStream && (
-        <div className="mb-4 p-3.5 bg-gradient-to-r from-red-950/90 via-amber-950/90 to-red-950/90 border border-amber-500/50 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-amber-200 shadow-xl animate-pulse">
+        <div className="mb-4 p-3.5 bg-amber-50 dark:bg-gradient-to-r dark:from-red-950/90 dark:via-amber-950/90 dark:to-red-950/90 border border-amber-400 dark:border-amber-500/50 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-amber-950 dark:text-amber-200 shadow-xl animate-pulse">
           <div className="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
             <span className="live-dot shrink-0" />
             <span>
-              🔴 Pandit is live now: <strong className="text-white">&ldquo;{activeOtherLiveStream.title}&rdquo;</strong> with {activeOtherLiveStream.streamer?.name || 'Acharya'}
+              Pandit is live now: <strong className="text-stone-950 dark:text-white">&ldquo;{activeOtherLiveStream.title}&rdquo;</strong> with {activeOtherLiveStream.streamer?.name || 'Acharya'}
             </span>
           </div>
           <Link
@@ -462,26 +501,26 @@ export default function StreamPlayerClient() {
       )}
 
       {error && !streamEnded && (
-        <div className="mb-6 p-4 bg-red-950/80 border border-red-800 rounded-2xl flex items-center gap-3 text-red-200">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+        <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/80 border border-red-300 dark:border-red-800 rounded-2xl flex items-center gap-3 text-red-900 dark:text-red-200">
+          <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-600 dark:text-red-400" />
           <span className="text-sm font-medium">{error}</span>
         </div>
       )}
 
       {streamEnded ? (
         <div className="w-full aspect-video max-h-[600px] bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-3xl flex flex-col items-center justify-center p-8 text-center shadow-xl">
-          <PranamIcon size={56} className="mb-4 text-amber-500" />
+          <PranamIcon size={56} className="mb-4 text-amber-700 dark:text-amber-500" />
           <h2 className="text-2xl font-bold text-stone-900 dark:text-white mb-2">Sacred Broadcast Concluded</h2>
           <p className="text-stone-600 dark:text-stone-400 text-sm max-w-md mb-4">
             This live broadcast by {stream?.streamer?.name || 'the Pandit'} is not active or has concluded. May divine blessings be upon you.
           </p>
 
           {activeOtherLiveStream ? (
-            <div className="mt-2 p-5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 border border-amber-500/50 text-center max-w-md shadow-xl">
-              <span className="text-[11px] font-extrabold uppercase tracking-widest text-amber-300 flex items-center justify-center gap-2 mb-1.5">
+            <div className="mt-2 p-5 rounded-2xl bg-amber-50 dark:bg-gradient-to-r dark:from-amber-500/20 dark:via-orange-500/20 dark:to-amber-500/20 border border-amber-400 dark:border-amber-500/50 text-center max-w-md shadow-xl">
+              <span className="text-[11px] font-extrabold uppercase tracking-widest text-amber-900 dark:text-amber-300 flex items-center justify-center gap-2 mb-1.5">
                 <span className="live-dot" /> Live Darshan Active Right Now
               </span>
-              <p className="text-base font-bold text-white mb-4">
+              <p className="text-base font-bold text-stone-950 dark:text-white mb-4">
                 &ldquo;{activeOtherLiveStream.title}&rdquo; by {activeOtherLiveStream.streamer?.name || 'Vedic Pandit'}
               </p>
               <Link
@@ -502,7 +541,7 @@ export default function StreamPlayerClient() {
               </Link>
               <Link
                 href="/"
-                className="px-5 py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold rounded-full border border-stone-700 transition"
+                className="px-5 py-2.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-900 dark:text-stone-200 text-xs font-semibold rounded-full border border-stone-300 dark:border-stone-700 transition"
               >
                 Return to Home
               </Link>
@@ -513,7 +552,7 @@ export default function StreamPlayerClient() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Video Viewport (Col span 2) */}
           <div className="lg:col-span-2 flex flex-col gap-4">
-            <div className="relative w-full aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl border border-gold/20 flex items-center justify-center">
+            <div className="player-container video-overlay relative w-full aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl border border-gold/20 flex items-center justify-center">
               {/* Scheduled Stream Announcement Overlay */}
               {isScheduled ? (
                 <div className="video-overlay absolute inset-0 z-40 bg-gradient-to-br from-black/90 via-black/85 to-[#241a12]/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center text-white">
@@ -654,11 +693,11 @@ export default function StreamPlayerClient() {
                   </div>
                 </LiveKitRoom>
               ) : error ? (
-                <div className="flex flex-col items-center gap-3 p-6 text-center max-w-md">
+                <div className="video-overlay flex flex-col items-center gap-3 p-6 text-center max-w-md">
                   <div className="w-12 h-12 rounded-full bg-red-950/80 border border-red-500/40 flex items-center justify-center text-red-400 mb-1">
                     <AlertCircle className="w-6 h-6" />
                   </div>
-                  <span className="text-sm font-bold text-stone-200">{error}</span>
+                  <span className="text-sm font-bold text-stone-100">{error}</span>
                   {activeOtherLiveStream ? (
                     <Link
                       href={`/stream/${activeOtherLiveStream.id}`}
@@ -670,16 +709,16 @@ export default function StreamPlayerClient() {
                   ) : (
                     <button
                       onClick={fetchStreamAndToken}
-                      className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold border border-stone-700 transition"
+                      className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-100 text-xs font-semibold border border-stone-600 transition"
                     >
                       <span>Retry Connection</span>
                     </button>
                   )}
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-3 text-stone-500">
+                <div className="video-overlay flex flex-col items-center gap-3 text-stone-200">
                   <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-gold" />
-                  <span className="text-xs uppercase tracking-wider font-semibold text-gold-soft">
+                  <span className="text-xs uppercase tracking-wider font-semibold text-amber-300">
                     Connecting to Sacred Broadcast...
                   </span>
                 </div>
@@ -733,8 +772,8 @@ export default function StreamPlayerClient() {
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-1.5">
                         {stream.status === 'LIVE' ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-950/80 text-red-400 border border-red-800">
-                            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800">
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-600 dark:bg-red-500 animate-pulse" />
                             LIVE
                           </span>
                         ) : stream.status === 'SCHEDULED' ? (
@@ -785,11 +824,11 @@ export default function StreamPlayerClient() {
                         onClick={handleShare}
                         className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2.5 bg-white dark:bg-obsidian border border-stone-200 dark:border-gold/20 hover:bg-stone-50 dark:hover:bg-stone-900 text-stone-700 dark:text-stone-200 text-xs font-semibold rounded-full transition-all shadow-sm"
                       >
-                        <Share2 className="w-3.5 h-3.5 text-amber-600 dark:text-gold-soft" /> Share
+                        <Share2 className="w-3.5 h-3.5 text-amber-700 dark:text-gold-soft" /> Share
                       </button>
                       <button
                         onClick={() => setReportModalOpen(true)}
-                        className="flex items-center gap-1 p-1.5 sm:px-3 sm:py-2.5 bg-white dark:bg-obsidian border border-stone-200 dark:border-gold/20 hover:border-red-500/50 hover:text-red-500 dark:hover:text-red-400 text-stone-500 dark:text-stone-400 text-xs font-semibold rounded-full transition-all shadow-sm"
+                        className="flex items-center gap-1 p-1.5 sm:px-3 sm:py-2.5 bg-white dark:bg-obsidian border border-stone-200 dark:border-gold/20 hover:border-red-500/50 hover:text-red-700 dark:hover:text-red-400 text-stone-600 dark:text-stone-400 text-xs font-semibold rounded-full transition-all shadow-sm"
                         title="Report this broadcast to moderators"
                       >
                         <Flag className="w-3.5 h-3.5" />
@@ -838,7 +877,7 @@ export default function StreamPlayerClient() {
                       {stream.description}
                     </p>
                   ) : (
-                    <p className="text-xs text-stone-500 italic">No additional description provided for this pooja.</p>
+                    <p className="text-xs text-stone-600 dark:text-stone-400 italic">No additional description provided for this pooja.</p>
                   )}
 
                   <div className="pt-3 border-t border-stone-200 dark:border-stone-800/80 flex items-center justify-between text-xs text-stone-600 dark:text-stone-300">
@@ -847,13 +886,13 @@ export default function StreamPlayerClient() {
                         <PranamIcon size={16} /> Presided by {stream.streamer?.name}
                       </span>
                       {stream.streamer?.streamerProfile?.isVerifiedBadge && (
-                        <span className="inline-flex items-center gap-1 text-amber-700 dark:text-gold-soft font-bold" title="Verified Vedic Pandit">
+                        <span className="inline-flex items-center gap-1 text-amber-800 dark:text-gold-soft font-bold" title="Verified Vedic Pandit">
                           <VerifiedPanditBadge size={16} /> Verified
                         </span>
                       )}
                     </div>
-                    <span className="flex items-center gap-1 text-stone-500 dark:text-stone-400 font-medium">
-                      <Users className="w-3.5 h-3.5 text-amber-600 dark:text-gold" /> Live Devotees
+                    <span className="flex items-center gap-1 text-stone-600 dark:text-stone-400 font-medium">
+                      <Users className="w-3.5 h-3.5 text-amber-700 dark:text-gold" /> Live Devotees
                     </span>
                   </div>
                 </div>
@@ -900,7 +939,7 @@ export default function StreamPlayerClient() {
               <X className="w-4 h-4" />
             </button>
 
-            <div className="flex items-center gap-2 mb-4 text-amber-600 dark:text-amber-400 font-bold">
+            <div className="flex items-center gap-2 mb-4 text-amber-700 dark:text-amber-400 font-bold">
               <Flag className="w-4 h-4" />
               <span className="text-sm text-stone-900 dark:text-white">Report Sacred Darshan Broadcast</span>
             </div>
@@ -964,9 +1003,9 @@ function VideoRenderer() {
   const tracks = useTracks([Track.Source.Camera]);
   if (tracks.length === 0) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center text-stone-400 bg-stone-950">
+      <div className="video-overlay w-full h-full flex flex-col items-center justify-center text-stone-200 bg-stone-950">
         <DiyaIcon size={44} className="mb-2" />
-        <span className="text-sm font-medium">Awaiting Pandit video transmission...</span>
+        <span className="text-sm font-medium text-stone-200">Awaiting Pandit video transmission...</span>
       </div>
     );
   }
