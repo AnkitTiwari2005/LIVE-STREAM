@@ -72,27 +72,24 @@ Shubhdarshan runs from a single codebase across **two production deployment topo
 
 ```mermaid
 flowchart LR
-    Devotee["Devotee / Pandit Browser"] --> Edge["Cloudflare or Hostinger Edge"]
+    user["Devotee and Pandit Browser"] --> proxy["Cloudflare or Hostinger Proxy"]
+    proxy -->|"Unified Host"| unified["NestJS API and Static Client"]
 
-    subgraph VPS["Deployment Mode A: Docker Compose VPS"]
-        Edge --> Nginx["Nginx 1.26 Reverse Proxy + CSP"]
-        Nginx -->|Static and SSR| Web["Next.js Standalone (web:3000)"]
-        Nginx -->|REST and Socket.IO| API["NestJS API (api:4000)"]
-        Nginx -->|WebSocket| LK["LiveKit SFU + TURN (7882/udp)"]
+    subgraph vps ["Mode A: Docker Compose VPS"]
+        nginx["Nginx Reverse Proxy and CSP"] -->|"Web UI"| web["Next.js Web Container"]
+        nginx -->|"API and WS"| api["NestJS API Container"]
+        nginx -->|"Media WS"| lk["LiveKit SFU and TURN"]
+        api --> worker["Cron Worker"]
+        lk -->|"Webhook"| api
     end
 
-    subgraph Unified["Deployment Mode B: Unified Node.js + Neon"]
-        Edge --> UnifiedAPI["NestJS API + Express Static Client (backend/public/client)"]
-    end
-
-    API --> Worker["Headless Cron Worker (worker.main.ts)"]
-    API --> PG["PostgreSQL 16 or Neon (pooja_app role)"]
-    UnifiedAPI --> PG
-    API --> Redis["Redis 7.2 Adapter and Cache"]
-    UnifiedAPI --> Redis
-    LK -->|Signed Webhook| API
-    API -->|Orders and Webhooks| Razorpay["Razorpay Checkout"]
-    API -->|Transactional Mail| Brevo["Brevo SMTP API"]
+    proxy -->|"VPS Stack"| nginx
+    api --> pg["PostgreSQL 16 or Neon"]
+    unified --> pg
+    api --> redis["Redis 7.2"]
+    unified --> redis
+    api --> pay["Razorpay and Brevo"]
+    unified --> pay
 ```
 
 | Layer | Technology | Responsibility |
@@ -112,20 +109,20 @@ flowchart LR
 ```mermaid
 sequenceDiagram
     participant Viewer as Viewer Browser
-    participant API as NestJS WalletController
-    participant Cron as CronTasksService (30s)
+    participant API as NestJS Wallet API
+    participant Cron as Watchdog Cron 30s
     participant SFU as LiveKit SFU
 
-    Viewer->>API: POST /api/v1/wallet/meter-tick (every 60s)
-    API-->>Viewer: canContinue + balance (classifyTick)
-    alt 401 Unauthorized
-        Viewer->>Viewer: Redirect to /login
-    else 402 or ZERO_BALANCE
+    Viewer->>API: POST /api/v1/wallet/meter-tick every 60s
+    API-->>Viewer: Return balance and classifyTick action
+    alt Status 401 Unauthorized
+        Viewer->>Viewer: Redirect to login
+    else Status 402 or ZERO_BALANCE
         Viewer->>Viewer: Open CoinTopupModal
-    else SESSION_EXPIRED
-        Viewer->>API: Re-run join flow (max 3 attempts)
+    else Reason SESSION_EXPIRED
+        Viewer->>API: Re-run join flow up to 3 tries
     else Heartbeat missing over 90s
-        Cron->>SFU: kickParticipant(streamId, userId)
+        Cron->>SFU: Kick participant from room
         Cron->>API: Mark session DISCONNECTED_TIMEOUT
     end
 ```
