@@ -263,41 +263,43 @@ export class StreamsService {
       throw new ForbiddenException('This is a private stream. Please join using your secret link.');
     }
 
-    // Check if user is banned or blocked
+    // Check if user is banned, deleted, or blocked
+    let verifiedUser: any = null;
     if (userId) {
-      const user = await this.prisma.user.findUnique({ where: { id: userId } });
-      if (user?.status === UserStatus.BANNED || user?.status === UserStatus.SUSPENDED) {
-        throw new ForbiddenException('Your account is restricted from watching streams');
-      }
-
-      const isBlocked = await this.prisma.blockedViewer.findFirst({
-        where: { streamId, userId },
-      });
-      if (isBlocked) {
-        throw new ForbiddenException('You have been blocked from viewing this live stream');
+      const candidateUser = await this.prisma.user.findUnique({ where: { id: userId } });
+      if (candidateUser) {
+        if (candidateUser.status === UserStatus.BANNED || candidateUser.status === UserStatus.SUSPENDED) {
+          throw new ForbiddenException('Your account is restricted from watching streams');
+        }
+        if (candidateUser.status !== UserStatus.DELETION_REQUESTED && !candidateUser.deletedAt) {
+          verifiedUser = candidateUser;
+          const isBlocked = await this.prisma.blockedViewer.findFirst({
+            where: { streamId, userId: verifiedUser.id },
+          });
+          if (isBlocked) {
+            throw new ForbiddenException('You have been blocked from viewing this live stream');
+          }
+        }
       }
     }
 
-    const participantId = userId || `guest_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-    const participantName = guestName || (userId ? 'Registered Devotee' : 'Guest Devotee');
+    const participantId = verifiedUser?.id || `guest_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const participantName = guestName || (verifiedUser ? verifiedUser.name || 'Registered Devotee' : 'Guest Devotee');
 
     let viewingSession: any = null;
 
     // Devotees watching public live streams are metered at 5 coins/min
     if (stream.visibility === StreamVisibility.PUBLIC) {
-      if (!userId) {
+      if (!verifiedUser) {
         throw new UnauthorizedException(
           'Please sign in or register to receive your 100 free coins and join the sacred live darshan.'
         );
       }
 
       // If user is not the stream host/pandit or platform admin, meter their darshan session
-      const callerUser = userId
-        ? await this.prisma.user.findUnique({ where: { id: userId }, select: { role: true } })
-        : null;
-      const isExempt = userId === stream.streamerId || callerUser?.role === UserRole.ADMIN;
+      const isExempt = verifiedUser.id === stream.streamerId || verifiedUser.role === UserRole.ADMIN;
       if (!isExempt) {
-        viewingSession = await this.walletService.startViewingSession(userId, streamId, ip);
+        viewingSession = await this.walletService.startViewingSession(verifiedUser.id, streamId, ip);
       }
     }
 
@@ -305,7 +307,7 @@ export class StreamsService {
     await this.prisma.viewerSession.create({
       data: {
         streamId,
-        userId: userId || null,
+        userId: verifiedUser?.id || null,
         guestName: participantName,
         ipAddress: ip || null,
       },
@@ -323,7 +325,7 @@ export class StreamsService {
       isPublisher: false,
       canSubscribe: true,
       ttlMinutes: 5,
-      metadata: { role: 'viewer', isGuest: !userId, sessionToken: viewingSession?.sessionToken },
+      metadata: { role: 'viewer', isGuest: !verifiedUser, sessionToken: viewingSession?.sessionToken },
     });
 
     return {

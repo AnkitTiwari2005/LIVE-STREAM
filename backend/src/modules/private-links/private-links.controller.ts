@@ -56,8 +56,10 @@ export class PrivateLinksController {
     const ip = req.ip || (req.headers['x-forwarded-for'] as string);
 
     // C-06 Secure Identity Resolution:
-    // Only trust validated session or cryptographically verified JWT signature
+    // Prefer JwtAuthGuard's validated req.user; if missing (e.g. direct call or restricted user rejected by guard),
+    // verify the JWT signature cleanly and forward iat so the service enforces DB existence, status, and passwordChangedAt.
     let resolvedUserId: string | undefined = userId || (req as any).user?.id;
+    let tokenIat: number | undefined;
 
     if (!resolvedUserId) {
       let rawToken: string | undefined;
@@ -67,12 +69,16 @@ export class PrivateLinksController {
         rawToken = (req as any).cookies.access_token;
       }
 
-      if (rawToken) {
+      const secret =
+        process.env.JWT_ACCESS_SECRET ||
+        (process.env.NODE_ENV !== 'production' ? 'jwt_default_insecure_access_secret_key' : undefined);
+
+      if (rawToken && secret) {
         try {
-          const secret = process.env.JWT_ACCESS_SECRET || 'jwt_default_insecure_access_secret_key';
           const payload = this.jwtService.verify(rawToken, { secret });
-          if (payload?.sub && !payload.is2FAChallenge) {
+          if (payload?.sub && payload.purpose !== '2fa_challenge' && !payload.is2FAChallenge) {
             resolvedUserId = payload.sub;
+            tokenIat = typeof payload.iat === 'number' ? payload.iat : undefined;
           }
         } catch {
           // Token invalid or expired - treat as guest
@@ -80,7 +86,7 @@ export class PrivateLinksController {
       }
     }
 
-    return this.privateLinksService.claimLink(tokenSlug, dto, resolvedUserId, ip);
+    return this.privateLinksService.claimLink(tokenSlug, dto, resolvedUserId, ip, tokenIat);
   }
 
   @Roles(UserRole.STREAMER)

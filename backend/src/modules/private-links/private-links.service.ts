@@ -177,6 +177,7 @@ export class PrivateLinksService {
     dto: ClaimPrivateLinkDto,
     userId?: string,
     ip?: string,
+    tokenIat?: number,
   ) {
     const tokenHash = CryptoUtil.hashSha256(tokenSlug);
     const link = await this.prisma.privateAccessLink.findUnique({
@@ -201,20 +202,33 @@ export class PrivateLinksService {
       throw new BadRequestException('The private live session is not currently streaming');
     }
 
-    // Check user verification and account status if userId provided
-    let verifiedUser = null;
+    // Check user verification and account status if userId provided.
+    // A stale JWT whose user row was deleted (or scheduled for deletion / invalidated by password reset)
+    // must resolve verifiedUser = null instead of flowing into ViewerSession.userId (FK constraint).
+    let verifiedUser: any = null;
     if (userId) {
-      verifiedUser = await this.prisma.user.findUnique({ where: { id: userId } });
-      if (verifiedUser) {
-        if (verifiedUser.status === UserStatus.BANNED || verifiedUser.status === UserStatus.SUSPENDED) {
+      const candidateUser = await this.prisma.user.findUnique({ where: { id: userId } });
+      if (candidateUser) {
+        if (candidateUser.status === UserStatus.BANNED || candidateUser.status === UserStatus.SUSPENDED) {
           throw new ForbiddenException('Your account is restricted from attending live streams');
         }
 
-        const blocked = await this.prisma.blockedViewer.findFirst({
-          where: { streamId: link.streamId, userId },
-        });
-        if (blocked) {
-          throw new ForbiddenException('You have been removed and blocked from this private session (FR-P7)');
+        const isDeletedAccount =
+          candidateUser.status === UserStatus.DELETION_REQUESTED || Boolean(candidateUser.deletedAt);
+        const isStalePasswordResetToken = Boolean(
+          candidateUser.passwordChangedAt &&
+            typeof tokenIat === 'number' &&
+            new Date(tokenIat * 1000) < candidateUser.passwordChangedAt,
+        );
+
+        if (!isDeletedAccount && !isStalePasswordResetToken) {
+          verifiedUser = candidateUser;
+          const blocked = await this.prisma.blockedViewer.findFirst({
+            where: { streamId: link.streamId, userId: verifiedUser.id },
+          });
+          if (blocked) {
+            throw new ForbiddenException('You have been removed and blocked from this private session (FR-P7)');
+          }
         }
       }
     }
@@ -267,7 +281,7 @@ export class PrivateLinksService {
       data: {
         streamId: link.streamId,
         privateLinkId: link.id,
-        userId: userId || null,
+        userId: verifiedUser?.id || null,
         guestName: participantName,
         ipAddress: ip || null,
       },

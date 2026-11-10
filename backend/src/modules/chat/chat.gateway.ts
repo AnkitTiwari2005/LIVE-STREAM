@@ -8,12 +8,12 @@ import {
   MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Logger, UnauthorizedException } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../database/prisma.service';
 import Redis from 'ioredis';
-import { UserRole } from '@prisma/client';
+import { UserRole, UserStatus } from '@prisma/client';
 
 class InMemoryChatCache {
   private rateLimits = new Map<string, number>();
@@ -113,24 +113,56 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return !!(this.redis && this.redis.status === 'ready');
   }
 
-  async handleConnection(client: Socket) {
+  private async resolveVerifiedSocketUser(rawToken?: string) {
+    if (!rawToken) return null;
+    const secret =
+      process.env.JWT_ACCESS_SECRET ||
+      (process.env.NODE_ENV !== 'production' ? 'jwt_default_insecure_access_secret_key' : '');
+    if (!secret) return null;
+
     try {
-      const token =
-        client.handshake.auth?.token ||
-        (client.handshake.headers?.authorization as string)?.replace('Bearer ', '');
-      if (token) {
-        const payload = this.jwtService.verify(token, {
-          secret: process.env.JWT_ACCESS_SECRET || 'jwt_default_insecure_access_secret_key',
-        });
-        if (payload?.purpose === '2fa_challenge' || payload?.is2FAChallenge) {
-          throw new UnauthorizedException('2FA challenge token rejected for chat session');
-        }
-        client.data.user = payload;
+      const cleanToken = rawToken.replace(/^Bearer\s+/i, '');
+      const payload = this.jwtService.verify(cleanToken, { secret });
+      if (!payload?.sub || payload?.purpose === '2fa_challenge' || payload?.is2FAChallenge) {
+        return null;
       }
+
+      const dbUser = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+        select: {
+          id: true,
+          name: true,
+          role: true,
+          status: true,
+          deletedAt: true,
+          passwordChangedAt: true,
+        },
+      });
+      if (
+        !dbUser ||
+        dbUser.deletedAt ||
+        dbUser.status === UserStatus.BANNED ||
+        dbUser.status === UserStatus.SUSPENDED ||
+        dbUser.status === UserStatus.DELETION_REQUESTED
+      ) {
+        return null;
+      }
+
+      if (dbUser.passwordChangedAt && payload.iat && new Date(payload.iat * 1000) < dbUser.passwordChangedAt) {
+        return null;
+      }
+
+      return { ...payload, sub: dbUser.id, name: dbUser.name, role: dbUser.role };
     } catch {
-      // Unauthenticated or guest connection
-      client.data.user = null;
+      return null;
     }
+  }
+
+  async handleConnection(client: Socket) {
+    const token =
+      client.handshake.auth?.token ||
+      (client.handshake.headers?.authorization as string)?.replace('Bearer ', '');
+    client.data.user = await this.resolveVerifiedSocketUser(token);
   }
 
   handleDisconnect(client: Socket) {
@@ -201,15 +233,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     let user = client.data.user;
 
-    // Fallback: If socket connected before login token was available, verify from message payload
+    // Fallback: If socket connected before login token was available, verify cleanly against active DB user
     if (!user && (data as any)?.token) {
-      try {
-        const rawToken = (data as any).token.replace(/^Bearer\s+/i, '');
-        user = this.jwtService.verify(rawToken, {
-          secret: process.env.JWT_ACCESS_SECRET || 'jwt_default_insecure_access_secret_key',
-        });
+      user = await this.resolveVerifiedSocketUser((data as any).token);
+      if (user) {
         client.data.user = user;
-      } catch {}
+      }
     }
 
     const { streamId, message, guestName } = data;
