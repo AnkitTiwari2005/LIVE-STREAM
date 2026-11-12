@@ -7,6 +7,7 @@ import {
   Patch,
   UseGuards,
   Delete,
+  Header,
 } from '@nestjs/common';
 import { StreamersService } from './streamers.service';
 import { ApplyStreamerDto, ReviewKycDto } from './dto/apply-streamer.dto';
@@ -33,11 +34,20 @@ export class StreamersController {
     return this.streamersService.apply(userId, dto);
   }
 
-  @Roles(UserRole.STREAMER)
+  @Roles(UserRole.STREAMER, UserRole.ADMIN)
   @Get('earnings')
-  @ApiOperation({ summary: 'Get streamer earnings ledger and Dakshina performance (B-13)' })
+  @Header('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+  @ApiOperation({ summary: 'Get streamer earnings ledger, watch-time coins, and Dakshina performance (B-13)' })
   async getEarnings(@CurrentUser() user: any) {
     return this.streamersService.getStreamerEarnings(user.id, user.role);
+  }
+
+  @Roles(UserRole.STREAMER, UserRole.ADMIN)
+  @Get('streams/:id/earnings')
+  @Header('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+  @ApiOperation({ summary: 'Get real-time coin earnings for a specific stream (streamer or admin only)' })
+  async getStreamEarnings(@Param('id') streamId: string, @CurrentUser() user: any) {
+    return this.streamersService.getStreamEarnings(streamId, user.id, user.role);
   }
 
   @Roles(UserRole.ADMIN)

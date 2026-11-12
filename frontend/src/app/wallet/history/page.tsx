@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowUpRight, ArrowDownLeft, Sparkles, RefreshCw, PlusCircle, Clock, ShieldCheck } from 'lucide-react';
 import { OmIcon, CoinIcon, DiyaIcon } from '@/components/icons/SpiritualIcons';
+import { syncLocalWalletBalance } from '@/lib/economy';
 
 interface Transaction {
   id: string;
@@ -37,7 +38,13 @@ export default function WalletHistoryPage() {
         fetch(`${apiUrl}/wallet/transactions`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' }),
       ]);
 
-      if (balRes.ok) setBalance(await balRes.json());
+      if (balRes.ok) {
+        const balData = await balRes.json();
+        setBalance(balData);
+        if (typeof balData?.balanceCoins === 'number') {
+          syncLocalWalletBalance(balData.balanceCoins);
+        }
+      }
       if (txRes.ok) setTransactions(await txRes.json());
     } catch {
       // Ignore network errors
@@ -209,6 +216,11 @@ export default function WalletHistoryPage() {
                               <span className="font-bold text-white block">
                                 {formatCategory(tx.category)}
                               </span>
+                              {tx.metadata?.streamTitle && (
+                                <span className="text-[11px] text-stone-300 block">
+                                  {tx.metadata.streamTitle}
+                                </span>
+                              )}
                               {tx.referenceId && (
                                 <span className="text-[10px] text-stone-600 dark:text-stone-400 font-mono">
                                   Ref: {tx.referenceId}

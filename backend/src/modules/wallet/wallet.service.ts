@@ -18,6 +18,7 @@ import {
   ViewingSessionStatus,
   PaymentStatus,
   PaymentProvider,
+  StreamerEarningSource,
 } from '@prisma/client';
 import * as crypto from 'crypto';
 import {
@@ -27,15 +28,18 @@ import {
   createRazorpayOrder,
   assertCaptured,
 } from '../../common/payments.util';
+import { COINS_PER_MINUTE } from '../../common/config/economy.constants';
+import { ChatGateway } from '../chat/chat.gateway';
 
 @Injectable()
 export class WalletService {
   private readonly logger = new Logger(WalletService.name);
-  public static readonly COINS_PER_MINUTE = 5;
+  public static readonly COINS_PER_MINUTE = COINS_PER_MINUTE;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly livekitProvider: LiveKitProviderService,
+    private readonly chatGateway: ChatGateway,
   ) {}
 
   /**
@@ -117,6 +121,19 @@ export class WalletService {
     ip?: string,
     userAgent?: string,
   ) {
+    const stream = await this.prisma.stream.findUnique({
+      where: { id: streamId },
+      select: { id: true, streamerId: true, title: true, deletedAt: true },
+    });
+
+    if (!stream || stream.deletedAt) {
+      throw new NotFoundException('Stream not found');
+    }
+
+    if (stream.streamerId === userId) {
+      throw new ForbiddenException('Broadcasters cannot start metered viewing on their own stream');
+    }
+
     const wallet = await this.getWalletBalance(userId);
 
     // B-09: Check if active session already exists for this user and stream (e.g. reload or reconnect)
@@ -130,7 +147,7 @@ export class WalletService {
     });
 
     if (existingActive) {
-      const availableMinutes = Math.floor(wallet.balanceCoins / WalletService.COINS_PER_MINUTE);
+      const availableMinutes = Math.floor(wallet.balanceCoins / COINS_PER_MINUTE);
       this.logger.log(`Devotee [${userId}] reconnecting to stream [${streamId}], reusing active session.`);
       return {
         sessionToken: existingActive.sessionToken,
@@ -141,13 +158,13 @@ export class WalletService {
     }
 
     // B-16: True HTTP 402 Payment Required for insufficient coins
-    if (wallet.balanceCoins < WalletService.COINS_PER_MINUTE) {
+    if (wallet.balanceCoins < COINS_PER_MINUTE) {
       throw new HttpException(
         {
           statusCode: HttpStatus.PAYMENT_REQUIRED,
           error: 'INSUFFICIENT_COINS',
-          message: `You need at least ${WalletService.COINS_PER_MINUTE} coins to watch public live darshan.`,
-          requiredCoins: WalletService.COINS_PER_MINUTE,
+          message: `You need at least ${COINS_PER_MINUTE} coins to watch public live darshan.`,
+          requiredCoins: COINS_PER_MINUTE,
           currentBalance: wallet.balanceCoins,
         },
         HttpStatus.PAYMENT_REQUIRED,
@@ -167,16 +184,17 @@ export class WalletService {
       },
     });
 
-    // B-09: Wrap debit, session creation, minute 1 tick, and ledger entry in a single atomic transaction
+    // B-09: Wrap debit, session creation, minute 1 tick, wallet ledger, and streamer earning in a single atomic transaction
     const startResult = await this.prisma.$transaction(async (tx) => {
       const rawResult: any = await tx.$queryRawUnsafe(
         `UPDATE "UserWallet"
-         SET "balanceCoins" = "balanceCoins" - ${WalletService.COINS_PER_MINUTE},
-             "lifetimeSpent" = "lifetimeSpent" + ${WalletService.COINS_PER_MINUTE},
+         SET "balanceCoins" = "balanceCoins" - $2,
+             "lifetimeSpent" = "lifetimeSpent" + $2,
              "updatedAt" = NOW()
-         WHERE "userId" = $1 AND "balanceCoins" >= ${WalletService.COINS_PER_MINUTE}
+         WHERE "userId" = $1 AND "balanceCoins" >= $2
          RETURNING "id", "balanceCoins"`,
         userId,
+        COINS_PER_MINUTE,
       );
 
       if (!rawResult || rawResult.length === 0) {
@@ -185,7 +203,7 @@ export class WalletService {
             statusCode: HttpStatus.PAYMENT_REQUIRED,
             error: 'INSUFFICIENT_COINS',
             message: 'Insufficient coin balance to enter live darshan.',
-            requiredCoins: WalletService.COINS_PER_MINUTE,
+            requiredCoins: COINS_PER_MINUTE,
             currentBalance: wallet.balanceCoins,
           },
           HttpStatus.PAYMENT_REQUIRED,
@@ -204,45 +222,67 @@ export class WalletService {
           sessionToken,
           status: ViewingSessionStatus.ACTIVE,
           totalMinutesWatched: 1,
-          totalCoinsDebited: WalletService.COINS_PER_MINUTE,
+          totalCoinsDebited: COINS_PER_MINUTE,
           ipAddress: ip || null,
           userAgent: userAgent || null,
-          // R-03: Set lastTickAt immediately on creation so the watchdog's
-          // `lte: ninetySecondsAgo` condition can correctly evict sessions
-          // that never send a heartbeat. Without this the column is NULL and
-          // is never matched by the watchdog query.
           lastTickAt: new Date(),
           meterTicks: {
             create: {
               minuteIndex: 1,
-              coinsCharged: WalletService.COINS_PER_MINUTE,
+              coinsCharged: COINS_PER_MINUTE,
               balanceAfter,
             },
           },
         },
       });
 
-      // Log transaction
+      // Log viewer debit transaction
       await tx.walletTransaction.create({
         data: {
           walletId,
           type: WalletTxType.DEBIT,
           category: WalletTxCategory.STREAM_METERED_VIEW,
-          amountCoins: WalletService.COINS_PER_MINUTE,
-          balanceBefore: balanceAfter + WalletService.COINS_PER_MINUTE,
+          amountCoins: COINS_PER_MINUTE,
+          balanceBefore: balanceAfter + COINS_PER_MINUTE,
           balanceAfter,
           streamId,
           referenceId: session.id,
           idempotencyKey: `tick_${session.id}_1`,
-          metadata: { minuteIndex: 1, sessionToken },
+          metadata: { minuteIndex: 1, sessionToken, streamTitle: stream.title },
         },
+      });
+
+      // Credit streamer watch-time revenue atomically in the same transaction
+      await tx.streamerEarning.create({
+        data: {
+          streamId,
+          streamerId: stream.streamerId,
+          viewerId: userId,
+          source: StreamerEarningSource.WATCH_TIME,
+          coins: COINS_PER_MINUTE,
+          referenceId: session.id,
+          idempotencyKey: `earn_${session.id}_1`,
+        },
+      });
+
+      const earningAgg = await tx.streamerEarning.aggregate({
+        where: { streamId },
+        _sum: { coins: true },
       });
 
       return {
         sessionToken,
         balanceAfter,
         sessionId: session.id,
+        streamTotalCoins: earningAgg._sum.coins || 0,
       };
+    });
+
+    this.chatGateway.emitEarningsUpdated(stream.streamerId, {
+      streamId,
+      totalCoins: startResult.streamTotalCoins,
+      delta: COINS_PER_MINUTE,
+      source: 'WATCH_TIME',
     });
 
     this.logger.log(
@@ -252,7 +292,7 @@ export class WalletService {
     return {
       sessionToken: startResult.sessionToken,
       remainingCoins: startResult.balanceAfter,
-      availableMinutes: Math.floor(startResult.balanceAfter / WalletService.COINS_PER_MINUTE),
+      availableMinutes: Math.floor(startResult.balanceAfter / COINS_PER_MINUTE),
       sessionId: startResult.sessionId,
     };
   }
@@ -268,6 +308,11 @@ export class WalletService {
         streamId: dto.streamId,
         status: ViewingSessionStatus.ACTIVE,
       },
+      include: {
+        stream: {
+          select: { id: true, streamerId: true, title: true },
+        },
+      },
     });
 
     if (!session) {
@@ -279,7 +324,7 @@ export class WalletService {
       };
     }
 
-    // B-10: Reject ticks sooner than ~55 seconds to prevent wallet drain and race conditions
+    // B-10: Fast-path cooldown reject before opening a transaction
     if (session.lastTickAt && Date.now() - session.lastTickAt.getTime() < 55_000) {
       const wallet = await this.getWalletBalance(userId);
       return {
@@ -289,44 +334,55 @@ export class WalletService {
       };
     }
 
-    // W-01: Wrap atomic balance decrement, session stats, meter tick log & transaction ledger in a single transaction
-    let tickResult: any;
+    // W-01: Strict global lock order: UserWallet first, then atomic conditional StreamViewingSession claim
+    let tickResult:
+      | { status: 'INSUFFICIENT' }
+      | { status: 'CREDITED'; balanceAfter: number; actualMinuteIndex: number; streamTotalCoins: number };
+
     try {
       tickResult = await this.prisma.$transaction(async (tx) => {
         const rawResult: any = await tx.$queryRawUnsafe(
           `UPDATE "UserWallet"
-           SET "balanceCoins" = "balanceCoins" - ${WalletService.COINS_PER_MINUTE},
-               "lifetimeSpent" = "lifetimeSpent" + ${WalletService.COINS_PER_MINUTE},
+           SET "balanceCoins" = "balanceCoins" - $2,
+               "lifetimeSpent" = "lifetimeSpent" + $2,
                "updatedAt" = NOW()
-           WHERE "userId" = $1 AND "balanceCoins" >= ${WalletService.COINS_PER_MINUTE}
+           WHERE "userId" = $1 AND "balanceCoins" >= $2
            RETURNING "id", "balanceCoins"`,
           userId,
+          COINS_PER_MINUTE,
         );
 
         if (!rawResult || rawResult.length === 0) {
-          return null;
+          return { status: 'INSUFFICIENT' as const };
+        }
+
+        const claimedSession: any = await tx.$queryRawUnsafe(
+          `UPDATE "StreamViewingSession"
+           SET "lastTickAt" = NOW(),
+               "totalMinutesWatched" = "totalMinutesWatched" + 1,
+               "totalCoinsDebited" = "totalCoinsDebited" + $2
+           WHERE "id" = $1
+             AND "status" = 'ACTIVE'
+             AND ("lastTickAt" IS NULL OR "lastTickAt" <= NOW() - INTERVAL '55 seconds')
+           RETURNING "totalMinutesWatched"`,
+          session.id,
+          COINS_PER_MINUTE,
+        );
+
+        if (!claimedSession || claimedSession.length === 0) {
+          throw new Error('TICK_NOT_CLAIMED');
         }
 
         const walletId = rawResult[0].id;
         const balanceAfter = rawResult[0].balanceCoins;
-        const nextMinuteIndex = session.totalMinutesWatched + 1;
-
-        // Update session stats
-        await tx.streamViewingSession.update({
-          where: { id: session.id },
-          data: {
-            lastTickAt: new Date(),
-            totalMinutesWatched: nextMinuteIndex,
-            totalCoinsDebited: { increment: WalletService.COINS_PER_MINUTE },
-          },
-        });
+        const actualMinuteIndex: number = claimedSession[0].totalMinutesWatched;
 
         // Create meter tick log
         await tx.meterTickLog.create({
           data: {
             sessionId: session.id,
-            minuteIndex: nextMinuteIndex,
-            coinsCharged: WalletService.COINS_PER_MINUTE,
+            minuteIndex: actualMinuteIndex,
+            coinsCharged: COINS_PER_MINUTE,
             balanceAfter,
           },
         });
@@ -337,22 +393,67 @@ export class WalletService {
             walletId,
             type: WalletTxType.DEBIT,
             category: WalletTxCategory.STREAM_METERED_VIEW,
-            amountCoins: WalletService.COINS_PER_MINUTE,
-            balanceBefore: balanceAfter + WalletService.COINS_PER_MINUTE,
+            amountCoins: COINS_PER_MINUTE,
+            balanceBefore: balanceAfter + COINS_PER_MINUTE,
             balanceAfter,
             streamId: dto.streamId,
             referenceId: session.id,
-            idempotencyKey: `tick_${session.id}_${nextMinuteIndex}`,
-            metadata: { minuteIndex: nextMinuteIndex, sessionToken: dto.sessionToken },
+            idempotencyKey: `tick_${session.id}_${actualMinuteIndex}`,
+            metadata: {
+              minuteIndex: actualMinuteIndex,
+              sessionToken: dto.sessionToken,
+              streamTitle: session.stream.title,
+            },
           },
         });
 
+        // Credit streamer watch-time earning atomically
+        await tx.streamerEarning.create({
+          data: {
+            streamId: dto.streamId,
+            streamerId: session.stream.streamerId,
+            viewerId: userId,
+            source: StreamerEarningSource.WATCH_TIME,
+            coins: COINS_PER_MINUTE,
+            referenceId: session.id,
+            idempotencyKey: `earn_${session.id}_${actualMinuteIndex}`,
+          },
+        });
+
+        const earningAgg = await tx.streamerEarning.aggregate({
+          where: { streamId: dto.streamId },
+          _sum: { coins: true },
+        });
+
         return {
+          status: 'CREDITED' as const,
           balanceAfter,
-          nextMinuteIndex,
+          actualMinuteIndex,
+          streamTotalCoins: earningAgg._sum.coins || 0,
         };
       });
     } catch (err: any) {
+      if (err?.message === 'TICK_NOT_CLAIMED') {
+        const latestSession = await this.prisma.streamViewingSession.findUnique({
+          where: { id: session.id },
+          select: { status: true },
+        });
+        if (latestSession?.status !== ViewingSessionStatus.ACTIVE) {
+          return {
+            canContinue: false,
+            remainingCoins: 0,
+            reason: 'SESSION_EXPIRED',
+            message: 'Viewing session not found or concluded.',
+          };
+        }
+        const wallet = await this.getWalletBalance(userId);
+        return {
+          canContinue: true,
+          remainingCoins: wallet.balanceCoins,
+          nextTickInSeconds: 60,
+        };
+      }
+
       // B-10: Idempotent success on concurrent duplicate meter tick key
       if (err.code === 'P2002' || err.message?.includes('Unique constraint')) {
         const wallet = await this.getWalletBalance(userId);
@@ -366,7 +467,7 @@ export class WalletService {
     }
 
     // If balance was insufficient
-    if (!tickResult) {
+    if (tickResult.status === 'INSUFFICIENT') {
       await this.prisma.streamViewingSession.update({
         where: { id: session.id },
         data: {
@@ -389,11 +490,19 @@ export class WalletService {
       };
     }
 
+    // Emit live watch-time earnings update to streamer only after commit
+    this.chatGateway.emitEarningsUpdated(session.stream.streamerId, {
+      streamId: dto.streamId,
+      totalCoins: tickResult.streamTotalCoins,
+      delta: COINS_PER_MINUTE,
+      source: 'WATCH_TIME',
+    });
+
     return {
       canContinue: true,
       remainingCoins: tickResult.balanceAfter,
-      availableMinutes: Math.floor(tickResult.balanceAfter / WalletService.COINS_PER_MINUTE),
-      minutesWatched: tickResult.nextMinuteIndex,
+      availableMinutes: Math.floor(tickResult.balanceAfter / COINS_PER_MINUTE),
+      minutesWatched: tickResult.actualMinuteIndex,
       nextTickInSeconds: 60,
     };
   }

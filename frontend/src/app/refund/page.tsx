@@ -44,7 +44,7 @@ export default function RefundPage() {
               <CoinIcon size={28} className="mt-0.5" />
               <div>
                 <p className="text-xs sm:text-sm text-stone-300">
-                  Shubhdarshan Coins (such as the 100 Coins for ₹200 starter pack) represent closed-loop, non-monetary digital redemption credits used exclusively for public and private live video darshans. Once coins have been consumed for viewing time (at 5 coins per minute), that portion of coins is non-refundable.
+                  Shubhdarshan Coins (such as the 150 Coins for ₹100 starter pack) represent closed-loop, non-monetary digital redemption credits used exclusively for public/private live video darshans and live Sacred Dakshina offerings. Once coins have been consumed for viewing time (at 5 coins per minute) or sent as live Dakshina, that portion of coins is non-refundable.
                 </p>
               </div>
             </div>

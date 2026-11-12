@@ -8,12 +8,12 @@ import { OmIcon, CoinIcon, DiyaIcon } from '@/components/icons/SpiritualIcons';
 const FAQS = [
   {
     q: 'How does the Sacred Coin system and 100 free joining bonus work?',
-    a: 'Every new devotee who registers on Shubhdarshan automatically receives 100 Sacred Coins completely free as an auspicious welcome bonus. Public live darshan streams consume coins at a nominal rate of 5 coins per minute. This means your initial 100 coins grant you 20 full minutes of complimentary live darshan. Once exhausted, you can top up your wallet starting at 100 coins for ₹200.',
+    a: 'Every new devotee who registers on Shubhdarshan automatically receives 100 Sacred Coins completely free as an auspicious welcome bonus. Public live darshan streams consume coins at a nominal rate of 5 coins per minute, and Sacred Dakshina offerings are also sent directly with Sacred Coins from your wallet. This means your initial 100 coins grant you 20 full minutes of complimentary live darshan. Once exhausted, you can top up your wallet starting at 150 coins for ₹100 (150 coins = ₹100).',
     category: 'Coins & Wallet',
   },
   {
     q: 'How do I top up my Sacred Coins wallet?',
-    a: 'You can recharge your coin wallet anytime by clicking the gold coin pill in the header navbar or during a live stream. We accept instant UPI (Google Pay, PhonePe, Paytm, BHIM), Net Banking, and Debit/Credit Cards via our secure Razorpay gateway. Packs include ₹200 (100 coins), ₹500 (275 coins with 10% bonus), ₹1,000 (600 coins with 20% bonus), and ₹2,100 (1,500 coins with 25% bonus).',
+    a: 'You can recharge your coin wallet anytime by clicking the gold coin pill in the header navbar or during a live stream. We accept instant UPI (Google Pay, PhonePe, Paytm, BHIM), Net Banking, and Debit/Credit Cards via our secure Razorpay gateway. Packs include ₹100 (150 coins), ₹200 (330 coins = 300 + 30 bonus, +10%), ₹500 (900 coins = 750 + 150 bonus, +20%), and ₹1,000 (1,875 coins = 1,500 + 375 bonus, +25%).',
     category: 'Coins & Wallet',
   },
   {

@@ -28,6 +28,7 @@ import {
   COMPREHENSIVE_POOJA_CATALOG,
   PoojaItem,
 } from '@/data/poojaCatalog';
+import { formatInrFromCoins } from '@/lib/economy';
 import SevaBookingModal from '@/components/SevaBookingModal';
 
 const CATEGORY_TABS = [
@@ -214,7 +215,7 @@ export default function PoojaCatalogPage() {
                         <CoinIcon size={14} />
                         <span>{pooja.baseDakshina} Coins</span>
                         <span className="text-[10px] text-stone-400 font-normal">
-                          (~₹{pooja.baseDakshina * 5})
+                          (~₹{formatInrFromCoins(pooja.baseDakshina)})
                         </span>
                       </div>
                     </div>

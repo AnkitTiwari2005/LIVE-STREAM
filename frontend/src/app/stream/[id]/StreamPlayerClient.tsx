@@ -20,6 +20,11 @@ import { Users, AlertCircle, Share2, Sparkles, Zap, Calendar, Bell, CheckCircle2
 import { apiFetch } from '@/lib/api';
 import { classifyTick } from '@/lib/meter-tick';
 import {
+  COINS_PER_MINUTE,
+  STARTER_PRICE_INR,
+  syncLocalWalletBalance,
+} from '@/lib/economy';
+import {
   OmIcon,
   DiyaIcon,
   CoinIcon,
@@ -70,7 +75,9 @@ export default function StreamPlayerClient() {
   const [reminderSet, setReminderSet] = useState(false);
   const [dakshinaModalOpen, setDakshinaModalOpen] = useState(false);
   const [topupModalOpen, setTopupModalOpen] = useState(false);
+  const [resumeDakshinaAfterTopup, setResumeDakshinaAfterTopup] = useState(false);
   const [latestDakshina, setLatestDakshina] = useState<any>(null);
+  const dakshinaTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [mobileTab, setMobileTab] = useState<'chat' | 'details'>('chat');
 
   // Metered Coin State
@@ -133,10 +140,15 @@ export default function StreamPlayerClient() {
 
     socketInstance.on('stream:dakshina_received', (dakshina: any) => {
       setLatestDakshina(dakshina);
-      setTimeout(() => setLatestDakshina(null), 8000);
+      if (dakshinaTimerRef.current) clearTimeout(dakshinaTimerRef.current);
+      dakshinaTimerRef.current = setTimeout(() => setLatestDakshina(null), 8000);
     });
 
     return () => {
+      if (dakshinaTimerRef.current) {
+        clearTimeout(dakshinaTimerRef.current);
+        dakshinaTimerRef.current = null;
+      }
       socketInstance.off('stream:dakshina_received');
       socketInstance.disconnect();
     };
@@ -214,6 +226,7 @@ export default function StreamPlayerClient() {
         setRemainingCoins(resData.remainingCoins);
         setAvailableMinutes(resData.availableMinutes);
         setIsZeroBalance(false);
+        syncLocalWalletBalance(resData.remainingCoins);
       }
     } catch (err: any) {
       const msg = err.message || 'Error connecting to sacred stream';
@@ -334,6 +347,9 @@ export default function StreamPlayerClient() {
             recoveryAttemptsRef.current = 0;
             setConnectionWarning(false);
             setRemainingCoins(data.remainingCoins);
+            if (typeof data.remainingCoins === 'number') {
+              syncLocalWalletBalance(data.remainingCoins);
+            }
             if (typeof data.availableMinutes === 'number') {
               setAvailableMinutes(data.availableMinutes);
             }
@@ -421,9 +437,15 @@ export default function StreamPlayerClient() {
 
   const handleTopupSuccess = (newBalance: number) => {
     setRemainingCoins(newBalance);
-    setAvailableMinutes(Math.floor(newBalance / 5));
+    setAvailableMinutes(Math.floor(newBalance / COINS_PER_MINUTE));
     setIsZeroBalance(false);
-    fetchStreamAndToken();
+    syncLocalWalletBalance(newBalance);
+    if (resumeDakshinaAfterTopup) {
+      setResumeDakshinaAfterTopup(false);
+      setDakshinaModalOpen(true);
+    } else {
+      fetchStreamAndToken();
+    }
   };
 
   return (
@@ -613,7 +635,7 @@ export default function StreamPlayerClient() {
                       className="w-full sm:w-auto px-6 py-3 bg-gold hover:bg-gold-deep text-obsidian font-extrabold rounded-full shadow-xl shadow-gold/20 flex items-center justify-center gap-2 text-sm transition"
                     >
                       <Zap className="w-4 h-4 fill-obsidian" />
-                      <span>Recharge Coins (from ₹200)</span>
+                      <span>Recharge Coins (from ₹{STARTER_PRICE_INR})</span>
                     </button>
                     <Link
                       href="/"
@@ -748,7 +770,10 @@ export default function StreamPlayerClient() {
                   <DiyaIcon size={24} />
                   <div className="text-xs">
                     <span className="font-extrabold">{latestDakshina.devoteeName}</span> offered{' '}
-                    <span className="font-black">₹{latestDakshina.amount}</span> Dakshina!
+                    <span className="font-black inline-flex items-center gap-1">
+                      <CoinIcon size={13} /> {latestDakshina.coins ?? latestDakshina.amount} Coins
+                    </span>{' '}
+                    Dakshina!
                     {latestDakshina.prayerMessage && (
                       <div className="text-[10px] font-semibold opacity-90 truncate max-w-xs">
                         &ldquo;{latestDakshina.prayerMessage}&rdquo;
@@ -919,12 +944,26 @@ export default function StreamPlayerClient() {
           streamId={id}
           streamerName={stream.streamer?.name || 'Vedic Pandit'}
           currentUser={currentUser}
+          walletBalance={remainingCoins}
+          onOpenTopup={() => {
+            setDakshinaModalOpen(false);
+            setResumeDakshinaAfterTopup(true);
+            setTopupModalOpen(true);
+          }}
+          onSuccess={(newBalance) => {
+            setRemainingCoins(newBalance);
+            setAvailableMinutes(Math.floor(newBalance / COINS_PER_MINUTE));
+            syncLocalWalletBalance(newBalance);
+          }}
         />
       )}
 
       <CoinTopupModal
         isOpen={topupModalOpen}
-        onClose={() => setTopupModalOpen(false)}
+        onClose={() => {
+          setTopupModalOpen(false);
+          setResumeDakshinaAfterTopup(false);
+        }}
         onSuccess={handleTopupSuccess}
       />
 

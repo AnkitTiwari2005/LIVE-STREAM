@@ -116,6 +116,8 @@ model User {
   dakshinaOfferings    DakshinaOffering[]
   wallet               UserWallet?
   topupOrders          WalletTopupOrder[]
+  streamerEarnings     StreamerEarning[]  @relation("StreamerEarnings")
+  viewerContributions  StreamerEarning[]  @relation("ViewerContributions")
 
   @@index([email])
   @@index([role, status])
@@ -189,6 +191,7 @@ model Stream {
   moderationActions  ModerationAction[]
   dakshinaOfferings  DakshinaOffering[]
   viewingMeterSessions StreamViewingSession[]
+  earnings             StreamerEarning[]
 
   @@index([status, visibility, scheduledAt])
   @@index([streamerId])
@@ -364,25 +367,50 @@ model StaticPage {
 }
 
 model DakshinaOffering {
-  id               String          @id @default(uuid())
+  id               String           @id @default(uuid())
   streamId         String
-  stream           Stream          @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  stream           Stream           @relation(fields: [streamId], references: [id], onDelete: Cascade)
   devoteeId        String?
-  devotee          User?           @relation(fields: [devoteeId], references: [id], onDelete: SetNull)
-  devoteeName      String          @db.VarChar(100)
-  amount           Decimal         @db.Decimal(10, 2)
-  currency         String          @default("INR")
-  prayerMessage    String?         @db.VarChar(500)
-  gotra            String?         @db.VarChar(100)
-  provider         PaymentProvider @default(RAZORPAY)
-  orderId          String          @unique
+  devotee          User?            @relation(fields: [devoteeId], references: [id], onDelete: SetNull)
+  devoteeName      String           @db.VarChar(100)
+  coins            Int?
+  idempotencyKey   String?          @unique
+  amount           Decimal?         @db.Decimal(10, 2)
+  currency         String?
+  prayerMessage    String?          @db.VarChar(500)
+  gotra            String?          @db.VarChar(100)
+  provider         PaymentProvider?
+  orderId          String?          @unique
   paymentId        String?
-  status           PaymentStatus   @default(PENDING)
-  createdAt        DateTime        @default(now()) @db.Timestamptz
-  updatedAt        DateTime        @updatedAt @db.Timestamptz
+  status           PaymentStatus    @default(PENDING)
+  createdAt        DateTime         @default(now()) @db.Timestamptz
+  updatedAt        DateTime         @updatedAt @db.Timestamptz
 
   @@index([streamId, status])
   @@index([devoteeId])
+}
+
+enum StreamerEarningSource {
+  DAKSHINA
+  WATCH_TIME
+}
+
+model StreamerEarning {
+  id             String                @id @default(uuid())
+  streamId       String
+  stream         Stream                @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  streamerId     String
+  streamer       User                  @relation("StreamerEarnings", fields: [streamerId], references: [id], onDelete: Restrict)
+  viewerId       String?
+  viewer         User?                 @relation("ViewerContributions", fields: [viewerId], references: [id], onDelete: SetNull)
+  source         StreamerEarningSource
+  coins          Int
+  referenceId    String
+  idempotencyKey String                @unique
+  createdAt      DateTime              @default(now()) @db.Timestamptz
+
+  @@index([streamerId, createdAt])
+  @@index([streamId])
 }
 
 

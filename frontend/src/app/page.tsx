@@ -39,6 +39,7 @@ import {
 import { CoinTopupModal } from '@/components/CoinTopupModal';
 import SevaBookingModal from '@/components/SevaBookingModal';
 import { useToast } from '@/components/Toast';
+import { STARTER_PRICE_INR } from '@/lib/economy';
 
 interface Stream {
   id: string;
@@ -1190,7 +1191,7 @@ export default function HomePage() {
                   onClick={() => setTopupModalOpen(true)}
                   className="rounded-full bg-gold px-6 py-3 text-xs font-black text-obsidian shadow-lg hover:bg-gold-deep transition"
                 >
-                  View Coin Packages (from ₹200)
+                  View Coin Packages (from ₹{STARTER_PRICE_INR})
                 </button>
                 <Link
                   href="/faq"

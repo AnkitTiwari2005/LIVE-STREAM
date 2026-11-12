@@ -1,8 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Sparkles, CheckCircle2, Shield, Zap } from 'lucide-react';
-import { CoinIcon, OmIcon, DiyaIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
+import { X, CheckCircle2, Shield, Zap } from 'lucide-react';
+import { CoinIcon, DiyaIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
+import {
+  DEFAULT_COIN_PACKAGES,
+  DEFAULT_TOPUP_SKU,
+  COINS_PER_MINUTE,
+  syncLocalWalletBalance,
+} from '@/lib/economy';
 
 interface CoinTopupModalProps {
   isOpen: boolean;
@@ -10,42 +16,6 @@ interface CoinTopupModalProps {
   onSuccess?: (newBalance: number) => void;
   initialSku?: string;
 }
-
-const PACKAGES = [
-  {
-    sku: 'shubh_100',
-    name: 'Shubh Starter',
-    coins: 100,
-    priceInr: 200,
-    watchTime: '20 Mins Live Darshan',
-    badge: null,
-  },
-  {
-    sku: 'bhakti_275',
-    name: 'Bhakti Pack',
-    coins: 275,
-    priceInr: 500,
-    watchTime: '55 Mins Live Darshan',
-    badge: '+10% Bonus',
-  },
-  {
-    sku: 'siddhi_600',
-    name: 'Siddhi Pack',
-    coins: 600,
-    priceInr: 1000,
-    watchTime: '120 Mins (2 Hours)',
-    badge: 'Most Popular',
-    highlight: true,
-  },
-  {
-    sku: 'mahodadhi_1500',
-    name: 'Mahodadhi Pack',
-    coins: 1500,
-    priceInr: 2100,
-    watchTime: '300 Mins (5 Hours)',
-    badge: 'Best Value',
-  },
-];
 
 function loadRazorpayScript(): Promise<boolean> {
   return new Promise((resolve) => {
@@ -61,8 +31,18 @@ function loadRazorpayScript(): Promise<boolean> {
 }
 
 export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinTopupModalProps) {
-  const [packages, setPackages] = useState(PACKAGES);
-  const [selectedSku, setSelectedSku] = useState(initialSku || 'siddhi_600');
+  const [packages, setPackages] = useState(
+    DEFAULT_COIN_PACKAGES.map((pkg) => ({
+      sku: pkg.sku,
+      name: pkg.name,
+      coins: pkg.totalCoins,
+      priceInr: pkg.priceInr,
+      watchTime: `${pkg.watchMinutes} Mins Live Darshan`,
+      badge: pkg.badgeText,
+      highlight: Boolean(pkg.highlight),
+    })),
+  );
+  const [selectedSku, setSelectedSku] = useState(initialSku || DEFAULT_TOPUP_SKU);
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -78,20 +58,29 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
           setPackages(
-            data.map((pkg: any) => ({
-              sku: pkg.sku,
-              name: pkg.name,
-              coins: pkg.totalCoins || pkg.coins,
-              priceInr: pkg.priceInr,
-              watchTime: `${Math.floor((pkg.totalCoins || pkg.coins) / 5)} Mins Live Darshan`,
-              badge: pkg.badgeText || null,
-              highlight: pkg.sku === 'siddhi_600',
-            })),
+            data.map((pkg: any) => {
+              const total = Number(pkg.totalCoins || pkg.coins);
+              return {
+                sku: pkg.sku,
+                name: pkg.name,
+                coins: total,
+                priceInr: Number(pkg.priceInr),
+                watchTime: `${Math.floor(total / COINS_PER_MINUTE)} Mins Live Darshan`,
+                badge: pkg.badgeText || null,
+                highlight: pkg.sku === DEFAULT_TOPUP_SKU,
+              };
+            }),
           );
+          if (!initialSku) {
+            const hasDefault = data.some((p: any) => p.sku === DEFAULT_TOPUP_SKU);
+            if (!hasDefault) {
+              setSelectedSku(data[0].sku);
+            }
+          }
         }
       })
       .catch(() => {});
-  }, []);
+  }, [initialSku]);
 
   if (!isOpen) return null;
 
@@ -155,7 +144,6 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
         if (process.env.NODE_ENV === 'production') {
           throw new Error('Online payments are currently unavailable. Please try again shortly.');
         }
-        // Direct sandbox / test verification only in development
         await verifyPayment(orderData.orderId, `pay_mock_${Date.now()}`);
       }
     } catch (err: any) {
@@ -181,16 +169,8 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Payment verification failed');
 
-      // Update local storage user wallet balance
-      const storedUser = localStorage.getItem('pooja_user');
-      if (storedUser) {
-        const parsed = JSON.parse(storedUser);
-        if (parsed.wallet) {
-          parsed.wallet.balanceCoins = data.newBalance;
-        } else {
-          parsed.wallet = { balanceCoins: data.newBalance };
-        }
-        localStorage.setItem('pooja_user', JSON.stringify(parsed));
+      if (typeof data.newBalance === 'number') {
+        syncLocalWalletBalance(data.newBalance);
       }
 
       setSuccessMessage(data.message || `Successfully added ${data.coinsAdded} Coins!`);
@@ -207,10 +187,11 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
     }
   };
 
+  const selectedPackage = packages.find((p) => p.sku === selectedSku) || packages[0];
+
   return (
     <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in overflow-y-auto">
       <div className="relative w-full max-w-xl bg-white dark:bg-obsidian-deep border border-stone-200 dark:border-gold/30 rounded-3xl p-5 sm:p-8 shadow-2xl overflow-hidden my-auto">
-        {/* Sacred ambient background glow */}
         <div className="mandala-bg absolute inset-0 opacity-20 pointer-events-none" />
 
         <div className="relative z-10 flex items-center justify-between pb-4 border-b border-stone-200 dark:border-stone-800">
@@ -218,19 +199,21 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
             <CoinIcon size={32} />
             <div>
               <h2 className="font-serif text-xl sm:text-2xl font-bold text-stone-900 dark:text-white">Recharge Sacred Coins</h2>
-              <p className="text-xs text-stone-600 dark:text-stone-400">5 Coins = 1 Minute of Auspicious Public Live Darshan</p>
+              <p className="text-xs text-stone-600 dark:text-stone-400">
+                150 Base Coins = ₹100 • {COINS_PER_MINUTE} Coins = 1 Min Live Darshan
+              </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-full text-stone-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-900 transition-colors"
+            className="p-2 rounded-full text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-900 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {error && (
-          <div className="relative z-10 mt-4 p-3.5 bg-red-950/80 border border-red-800 rounded-xl text-xs text-red-200">
+          <div className="relative z-10 mt-4 p-3.5 bg-red-50 dark:bg-red-950/80 border border-red-300 dark:border-red-800 rounded-xl text-xs text-red-900 dark:text-red-200">
             {error}
           </div>
         )}
@@ -240,8 +223,8 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
             <div className="w-16 h-16 mx-auto mb-4 bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-full flex items-center justify-center">
               <CheckCircle2 className="w-10 h-10" />
             </div>
-            <h3 className="font-serif text-2xl font-bold text-white mb-2">{successMessage}</h3>
-            <p className="text-sm text-stone-300 flex items-center justify-center gap-1.5">
+            <h3 className="font-serif text-2xl font-bold text-stone-900 dark:text-white mb-2">{successMessage}</h3>
+            <p className="text-sm text-stone-600 dark:text-stone-300 flex items-center justify-center gap-1.5">
               <span>May you receive peace, divine grace, and spiritual blessings</span>
               <PranamIcon size={18} />
             </p>
@@ -257,7 +240,7 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
                     onClick={() => setSelectedSku(pkg.sku)}
                     className={`relative p-4 rounded-2xl cursor-pointer transition-all border ${
                       isSelected
-                        ? 'bg-gold/15 border-gold shadow-lg shadow-gold/25 ring-1 ring-gold/40'
+                        ? 'bg-amber-50 dark:bg-gold/15 border-amber-500 dark:border-gold shadow-lg shadow-gold/25 ring-1 ring-amber-400 dark:ring-gold/40'
                         : 'bg-stone-50 dark:bg-obsidian-soft border-stone-200 dark:border-gold/15 hover:border-amber-400 dark:hover:border-gold/40'
                     }`}
                   >
@@ -269,12 +252,12 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
 
                     {/* Top line: Package Name */}
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-bold uppercase tracking-wider text-stone-300">
+                      <span className="text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300">
                         {pkg.name}
                       </span>
                       {isSelected && (
-                        <span className="text-[10px] font-bold text-gold-pale flex items-center gap-1">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-gold" /> Selected
+                        <span className="text-[10px] font-bold text-amber-800 dark:text-gold-pale flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 dark:text-gold" /> Selected
                         </span>
                       )}
                     </div>
@@ -282,17 +265,17 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
                     {/* Prominent Rupee Price & Coin Count */}
                     <div className="flex items-baseline justify-between my-2">
                       <div className="flex items-baseline gap-1">
-                        <span className="text-lg sm:text-xl font-bold text-gold-pale">₹</span>
-                        <span className="font-serif text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+                        <span className="text-lg sm:text-xl font-bold text-amber-700 dark:text-gold-pale">₹</span>
+                        <span className="font-serif text-3xl sm:text-4xl font-extrabold text-stone-900 dark:text-white tracking-tight">
                           {pkg.priceInr.toLocaleString('en-IN')}
                         </span>
-                        <span className="text-[11px] text-stone-400 font-medium ml-0.5">INR</span>
+                        <span className="text-[11px] text-stone-500 dark:text-stone-400 font-medium ml-0.5">INR</span>
                       </div>
 
-                      <div className="flex items-center gap-1.5 bg-gold/10 border border-gold/30 px-2.5 py-1 rounded-xl">
+                      <div className="flex items-center gap-1.5 bg-amber-100/80 dark:bg-gold/10 border border-amber-300 dark:border-gold/30 px-2.5 py-1 rounded-xl">
                         <CoinIcon size={18} />
-                        <span className="font-serif text-lg font-bold text-gold-pale">{pkg.coins}</span>
-                        <span className="text-[10px] uppercase font-bold text-stone-300">Coins</span>
+                        <span className="font-serif text-lg font-bold text-amber-900 dark:text-gold-pale">{pkg.coins}</span>
+                        <span className="text-[10px] uppercase font-bold text-stone-700 dark:text-stone-300">Coins</span>
                       </div>
                     </div>
 
@@ -303,7 +286,7 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
                         {pkg.watchTime}
                       </span>
                       <span className="text-[10px] text-stone-600 dark:text-stone-400 font-medium">
-                        5 C / min
+                        {COINS_PER_MINUTE} C / min
                       </span>
                     </div>
                   </div>
@@ -323,7 +306,7 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
                   <>
                     <Zap className="w-4 h-4 fill-obsidian" />
                     <span>
-                      Proceed to Recharge ₹{(packages.find((p) => p.sku === selectedSku)?.priceInr || 1000).toLocaleString('en-IN')}
+                      Proceed to Recharge ₹{(selectedPackage?.priceInr || 500).toLocaleString('en-IN')}
                     </span>
                   </>
                 )}

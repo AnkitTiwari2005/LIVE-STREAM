@@ -1,61 +1,23 @@
 import { PrismaClient, WalletTxType, WalletTxCategory } from '@prisma/client';
+import {
+  COIN_PACKAGES_CATALOG,
+  LEGACY_COIN_PACKAGE_SKUS,
+} from '../src/common/config/economy.constants';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('--- 1. Seeding Coin Packages ---');
-  const packages = [
-    {
-      sku: 'shubh_100',
-      name: 'Shubh Starter',
-      coins: 100,
-      bonusCoins: 0,
-      totalCoins: 100,
-      priceInr: 200.0,
-      badgeText: 'Quick Darshan',
-      displayOrder: 1,
-      isActive: true,
-    },
-    {
-      sku: 'bhakti_275',
-      name: 'Bhakti Pack',
-      coins: 250,
-      bonusCoins: 25,
-      totalCoins: 275,
-      priceInr: 500.0,
-      badgeText: '+10% Bonus',
-      displayOrder: 2,
-      isActive: true,
-    },
-    {
-      sku: 'siddhi_600',
-      name: 'Siddhi Pack',
-      coins: 500,
-      bonusCoins: 100,
-      totalCoins: 600,
-      priceInr: 1000.0,
-      badgeText: 'Most Popular (+20% Bonus)',
-      displayOrder: 3,
-      isActive: true,
-    },
-    {
-      sku: 'mahodadhi_1500',
-      name: 'Mahodadhi Pack',
-      coins: 1200,
-      bonusCoins: 300,
-      totalCoins: 1500,
-      priceInr: 2100.0,
-      badgeText: 'Best Value (+25% Bonus)',
-      displayOrder: 4,
-      isActive: true,
-    },
-  ];
+  console.log('--- 1. Syncing Coin Packages (150 Coins = ₹100) ---');
+  await prisma.coinPackage.updateMany({
+    where: { sku: { in: [...LEGACY_COIN_PACKAGE_SKUS] } },
+    data: { isActive: false },
+  });
 
-  for (const pkg of packages) {
+  for (const pkg of COIN_PACKAGES_CATALOG) {
     await prisma.coinPackage.upsert({
       where: { sku: pkg.sku },
-      update: pkg,
-      create: pkg,
+      update: { ...pkg },
+      create: { ...pkg },
     });
     console.log(`Synced package: ${pkg.name} (${pkg.sku}) - ${pkg.totalCoins} coins @ ₹${pkg.priceInr}`);
   }

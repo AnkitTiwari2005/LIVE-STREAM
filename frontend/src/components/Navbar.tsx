@@ -76,8 +76,24 @@ export function Navbar() {
   };
 
   useEffect(() => {
+    const handleWalletUpdated = (event: any) => {
+      const nextBal = event?.detail?.balanceCoins;
+      if (typeof nextBal === 'number' && Number.isFinite(nextBal)) {
+        setCoinBalance(nextBal);
+      } else {
+        const storedBalance = localStorage.getItem('pooja_wallet_balance');
+        if (storedBalance !== null && !isNaN(Number(storedBalance))) {
+          setCoinBalance(Number(storedBalance));
+        }
+      }
+    };
+
     window.addEventListener('sd-auth-change', refreshAuthState);
-    return () => window.removeEventListener('sd-auth-change', refreshAuthState);
+    window.addEventListener('sd-wallet-updated', handleWalletUpdated);
+    return () => {
+      window.removeEventListener('sd-auth-change', refreshAuthState);
+      window.removeEventListener('sd-wallet-updated', handleWalletUpdated);
+    };
   }, []);
 
   useEffect(() => {

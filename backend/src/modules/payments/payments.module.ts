@@ -2,9 +2,10 @@ import { Module } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { PaymentsController } from './payments.controller';
 import { ChatModule } from '../chat/chat.module';
+import { WalletModule } from '../wallet/wallet.module';
 
 @Module({
-  imports: [ChatModule],
+  imports: [ChatModule, WalletModule],
   controllers: [PaymentsController],
   providers: [PaymentsService],
   exports: [PaymentsService],

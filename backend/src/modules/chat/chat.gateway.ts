@@ -163,6 +163,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.handshake.auth?.token ||
       (client.handshake.headers?.authorization as string)?.replace('Bearer ', '');
     client.data.user = await this.resolveVerifiedSocketUser(token);
+    if (client.data.user?.sub) {
+      client.join(`user:${client.data.user.sub}`);
+    }
   }
 
   handleDisconnect(client: Socket) {
@@ -238,6 +241,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       user = await this.resolveVerifiedSocketUser((data as any).token);
       if (user) {
         client.data.user = user;
+        client.join(`user:${user.sub}`);
       }
     }
 
@@ -453,6 +457,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   broadcastDakshina(streamId: string, dakshina: any) {
     if (this.server) {
       this.server.to(`stream:${streamId}`).emit('stream:dakshina_received', dakshina);
+    }
+  }
+
+  emitEarningsUpdated(
+    streamerId: string,
+    payload: {
+      streamId: string;
+      totalCoins: number;
+      delta: number;
+      source: 'DAKSHINA' | 'WATCH_TIME';
+    },
+  ) {
+    if (this.server && streamerId) {
+      this.server.to(`user:${streamerId}`).emit('stream:earnings_updated', payload);
     }
   }
 }

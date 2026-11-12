@@ -8,7 +8,18 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { ApplyStreamerDto, ReviewKycDto } from './dto/apply-streamer.dto';
-import { KycStatus, UserRole, StreamStatus, PaymentStatus } from '@prisma/client';
+import {
+  KycStatus,
+  UserRole,
+  StreamStatus,
+  PaymentStatus,
+  StreamerEarningSource,
+} from '@prisma/client';
+import {
+  COINS_PER_100_INR,
+  STREAMER_SHARE_PERCENT,
+  calculateCoinEarningsBreakdown,
+} from '../../common/config/economy.constants';
 
 @Injectable()
 export class StreamersService {
@@ -279,70 +290,258 @@ export class StreamersService {
     }
   }
 
-  async getStreamerEarnings(userId: string, userRole?: string) {
-    const isAdmin = userRole === 'ADMIN';
-    const streams = await this.prisma.stream.findMany({
-      where: isAdmin ? {} : { streamerId: userId },
-      select: { id: true, title: true, startedAt: true, durationSeconds: true },
+  async getStreamEarnings(streamId: string, userId: string, userRole?: string) {
+    const stream = await this.prisma.stream.findUnique({
+      where: { id: streamId },
+      select: { id: true, title: true, streamerId: true, deletedAt: true },
     });
-    const streamIds = streams.map((s) => s.id);
 
-    const dakshinaOfferings = await this.prisma.dakshinaOffering.findMany({
-      where: {
-        streamId: { in: streamIds },
-        status: PaymentStatus.SUCCESS,
-      },
-      orderBy: { createdAt: 'desc' },
+    if (!stream || stream.deletedAt) {
+      throw new NotFoundException('Stream not found');
+    }
+
+    if (stream.streamerId !== userId && userRole !== UserRole.ADMIN) {
+      throw new ForbiddenException('You do not have permission to view earnings for this stream');
+    }
+
+    const grouped = await this.prisma.streamerEarning.groupBy({
+      by: ['source'],
+      where: { streamId },
+      _sum: { coins: true },
+    });
+
+    let dakshinaCoins = 0;
+    let watchTimeCoins = 0;
+    for (const row of grouped) {
+      const sumCoins = row._sum.coins || 0;
+      if (row.source === StreamerEarningSource.DAKSHINA) {
+        dakshinaCoins += sumCoins;
+      } else if (row.source === StreamerEarningSource.WATCH_TIME) {
+        watchTimeCoins += sumCoins;
+      }
+    }
+
+    const totalCoins = dakshinaCoins + watchTimeCoins;
+    const breakdown = calculateCoinEarningsBreakdown(totalCoins);
+
+    return {
+      streamId: stream.id,
+      title: stream.title,
+      totalCoins,
+      dakshinaCoins,
+      watchTimeCoins,
+      grossInr: breakdown.grossInr,
+      netInr: breakdown.netInr,
+      platformFeeInr: breakdown.platformFeeInr,
+      panditSharePercentage: STREAMER_SHARE_PERCENT,
+      coinsPer100Inr: COINS_PER_100_INR,
+    };
+  }
+
+  async getStreamerEarnings(userId: string, userRole?: string) {
+    const isAdmin = userRole === UserRole.ADMIN;
+    const streams = await this.prisma.stream.findMany({
+      where: isAdmin ? { deletedAt: null } : { streamerId: userId, deletedAt: null },
       select: {
         id: true,
-        amount: true,
-        devoteeName: true,
-        createdAt: true,
-        streamId: true,
+        title: true,
+        visibility: true,
+        status: true,
+        startedAt: true,
+        endedAt: true,
+        durationSeconds: true,
       },
+      orderBy: { createdAt: 'desc' },
+    });
+    const streamIds = streams.map((s) => s.id);
+    const streamMap = new Map(streams.map((s) => [s.id, s]));
+
+    if (streamIds.length === 0) {
+      return {
+        totalStreams: 0,
+        totalCoins: 0,
+        dakshinaCoins: 0,
+        watchTimeCoins: 0,
+        grossInr: 0,
+        netEarningsInr: 0,
+        platformFeeInr: 0,
+        panditSharePercentage: STREAMER_SHARE_PERCENT,
+        coinsPer100Inr: COINS_PER_100_INR,
+        totalWatchMinutes: 0,
+        totalCoinsConsumed: 0,
+        perStreamEarnings: [],
+        recentDakshina: [],
+        legacyInr: {
+          totalDakshinaInr: 0,
+          netEarningsInr: 0,
+          platformFeeInr: 0,
+          count: 0,
+        },
+      };
+    }
+
+    const [
+      earningBySource,
+      earningByStreamAndSource,
+      dakshinaOfferings,
+      legacyAggregate,
+      viewingAggregate,
+    ] = await Promise.all([
+      this.prisma.streamerEarning.groupBy({
+        by: ['source'],
+        where: { streamId: { in: streamIds } },
+        _sum: { coins: true },
+      }),
+      this.prisma.streamerEarning.groupBy({
+        by: ['streamId', 'source'],
+        where: { streamId: { in: streamIds } },
+        _sum: { coins: true },
+      }),
+      this.prisma.dakshinaOffering.findMany({
+        where: {
+          streamId: { in: streamIds },
+          status: PaymentStatus.SUCCESS,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 30,
+        select: {
+          id: true,
+          coins: true,
+          amount: true,
+          devoteeName: true,
+          createdAt: true,
+          streamId: true,
+        },
+      }),
+      this.prisma.dakshinaOffering.aggregate({
+        where: {
+          streamId: { in: streamIds },
+          status: PaymentStatus.SUCCESS,
+          coins: null,
+          amount: { not: null },
+        },
+        _sum: { amount: true },
+        _count: { id: true },
+      }),
+      this.prisma.streamViewingSession.aggregate({
+        where: { streamId: { in: streamIds } },
+        _sum: {
+          totalMinutesWatched: true,
+          totalCoinsDebited: true,
+        },
+      }),
+    ]);
+
+    let dakshinaCoins = 0;
+    let watchTimeCoins = 0;
+    for (const row of earningBySource) {
+      const sumCoins = row._sum.coins || 0;
+      if (row.source === StreamerEarningSource.DAKSHINA) {
+        dakshinaCoins += sumCoins;
+      } else if (row.source === StreamerEarningSource.WATCH_TIME) {
+        watchTimeCoins += sumCoins;
+      }
+    }
+
+    const totalCoins = dakshinaCoins + watchTimeCoins;
+    const totalsBreakdown = calculateCoinEarningsBreakdown(totalCoins);
+
+    // Build per-stream earning summaries
+    const perStreamCoinsMap = new Map<string, { dakshinaCoins: number; watchTimeCoins: number }>();
+    for (const row of earningByStreamAndSource) {
+      const entry = perStreamCoinsMap.get(row.streamId) || { dakshinaCoins: 0, watchTimeCoins: 0 };
+      const sumCoins = row._sum.coins || 0;
+      if (row.source === StreamerEarningSource.DAKSHINA) {
+        entry.dakshinaCoins += sumCoins;
+      } else if (row.source === StreamerEarningSource.WATCH_TIME) {
+        entry.watchTimeCoins += sumCoins;
+      }
+      perStreamCoinsMap.set(row.streamId, entry);
+    }
+
+    const perStreamEarnings = streams.map((s) => {
+      const c = perStreamCoinsMap.get(s.id) || { dakshinaCoins: 0, watchTimeCoins: 0 };
+      const streamTotalCoins = c.dakshinaCoins + c.watchTimeCoins;
+      const b = calculateCoinEarningsBreakdown(streamTotalCoins);
+      return {
+        streamId: s.id,
+        title: s.title,
+        visibility: s.visibility,
+        status: s.status,
+        startedAt: s.startedAt,
+        dakshinaCoins: c.dakshinaCoins,
+        watchTimeCoins: c.watchTimeCoins,
+        totalCoins: streamTotalCoins,
+        grossInr: b.grossInr,
+        netInr: b.netInr,
+        platformFeeInr: b.platformFeeInr,
+      };
     });
 
-    const aggregate = await this.prisma.dakshinaOffering.aggregate({
-      where: {
-        streamId: { in: streamIds },
-        status: PaymentStatus.SUCCESS,
-      },
-      _sum: { amount: true },
-      _count: { id: true },
-    });
-
-    const totalDakshinaInr = Number(aggregate._sum.amount || 0);
-    const panditSharePercentage = 85;
-    const netEarningsInr = (totalDakshinaInr * panditSharePercentage) / 100;
-    const platformFeeInr = totalDakshinaInr - netEarningsInr;
-
-    // B-11: Database-level SQL SUM aggregation instead of loading all viewing sessions into JS memory
-    const viewingAggregate = await this.prisma.streamViewingSession.aggregate({
-      where: { streamId: { in: streamIds } },
-      _sum: {
-        totalMinutesWatched: true,
-        totalCoinsDebited: true,
-      },
-    });
+    // Legacy pre-cutover INR offerings kept visible separately without polluting coin totals
+    const legacyTotalInr = Number(legacyAggregate._sum.amount || 0);
+    const legacyGrossPaise = Math.round(legacyTotalInr * 100);
+    const legacyNetPaise = Math.round((legacyGrossPaise * STREAMER_SHARE_PERCENT) / 100);
+    const legacyFeePaise = legacyGrossPaise - legacyNetPaise;
 
     const totalWatchMinutes = viewingAggregate._sum.totalMinutesWatched || 0;
     const totalCoinsConsumed = viewingAggregate._sum.totalCoinsDebited || 0;
 
     return {
       totalStreams: streams.length,
-      totalDakshinaInr,
-      netEarningsInr,
-      platformFeeInr,
-      panditSharePercentage,
+      totalCoins,
+      dakshinaCoins,
+      watchTimeCoins,
+      grossInr: totalsBreakdown.grossInr,
+      netEarningsInr: totalsBreakdown.netInr,
+      platformFeeInr: totalsBreakdown.platformFeeInr,
+      panditSharePercentage: STREAMER_SHARE_PERCENT,
+      coinsPer100Inr: COINS_PER_100_INR,
       totalWatchMinutes,
       totalCoinsConsumed,
-      recentDakshina: dakshinaOfferings.slice(0, 30).map((d) => ({
-        id: d.id,
-        amount: Number(d.amount),
-        devoteeName: d.devoteeName,
-        createdAt: d.createdAt,
-        streamTitle: streams.find((s) => s.id === d.streamId)?.title || 'Sacred Darshan',
-      })),
+      perStreamEarnings,
+      recentDakshina: dakshinaOfferings.map((d) => {
+        const isLegacyInr = d.coins === null || d.coins === undefined;
+        if (!isLegacyInr && typeof d.coins === 'number') {
+          const b = calculateCoinEarningsBreakdown(d.coins);
+          return {
+            id: d.id,
+            coins: d.coins,
+            isLegacyInr: false,
+            legacyAmountInr: null,
+            grossInr: b.grossInr,
+            netInr: b.netInr,
+            platformFeeInr: b.platformFeeInr,
+            devoteeName: d.devoteeName,
+            createdAt: d.createdAt,
+            streamId: d.streamId,
+            streamTitle: streamMap.get(d.streamId)?.title || 'Sacred Darshan',
+          };
+        }
+        const amt = Number(d.amount || 0);
+        const grossP = Math.round(amt * 100);
+        const netP = Math.round((grossP * STREAMER_SHARE_PERCENT) / 100);
+        const feeP = grossP - netP;
+        return {
+          id: d.id,
+          coins: 0,
+          isLegacyInr: true,
+          legacyAmountInr: amt,
+          grossInr: grossP / 100,
+          netInr: netP / 100,
+          platformFeeInr: feeP / 100,
+          devoteeName: d.devoteeName,
+          createdAt: d.createdAt,
+          streamId: d.streamId,
+          streamTitle: streamMap.get(d.streamId)?.title || 'Sacred Darshan',
+        };
+      }),
+      legacyInr: {
+        totalDakshinaInr: legacyGrossPaise / 100,
+        netEarningsInr: legacyNetPaise / 100,
+        platformFeeInr: legacyFeePaise / 100,
+        count: legacyAggregate._count.id || 0,
+      },
     };
   }
 }

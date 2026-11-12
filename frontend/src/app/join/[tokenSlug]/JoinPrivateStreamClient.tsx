@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import {
   LiveKitRoom,
@@ -17,6 +17,8 @@ import { io, Socket } from 'socket.io-client';
 import { ChatWidget } from '@/components/ChatWidget';
 import { DevotionalEmojiBar, FloatingReactionsOverlay } from '@/components/SpiritualReactions';
 import { DakshinaModal } from '@/components/DakshinaModal';
+import { CoinTopupModal } from '@/components/CoinTopupModal';
+import { syncLocalWalletBalance } from '@/lib/economy';
 import { useToast } from '@/components/Toast';
 import {
   Lock,
@@ -35,6 +37,7 @@ import {
   OmIcon,
   DiyaIcon,
   PranamIcon,
+  CoinIcon,
   VerifiedPanditBadge,
 } from '@/components/icons/SpiritualIcons';
 
@@ -62,7 +65,11 @@ export default function JoinPrivateStreamClient() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [dakshinaModalOpen, setDakshinaModalOpen] = useState(false);
+  const [topupModalOpen, setTopupModalOpen] = useState(false);
+  const [resumeDakshinaAfterTopup, setResumeDakshinaAfterTopup] = useState(false);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [latestDakshina, setLatestDakshina] = useState<any>(null);
+  const dakshinaTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [inspectLoading, setInspectLoading] = useState(true);
@@ -133,10 +140,15 @@ export default function JoinPrivateStreamClient() {
 
     socketInstance.on('stream:dakshina_received', (dakshina: any) => {
       setLatestDakshina(dakshina);
-      setTimeout(() => setLatestDakshina(null), 8000);
+      if (dakshinaTimerRef.current) clearTimeout(dakshinaTimerRef.current);
+      dakshinaTimerRef.current = setTimeout(() => setLatestDakshina(null), 8000);
     });
 
     return () => {
+      if (dakshinaTimerRef.current) {
+        clearTimeout(dakshinaTimerRef.current);
+        dakshinaTimerRef.current = null;
+      }
       socketInstance.off('stream:dakshina_received');
       socketInstance.disconnect();
     };
@@ -231,7 +243,10 @@ export default function JoinPrivateStreamClient() {
                   <DiyaIcon size={22} />
                   <div className="text-xs">
                     <span className="font-extrabold">{latestDakshina.devoteeName}</span> offered{' '}
-                    <span className="font-black">₹{latestDakshina.amount}</span> Dakshina!
+                    <span className="font-black inline-flex items-center gap-1">
+                      <CoinIcon size={13} /> {latestDakshina.coins ?? latestDakshina.amount} Coins
+                    </span>{' '}
+                    Dakshina!
                     {latestDakshina.prayerMessage && (
                       <div className="text-[10px] font-semibold opacity-90 truncate max-w-xs">
                         &ldquo;{latestDakshina.prayerMessage}&rdquo;
@@ -324,7 +339,7 @@ export default function JoinPrivateStreamClient() {
             )}
           </div>
 
-          {/* Dakshina Offering Modal */}
+          {/* Dakshina Offering & Topup Modals */}
           {streamId && (
             <DakshinaModal
               isOpen={dakshinaModalOpen}
@@ -332,8 +347,34 @@ export default function JoinPrivateStreamClient() {
               streamId={streamId}
               streamerName={metadata?.streamerName || 'Acharya Devrat Sharma'}
               currentUser={currentUser}
+              walletBalance={walletBalance}
+              onOpenTopup={() => {
+                setDakshinaModalOpen(false);
+                setResumeDakshinaAfterTopup(true);
+                setTopupModalOpen(true);
+              }}
+              onSuccess={(newBalance) => {
+                setWalletBalance(newBalance);
+                syncLocalWalletBalance(newBalance);
+              }}
             />
           )}
+
+          <CoinTopupModal
+            isOpen={topupModalOpen}
+            onClose={() => {
+              setTopupModalOpen(false);
+              setResumeDakshinaAfterTopup(false);
+            }}
+            onSuccess={(newBalance) => {
+              setWalletBalance(newBalance);
+              syncLocalWalletBalance(newBalance);
+              if (resumeDakshinaAfterTopup) {
+                setResumeDakshinaAfterTopup(false);
+                setDakshinaModalOpen(true);
+              }
+            }}
+          />
         </div>
       ) : (
         // Verification & Password Claim Screen

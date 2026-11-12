@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { PranamIcon, OmIcon, DiyaIcon } from '@/components/icons/SpiritualIcons';
+import { PranamIcon, OmIcon, DiyaIcon, CoinIcon } from '@/components/icons/SpiritualIcons';
+import { calculateStreamerNetCoinsInr, formatInrAmount } from '@/lib/economy';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -78,6 +79,9 @@ export default function StudioClient() {
   const [error, setError] = useState<string | null>(null);
   const [activeConflict, setActiveConflict] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [streamCoins, setStreamCoins] = useState<number | null>(null);
+  const [lastDelta, setLastDelta] = useState<number | null>(null);
+  const deltaTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const devicesLoadedRef = useRef(false);
 
   // Ensure streamId updates if URL changes
@@ -112,9 +116,12 @@ export default function StudioClient() {
     };
   }, []);
 
-  // Initialize stream data and available hardware devices
+  // Initialize stream data, live stream earnings, and available hardware devices
   useEffect(() => {
     if (!streamId || streamId === 'demo') return;
+
+    setStreamCoins(null);
+    setLastDelta(null);
 
     const storedUser = localStorage.getItem('pooja_user');
     const storedToken = localStorage.getItem('pooja_token');
@@ -128,6 +135,21 @@ export default function StudioClient() {
       } catch {}
     }
 
+    let isDisposed = false;
+
+    async function fetchStreamEarnings() {
+      try {
+        const earnings = await apiFetch<any>(`/streamers/streams/${streamId}/earnings`);
+        if (!isDisposed && typeof earnings?.totalCoins === 'number') {
+          setStreamCoins((prev) =>
+            prev === null ? earnings.totalCoins : Math.max(prev, earnings.totalCoins),
+          );
+        }
+      } catch {
+        // Non-fatal on transient reconnect blips
+      }
+    }
+
     async function loadStream() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
       try {
@@ -136,7 +158,7 @@ export default function StudioClient() {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Stream not found');
-        setStream(data);
+        if (!isDisposed) setStream(data);
 
         // If stream is private, auto-generate private link
         if (data.visibility === 'PRIVATE') {
@@ -150,17 +172,18 @@ export default function StudioClient() {
           });
           if (linkRes.ok) {
             const linkData = await linkRes.json();
-            setPrivateLinkData(linkData);
+            if (!isDisposed) setPrivateLinkData(linkData);
           }
         }
       } catch (err: any) {
-        setError(err.message);
+        if (!isDisposed) setError(err.message);
       }
     }
 
     loadStream();
+    fetchStreamEarnings();
 
-    // Socket.io chat
+    // Socket.io chat & private live streamer earnings listener
     const socketUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || '';
     const socketInstance = io(socketUrl, {
       auth: { token: storedToken },
@@ -168,7 +191,31 @@ export default function StudioClient() {
     });
     setSocket(socketInstance);
 
+    const handleEarningsUpdated = (payload: any) => {
+      if (!payload || payload.streamId !== streamId) return;
+      if (typeof payload.totalCoins === 'number') {
+        setStreamCoins((prev) => Math.max(prev ?? 0, payload.totalCoins));
+      }
+      if (typeof payload.delta === 'number' && payload.delta > 0) {
+        setLastDelta(payload.delta);
+        if (deltaTimerRef.current) clearTimeout(deltaTimerRef.current);
+        deltaTimerRef.current = setTimeout(() => {
+          setLastDelta(null);
+        }, 3000);
+      }
+    };
+
+    socketInstance.on('connect', fetchStreamEarnings);
+    socketInstance.on('stream:earnings_updated', handleEarningsUpdated);
+
     return () => {
+      isDisposed = true;
+      if (deltaTimerRef.current) {
+        clearTimeout(deltaTimerRef.current);
+        deltaTimerRef.current = null;
+      }
+      socketInstance.off('connect', fetchStreamEarnings);
+      socketInstance.off('stream:earnings_updated', handleEarningsUpdated);
       socketInstance.disconnect();
     };
   }, [streamId, router]);
@@ -324,7 +371,33 @@ export default function StudioClient() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Always-visible Live Stream Coin Earnings Pill */}
+          {(() => {
+            const earned = streamCoins ?? 0;
+            const breakdown = calculateStreamerNetCoinsInr(earned);
+            const tooltipText = `Gross: ₹${formatInrAmount(breakdown.grossInr)} • Your 85% Net Share: ₹${formatInrAmount(breakdown.netInr)} (150 coins = ₹100)`;
+            return (
+              <Link
+                href="/streamer/earnings"
+                title={tooltipText}
+                aria-label={`${earned} Coins Earned in this stream. ${tooltipText}`}
+                className="relative inline-flex items-center gap-1.5 rounded-full border border-amber-400/60 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900/60 px-3.5 py-2 text-xs font-extrabold text-amber-950 dark:text-gold-pale shadow-sm transition-all"
+              >
+                <CoinIcon size={16} />
+                <span>{earned.toLocaleString('en-IN')} Coins</span>
+                <span className="text-[10px] font-semibold text-amber-800 dark:text-stone-300 hidden sm:inline">
+                  (≈ ₹{formatInrAmount(breakdown.netInr)} net)
+                </span>
+                {lastDelta !== null && (
+                  <span className="ml-1 px-1.5 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-black animate-bounce shadow">
+                    +{lastDelta}
+                  </span>
+                )}
+              </Link>
+            );
+          })()}
+
           {stream?.visibility === 'PRIVATE' && privateLinkData && (
             <button
               onClick={() => setShareModalOpen(true)}

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Socket } from 'socket.io-client';
 import { Send, Pin, Trash2, VolumeX, ShieldAlert, Sparkles, Flag } from 'lucide-react';
-import { OmIcon, DiyaIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
+import { OmIcon, DiyaIcon, PranamIcon, CoinIcon } from '@/components/icons/SpiritualIcons';
 
 interface ChatMessage {
   id: string;
@@ -93,11 +93,12 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
     });
 
     socket.on('stream:dakshina_received', (dakshina: any) => {
+      const coinAmount = dakshina.coins ?? dakshina.amount;
       setMessages((prev) => [
         ...prev,
         {
           id: `dakshina_${Date.now()}_${Math.random()}`,
-          message: `Offered ₹${dakshina.amount} Sacred Dakshina${dakshina.prayerMessage ? `: "${dakshina.prayerMessage}"` : ''}`,
+          message: `Offered ${coinAmount} Coins Sacred Dakshina${dakshina.prayerMessage ? `: "${dakshina.prayerMessage}"` : ''}`,
           createdAt: new Date().toISOString(),
           user: {
             id: '',
@@ -280,8 +281,9 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
                     </span>
                   )}
                 </div>
-                <div className="text-stone-900 dark:text-white font-medium pl-5 text-[11px] leading-relaxed">
-                  {msg.message}
+                <div className="text-stone-900 dark:text-white font-medium pl-5 text-[11px] leading-relaxed flex items-center gap-1.5">
+                  <CoinIcon size={13} className="shrink-0" />
+                  <span>{msg.message}</span>
                 </div>
               </div>
             );

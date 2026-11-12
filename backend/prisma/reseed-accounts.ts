@@ -71,9 +71,10 @@ async function main() {
   await prisma.privateAccessLink.deleteMany({});
   console.log('  - Cleared private access links');
 
-  // Delete dakshina offerings
+  // Delete streamer earnings & dakshina offerings
+  await prisma.streamerEarning.deleteMany({});
   await prisma.dakshinaOffering.deleteMany({});
-  console.log('  - Cleared dakshina offerings');
+  console.log('  - Cleared streamer earnings & dakshina offerings');
 
   // Delete stream reminders
   await prisma.streamReminder.deleteMany({});

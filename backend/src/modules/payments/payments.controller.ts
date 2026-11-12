@@ -12,7 +12,6 @@ import {
 import { Request } from 'express';
 import { PaymentsService } from './payments.service';
 import { CreateDakshinaDto } from './dto/create-dakshina.dto';
-import { VerifyPaymentDto } from './dto/verify-payment.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { SkipThrottle } from '@nestjs/throttler';
@@ -21,21 +20,13 @@ import { SkipThrottle } from '@nestjs/throttler';
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
-  @Public()
-  @Post('dakshina/create-order')
-  async createDakshinaOrder(
+  @Post('dakshina')
+  @HttpCode(HttpStatus.OK)
+  async sendDakshina(
     @Body() dto: CreateDakshinaDto,
-    @Req() req: Request,
+    @CurrentUser('id') devoteeId: string,
   ) {
-    const user = (req as any).user;
-    const devoteeId = user?.id || user?.sub;
-    return this.paymentsService.createDakshinaOrder(dto, devoteeId);
-  }
-
-  @Public()
-  @Post('dakshina/verify')
-  async verifyPayment(@Body() dto: VerifyPaymentDto) {
-    return this.paymentsService.verifyPayment(dto);
+    return this.paymentsService.sendCoinDakshina(dto, devoteeId);
   }
 
   @Public()

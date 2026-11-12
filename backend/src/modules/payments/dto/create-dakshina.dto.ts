@@ -1,14 +1,26 @@
-import { IsString, IsNotEmpty, IsNumber, Min, Max, MaxLength, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsInt,
+  Min,
+  Max,
+  MaxLength,
+  IsOptional,
+} from 'class-validator';
+import {
+  MIN_DAKSHINA_COINS,
+  MAX_DAKSHINA_COINS,
+} from '../../../common/config/economy.constants';
 
 export class CreateDakshinaDto {
   @IsString()
   @IsNotEmpty()
   streamId: string;
 
-  @IsNumber()
-  @Min(1)
-  @Max(100000)
-  amount: number;
+  @IsInt()
+  @Min(MIN_DAKSHINA_COINS)
+  @Max(MAX_DAKSHINA_COINS)
+  coins: number;
 
   @IsString()
   @IsNotEmpty()
@@ -24,4 +36,9 @@ export class CreateDakshinaDto {
   @IsOptional()
   @MaxLength(100)
   gotra?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  idempotencyKey: string;
 }

@@ -6,7 +6,7 @@
 
 **Sacred Pooja, Live Darshan & Vedic Astrology Streaming Platform**
 
-*Self-hosted WebRTC media infrastructure paired with metered Sacred Coins, encrypted private pooja rooms, Razorpay Dakshina offerings, and DPDP Act 2023 controls.*
+*Self-hosted WebRTC media infrastructure paired with metered Sacred Coins (`150 coins = ₹100`), coin-only Dakshina & 85% streamer earnings, encrypted private pooja rooms, Razorpay coin top-ups, and DPDP Act 2023 controls.*
 
 <p>
   <img src="https://img.shields.io/badge/NestJS-10-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NestJS 10" />
@@ -42,9 +42,9 @@
       </p>
     </td>
     <td width="50%" valign="top">
-      <h3>Metered Coins &amp; Dakshina</h3>
+      <h3>Metered Coins &amp; Coin Dakshina</h3>
       <p>
-        Server-authoritative 60-second heartbeat billing (<code>POST /api/v1/wallet/meter-tick</code>), automated 90-second eviction watchdog, atomic top-up packs, and HMAC-verified Razorpay Dakshina webhooks.
+        Server-authoritative 60-second heartbeat billing (<code>POST /api/v1/wallet/meter-tick</code>), automated 90-second eviction watchdog, coin-only Dakshina (<code>POST /api/v1/payments/dakshina</code>), atomic <code>StreamerEarning</code> credits with real-time Studio updates, and HMAC-verified Razorpay coin top-up webhooks.
       </p>
     </td>
   </tr>
@@ -169,7 +169,7 @@ sequenceDiagram
 │   │   │   ├── health/             # GET /api/v1/health/live & /api/v1/health/ready
 │   │   │   ├── internal/           # Internal live-stream count check (X-Internal-Key)
 │   │   │   ├── notifications/      # Brevo transactional mailer & 15-minute alerts
-│   │   │   ├── payments/           # Razorpay Dakshina orders & HMAC-verified webhook
+│   │   │   ├── payments/           # Wallet-coin Dakshina endpoint, Razorpay webhook (top-ups) & offerings feed
 │   │   │   ├── private-links/      # 128-bit SHA-256 invite links & AES-256-GCM room access
 │   │   │   ├── reports/            # Viewer safety report queue
 │   │   │   ├── storage/            # MIME/extension & 10 MB upload guard (local + private KYC)
@@ -238,11 +238,11 @@ When `NODE_ENV=production`, startup aborts immediately if any rule below is viol
 <details>
 <summary><strong>Seeded Sacred Coin Packs &amp; Container Budgets</strong></summary>
 
-**Coin Packages (`backend/prisma/seed.ts`):**
-- `shubh_100` — **Shubh Starter:** 100 coins (`INR 200`)
-- `bhakti_275` — **Bhakti Pack:** 250 + 25 bonus = 275 coins (`INR 500`)
-- `siddhi_600` — **Siddhi Pack:** 500 + 100 bonus = 600 coins (`INR 1,000`)
-- `mahodadhi_1500` — **Mahodadhi Pack:** 1,200 + 300 bonus = 1,500 coins (`INR 2,100`)
+**Coin Packages (`150 coins = ₹100`, `backend/prisma/seed.ts` &amp; `seed-wallet.ts`):**
+- `shubh_150` — **Shubh Starter:** 150 coins (`INR 100`)
+- `bhakti_330` — **Bhakti Pack:** 300 + 30 bonus (+10%) = 330 coins (`INR 200`)
+- `siddhi_900` — **Siddhi Pack:** 750 + 150 bonus (+20%) = 900 coins (`INR 500`)
+- `mahodadhi_1875` — **Mahodadhi Pack:** 1,500 + 375 bonus (+25%) = 1,875 coins (`INR 1,000`)
 
 **Docker Compose Resource Allocation (`docker-compose.yml`):**
 - `postgres` (`1536m`) &bull; `livekit` (`1536m`) &bull; `api` (`1024m`) &bull; `web` (`768m`) &bull; `worker` (`512m`) &bull; `redis` (`384m`) &bull; `nginx` (`128m`)

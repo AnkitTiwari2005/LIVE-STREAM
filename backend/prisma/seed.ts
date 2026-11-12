@@ -1,5 +1,9 @@
 import { PrismaClient, UserRole, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import {
+  COIN_PACKAGES_CATALOG,
+  LEGACY_COIN_PACKAGE_SKUS,
+} from '../src/common/config/economy.constants';
 
 const prisma = new PrismaClient();
 
@@ -76,7 +80,8 @@ async function main() {
       title: 'Refund & Cancellation Policy',
       contentHtml: `
         <h2>Refund & Cancellation Policy</h2>
-        <p>Phase 1 streams are free to attend. When paid private consultations or voluntary dakshina are introduced in Phase 2, refunds will be governed by session fulfillment and technical connectivity records.</p>
+        <p>Verified devotees receive 100 Sacred Welcome Coins on signup, and additional coin packs start from ₹100 for 150 Sacred Coins. Watch-time charges (5 coins/min) and voluntary Sacred Dakshina use Wallet Coins only.</p>
+        <p>Once Wallet Coins are redeemed during live broadcasts or confirmed Dakshina offerings, coin debits are non-refundable unless technical failure or gateway double-charge is verified in our billing logs.</p>
       `,
     },
     {
@@ -119,62 +124,20 @@ async function main() {
   }
   console.log(`Seeded ${staticPages.length} CMS static pages.`);
 
-  // 4. Coin Packages (B-08: Unified Package Seed)
-  const packages = [
-    {
-      sku: 'shubh_100',
-      name: 'Shubh Starter',
-      coins: 100,
-      bonusCoins: 0,
-      totalCoins: 100,
-      priceInr: 200.0,
-      badgeText: 'Quick Darshan',
-      displayOrder: 1,
-      isActive: true,
-    },
-    {
-      sku: 'bhakti_275',
-      name: 'Bhakti Pack',
-      coins: 250,
-      bonusCoins: 25,
-      totalCoins: 275,
-      priceInr: 500.0,
-      badgeText: '+10% Bonus',
-      displayOrder: 2,
-      isActive: true,
-    },
-    {
-      sku: 'siddhi_600',
-      name: 'Siddhi Pack',
-      coins: 500,
-      bonusCoins: 100,
-      totalCoins: 600,
-      priceInr: 1000.0,
-      badgeText: 'Most Popular (+20% Bonus)',
-      displayOrder: 3,
-      isActive: true,
-    },
-    {
-      sku: 'mahodadhi_1500',
-      name: 'Mahodadhi Pack',
-      coins: 1200,
-      bonusCoins: 300,
-      totalCoins: 1500,
-      priceInr: 2100.0,
-      badgeText: 'Best Value (+25% Bonus)',
-      displayOrder: 4,
-      isActive: true,
-    },
-  ];
+  // 4. Coin Packages (150 Coins = ₹100)
+  await prisma.coinPackage.updateMany({
+    where: { sku: { in: [...LEGACY_COIN_PACKAGE_SKUS] } },
+    data: { isActive: false },
+  });
 
-  for (const pkg of packages) {
+  for (const pkg of COIN_PACKAGES_CATALOG) {
     await prisma.coinPackage.upsert({
       where: { sku: pkg.sku },
-      update: pkg,
-      create: pkg,
+      update: { ...pkg },
+      create: { ...pkg },
     });
   }
-  console.log(`Seeded ${packages.length} coin packages.`);
+  console.log(`Seeded ${COIN_PACKAGES_CATALOG.length} coin packages.`);
 
   // 5. Default Platform Admin User (FR-A4)
   const adminEmail = process.env.ADMIN_EMAIL || 'admin@platform-domain.com';

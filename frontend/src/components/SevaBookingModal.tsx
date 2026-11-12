@@ -33,6 +33,7 @@ import {
   PanditPricing,
   getPanditDakshinaForPooja,
 } from '@/data/poojaCatalog';
+import { formatInrFromCoins } from '@/lib/economy';
 
 const BOOKINGS_ENABLED = process.env.NEXT_PUBLIC_BOOKINGS_ENABLED === 'true';
 
@@ -495,7 +496,7 @@ function SevaBookingFlow({
                             <CoinIcon size={13} /> {panditDakshina} Coins
                           </span>
                           <span className="text-[10px] text-stone-400 font-normal block">
-                            (~₹{panditDakshina * 5})
+                            (~₹{formatInrFromCoins(panditDakshina)})
                           </span>
                         </div>
                       </div>
