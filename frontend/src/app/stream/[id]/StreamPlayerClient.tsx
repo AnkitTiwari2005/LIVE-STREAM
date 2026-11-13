@@ -836,8 +836,8 @@ export default function StreamPlayerClient() {
                               <span className="w-1.5 h-1.5 rounded-full bg-red-600 dark:bg-red-500 animate-pulse" />
                               LIVE
                             </span>
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gold/10 text-gold-pale border border-gold/30">
-                              <Eye className="w-3.5 h-3.5 text-amber-400" />
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 dark:bg-gold/10 text-amber-800 dark:text-gold-pale border border-amber-300 dark:border-gold/30 shadow-sm">
+                              <Eye className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                               <span>{viewerCount ?? stream.peakViewers ?? 0} Watching</span>
                             </span>
                           </>

@@ -63,7 +63,7 @@ export function KickViewerModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 dark:bg-black/75 backdrop-blur-sm p-4"
       onClick={() => { if (!loading) onClose(); }}
     >
       <div
@@ -71,7 +71,7 @@ export function KickViewerModal({
         aria-modal="true"
         aria-labelledby="kick-modal-title"
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-sm rounded-2xl bg-stone-900 border border-stone-700 shadow-2xl p-6 space-y-4"
+        className="relative w-full max-w-sm rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-2xl p-6 space-y-4 text-stone-900 dark:text-white"
       >
         {/* Close button */}
         <button
@@ -79,21 +79,21 @@ export function KickViewerModal({
           onClick={onClose}
           disabled={!!loading}
           aria-label="Close"
-          className="absolute top-4 right-4 p-1.5 rounded-full text-stone-400 hover:text-white hover:bg-stone-800 transition disabled:opacity-50"
+          className="absolute top-4 right-4 p-1.5 rounded-full text-stone-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition disabled:opacity-50"
         >
           <X className="w-4 h-4" />
         </button>
 
         {/* Header */}
         <div className="flex items-center gap-3 pr-6">
-          <div className="p-2.5 rounded-xl bg-red-950/70 border border-red-800/60 text-red-400 shrink-0">
+          <div className="p-2.5 rounded-xl bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-800/60 text-red-600 dark:text-red-400 shrink-0 shadow-sm">
             <UserX className="w-5 h-5" />
           </div>
           <div>
-            <h3 id="kick-modal-title" className="font-bold text-white text-base">
+            <h3 id="kick-modal-title" className="font-bold text-stone-900 dark:text-white text-base">
               Remove Viewer
             </h3>
-            <p className="text-xs text-stone-400 mt-0.5">
+            <p className="text-xs text-stone-600 dark:text-stone-400 mt-0.5">
               {displayName}
             </p>
           </div>
@@ -103,7 +103,7 @@ export function KickViewerModal({
         <div>
           <label
             htmlFor="kick-reason"
-            className="block text-xs font-semibold text-stone-400 mb-1.5"
+            className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1.5"
           >
             Reason (optional)
           </label>
@@ -114,12 +114,12 @@ export function KickViewerModal({
             onChange={(e) => setReason(e.target.value.slice(0, 255))}
             placeholder="Disruptive behaviour…"
             disabled={!!loading}
-            className="w-full rounded-lg bg-stone-800 border border-stone-700 text-white placeholder-stone-500 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-600 disabled:opacity-50"
+            className="w-full rounded-lg bg-stone-50 dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-900 dark:text-white placeholder-stone-400 dark:placeholder-stone-500 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-600 disabled:opacity-50"
           />
         </div>
 
         {error && (
-          <p className="text-xs text-red-400 bg-red-950/50 rounded-lg px-3 py-2 border border-red-800/50">
+          <p className="text-xs text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/50 rounded-lg px-3 py-2 border border-red-200 dark:border-red-800/50">
             {error}
           </p>
         )}
@@ -130,7 +130,7 @@ export function KickViewerModal({
             type="button"
             onClick={() => handleAction(false)}
             disabled={!!loading}
-            className="w-full py-2.5 rounded-xl bg-amber-700 hover:bg-amber-600 text-white text-sm font-semibold transition disabled:opacity-50"
+            className="w-full py-2.5 rounded-xl bg-amber-700 hover:bg-amber-600 text-white text-sm font-semibold transition disabled:opacity-50 shadow-sm"
           >
             {loading === 'kick' ? 'Removing…' : 'Remove (can rejoin)'}
           </button>
@@ -138,7 +138,7 @@ export function KickViewerModal({
             type="button"
             onClick={() => handleAction(true)}
             disabled={!!loading}
-            className="w-full py-2.5 rounded-xl bg-red-700 hover:bg-red-600 text-white text-sm font-semibold transition disabled:opacity-50"
+            className="w-full py-2.5 rounded-xl bg-red-700 hover:bg-red-600 text-white text-sm font-semibold transition disabled:opacity-50 shadow-sm"
           >
             {loading === 'block' ? 'Blocking…' : 'Remove & Block'}
           </button>
@@ -146,7 +146,7 @@ export function KickViewerModal({
             type="button"
             onClick={onClose}
             disabled={!!loading}
-            className="w-full py-2 rounded-xl border border-stone-700 text-stone-400 hover:text-white text-sm transition disabled:opacity-50"
+            className="w-full py-2 rounded-xl border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-white text-sm transition disabled:opacity-50"
           >
             Cancel
           </button>

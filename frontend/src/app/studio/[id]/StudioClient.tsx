@@ -241,6 +241,21 @@ export default function StudioClient() {
       }
     };
 
+    const handleViewerJoined = (viewer: ViewerEntry) => {
+      if (viewer && viewer.identity) {
+        setViewers((prev) => {
+          const filtered = prev.filter((v) => v.identity !== viewer.identity);
+          return [...filtered, viewer];
+        });
+      }
+    };
+
+    const handleViewerLeft = (data: { identity: string }) => {
+      if (data?.identity) {
+        setViewers((prev) => prev.filter((v) => v.identity !== data.identity));
+      }
+    };
+
     const onConnect = () => {
       fetchStreamEarnings();
       socketInstance.emit('stream:viewer_list:request', { streamId });
@@ -250,6 +265,8 @@ export default function StudioClient() {
     socketInstance.on('stream:earnings_updated', handleEarningsUpdated);
     socketInstance.on('stream:viewer_count', handleViewerCount);
     socketInstance.on('stream:viewer_list', handleViewerList);
+    socketInstance.on('stream:viewer_joined', handleViewerJoined);
+    socketInstance.on('stream:viewer_left', handleViewerLeft);
 
     return () => {
       isDisposed = true;
@@ -261,6 +278,8 @@ export default function StudioClient() {
       socketInstance.off('stream:earnings_updated', handleEarningsUpdated);
       socketInstance.off('stream:viewer_count', handleViewerCount);
       socketInstance.off('stream:viewer_list', handleViewerList);
+      socketInstance.off('stream:viewer_joined', handleViewerJoined);
+      socketInstance.off('stream:viewer_left', handleViewerLeft);
       socketInstance.disconnect();
     };
   }, [streamId, router]);
@@ -447,15 +466,15 @@ export default function StudioClient() {
           {isLive && (
             <div
               title={`Active Devotees: ${viewerCount} • Peak: ${peakViewers}`}
-              className="relative inline-flex items-center gap-2 rounded-full border border-gold/40 bg-obsidian-soft px-3.5 py-2 text-xs font-bold text-gold-pale shadow-sm"
+              className="relative inline-flex items-center gap-2 rounded-full border border-emerald-300 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 px-3.5 py-2 text-xs font-bold text-emerald-800 dark:text-emerald-400 shadow-sm"
             >
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <Eye className="w-4 h-4 text-amber-400" />
+                <Eye className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
                 <span>{viewerCount} Live</span>
               </div>
-              <span className="text-stone-500">•</span>
-              <span className="text-[10px] text-stone-400 font-medium">Peak: {peakViewers}</span>
+              <span className="text-stone-400 dark:text-stone-600">•</span>
+              <span className="text-[10px] text-stone-600 dark:text-stone-400 font-medium">Peak: {peakViewers}</span>
             </div>
           )}
 
@@ -470,13 +489,13 @@ export default function StudioClient() {
                   socket.emit('stream:viewer_list:request', { streamId });
                 }
               }}
-              className={`flex items-center gap-1.5 text-xs font-semibold py-2 px-3.5 rounded-xl transition-colors shadow-md ${
+              className={`flex items-center gap-1.5 text-xs font-semibold py-2 px-3.5 rounded-xl transition-colors shadow-sm ${
                 showViewersPanel
-                  ? 'bg-amber-700 text-white shadow-amber-900/40'
-                  : 'bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-700'
+                  ? 'bg-amber-700 hover:bg-amber-600 text-white shadow-amber-900/40'
+                  : 'bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 border border-stone-300 dark:border-stone-700'
               }`}
             >
-              <Users className="w-4 h-4" /> Viewers ({viewerCount})
+              <Users className="w-4 h-4 text-amber-700 dark:text-amber-400" /> Viewers ({viewerCount})
             </button>
           )}
 
@@ -698,46 +717,46 @@ export default function StudioClient() {
             </div>
           ) : (
             <>
-              <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl flex items-center justify-between text-xs text-stone-300">
-                <span className="flex items-center gap-2">
+              <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl flex items-center justify-between text-xs text-stone-800 dark:text-stone-300 shadow-sm">
+                <span className="flex items-center gap-2 font-medium">
                   <span className="w-2 h-2 rounded-full bg-green-500 animate-ping" />
                   Audio & Video Broadcasting via Single-port UDP (7882)
                 </span>
-                <span className="text-stone-400 font-mono">Simulcast Active</span>
+                <span className="text-stone-500 dark:text-stone-400 font-mono">Simulcast Active</span>
               </div>
 
               {/* Live Viewers Panel */}
               {showViewersPanel && (
-                <div className="bg-stone-900 border border-gold/30 p-4 rounded-2xl space-y-3 shadow-xl">
-                  <div className="flex items-center justify-between border-b border-stone-800 pb-2">
+                <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-gold/30 p-4 rounded-2xl space-y-3 shadow-xl text-stone-900 dark:text-white">
+                  <div className="flex items-center justify-between border-b border-stone-200 dark:border-stone-800 pb-2">
                     <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-amber-400" />
-                      <h3 className="text-sm font-bold text-white">Active Devotees ({viewers.length})</h3>
+                      <Users className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+                      <h3 className="text-sm font-bold text-stone-900 dark:text-white">Active Devotees ({viewers.length})</h3>
                     </div>
                     <button
                       type="button"
                       onClick={() => {
                         if (socket) socket.emit('stream:viewer_list:request', { streamId });
                       }}
-                      className="text-[11px] text-amber-400 hover:text-amber-300 font-semibold transition"
+                      className="text-[11px] text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 font-semibold transition"
                     >
                       Refresh List
                     </button>
                   </div>
 
                   {viewers.length === 0 ? (
-                    <p className="text-xs text-stone-400 py-3 text-center">No other devotees currently connected in video room.</p>
+                    <p className="text-xs text-stone-500 dark:text-stone-400 py-3 text-center">No other devotees currently connected in video room.</p>
                   ) : (
                     <div className="max-h-56 overflow-y-auto space-y-2 pr-1">
                       {viewers.map((v) => (
                         <div
                           key={v.identity}
-                          className="flex items-center justify-between p-2.5 rounded-xl bg-stone-950/80 border border-stone-800 text-xs hover:border-gold/20 transition"
+                          className="flex items-center justify-between p-2.5 rounded-xl bg-stone-50 dark:bg-stone-950/80 border border-stone-200 dark:border-stone-800 text-xs hover:border-amber-300 dark:hover:border-gold/20 transition shadow-sm"
                         >
                           <div className="flex items-center gap-2">
-                            <span className="font-semibold text-white">{v.displayName}</span>
+                            <span className="font-semibold text-stone-900 dark:text-white">{v.displayName}</span>
                             {v.isGuest && (
-                              <span className="px-1.5 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800/60 text-[10px] font-medium">
+                              <span className="px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-400 border border-amber-300 dark:border-amber-800/60 text-[10px] font-medium">
                                 Guest
                               </span>
                             )}
@@ -745,7 +764,7 @@ export default function StudioClient() {
                           <button
                             type="button"
                             onClick={() => setKickTarget({ identity: v.identity, displayName: v.displayName })}
-                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800/60 text-xs transition"
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 dark:bg-red-950/60 dark:hover:bg-red-900 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/60 text-xs transition font-semibold"
                           >
                             <UserX className="w-3.5 h-3.5" /> Remove
                           </button>

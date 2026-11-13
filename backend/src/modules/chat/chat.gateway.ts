@@ -189,16 +189,28 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
   }
 
-  handleDisconnect(client: Socket) {
-    // Chat-only socket disconnect: remove from chat-only viewer tracking if applicable.
-    // NOTE: Do NOT decrement LiveKit-sourced viewer count here — that is the webhook's job.
-    // We only clean up client.data to free memory.
+  async handleDisconnect(client: Socket) {
     const streamId = client.data?.streamId;
-    if (streamId) {
-      // Leave per-identity socket room (clean up for future targeted emits)
-      const identity = client.data?.livekitIdentity || client.data?.user?.sub;
-      if (identity) {
-        client.leave(`identity:${streamId}:${identity}`);
+    const identity = client.data?.livekitIdentity || client.data?.user?.sub;
+    const isStreamer = client.data?.isStreamer;
+
+    if (streamId && identity) {
+      client.leave(`identity:${streamId}:${identity}`);
+
+      // Only track viewer removal for non-streamers
+      if (!isStreamer) {
+        const { isViewerRemoved, count } = await this.presenceService.removeViewerSocket(
+          streamId,
+          identity,
+          client.id,
+        );
+        if (isViewerRemoved) {
+          this.presenceService.broadcastCount(streamId, count);
+          this.server.to(`stream:${streamId}`).emit('stream:viewer_left', {
+            streamId,
+            identity,
+          });
+        }
       }
     }
     client.data = {};
@@ -264,10 +276,66 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     // Join per-identity room for targeted kick events
     const userId2 = client.data.user?.sub;
     const sessionId2 = data.sessionId || client.handshake.auth?.sessionId;
-    const livekitIdentity = userId2 || (sessionId2 ? `priv_guest_${sessionId2}` : null);
-    if (livekitIdentity) {
-      client.data.livekitIdentity = livekitIdentity;
-      client.join(`identity:${streamId}:${livekitIdentity}`);
+    const isStreamer = Boolean(userId2 && userId2 === stream.streamerId);
+    const livekitIdentity = userId2 || (sessionId2 ? `priv_guest_${sessionId2}` : `guest_${client.id}`);
+    
+    client.data.isStreamer = isStreamer;
+    client.data.livekitIdentity = livekitIdentity;
+    client.join(`identity:${streamId}:${livekitIdentity}`);
+
+    // If Devotee / Viewer (NOT the streamer broadcaster):
+    if (!isStreamer) {
+      const displayName =
+        client.data.user?.name ||
+        client.handshake.auth?.guestName ||
+        (sessionId2 ? 'Guest Devotee' : 'Devotee');
+      const isGuest = !userId2;
+      client.data.displayName = displayName;
+
+      const { isNewViewer, count } = await this.presenceService.addViewerSession(
+        streamId,
+        livekitIdentity,
+        displayName,
+        isGuest,
+        client.id,
+      );
+
+      // If new devotee joined, broadcast join event & sacred announcement to chat
+      if (isNewViewer) {
+        // Broadcast updated count to all clients
+        this.presenceService.broadcastCount(streamId, count);
+
+        // Broadcast join event for studio real-time list
+        this.server.to(`stream:${streamId}`).emit('stream:viewer_joined', {
+          identity: livekitIdentity,
+          displayName,
+          isGuest,
+          joinedAtMs: Date.now(),
+        });
+
+        // Broadcast sacred spiritual join message into the chat room
+        this.server.to(`stream:${streamId}`).emit('chat:message', {
+          id: `join_${livekitIdentity}_${Date.now()}`,
+          streamId,
+          message: `${displayName} has joined the sacred darshan 🙏`,
+          createdAt: new Date().toISOString(),
+          user: {
+            id: livekitIdentity,
+            name: displayName,
+            role: isGuest ? 'GUEST' : 'DEVOTEE',
+          },
+          isSystem: true,
+          systemType: 'JOIN',
+        });
+
+        // Update peakViewers in DB if count grew
+        if (count > stream.peakViewers) {
+          this.prisma.stream.update({
+            where: { id: streamId },
+            data: { peakViewers: count },
+          }).catch(() => {});
+        }
+      }
     }
 
     // Send current viewer count to this client

@@ -261,20 +261,20 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
 
       {/* Pinned Message Banner */}
       {pinnedMessage && (
-        <div className="bg-amber-950/60 border-b border-amber-800/60 p-2.5 px-3 flex items-start justify-between gap-2 text-xs text-amber-200">
+        <div className="bg-amber-50 dark:bg-amber-950/60 border-b border-amber-200 dark:border-amber-800/60 p-2.5 px-3 flex items-start justify-between gap-2 text-xs text-amber-900 dark:text-amber-200 shadow-sm">
           <div className="flex items-start gap-1.5 flex-1">
-            <Pin className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5 fill-amber-400" />
+            <Pin className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5 fill-amber-600 dark:fill-amber-400" />
             <div>
-              <span className="font-bold text-amber-300 block text-[10px] uppercase tracking-wider">
+              <span className="font-bold text-amber-800 dark:text-amber-300 block text-[10px] uppercase tracking-wider">
                 Pinned by Pandit
               </span>
-              <p className="line-clamp-2 text-stone-200">{pinnedMessage.message}</p>
+              <p className="line-clamp-2 text-stone-800 dark:text-stone-200">{pinnedMessage.message}</p>
             </div>
           </div>
           {isStreamer && (
             <button
               onClick={() => setPinnedMessage(null)}
-              className="text-amber-400/80 hover:text-white text-[10px]"
+              className="text-amber-700 dark:text-amber-400/80 hover:text-amber-950 dark:hover:text-white text-[10px] font-semibold"
             >
               Dismiss
             </button>
@@ -284,16 +284,16 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
 
       {/* Error / Rate Limit Toast */}
       {errorBanner && (
-        <div className="bg-red-950/90 border-b border-red-800 px-3 py-1.5 text-xs text-red-200 flex items-center gap-2">
-          <ShieldAlert className="w-3.5 h-3.5 text-red-400 shrink-0" />
+        <div className="bg-red-50 dark:bg-red-950/90 border-b border-red-200 dark:border-red-800 px-3 py-1.5 text-xs text-red-800 dark:text-red-200 flex items-center gap-2 shadow-sm">
+          <ShieldAlert className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
           <span>{errorBanner}</span>
         </div>
       )}
 
       {/* Mute Banner */}
       {muteBanner && (
-        <div className="bg-orange-950/80 border-b border-orange-800/60 px-3 py-1.5 text-xs text-orange-200 flex items-center gap-2">
-          <VolumeX className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+        <div className="bg-orange-50 dark:bg-orange-950/80 border-b border-orange-200 dark:border-orange-800/60 px-3 py-1.5 text-xs text-orange-900 dark:text-orange-200 flex items-center gap-2 shadow-sm">
+          <VolumeX className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400 shrink-0" />
           <span>{muteBanner}</span>
         </div>
       )}
@@ -309,6 +309,24 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
 
         {messages.map((msg) => {
           const isDakshina = (msg as any).isDakshina;
+          const isSystem = (msg as any).isSystem;
+
+          if (isSystem) {
+            return (
+              <div key={msg.id} className="flex justify-center my-2 animate-in fade-in zoom-in-95 duration-200">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/40 text-amber-900 dark:text-amber-300 shadow-sm">
+                  <DiyaIcon size={13} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                  <span>{msg.message}</span>
+                  {msg.createdAt && (
+                    <span className="text-[9px] text-amber-700/70 dark:text-amber-400/60 font-mono ml-1">
+                      {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          }
+
           if (isDakshina) {
             return (
               <div
@@ -360,14 +378,14 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
                 )}
               </div>
 
-              <div className="hidden group-hover:flex items-center gap-1 shrink-0 opacity-80">
+              <div className="hidden group-hover:flex items-center gap-1 shrink-0 opacity-90">
                 {/* Moderation Controls (Streamer / Admin only) */}
                 {isStreamer && (
                   <>
                     <button
                       onClick={() => handlePin(msg.id)}
                       title="Pin message"
-                      className="p-1 text-stone-600 dark:text-stone-400 hover:text-amber-700 dark:hover:text-amber-400"
+                      className="p-1 rounded text-stone-500 hover:text-amber-700 dark:text-stone-400 dark:hover:text-amber-400 hover:bg-stone-200 dark:hover:bg-stone-800 transition"
                     >
                       <Pin className="w-3 h-3" />
                     </button>
@@ -375,7 +393,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
                       <button
                         onClick={() => handleMute(msg.user.id)}
                         title="Mute user for 15 mins"
-                        className="p-1 text-stone-600 dark:text-stone-400 hover:text-red-700 dark:hover:text-red-400"
+                        className="p-1 rounded text-stone-500 hover:text-orange-700 dark:text-stone-400 dark:hover:text-orange-400 hover:bg-stone-200 dark:hover:bg-stone-800 transition"
                       >
                         <VolumeX className="w-3 h-3" />
                       </button>
@@ -385,7 +403,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
                       <button
                         onClick={() => handleKick(msg.user.id, msg.user.name)}
                         title="Remove viewer"
-                        className="p-1 text-stone-600 dark:text-stone-400 hover:text-red-700 dark:hover:text-red-400"
+                        className="p-1 rounded text-stone-500 hover:text-red-700 dark:text-stone-400 dark:hover:text-red-400 hover:bg-stone-200 dark:hover:bg-stone-800 transition"
                       >
                         <UserX className="w-3 h-3" />
                       </button>
@@ -393,7 +411,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
                     <button
                       onClick={() => handleDelete(msg.id)}
                       title="Delete message"
-                      className="p-1 text-stone-600 dark:text-stone-400 hover:text-red-700 dark:hover:text-red-400"
+                      className="p-1 rounded text-stone-500 hover:text-red-700 dark:text-stone-400 dark:hover:text-red-400 hover:bg-stone-200 dark:hover:bg-stone-800 transition"
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>
@@ -403,7 +421,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
                 <button
                   onClick={() => handleReportMessage(msg)}
                   title="Report inappropriate message"
-                  className="p-1 hover:text-amber-700 dark:hover:text-amber-400 text-stone-600 dark:text-stone-400"
+                  className="p-1 rounded text-stone-500 hover:text-amber-700 dark:text-stone-400 dark:hover:text-amber-400 hover:bg-stone-200 dark:hover:bg-stone-800 transition"
                 >
                   <Flag className="w-3 h-3" />
                 </button>

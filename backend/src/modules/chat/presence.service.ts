@@ -29,6 +29,10 @@ export interface ViewerEntry {
   joinedAtMs: number;
 }
 
+interface InternalViewerRecord extends ViewerEntry {
+  socketIds: Set<string>;
+}
+
 @Injectable()
 export class PresenceService {
   private readonly logger = new Logger(PresenceService.name);
@@ -39,8 +43,11 @@ export class PresenceService {
   /** Dedicated subscriber connection (a subscribed redis client cannot issue commands) */
   private redisSubscriber: Redis | null = null;
 
-  /** In-memory fallback when Redis is unavailable */
+  /** In-memory fallback sets: streamId -> Set<identity> */
   private readonly memoryViewers = new Map<string, Set<string>>();
+
+  /** In-memory rich viewer registry: streamId -> Map<identity, InternalViewerRecord> */
+  private readonly streamViewers = new Map<string, Map<string, InternalViewerRecord>>();
 
   /** Per-stream throttle timer handles */
   private readonly throttleTimers = new Map<string, NodeJS.Timeout>();
@@ -115,53 +122,160 @@ export class PresenceService {
   // Viewer tracking
   // ---------------------------------------------------------------------------
 
-  async addViewer(streamId: string, identity: string) {
-    try {
-      if (this.isRedisReady() && this.redis) {
-        await this.redis.sadd(`stream:viewers:${streamId}`, identity);
-        await this.redis.expire(`stream:viewers:${streamId}`, 3600); // 1-hour TTL safety
-      }
-    } catch {
-      // fall through to memory
+  /**
+   * Register a viewer session from Socket.IO or LiveKit webhook.
+   * Tracks multiple sockets per identity so multi-tab or reconnect does not inflate count.
+   */
+  async addViewerSession(
+    streamId: string,
+    identity: string,
+    displayName: string = 'Devotee',
+    isGuest: boolean = false,
+    socketId?: string,
+  ): Promise<{ isNewViewer: boolean; count: number }> {
+    let streamMap = this.streamViewers.get(streamId);
+    if (!streamMap) {
+      streamMap = new Map();
+      this.streamViewers.set(streamId, streamMap);
     }
+
+    let isNewViewer = false;
+    let record = streamMap.get(identity);
+
+    if (record) {
+      if (socketId) record.socketIds.add(socketId);
+      if (displayName && displayName !== 'Devotee') {
+        record.displayName = displayName;
+      }
+    } else {
+      isNewViewer = true;
+      record = {
+        identity,
+        displayName: displayName || 'Devotee',
+        isGuest,
+        joinedAtMs: Date.now(),
+        socketIds: new Set(socketId ? [socketId] : []),
+      };
+      streamMap.set(identity, record);
+    }
+
+    // Keep memoryViewers Set in sync
     const mem = this.memoryViewers.get(streamId) ?? new Set();
     mem.add(identity);
     this.memoryViewers.set(streamId, mem);
-  }
 
-  async removeViewer(streamId: string, identity: string) {
+    // Redis sync (Set for identities + Hash for rich metadata)
     try {
       if (this.isRedisReady() && this.redis) {
-        await this.redis.srem(`stream:viewers:${streamId}`, identity);
+        await this.redis.sadd(`stream:viewers:${streamId}`, identity);
+        await this.redis.hset(
+          `stream:viewer_meta:${streamId}`,
+          identity,
+          JSON.stringify({
+            identity,
+            displayName: record.displayName,
+            isGuest: record.isGuest,
+            joinedAtMs: record.joinedAtMs,
+          }),
+        );
+        await this.redis.expire(`stream:viewers:${streamId}`, 3600);
+        await this.redis.expire(`stream:viewer_meta:${streamId}`, 3600);
       }
-    } catch {
-      // fall through to memory
+    } catch {}
+
+    const count = await this.getCount(streamId);
+    return { isNewViewer, count };
+  }
+
+  /** Backward-compatible helper (calls addViewerSession) */
+  async addViewer(streamId: string, identity: string) {
+    const isGuest = identity.startsWith('priv_guest_') || identity.startsWith('guest_');
+    await this.addViewerSession(streamId, identity, 'Devotee', isGuest);
+  }
+
+  /**
+   * Remove a viewer socket or identity.
+   * If socketId is provided, identity is only evicted when all sockets for that identity disconnect.
+   */
+  async removeViewerSocket(
+    streamId: string,
+    identity: string,
+    socketId?: string,
+  ): Promise<{ isViewerRemoved: boolean; count: number }> {
+    const streamMap = this.streamViewers.get(streamId);
+    let isViewerRemoved = false;
+
+    if (streamMap) {
+      const record = streamMap.get(identity);
+      if (record) {
+        if (socketId) {
+          record.socketIds.delete(socketId);
+        }
+        // Evict if no socketId specified or zero remaining sockets
+        if (!socketId || record.socketIds.size === 0) {
+          streamMap.delete(identity);
+          isViewerRemoved = true;
+          if (streamMap.size === 0) {
+            this.streamViewers.delete(streamId);
+          }
+        }
+      }
+    } else {
+      // Fallback if record was only in memoryViewers
+      const mem = this.memoryViewers.get(streamId);
+      if (mem && mem.has(identity)) {
+        mem.delete(identity);
+        isViewerRemoved = true;
+      }
     }
-    const mem = this.memoryViewers.get(streamId);
-    if (mem) {
-      mem.delete(identity);
-      if (mem.size === 0) this.memoryViewers.delete(streamId);
+
+    if (isViewerRemoved) {
+      const mem = this.memoryViewers.get(streamId);
+      if (mem) {
+        mem.delete(identity);
+        if (mem.size === 0) this.memoryViewers.delete(streamId);
+      }
+
+      try {
+        if (this.isRedisReady() && this.redis) {
+          await this.redis.srem(`stream:viewers:${streamId}`, identity);
+          await this.redis.hdel(`stream:viewer_meta:${streamId}`, identity);
+        }
+      } catch {}
     }
+
+    const count = await this.getCount(streamId);
+    return { isViewerRemoved, count };
+  }
+
+  /** Backward-compatible helper */
+  async removeViewer(streamId: string, identity: string) {
+    await this.removeViewerSocket(streamId, identity);
   }
 
   async getCount(streamId: string): Promise<number> {
+    const memCount =
+      this.streamViewers.get(streamId)?.size ??
+      this.memoryViewers.get(streamId)?.size ??
+      0;
     try {
       if (this.isRedisReady() && this.redis) {
-        return await this.redis.scard(`stream:viewers:${streamId}`);
+        const redisCount = await this.redis.scard(`stream:viewers:${streamId}`);
+        return Math.max(redisCount, memCount);
       }
-    } catch {
-      // fall through to memory
-    }
-    return this.memoryViewers.get(streamId)?.size ?? 0;
+    } catch {}
+    return memCount;
   }
 
   async clearStream(streamId: string) {
     try {
       if (this.isRedisReady() && this.redis) {
         await this.redis.del(`stream:viewers:${streamId}`);
+        await this.redis.del(`stream:viewer_meta:${streamId}`);
       }
     } catch {}
     this.memoryViewers.delete(streamId);
+    this.streamViewers.delete(streamId);
   }
 
   // ---------------------------------------------------------------------------
@@ -216,55 +330,107 @@ export class PresenceService {
   // ---------------------------------------------------------------------------
 
   async getViewerList(streamId: string, streamerId: string): Promise<ViewerEntry[]> {
-    // Best effort: query LiveKit for live participant data
-    const participants = await this.videoProvider.listParticipants(streamId);
-    const viewers = participants.filter(
-      (p) => !p.hidden && p.identity !== streamerId,
-    );
+    const viewersMap = new Map<string, ViewerEntry>();
 
-    // Resolve display names for logged-in users
-    const userIds = viewers
-      .filter((p) => !p.identity.startsWith('priv_guest_'))
-      .map((p) => p.identity);
+    // 1. Gather all viewers from local in-memory registry
+    const streamMap = this.streamViewers.get(streamId);
+    if (streamMap) {
+      for (const [id, record] of streamMap.entries()) {
+        if (id !== streamerId) {
+          viewersMap.set(id, {
+            identity: record.identity,
+            displayName: record.displayName,
+            isGuest: record.isGuest,
+            joinedAtMs: record.joinedAtMs,
+          });
+        }
+      }
+    }
 
-    const dbUsers =
-      userIds.length > 0
-        ? await this.prisma.user.findMany({
-            where: { id: { in: userIds } },
-            select: { id: true, name: true },
-          })
-        : [];
-    const userNameMap = new Map(dbUsers.map((u) => [u.id, u.name]));
+    // 2. Supplement from Redis hash if available
+    try {
+      if (this.isRedisReady() && this.redis) {
+        const metas = await this.redis.hgetall(`stream:viewer_meta:${streamId}`);
+        if (metas) {
+          for (const [id, jsonStr] of Object.entries(metas)) {
+            if (id !== streamerId && !viewersMap.has(id)) {
+              try {
+                const parsed = JSON.parse(jsonStr);
+                viewersMap.set(id, parsed);
+              } catch {}
+            }
+          }
+        }
+      }
+    } catch {}
 
-    // Resolve guest names from ViewerSession
-    const guestSessionIds = viewers
-      .filter((p) => p.identity.startsWith('priv_guest_'))
-      .map((p) => p.identity.replace('priv_guest_', ''));
+    // 3. Supplement with LiveKit room participants (best-effort)
+    try {
+      const participants = await this.videoProvider.listParticipants(streamId);
+      for (const p of participants) {
+        if (!p.hidden && p.identity !== streamerId) {
+          const existing = viewersMap.get(p.identity);
+          if (existing) {
+            if (p.name && (!existing.displayName || existing.displayName === 'Devotee')) {
+              existing.displayName = p.name;
+            }
+            if (p.joinedAtMs) {
+              existing.joinedAtMs = Math.min(existing.joinedAtMs, p.joinedAtMs);
+            }
+          } else {
+            viewersMap.set(p.identity, {
+              identity: p.identity,
+              displayName: p.name || 'Devotee',
+              isGuest: p.identity.startsWith('priv_guest_') || p.identity.startsWith('guest_'),
+              joinedAtMs: p.joinedAtMs || Date.now(),
+            });
+          }
+        }
+      }
+    } catch (err: any) {
+      this.logger.debug(`getViewerList LiveKit fallback: ${err.message}`);
+    }
 
-    const guestSessions =
-      guestSessionIds.length > 0
-        ? await this.prisma.viewerSession.findMany({
-            where: { id: { in: guestSessionIds } },
-            select: { id: true, guestName: true },
-          })
-        : [];
-    const guestNameMap = new Map(
-      guestSessions.map((s) => [s.id, s.guestName ?? 'Devotee']),
-    );
+    // 4. Resolve missing names from DB
+    const list = Array.from(viewersMap.values());
+    const unresolvedUserIds = list
+      .filter((v) => !v.isGuest && (!v.displayName || v.displayName === 'Devotee'))
+      .map((v) => v.identity);
 
-    return viewers.map((p) => {
-      const isGuest = p.identity.startsWith('priv_guest_');
-      const sessionId = isGuest ? p.identity.replace('priv_guest_', '') : null;
-      const displayName = isGuest
-        ? (guestNameMap.get(sessionId ?? '') ?? 'Devotee')
-        : (userNameMap.get(p.identity) ?? 'Devotee');
-      return {
-        identity: p.identity,
-        displayName,
-        isGuest,
-        joinedAtMs: p.joinedAtMs,
-      };
-    });
+    if (unresolvedUserIds.length > 0) {
+      try {
+        const dbUsers = await this.prisma.user.findMany({
+          where: { id: { in: unresolvedUserIds } },
+          select: { id: true, name: true },
+        });
+        const nameMap = new Map(dbUsers.map((u) => [u.id, u.name]));
+        for (const v of list) {
+          const resolvedName = nameMap.get(v.identity);
+          if (resolvedName) v.displayName = resolvedName;
+        }
+      } catch {}
+    }
+
+    const unresolvedGuestSessionIds = list
+      .filter((v) => v.isGuest && (!v.displayName || v.displayName === 'Devotee'))
+      .map((v) => v.identity.replace('priv_guest_', ''));
+
+    if (unresolvedGuestSessionIds.length > 0) {
+      try {
+        const guestSessions = await this.prisma.viewerSession.findMany({
+          where: { id: { in: unresolvedGuestSessionIds } },
+          select: { id: true, guestName: true },
+        });
+        const guestNameMap = new Map(guestSessions.map((s) => [s.id, s.guestName ?? 'Devotee']));
+        for (const v of list) {
+          const sId = v.identity.replace('priv_guest_', '');
+          const gName = guestNameMap.get(sId);
+          if (gName) v.displayName = gName;
+        }
+      } catch {}
+    }
+
+    return list.sort((a, b) => a.joinedAtMs - b.joinedAtMs);
   }
 
   // ---------------------------------------------------------------------------
@@ -272,8 +438,8 @@ export class PresenceService {
   // ---------------------------------------------------------------------------
 
   /**
-   * Syncs Redis viewer sets against LiveKit ground truth for all active streams.
-   * Also updates Stream.peakViewers (excluding streamer + hidden participants).
+   * Syncs Redis viewer sets against LiveKit ground truth for all active streams
+   * while keeping actively connected chat viewers intact.
    * Safe to call from the worker process (emits via Redis pub/sub, not socket.io direct).
    */
   async reconcileAll() {
@@ -286,27 +452,23 @@ export class PresenceService {
       for (const stream of activeStreams) {
         try {
           const participants = await this.videoProvider.listParticipants(stream.id);
-          const viewers = participants.filter(
+          const livekitViewers = participants.filter(
             (p) => !p.hidden && p.identity !== stream.streamerId,
           );
-          const count = viewers.length;
 
-          // Rebuild Redis set
-          if (this.isRedisReady() && this.redis) {
-            const key = `stream:viewers:${stream.id}`;
-            await this.redis.del(key);
-            if (viewers.length > 0) {
-              await this.redis.sadd(key, ...viewers.map((v) => v.identity));
-              await this.redis.expire(key, 3600);
-            }
+          // Add any LiveKit participants into presence
+          for (const p of livekitViewers) {
+            await this.addViewerSession(
+              stream.id,
+              p.identity,
+              p.name || 'Devotee',
+              p.identity.startsWith('priv_guest_') || p.identity.startsWith('guest_'),
+            );
           }
 
-          // Update in-memory fallback
-          const memSet = new Set(viewers.map((v) => v.identity));
-          if (memSet.size > 0) this.memoryViewers.set(stream.id, memSet);
-          else this.memoryViewers.delete(stream.id);
+          const count = await this.getCount(stream.id);
 
-          // Fix peakViewers inflation: exclude streamer & hidden
+          // Update peakViewers if count grew
           if (count > stream.peakViewers) {
             await this.prisma.stream.update({
               where: { id: stream.id },
