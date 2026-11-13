@@ -205,7 +205,7 @@ export class StreamersService {
         user: {
           select: { id: true, name: true, avatarUrl: true, createdAt: true },
         },
-        followers: { select: { followerId: true } },
+        _count: { select: { followers: true } },
       },
     });
 
@@ -232,7 +232,7 @@ export class StreamersService {
         languages: profile.languages,
         specialties: profile.specialties,
         isVerifiedBadge: profile.isVerifiedBadge,
-        followerCount: profile.followerCount,
+        followerCount: (profile as any)._count?.followers ?? profile.followerCount,
       },
       streams: activeStreams,
     };

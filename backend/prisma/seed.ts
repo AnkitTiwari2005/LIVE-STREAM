@@ -118,7 +118,7 @@ async function main() {
   for (const page of staticPages) {
     await prisma.staticPage.upsert({
       where: { slug: page.slug },
-      update: { title: page.title, contentHtml: page.contentHtml },
+      update: {}, // M9: Do not overwrite live edited CMS pages on re-seed
       create: { slug: page.slug, title: page.title, contentHtml: page.contentHtml },
     });
   }
@@ -133,7 +133,7 @@ async function main() {
   for (const pkg of COIN_PACKAGES_CATALOG) {
     await prisma.coinPackage.upsert({
       where: { sku: pkg.sku },
-      update: { ...pkg },
+      update: {}, // M9: Do not overwrite live price or bonus changes on re-seed
       create: { ...pkg },
     });
   }
