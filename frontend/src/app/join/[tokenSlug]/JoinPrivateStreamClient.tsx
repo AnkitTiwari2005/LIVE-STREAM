@@ -32,7 +32,9 @@ import {
   VideoOff,
   PhoneOff,
   Volume2,
+  Eye,
 } from 'lucide-react';
+import { KickedScreen } from '@/components/KickedScreen';
 import {
   OmIcon,
   DiyaIcon,
@@ -73,6 +75,11 @@ export default function JoinPrivateStreamClient() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [inspectLoading, setInspectLoading] = useState(true);
+
+  // Live Presence & Moderation State
+  const [viewerCount, setViewerCount] = useState<number | null>(null);
+  const [kicked, setKicked] = useState<{ reason?: string; blocked: boolean } | null>(null);
+  const kickedRef = useRef<boolean>(false);
 
   // Auto-populate logged-in user name
   useEffect(() => {
@@ -144,12 +151,26 @@ export default function JoinPrivateStreamClient() {
       dakshinaTimerRef.current = setTimeout(() => setLatestDakshina(null), 8000);
     });
 
+    socketInstance.on('stream:viewer_count', (data: { streamId: string; count: number }) => {
+      if (data?.streamId === streamId && typeof data.count === 'number') {
+        setViewerCount(data.count);
+      }
+    });
+
+    socketInstance.on('stream:kicked', (data: { reason?: string; blocked: boolean }) => {
+      kickedRef.current = true;
+      setKicked(data);
+      setToken(null);
+    });
+
     return () => {
       if (dakshinaTimerRef.current) {
         clearTimeout(dakshinaTimerRef.current);
         dakshinaTimerRef.current = null;
       }
       socketInstance.off('stream:dakshina_received');
+      socketInstance.off('stream:viewer_count');
+      socketInstance.off('stream:kicked');
       socketInstance.disconnect();
     };
   }, [streamId, sessionId]);
@@ -206,6 +227,10 @@ export default function JoinPrivateStreamClient() {
     }
   };
 
+  if (kicked) {
+    return <KickedScreen reason={kicked.reason} blocked={kicked.blocked} />;
+  }
+
   if (inspectLoading) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center text-stone-400 gap-3">
@@ -230,6 +255,10 @@ export default function JoinPrivateStreamClient() {
                 connect={true}
                 video={false}
                 audio={false}
+                onDisconnected={() => {
+                  if (kickedRef.current) return;
+                  setToken(null);
+                }}
                 className="w-full h-full"
               >
                 {/* RoomAudioRenderer ensures remote audio tracks are played via HTMLAudioElement */}
@@ -280,6 +309,11 @@ export default function JoinPrivateStreamClient() {
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-950/80 text-orange-400 border border-orange-800">
                       <Lock className="w-3 h-3 text-orange-400" /> Private Consultation
                     </span>
+                    {typeof viewerCount === 'number' && viewerCount > 0 && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gold/10 text-gold-pale border border-gold/30">
+                        <Eye className="w-3 h-3 text-amber-400" /> {viewerCount} Connected
+                      </span>
+                    )}
                   </div>
                   <h1 className="text-xl font-bold text-white tracking-tight">
                     {metadata?.streamTitle || 'Private Pooja Consultation'}

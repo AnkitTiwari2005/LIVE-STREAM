@@ -15,6 +15,7 @@ import { PrismaService } from '../../../database/prisma.service';
 import { StreamStatus } from '@prisma/client';
 import { SkipThrottle } from '@nestjs/throttler';
 import { Public } from '../../../common/decorators/public.decorator';
+import { PresenceAccessor } from '../../chat/presence.accessor';
 
 @SkipThrottle()
 @Public()
@@ -36,7 +37,6 @@ export class LiveKitWebhookController {
       throw new UnauthorizedException('Authorization header is missing');
     }
 
-    // Access raw unmodified string body populated by NestJS rawBody: true
     const rawBody = (req as any).rawBody?.toString('utf-8');
     if (!rawBody) {
       throw new UnauthorizedException('Missing raw body for webhook verification');
@@ -68,7 +68,6 @@ export class LiveKitWebhookController {
 
     if (!room?.name) return;
 
-    // Room name corresponds to streamId in our platform
     const stream = await this.prisma.stream.findUnique({
       where: { id: room.name },
     });
@@ -78,17 +77,38 @@ export class LiveKitWebhookController {
       return;
     }
 
+    // PresenceService is available after ChatGateway.afterInit() runs
+    const presenceService = PresenceAccessor.get();
+
     switch (eventType) {
       case 'participant_joined': {
-        // Track viewer count
-        if (room.numParticipants > stream.peakViewers) {
+        const identity: string = participant?.identity || '';
+        const isStreamer = identity === stream.streamerId;
+        const isHidden = participant?.permission?.hidden ?? false;
+
+        // Track viewer presence (exclude streamer and hidden/admin participants)
+        if (!isStreamer && !isHidden && identity && presenceService) {
+          await presenceService.addViewer(stream.id, identity);
+        }
+
+        // Fix peakViewers: use presence count which excludes streamer + hidden
+        const viewerCount = presenceService
+          ? await presenceService.getCount(stream.id)
+          : Math.max(0, (room.numParticipants || 1) - 1);
+
+        if (viewerCount > stream.peakViewers) {
           await this.prisma.stream.update({
             where: { id: stream.id },
-            data: { peakViewers: room.numParticipants },
+            data: { peakViewers: viewerCount },
           });
         }
+
+        if (presenceService) {
+          presenceService.broadcastCount(stream.id);
+        }
+
         // If the streamer reconnected during grace period, restore LIVE status
-        if (participant?.identity === stream.streamerId && stream.status === StreamStatus.RECONNECTING_GRACE_PERIOD) {
+        if (isStreamer && stream.status === StreamStatus.RECONNECTING_GRACE_PERIOD) {
           this.logger.log(`Streamer reconnected to stream [${stream.id}]. Restoring LIVE status.`);
           await this.prisma.stream.update({
             where: { id: stream.id },
@@ -99,9 +119,19 @@ export class LiveKitWebhookController {
       }
 
       case 'participant_left': {
-        // Check if publisher/streamer dropped (B-13: Do not enter grace period if stream was already ended)
+        const identity: string = participant?.identity || '';
+        const isStreamer = identity === stream.streamerId;
+        const isHidden = participant?.permission?.hidden ?? false;
+
+        // Remove from presence and broadcast updated count
+        if (!isStreamer && !isHidden && identity && presenceService) {
+          await presenceService.removeViewer(stream.id, identity);
+          presenceService.broadcastCount(stream.id);
+        }
+
+        // Check if publisher/streamer dropped
         if (
-          participant?.identity === stream.streamerId &&
+          isStreamer &&
           stream.status === StreamStatus.LIVE &&
           !stream.endedAt
         ) {
@@ -112,16 +142,16 @@ export class LiveKitWebhookController {
           });
         }
 
-        // B-16: Record leftAt for private viewer session if a participant disconnects
-        if (participant?.identity) {
-          const isGuest = participant.identity.startsWith('priv_guest_');
-          const sessionId = isGuest ? participant.identity.replace('priv_guest_', '') : null;
+        // B-16: Record leftAt for private viewer session
+        if (identity) {
+          const isGuest = identity.startsWith('priv_guest_');
+          const sessionId = isGuest ? identity.replace('priv_guest_', '') : null;
           await this.prisma.viewerSession.updateMany({
             where: {
               streamId: stream.id,
               leftAt: null,
               OR: [
-                ...(participant.identity ? [{ userId: participant.identity }] : []),
+                ...(identity ? [{ userId: identity }] : []),
                 ...(sessionId ? [{ id: sessionId }] : []),
               ],
             },
@@ -151,6 +181,12 @@ export class LiveKitWebhookController {
             where: { streamId: stream.id, status: 'ACTIVE' },
             data: { status: 'DISCONNECTED_TIMEOUT', endedAt },
           });
+
+          // Clear presence and broadcast zero count
+          if (presenceService) {
+            await presenceService.clearStream(stream.id);
+            presenceService.broadcastCount(stream.id);
+          }
 
           this.logger.log(`Room finished. Stream [${stream.id}] marked as ENDED.`);
         }

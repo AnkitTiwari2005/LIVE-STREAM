@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Socket } from 'socket.io-client';
-import { Send, Pin, Trash2, VolumeX, ShieldAlert, Sparkles, Flag } from 'lucide-react';
+import { Send, Pin, Trash2, VolumeX, ShieldAlert, Sparkles, Flag, UserX } from 'lucide-react';
 import { OmIcon, DiyaIcon, PranamIcon, CoinIcon } from '@/components/icons/SpiritualIcons';
+import { KickedScreen } from '@/components/KickedScreen';
+import { KickViewerModal } from '@/components/KickViewerModal';
 
 interface ChatMessage {
   id: string;
@@ -31,7 +33,11 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
   const [pinnedMessage, setPinnedMessage] = useState<ChatMessage | null>(null);
   const [input, setInput] = useState('');
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
+  const [muteBanner, setMuteBanner] = useState<string | null>(null);
+  const [isMuted, setIsMuted] = useState(false);
   const [activeUser, setActiveUser] = useState<any>(currentUser || null);
+  const [kickedData, setKickedData] = useState<{ reason?: string; blocked: boolean } | null>(null);
+  const [kickTarget, setKickTarget] = useState<{ identity: string; displayName: string } | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -54,7 +60,6 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
       socket.emit('chat:join', { streamId, sessionId: sessionId || undefined });
     };
 
-    // Join room immediately if already connected, and also on every connect/reconnect
     if (socket.connected) {
       joinRoom();
     }
@@ -92,6 +97,22 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
       setTimeout(() => setErrorBanner(null), 4000);
     });
 
+    // G7: chat:user_muted is now sent only to the target's identity room (not the whole stream room)
+    socket.on('chat:user_muted', (data: { userId: string; durationMinutes: number }) => {
+      setMuteBanner(`You have been muted for ${data.durationMinutes} minute(s).`);
+      setIsMuted(true);
+      // Auto-clear mute banner after duration
+      setTimeout(() => {
+        setMuteBanner(null);
+        setIsMuted(false);
+      }, data.durationMinutes * 60 * 1000);
+    });
+
+    // Feature C: listen for kick event from streamer/admin
+    socket.on('stream:kicked', (data: { reason?: string; blocked: boolean }) => {
+      setKickedData(data);
+    });
+
     socket.on('stream:dakshina_received', (dakshina: any) => {
       const coinAmount = dakshina.coins ?? dakshina.amount;
       setMessages((prev) => [
@@ -118,6 +139,8 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
       socket.off('chat:message_deleted');
       socket.off('chat:message_pinned');
       socket.off('chat:error');
+      socket.off('chat:user_muted');
+      socket.off('stream:kicked');
       socket.off('stream:dakshina_received');
     };
   }, [socket, streamId]);
@@ -134,9 +157,10 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
     if (!trimmed) return;
 
     const storedUser = typeof window !== 'undefined' ? localStorage.getItem('pooja_user') : null;
-    const activeUser = currentUser || (storedUser ? JSON.parse(storedUser) : null);
+    const resolvedUser = currentUser || (storedUser ? JSON.parse(storedUser) : null);
 
-    if (!activeUser) {
+    // G8: allow guests with sessionId to send without being logged in
+    if (!resolvedUser && !sessionId) {
       setErrorBanner('Please sign in to participate in sacred live chat.');
       setTimeout(() => setErrorBanner(null), 4000);
       return;
@@ -150,11 +174,10 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
 
     const storedToken = typeof window !== 'undefined' ? localStorage.getItem('pooja_token') : null;
 
-    // Emit chat message event
     socket.emit('chat:send', {
       streamId,
       message: trimmed,
-      guestName: activeUser?.name || 'Devotee',
+      guestName: resolvedUser?.name || 'Devotee',
       token: storedToken,
     });
 
@@ -176,6 +199,12 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
     socket.emit('chat:mute', { streamId, targetUserId, durationMinutes: 15 });
   };
 
+  // G9: kick button opens KickViewerModal
+  const handleKick = (identity: string, displayName: string) => {
+    if (!isStreamer) return;
+    setKickTarget({ identity, displayName });
+  };
+
   const handleReportMessage = async (msg: ChatMessage) => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('pooja_token') : null;
     if (!token) {
@@ -186,6 +215,9 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      // G10: only pass targetUserId if it looks like a real UUID (not a socket.id or guest string)
+      const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const isRealUserId = UUID_PATTERN.test(msg.user?.id || '');
       await fetch(`${apiUrl}/reports`, {
         method: 'POST',
         headers: {
@@ -196,7 +228,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
           targetType: 'CHAT_MESSAGE',
           streamId,
           chatMessageId: msg.id,
-          targetUserId: msg.user?.id,
+          ...(isRealUserId ? { targetUserId: msg.user.id } : {}),
           reason: 'Inappropriate or offensive message',
           details: msg.message,
         }),
@@ -209,7 +241,12 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
     }
   };
 
-  const isLoggedIn = Boolean(activeUser);
+  const isLoggedIn = Boolean(activeUser) || Boolean(sessionId);
+
+  // Feature C: show kicked screen if user was removed
+  if (kickedData) {
+    return <KickedScreen reason={kickedData.reason} blocked={kickedData.blocked} />;
+  }
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-3xl overflow-hidden shadow-lg dark:shadow-2xl">
@@ -250,6 +287,14 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
         <div className="bg-red-950/90 border-b border-red-800 px-3 py-1.5 text-xs text-red-200 flex items-center gap-2">
           <ShieldAlert className="w-3.5 h-3.5 text-red-400 shrink-0" />
           <span>{errorBanner}</span>
+        </div>
+      )}
+
+      {/* Mute Banner */}
+      {muteBanner && (
+        <div className="bg-orange-950/80 border-b border-orange-800/60 px-3 py-1.5 text-xs text-orange-200 flex items-center gap-2">
+          <VolumeX className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+          <span>{muteBanner}</span>
         </div>
       )}
 
@@ -335,6 +380,16 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
                         <VolumeX className="w-3 h-3" />
                       </button>
                     )}
+                    {/* G9: Kick button */}
+                    {msg.user.id && (
+                      <button
+                        onClick={() => handleKick(msg.user.id, msg.user.name)}
+                        title="Remove viewer"
+                        className="p-1 text-stone-600 dark:text-stone-400 hover:text-red-700 dark:hover:text-red-400"
+                      >
+                        <UserX className="w-3 h-3" />
+                      </button>
+                    )}
                     <button
                       onClick={() => handleDelete(msg.id)}
                       title="Delete message"
@@ -368,12 +423,14 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
               onChange={(e) => setInput(e.target.value)}
               placeholder="Chant Har Har Mahadev, Jai Shri Ram..."
               maxLength={500}
-              className="flex-1 px-3.5 py-2 bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-800 rounded-xl text-xs text-stone-900 dark:text-white placeholder-stone-500 dark:placeholder-stone-400 focus:outline-none focus:border-amber-600 dark:focus:border-orange-500 shadow-sm"
+              disabled={isMuted}
+              className="flex-1 px-3.5 py-2 bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-800 rounded-xl text-xs text-stone-900 dark:text-white placeholder-stone-500 dark:placeholder-stone-400 focus:outline-none focus:border-amber-600 dark:focus:border-orange-500 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <button
               type="submit"
-              className="bg-orange-700 hover:bg-orange-600 text-white p-2.5 rounded-xl transition-colors shadow-md shrink-0"
-              title="Send Message"
+              disabled={isMuted}
+              className="bg-orange-700 hover:bg-orange-600 text-white p-2.5 rounded-xl transition-colors shadow-md shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              title={isMuted ? 'You are muted' : 'Send Message'}
             >
               <Send className="w-4 h-4" />
             </button>
@@ -387,6 +444,17 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
           </div>
         )}
       </div>
+
+      {/* KickViewerModal */}
+      {kickTarget && isStreamer && (
+        <KickViewerModal
+          streamId={streamId}
+          identity={kickTarget.identity}
+          displayName={kickTarget.displayName}
+          onClose={() => setKickTarget(null)}
+          socket={socket}
+        />
+      )}
     </div>
   );
 }

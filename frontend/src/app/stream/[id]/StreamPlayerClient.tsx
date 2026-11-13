@@ -16,7 +16,8 @@ import { ChatWidget } from '@/components/ChatWidget';
 import { FloatingReactionsOverlay, DevotionalEmojiBar } from '@/components/SpiritualReactions';
 import { DakshinaModal } from '@/components/DakshinaModal';
 import { CoinTopupModal } from '@/components/CoinTopupModal';
-import { Users, AlertCircle, Share2, Sparkles, Zap, Calendar, Bell, CheckCircle2, Clock, MessageSquare, Info, LogIn, Gift, Flame, Flag, X, ArrowRight } from 'lucide-react';
+import { Users, AlertCircle, Share2, Sparkles, Zap, Calendar, Bell, CheckCircle2, Clock, MessageSquare, Info, LogIn, Gift, Flame, Flag, X, ArrowRight, Eye } from 'lucide-react';
+import { KickedScreen } from '@/components/KickedScreen';
 import { apiFetch } from '@/lib/api';
 import { classifyTick } from '@/lib/meter-tick';
 import {
@@ -105,6 +106,11 @@ export default function StreamPlayerClient() {
   // N-05: Show a small non-intrusive connection warning instead of the top-up dialog on transient errors.
   const [connectionWarning, setConnectionWarning] = useState(false);
 
+  // Live Presence & Moderation State
+  const [viewerCount, setViewerCount] = useState<number | null>(null);
+  const [kicked, setKicked] = useState<{ reason?: string; blocked: boolean } | null>(null);
+  const kickedRef = useRef<boolean>(false);
+
   useEffect(() => {
     if (stream?.title) {
       document.title = `${stream.title} | Shubhdarshan`;
@@ -144,12 +150,33 @@ export default function StreamPlayerClient() {
       dakshinaTimerRef.current = setTimeout(() => setLatestDakshina(null), 8000);
     });
 
+    socketInstance.on('stream:viewer_count', (data: { streamId: string; count: number }) => {
+      if (data?.streamId === id && typeof data.count === 'number') {
+        setViewerCount(data.count);
+      }
+    });
+
+    socketInstance.on('stream:kicked', (data: { reason?: string; blocked: boolean }) => {
+      kickedRef.current = true;
+      setKicked(data);
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+      if (meterIntervalRef.current) {
+        clearInterval(meterIntervalRef.current);
+        meterIntervalRef.current = null;
+      }
+    });
+
     return () => {
       if (dakshinaTimerRef.current) {
         clearTimeout(dakshinaTimerRef.current);
         dakshinaTimerRef.current = null;
       }
       socketInstance.off('stream:dakshina_received');
+      socketInstance.off('stream:viewer_count');
+      socketInstance.off('stream:kicked');
       socketInstance.disconnect();
     };
   }, []);
@@ -448,6 +475,10 @@ export default function StreamPlayerClient() {
     }
   };
 
+  if (kicked) {
+    return <KickedScreen reason={kicked.reason} blocked={kicked.blocked} />;
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* N-05: Transient connection warning — shown on 5xx/429/network errors, NOT on low balance */}
@@ -690,6 +721,9 @@ export default function StreamPlayerClient() {
                   video={false}
                   audio={false}
                   onDisconnected={() => {
+                    // Stop auto-reconnect if viewer was kicked
+                    if (kickedRef.current) return;
+
                     // N-06: Backoff reconnect — cap at 5 attempts with exponential delay.
                     // Previously called fetchStreamAndToken() immediately on every disconnect,
                     // causing a tight loop if the room rejected the connection (e.g. stream ended).
@@ -797,10 +831,16 @@ export default function StreamPlayerClient() {
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-1.5">
                         {stream.status === 'LIVE' ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800">
-                            <span className="w-1.5 h-1.5 rounded-full bg-red-600 dark:bg-red-500 animate-pulse" />
-                            LIVE
-                          </span>
+                          <>
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800">
+                              <span className="w-1.5 h-1.5 rounded-full bg-red-600 dark:bg-red-500 animate-pulse" />
+                              LIVE
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gold/10 text-gold-pale border border-gold/30">
+                              <Eye className="w-3.5 h-3.5 text-amber-400" />
+                              <span>{viewerCount ?? stream.peakViewers ?? 0} Watching</span>
+                            </span>
+                          </>
                         ) : stream.status === 'SCHEDULED' ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gold/10 text-gold-pale border border-gold/30">
                             <Calendar className="w-3.5 h-3.5 text-gold" />
@@ -917,7 +957,8 @@ export default function StreamPlayerClient() {
                       )}
                     </div>
                     <span className="flex items-center gap-1 text-stone-600 dark:text-stone-400 font-medium">
-                      <Users className="w-3.5 h-3.5 text-amber-700 dark:text-gold" /> Live Devotees
+                      <Eye className="w-3.5 h-3.5 text-amber-700 dark:text-gold" />
+                      <span>{viewerCount ?? stream.peakViewers ?? 0} Live Devotees</span>
                     </span>
                   </div>
                 </div>

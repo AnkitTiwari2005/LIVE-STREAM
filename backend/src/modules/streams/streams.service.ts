@@ -12,6 +12,7 @@ import { WalletService } from '../wallet/wallet.service';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateStreamDto } from './dto/create-stream.dto';
 import { UpdateStreamDto } from './dto/update-stream.dto';
+import { KickViewerDto } from './dto/kick-viewer.dto';
 import { StreamStatus, StreamVisibility, UserRole, UserStatus, ViewingSessionStatus } from '@prisma/client';
 import { validateStateTransition } from './state/stream-state-machine';
 import {
@@ -23,6 +24,19 @@ import { getLiveKitPublicUrl } from '../../common/livekit-url.util';
 @Injectable()
 export class StreamsService {
   private readonly logger = new Logger(StreamsService.name);
+
+  // Set via StreamsService.setDependencies() called from ChatGateway.afterInit()
+  // to avoid circular NestJS DI (StreamsModule ↔ ChatModule).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private presenceService: any = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private chatGateway: any = null;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  setDependencies(presenceService: any, chatGateway: any) {
+    this.presenceService = presenceService;
+    this.chatGateway = chatGateway;
+  }
 
   constructor(
     private readonly prisma: PrismaService,
@@ -464,5 +478,125 @@ export class StreamsService {
     }
 
     return stream;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Feature C — Kick / Remove viewer (public + private streams)
+  // ---------------------------------------------------------------------------
+
+  async kickViewer(
+    streamId: string,
+    actorId: string,
+    actorRole: string,
+    identity: string,
+    dto: KickViewerDto,
+  ) {
+    const stream = await this.prisma.stream.findUnique({ where: { id: streamId } });
+    if (!stream) throw new NotFoundException('Stream not found');
+
+    const isModerator = stream.streamerId === actorId || actorRole === UserRole.ADMIN;
+    if (!isModerator) throw new ForbiddenException('Not authorized to remove viewers');
+
+    // 1. Kick from LiveKit
+    await this.videoProvider.kickParticipant(streamId, identity);
+
+    // 2. Determine if identity is a registered user or guest session
+    const isGuest = identity.startsWith('priv_guest_');
+    const targetUserId = isGuest ? null : identity;
+    const targetSessionId = isGuest ? identity.replace('priv_guest_', '') : null;
+
+    // 3. Stop coin billing (StreamViewingSession → EVICTED_BY_MODERATOR)
+    // StreamViewingSession is keyed by userId only (guests don't have metered billing)
+    const billingWhere: Record<string, any> = { streamId, status: 'ACTIVE' };
+    if (targetUserId) billingWhere.userId = targetUserId;
+    await this.prisma.streamViewingSession.updateMany({
+      where: billingWhere,
+      data: {
+        status: ViewingSessionStatus.EVICTED_BY_MODERATOR,
+        endedAt: new Date(),
+      },
+    });
+
+    // 4. Mark ViewerSession as removed
+    if (targetSessionId) {
+      await this.prisma.viewerSession.updateMany({
+        where: { id: targetSessionId, streamId },
+        data: { isRemoved: true, leftAt: new Date() },
+      });
+    } else if (targetUserId) {
+      await this.prisma.viewerSession.updateMany({
+        where: { userId: targetUserId, streamId, isRemoved: false },
+        data: { isRemoved: true, leftAt: new Date() },
+      });
+    }
+
+    // 5. Block if requested — create a BlockedViewer record
+    if (dto.block) {
+      try {
+        // Check if already blocked to avoid duplicates
+        const existing = await this.prisma.blockedViewer.findFirst({
+          where: {
+            streamId,
+            ...(targetUserId ? { userId: targetUserId } : {}),
+            ...(targetSessionId ? { sessionFingerprint: targetSessionId } : {}),
+          },
+        });
+        if (!existing) {
+          await this.prisma.blockedViewer.create({
+            data: {
+              streamId,
+              ...(targetUserId ? { userId: targetUserId } : {}),
+              ...(targetSessionId ? { sessionFingerprint: targetSessionId } : {}),
+              reason: dto.reason,
+            },
+          });
+        }
+      } catch (err: any) {
+        this.logger.warn(`BlockedViewer create failed for ${identity}: ${err.message}`);
+      }
+    }
+
+    // 6. Record ModerationAction
+    const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    await this.prisma.moderationAction.create({
+      data: {
+        actorId,
+        ...(targetUserId && UUID_PATTERN.test(targetUserId) ? { targetUserId } : {}),
+        streamId,
+        actionType: dto.block ? 'BLOCK' : 'KICK',
+        reason: dto.reason,
+      },
+    });
+
+    // 7. Notify the kicked client via Socket.IO
+    if (this.chatGateway) {
+      this.chatGateway.emitKick(streamId, identity, {
+        reason: dto.reason,
+        blocked: dto.block,
+      });
+    }
+
+    // 8. Update viewer count
+    if (this.presenceService) {
+      await this.presenceService.removeViewer(streamId, identity);
+      this.presenceService.broadcastCount(streamId);
+    }
+
+    this.logger.log(`Kicked viewer [${identity}] from stream [${streamId}] block=${dto.block}`);
+    return {
+      success: true,
+      kicked: true,
+      blocked: !!dto.block,
+    };
+  }
+
+  async getViewerListForStream(streamId: string, actorId: string, actorRole: string) {
+    const stream = await this.prisma.stream.findUnique({ where: { id: streamId } });
+    if (!stream) throw new NotFoundException('Stream not found');
+    if (stream.streamerId !== actorId && actorRole !== UserRole.ADMIN) {
+      throw new ForbiddenException('Not authorized');
+    }
+    if (!this.presenceService) return [];
+    return this.presenceService.getViewerList(streamId, stream.streamerId);
   }
 }

@@ -17,6 +17,8 @@ import {
 } from '../video/interfaces/video-provider.interface';
 import { getLiveKitPublicUrl } from '../../common/livekit-url.util';
 import { StreamStatus, StreamVisibility, UserStatus } from '@prisma/client';
+import { forwardRef } from '@nestjs/common';
+import { StreamsService } from '../streams/streams.service';
 
 function getFrontendOrigin(): string {
   const origin = process.env.FRONTEND_ORIGIN || (process.env.DOMAIN ? `https://${process.env.DOMAIN}` : null);
@@ -35,6 +37,8 @@ export class PrivateLinksService {
     private readonly prisma: PrismaService,
     @Inject(VIDEO_PROVIDER_TOKEN)
     private readonly videoProvider: IVideoProviderService,
+    @Inject(forwardRef(() => StreamsService))
+    private readonly streamsService: StreamsService,
   ) {}
 
   async createLink(streamerId: string, dto: CreatePrivateLinkDto) {
@@ -360,38 +364,18 @@ export class PrivateLinksService {
       throw new ForbiddenException('Only the streamer can moderate attendees in this stream');
     }
 
-    let identityToKick = targetUserId || null;
-    let sessionIp: string | null = null;
-    if (targetSessionId) {
+    // Resolve LiveKit identity
+    let identity = targetUserId || null;
+    if (targetSessionId && !identity) {
       const session = await this.prisma.viewerSession.findUnique({ where: { id: targetSessionId } });
-      if (session) {
-        sessionIp = session.ipAddress;
-        // B-16: Resolve real identity from session record (logged-in user or guest)
-        if (!identityToKick) {
-          identityToKick = session.userId || `priv_guest_${session.id}`;
-        }
-        await this.prisma.viewerSession.update({
-          where: { id: session.id },
-          data: { isRemoved: true, leftAt: new Date() },
-        });
-      }
+      identity = session?.userId || `priv_guest_${targetSessionId}`;
     }
+    if (!identity) throw new BadRequestException('Must provide targetUserId or targetSessionId');
 
-    // Add to BlockedViewer table (FR-P7)
-    await this.prisma.blockedViewer.create({
-      data: {
-        streamId,
-        userId: targetUserId || null,
-        sessionFingerprint: sessionIp || targetSessionId || null,
-        reason: reason || 'Removed by streamer',
-      },
+    // Delegate to unified kick logic (handles billing, block, ModerationAction, socket emit)
+    return this.streamsService.kickViewer(streamId, streamerId, 'STREAMER', identity, {
+      block: true,
+      reason,
     });
-
-    // Evict from LiveKit SFU immediately using roomName
-    if (identityToKick) {
-      await this.videoProvider.kickParticipant(streamId, identityToKick);
-    }
-
-    return { message: 'Viewer removed and permanently blocked from this stream.' };
   }
 }

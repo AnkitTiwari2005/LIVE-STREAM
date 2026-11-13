@@ -4,16 +4,20 @@ import {
   SubscribeMessage,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
   ConnectedSocket,
   MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Logger } from '@nestjs/common';
+import { Logger, Inject, forwardRef } from '@nestjs/common';
 import { ChatService } from './chat.service';
+import { PresenceService } from './presence.service';
+import { PresenceAccessor } from './presence.accessor';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../database/prisma.service';
 import Redis from 'ioredis';
 import { UserRole, UserStatus } from '@prisma/client';
+import { StreamsService } from '../streams/streams.service';
 
 class InMemoryChatCache {
   private rateLimits = new Map<string, number>();
@@ -76,12 +80,15 @@ class InMemoryChatCache {
 
 @WebSocketGateway({
   cors: {
-    origin: (origin, callback) => callback(null, true),
+    origin: process.env.FRONTEND_URL
+      ? [process.env.FRONTEND_URL, 'http://localhost:3000']
+      : (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) =>
+          callback(null, true),
     credentials: true,
   },
   namespace: '/',
 })
-export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
@@ -91,8 +98,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   constructor(
     private readonly chatService: ChatService,
+    private readonly presenceService: PresenceService,
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => StreamsService))
+    private readonly streamsService: StreamsService,
   ) {
     const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
     try {
@@ -106,6 +116,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
     } catch {
       this.redis = null;
+    }
+  }
+
+  afterInit(_server: Server) {
+    // Wire PresenceService → this gateway (avoids circular DI in constructor)
+    this.presenceService.setGateway(this);
+    // Register in global accessor so VideoModule's webhook controller can reach it
+    PresenceAccessor.set(this.presenceService);
+    // Wire StreamsService with lazy references to PresenceService + ChatGateway
+    if (this.streamsService?.setDependencies) {
+      this.streamsService.setDependencies(this.presenceService, this);
     }
   }
 
@@ -169,7 +190,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(client: Socket) {
-    // Cleanup on client drop
+    // Chat-only socket disconnect: remove from chat-only viewer tracking if applicable.
+    // NOTE: Do NOT decrement LiveKit-sourced viewer count here — that is the webhook's job.
+    // We only clean up client.data to free memory.
+    const streamId = client.data?.streamId;
+    if (streamId) {
+      // Leave per-identity socket room (clean up for future targeted emits)
+      const identity = client.data?.livekitIdentity || client.data?.user?.sub;
+      if (identity) {
+        client.leave(`identity:${streamId}:${identity}`);
+      }
+    }
+    client.data = {};
   }
 
   @SubscribeMessage('chat:join')
@@ -224,9 +256,47 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.join(`stream:${streamId}`);
     client.data.streamId = streamId;
 
+    // Persist sessionId for guest identity resolution later
+    if (data.sessionId) {
+      client.data.sessionId = data.sessionId;
+    }
+
+    // Join per-identity room for targeted kick events
+    const userId2 = client.data.user?.sub;
+    const sessionId2 = data.sessionId || client.handshake.auth?.sessionId;
+    const livekitIdentity = userId2 || (sessionId2 ? `priv_guest_${sessionId2}` : null);
+    if (livekitIdentity) {
+      client.data.livekitIdentity = livekitIdentity;
+      client.join(`identity:${streamId}:${livekitIdentity}`);
+    }
+
+    // Send current viewer count to this client
+    await this.presenceService.sendCountToSocket(streamId, client.id);
+
     // Send recent chat messages to joining client
     const recent = await this.chatService.getRecentChat(streamId, 30);
     client.emit('chat:history', recent.reverse());
+  }
+
+  @SubscribeMessage('stream:viewer_list:request')
+  async handleViewerListRequest(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { streamId: string },
+  ) {
+    const user = client.data.user;
+    if (!user || !data?.streamId) return;
+
+    const { streamId } = data;
+    if (!streamId) return;
+
+    const stream = await this.prisma.stream.findUnique({ where: { id: streamId } });
+    if (!stream) return;
+
+    const isModerator = stream.streamerId === user.sub || user.role === UserRole.ADMIN;
+    if (!isModerator) return;
+
+    const list = await this.presenceService.getViewerList(streamId, stream.streamerId);
+    client.emit('stream:viewer_list', list);
   }
 
   @SubscribeMessage('chat:send')
@@ -372,7 +442,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { streamId: string; messageId: string },
   ) {
     const user = client.data.user;
-    if (!user) return;
+    if (!user || !data?.streamId || !data?.messageId) return;
 
     const stream = await this.prisma.stream.findUnique({ where: { id: data.streamId } });
     if (!stream) return;
@@ -384,9 +454,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (!msg || msg.streamId !== data.streamId) return;
 
     await this.chatService.deleteMessage(data.messageId);
-    this.server.to(`stream:${data.streamId}`).emit('chat:message_deleted', {
-      messageId: data.messageId,
-    });
+    if (this.server) {
+      this.server.to(`stream:${data.streamId}`).emit('chat:message_deleted', {
+        messageId: data.messageId,
+      });
+    }
   }
 
   @SubscribeMessage('chat:pin')
@@ -395,7 +467,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { streamId: string; messageId: string },
   ) {
     const user = client.data.user;
-    if (!user) return;
+    if (!user || !data?.streamId || !data?.messageId) return;
 
     const stream = await this.prisma.stream.findUnique({ where: { id: data.streamId } });
     if (!stream) return;
@@ -407,10 +479,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (!msg || msg.streamId !== data.streamId) return;
 
     const pinned = await this.chatService.pinMessage(data.streamId, data.messageId);
-    this.server.to(`stream:${data.streamId}`).emit('chat:message_pinned', {
-      messageId: pinned.id,
-      message: pinned.message,
-    });
+    if (this.server) {
+      this.server.to(`stream:${data.streamId}`).emit('chat:message_pinned', {
+        messageId: pinned.id,
+        message: pinned.message,
+      });
+    }
   }
 
   @SubscribeMessage('chat:mute')
@@ -419,7 +493,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { streamId: string; targetUserId: string; durationMinutes?: number },
   ) {
     const user = client.data.user;
-    if (!user) return;
+    if (!user || !data?.streamId || !data?.targetUserId) return;
 
     const stream = await this.prisma.stream.findUnique({ where: { id: data.streamId } });
     if (!stream) return;
@@ -438,20 +512,29 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Redis unavailable
     }
 
+    // G6: Only write ModerationAction.targetUserId when it is a real UUID (FK to User.id).
+    // Guest socket.id / priv_guest_* strings would cause a Prisma FK violation.
+    const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const isRealUserId = UUID_PATTERN.test(data.targetUserId);
     await this.prisma.moderationAction.create({
       data: {
         actorId: user.sub,
-        targetUserId: data.targetUserId,
+        ...(isRealUserId ? { targetUserId: data.targetUserId } : {}),
         streamId: data.streamId,
         actionType: 'MUTE',
         durationMinutes: minutes,
       },
     });
 
-    this.server.to(`stream:${data.streamId}`).emit('chat:user_muted', {
-      userId: data.targetUserId,
-      durationMinutes: minutes,
-    });
+    // G7: Send chat:user_muted only to the target's own socket room (not the entire stream room)
+    // so other viewers don't know who was muted.
+    if (this.server) {
+      const targetRoom = `identity:${data.streamId}:${data.targetUserId}`;
+      this.server.to(targetRoom).emit('chat:user_muted', {
+        userId: data.targetUserId,
+        durationMinutes: minutes,
+      });
+    }
   }
 
   broadcastDakshina(streamId: string, dakshina: any) {
@@ -472,5 +555,25 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (this.server && streamerId) {
       this.server.to(`user:${streamerId}`).emit('stream:earnings_updated', payload);
     }
+  }
+
+  /**
+   * Emit stream:kicked to a specific viewer's identity room.
+   * Called by StreamsService.kickViewer() after removing from LiveKit.
+   */
+  emitKick(streamId: string, identity: string, payload: { reason?: string; blocked: boolean }) {
+    if (this.server) {
+      this.server
+        .to(`identity:${streamId}:${identity}`)
+        .emit('stream:kicked', payload);
+    }
+  }
+
+  /**
+   * Broadcast updated viewer count to everyone in the stream room.
+   * Also delegates to PresenceService for throttle + Redis pub/sub cross-process relay.
+   */
+  broadcastViewerCount(streamId: string) {
+    this.presenceService.broadcastCount(streamId);
   }
 }

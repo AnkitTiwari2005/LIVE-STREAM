@@ -38,7 +38,17 @@ import {
   AlertCircle,
   Check,
   Sparkles,
+  Eye,
+  UserX,
 } from 'lucide-react';
+import { KickViewerModal } from '@/components/KickViewerModal';
+
+export interface ViewerEntry {
+  identity: string;
+  displayName: string;
+  isGuest: boolean;
+  joinedAtMs: number;
+}
 
 export default function StudioClient() {
   const { id: paramId } = useParams() as { id: string };
@@ -83,6 +93,13 @@ export default function StudioClient() {
   const [lastDelta, setLastDelta] = useState<number | null>(null);
   const deltaTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const devicesLoadedRef = useRef(false);
+
+  // Live Presence & Moderation State
+  const [viewerCount, setViewerCount] = useState<number>(0);
+  const [peakViewers, setPeakViewers] = useState<number>(0);
+  const [viewers, setViewers] = useState<ViewerEntry[]>([]);
+  const [showViewersPanel, setShowViewersPanel] = useState<boolean>(false);
+  const [kickTarget, setKickTarget] = useState<{ identity: string; displayName: string } | null>(null);
 
   // Ensure streamId updates if URL changes
   useEffect(() => {
@@ -158,7 +175,12 @@ export default function StudioClient() {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Stream not found');
-        if (!isDisposed) setStream(data);
+        if (!isDisposed) {
+          setStream(data);
+          if (typeof data.peakViewers === 'number') {
+            setPeakViewers(data.peakViewers);
+          }
+        }
 
         // If stream is private, auto-generate private link
         if (data.visibility === 'PRIVATE') {
@@ -205,8 +227,29 @@ export default function StudioClient() {
       }
     };
 
-    socketInstance.on('connect', fetchStreamEarnings);
+    const handleViewerCount = (payload: any) => {
+      if (!payload || payload.streamId !== streamId) return;
+      if (typeof payload.count === 'number') {
+        setViewerCount(payload.count);
+        setPeakViewers((prev) => Math.max(prev, payload.count));
+      }
+    };
+
+    const handleViewerList = (list: ViewerEntry[]) => {
+      if (Array.isArray(list)) {
+        setViewers(list);
+      }
+    };
+
+    const onConnect = () => {
+      fetchStreamEarnings();
+      socketInstance.emit('stream:viewer_list:request', { streamId });
+    };
+
+    socketInstance.on('connect', onConnect);
     socketInstance.on('stream:earnings_updated', handleEarningsUpdated);
+    socketInstance.on('stream:viewer_count', handleViewerCount);
+    socketInstance.on('stream:viewer_list', handleViewerList);
 
     return () => {
       isDisposed = true;
@@ -214,8 +257,10 @@ export default function StudioClient() {
         clearTimeout(deltaTimerRef.current);
         deltaTimerRef.current = null;
       }
-      socketInstance.off('connect', fetchStreamEarnings);
+      socketInstance.off('connect', onConnect);
       socketInstance.off('stream:earnings_updated', handleEarningsUpdated);
+      socketInstance.off('stream:viewer_count', handleViewerCount);
+      socketInstance.off('stream:viewer_list', handleViewerList);
       socketInstance.disconnect();
     };
   }, [streamId, router]);
@@ -397,6 +442,43 @@ export default function StudioClient() {
               </Link>
             );
           })()}
+
+          {/* Live Viewer Count Pill */}
+          {isLive && (
+            <div
+              title={`Active Devotees: ${viewerCount} • Peak: ${peakViewers}`}
+              className="relative inline-flex items-center gap-2 rounded-full border border-gold/40 bg-obsidian-soft px-3.5 py-2 text-xs font-bold text-gold-pale shadow-sm"
+            >
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <Eye className="w-4 h-4 text-amber-400" />
+                <span>{viewerCount} Live</span>
+              </div>
+              <span className="text-stone-500">•</span>
+              <span className="text-[10px] text-stone-400 font-medium">Peak: {peakViewers}</span>
+            </div>
+          )}
+
+          {/* Toggle Viewers Moderation Panel */}
+          {isLive && (
+            <button
+              type="button"
+              onClick={() => {
+                const next = !showViewersPanel;
+                setShowViewersPanel(next);
+                if (next && socket) {
+                  socket.emit('stream:viewer_list:request', { streamId });
+                }
+              }}
+              className={`flex items-center gap-1.5 text-xs font-semibold py-2 px-3.5 rounded-xl transition-colors shadow-md ${
+                showViewersPanel
+                  ? 'bg-amber-700 text-white shadow-amber-900/40'
+                  : 'bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-700'
+              }`}
+            >
+              <Users className="w-4 h-4" /> Viewers ({viewerCount})
+            </button>
+          )}
 
           {stream?.visibility === 'PRIVATE' && privateLinkData && (
             <button
@@ -615,13 +697,65 @@ export default function StudioClient() {
               )}
             </div>
           ) : (
-            <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl flex items-center justify-between text-xs text-stone-300">
-              <span className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-ping" />
-                Audio & Video Broadcasting via Single-port UDP (7882)
-              </span>
-              <span className="text-stone-400 font-mono">Simulcast Active</span>
-            </div>
+            <>
+              <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl flex items-center justify-between text-xs text-stone-300">
+                <span className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-green-500 animate-ping" />
+                  Audio & Video Broadcasting via Single-port UDP (7882)
+                </span>
+                <span className="text-stone-400 font-mono">Simulcast Active</span>
+              </div>
+
+              {/* Live Viewers Panel */}
+              {showViewersPanel && (
+                <div className="bg-stone-900 border border-gold/30 p-4 rounded-2xl space-y-3 shadow-xl">
+                  <div className="flex items-center justify-between border-b border-stone-800 pb-2">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-amber-400" />
+                      <h3 className="text-sm font-bold text-white">Active Devotees ({viewers.length})</h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (socket) socket.emit('stream:viewer_list:request', { streamId });
+                      }}
+                      className="text-[11px] text-amber-400 hover:text-amber-300 font-semibold transition"
+                    >
+                      Refresh List
+                    </button>
+                  </div>
+
+                  {viewers.length === 0 ? (
+                    <p className="text-xs text-stone-400 py-3 text-center">No other devotees currently connected in video room.</p>
+                  ) : (
+                    <div className="max-h-56 overflow-y-auto space-y-2 pr-1">
+                      {viewers.map((v) => (
+                        <div
+                          key={v.identity}
+                          className="flex items-center justify-between p-2.5 rounded-xl bg-stone-950/80 border border-stone-800 text-xs hover:border-gold/20 transition"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-white">{v.displayName}</span>
+                            {v.isGuest && (
+                              <span className="px-1.5 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800/60 text-[10px] font-medium">
+                                Guest
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setKickTarget({ identity: v.identity, displayName: v.displayName })}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800/60 text-xs transition"
+                          >
+                            <UserX className="w-3.5 h-3.5" /> Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -657,6 +791,19 @@ export default function StudioClient() {
         onConfirm={confirmEndStream}
         onCancel={() => setConfirmEndOpen(false)}
       />
+
+      {kickTarget && (
+        <KickViewerModal
+          streamId={streamId}
+          identity={kickTarget.identity}
+          displayName={kickTarget.displayName}
+          onClose={() => {
+            setKickTarget(null);
+            if (socket) socket.emit('stream:viewer_list:request', { streamId });
+          }}
+          socket={socket}
+        />
+      )}
       </div>
     </div>
   );

@@ -1,6 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/database/prisma.service';
+import { ChatGateway } from '../src/modules/chat/chat.gateway';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcryptjs';
 const request = require('supertest');
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 const cookieParser = require('cookie-parser');
@@ -154,9 +157,13 @@ async function runTestSuite() {
         const verifyRes = await request(httpServer).get(`/api/v1/auth/verify-email?token=${verifyToken}`);
         recordTest('Auth', 'GET /api/v1/auth/verify-email verifies user email with token', verifyRes.status === 200);
       } else {
-        // Manually mark verified in DB
+        // Manually mark verified in DB and credit welcome bonus coins
         await prisma.user.update({ where: { id: viewerUserId }, data: { isEmailVerified: true } });
-        recordTest('Auth', 'User email verified in DB', true);
+        await prisma.userWallet.update({
+          where: { userId: viewerUserId },
+          data: { balanceCoins: 100, bonusCoins: 100 },
+        });
+        recordTest('Auth', 'User email verified in DB and credited 100 welcome coins', true);
       }
 
       // E. Login with Invalid Password
@@ -218,12 +225,40 @@ async function runTestSuite() {
       recordTest('Streamers', 'POST /api/v1/streamers/apply submits KYC application', applyRes.status === 201 && !!prof?.id);
       streamerProfileId = prof?.id;
 
-      // Login as Admin
+      // Ensure default admin user is seeded with known test password & 2FA enabled
+      const adminHash = await bcrypt.hash('AdminPooja@2026Secure!', 12);
+      const adminUser = await prisma.user.upsert({
+        where: { email: 'admin@platform-domain.com' },
+        update: { passwordHash: adminHash, role: 'ADMIN', status: 'ACTIVE', isEmailVerified: true, isTwoFactorEnabled: true },
+        create: {
+          email: 'admin@platform-domain.com',
+          passwordHash: adminHash,
+          name: 'Platform Operator Admin',
+          role: 'ADMIN',
+          status: 'ACTIVE',
+          isEmailVerified: true,
+          isTwoFactorEnabled: true,
+          isAgeConfirmed18Plus: true,
+          termsVersionAccepted: 'v1.0',
+        },
+      });
+
+      // Login as Admin (triggers mandatory 2FA challenge for admins)
       const adminLogin = await request(httpServer)
         .post('/api/v1/auth/login')
         .send({ email: 'admin@platform-domain.com', password: 'AdminPooja@2026Secure!' });
-      adminAccessToken = adminLogin.body.accessToken;
-      recordTest('Admin', 'POST /api/v1/auth/login authenticates default Administrator', adminLogin.status === 200 && !!adminAccessToken);
+      recordTest(
+        'Admin',
+        'POST /api/v1/auth/login verifies admin credentials and enforces mandatory 2FA challenge (R-05)',
+        adminLogin.status === 200 && adminLogin.body.requires2FA === true && !!adminLogin.body.tempToken,
+      );
+
+      // Issue verified admin session token for testing administrative operations
+      const jwtService = app.get(JwtService);
+      adminAccessToken = jwtService.sign(
+        { sub: adminUser.id, email: adminUser.email, role: 'ADMIN' },
+        { secret: process.env.JWT_ACCESS_SECRET || 'jwt_default_insecure_access_secret_key', expiresIn: '15m' },
+      );
 
       // Admin views KYC queue
       const kycQueue = await request(httpServer)
@@ -316,7 +351,66 @@ async function runTestSuite() {
         .post(`/api/v1/streams/${testStreamId}/token/viewer`)
         .set('Authorization', `Bearer ${viewerAccessToken}`)
         .send({ guestName: 'Devotee 1' });
-      recordTest('Streams', 'POST /api/v1/streams/:id/token/viewer mints 5-minute LiveKit subscriber token', viewerTokenRes.status === 200 && !!viewerTokenRes.body.token);
+      recordTest(
+        'Streams',
+        'POST /api/v1/streams/:id/token/viewer mints 5-minute LiveKit subscriber token',
+        viewerTokenRes.status === 200 && !!viewerTokenRes.body.token,
+        viewerTokenRes.body,
+      );
+
+      // Viewer List & Presence APIs
+      const streamerGetViewersRes = await request(httpServer)
+        .get(`/api/v1/streams/${testStreamId}/viewers`)
+        .set('Authorization', `Bearer ${streamerAccessToken}`);
+      recordTest('Streams', 'GET /api/v1/streams/:id/viewers allows STREAMER to view active viewers', streamerGetViewersRes.status === 200 && Array.isArray(streamerGetViewersRes.body));
+
+      const viewerGetViewersRes = await request(httpServer)
+        .get(`/api/v1/streams/${testStreamId}/viewers`)
+        .set('Authorization', `Bearer ${viewerAccessToken}`);
+      recordTest('Streams', 'GET /api/v1/streams/:id/viewers forbids regular VIEWER (403)', viewerGetViewersRes.status === 403);
+
+      const unauthGetViewersRes = await request(httpServer)
+        .get(`/api/v1/streams/${testStreamId}/viewers`);
+      recordTest('Streams', 'GET /api/v1/streams/:id/viewers forbids unauthenticated requests (401)', unauthGetViewersRes.status === 401);
+
+      // Kick & Moderation APIs
+      const viewerKickRes = await request(httpServer)
+        .post(`/api/v1/streams/${testStreamId}/viewers/${viewerUserId}/kick`)
+        .set('Authorization', `Bearer ${viewerAccessToken}`)
+        .send({ block: false, reason: 'Unauthorized kick attempt' });
+      recordTest('Streams', 'POST /api/v1/streams/:id/viewers/:identity/kick forbids regular VIEWER (403)', viewerKickRes.status === 403);
+
+      const streamerSoftKickRes = await request(httpServer)
+        .post(`/api/v1/streams/${testStreamId}/viewers/${viewerUserId}/kick`)
+        .set('Authorization', `Bearer ${streamerAccessToken}`)
+        .send({ block: false, reason: 'Temporary removal for testing' });
+      recordTest(
+        'Streams',
+        'POST /api/v1/streams/:id/viewers/:identity/kick soft-kicks viewer (200 OK)',
+        streamerSoftKickRes.status === 200 && streamerSoftKickRes.body.success === true && streamerSoftKickRes.body.blocked === false,
+        streamerSoftKickRes.body,
+      );
+
+      const streamerBlockKickRes = await request(httpServer)
+        .post(`/api/v1/streams/${testStreamId}/viewers/${viewerUserId}/kick`)
+        .set('Authorization', `Bearer ${streamerAccessToken}`)
+        .send({ block: true, reason: 'Disruptive behavior' });
+      recordTest(
+        'Streams',
+        'POST /api/v1/streams/:id/viewers/:identity/kick block-kicks viewer (200 OK)',
+        streamerBlockKickRes.status === 200 && streamerBlockKickRes.body.success === true && streamerBlockKickRes.body.blocked === true,
+        streamerBlockKickRes.body,
+      );
+
+      const blockedRecord = await prisma.blockedViewer.findFirst({
+        where: { streamId: testStreamId, userId: viewerUserId },
+      });
+      recordTest('Streams', 'BlockedViewer entry created in DB with streamId and userId', !!blockedRecord);
+
+      const modActionRecord = await prisma.moderationAction.findFirst({
+        where: { streamId: testStreamId, actionType: 'BLOCK' },
+      });
+      recordTest('Streams', 'ModerationAction entry recorded in DB with actionType BLOCK', !!modActionRecord);
 
       // End Stream
       const endStreamRes = await request(httpServer)
@@ -391,6 +485,19 @@ async function runTestSuite() {
         .set('Authorization', `Bearer ${streamerAccessToken}`);
       recordTest('PrivateStreams', 'POST /api/v1/private-links/:id/revoke revokes link and evicts viewers', revokeRes.status === 200, revokeRes.body);
 
+      // Unified Kick & Block on Private Stream
+      const privKickRes = await request(httpServer)
+        .post(`/api/v1/private-links/${testPrivateStreamId}/kick-block`)
+        .set('Authorization', `Bearer ${streamerAccessToken}`)
+        .send({ targetUserId: viewerUserId, reason: 'Private ceremony violation' });
+      recordTest('PrivateStreams', 'POST /api/v1/private-links/:streamId/kick-block delegates to unified kickViewer', privKickRes.status === 200 && privKickRes.body.success === true);
+
+      const unauthPrivKickRes = await request(httpServer)
+        .post(`/api/v1/private-links/${testPrivateStreamId}/kick-block`)
+        .set('Authorization', `Bearer ${viewerAccessToken}`)
+        .send({ targetUserId: viewerUserId });
+      recordTest('PrivateStreams', 'POST /api/v1/private-links/:streamId/kick-block forbids regular VIEWER (403)', unauthPrivKickRes.status === 403);
+
       // Clean up private stream
       await request(httpServer)
         .post(`/api/v1/streams/${testPrivateStreamId}/end`)
@@ -398,10 +505,32 @@ async function runTestSuite() {
     }
 
     // -------------------------------------------------------------------------
-    // 8. Reports & Safety Queue Flow
+    // 8. Notifications Desk & Safety Queue Flow
     // -------------------------------------------------------------------------
-    console.log('\n📌 8. SAFETY & CONTENT REPORTING FLOW');
+    console.log('\n📌 8. NOTIFICATIONS DESK & SAFETY REPORTING FLOW');
     {
+      // Devotee Contact Form
+      const contactRes = await request(httpServer)
+        .post('/api/v1/notifications/contact')
+        .send({
+          name: 'Shubham Bhakt',
+          email: testViewerEmail,
+          subject: 'Pooja Timings Inquiry',
+          message: 'When will the evening aarti start at Kashi temple?',
+        });
+      recordTest('Notifications', 'POST /api/v1/notifications/contact submits devotee contact desk inquiry', contactRes.status === 201 && contactRes.body.success === true);
+
+      // Statutory Grievance Submission (Rule 3(2) IT Rules 2021)
+      const grievanceRes = await request(httpServer)
+        .post('/api/v1/notifications/grievance')
+        .send({
+          name: 'Shubham Bhakt',
+          email: testViewerEmail,
+          complaintType: 'CONTENT_VIOLATION',
+          details: 'Formal complaint regarding audio disturbance on stream according to Rule 3(2) IT Rules 2021.',
+        });
+      recordTest('Notifications', 'POST /api/v1/notifications/grievance submits statutory complaint under Rule 3(2) IT Rules 2021', grievanceRes.status === 201 && grievanceRes.body.success === true);
+
       const reportRes = await request(httpServer)
         .post('/api/v1/reports')
         .set('Authorization', `Bearer ${viewerAccessToken}`)
@@ -453,6 +582,50 @@ async function runTestSuite() {
         .send({ event: 'participant_joined' });
       recordTest('Security', 'POST /api/v1/webhooks/livekit blocks unsigned webhook calls (401)', webhookRes.status === 401);
     }
+
+    // -------------------------------------------------------------------------
+    // 10. Chat Gateway Moderation & Mute Safety (G6/G7)
+    // -------------------------------------------------------------------------
+    console.log('\n📌 10. CHAT GATEWAY MODERATION & MUTE SAFETY (G6/G7)');
+    {
+      const chatGateway = app.get(ChatGateway);
+      const mockClient: any = {
+        id: 'socket_moderator_123',
+        data: {
+          user: {
+            sub: streamerUserId,
+            role: 'STREAMER',
+          },
+        },
+        emit: () => {},
+      };
+
+      // Test mute with non-UUID target (e.g. guest socket) - must NOT throw Prisma FK error
+      let nonUuidError: any = null;
+      try {
+        await chatGateway.handleMuteUser(mockClient, {
+          streamId: testStreamId,
+          targetUserId: 'guest_socket_non_uuid_abc',
+          durationMinutes: 10,
+        });
+      } catch (err: any) {
+        nonUuidError = err;
+      }
+      recordTest('ChatGateway', 'chat:mute safely handles non-UUID guest strings without Prisma FK crash (G6)', nonUuidError === null, nonUuidError ? nonUuidError.message : undefined);
+
+      // Test mute with real UUID target
+      let uuidError: any = null;
+      try {
+        await chatGateway.handleMuteUser(mockClient, {
+          streamId: testStreamId,
+          targetUserId: viewerUserId,
+          durationMinutes: 15,
+        });
+      } catch (err: any) {
+        uuidError = err;
+      }
+      recordTest('ChatGateway', 'chat:mute records ModerationAction with real targetUserId (G6/G7)', uuidError === null, uuidError ? uuidError.message : undefined);
+    }
   } catch (err: any) {
     console.error('Fatal Test Suite Error:', err);
     recordTest('Suite', 'Global test execution', false, err.message);
@@ -461,6 +634,14 @@ async function runTestSuite() {
     console.log('\n🧹 Cleaning up test records from Neon PostgreSQL...');
     try {
       if (testReportId) await prisma.report.deleteMany({ where: { id: testReportId } });
+      if (testStreamId) {
+        await prisma.blockedViewer.deleteMany({ where: { streamId: testStreamId } });
+        await prisma.moderationAction.deleteMany({ where: { streamId: testStreamId } });
+      }
+      if (testPrivateStreamId) {
+        await prisma.blockedViewer.deleteMany({ where: { streamId: testPrivateStreamId } });
+        await prisma.moderationAction.deleteMany({ where: { streamId: testPrivateStreamId } });
+      }
       if (testPrivateLinkId) await prisma.privateAccessLink.deleteMany({ where: { id: testPrivateLinkId } });
       if (testPrivateStreamId) await prisma.stream.deleteMany({ where: { id: testPrivateStreamId } });
       if (testStreamId) await prisma.stream.deleteMany({ where: { id: testStreamId } });

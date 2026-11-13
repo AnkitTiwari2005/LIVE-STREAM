@@ -14,6 +14,7 @@ import {
 import { StreamsService } from './streams.service';
 import { CreateStreamDto } from './dto/create-stream.dto';
 import { UpdateStreamDto } from './dto/update-stream.dto';
+import { KickViewerDto } from './dto/kick-viewer.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Public } from '../../common/decorators/public.decorator';
@@ -111,6 +112,33 @@ export class StreamsController {
   @ApiOperation({ summary: 'Streamer dashboard past streams and stats (FR-L10)' })
   async getStreamerPastStreams(@CurrentUser('id') streamerId: string) {
     return this.streamsService.getStreamerPastStreams(streamerId);
+  }
+
+  // Must be declared BEFORE @Get(':id') to avoid NestJS matching 'viewers' as :id
+  @Roles(UserRole.STREAMER, UserRole.ADMIN)
+  @Get(':id/viewers')
+  @ApiOperation({ summary: 'Get live viewer list for a stream (streamer/admin only)' })
+  async getViewers(@Param('id') streamId: string, @CurrentUser() user: any) {
+    return this.streamsService.getViewerListForStream(streamId, user.id, user.role);
+  }
+
+  @Roles(UserRole.STREAMER, UserRole.ADMIN)
+  @Post(':id/viewers/:identity/kick')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Kick/remove a viewer from a live stream' })
+  async kickViewer(
+    @Param('id') streamId: string,
+    @Param('identity') identity: string,
+    @CurrentUser() user: any,
+    @Body() dto: KickViewerDto,
+  ) {
+    return this.streamsService.kickViewer(
+      streamId,
+      user.id,
+      user.role,
+      decodeURIComponent(identity),
+      dto,
+    );
   }
 
   @Public()

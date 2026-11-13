@@ -1,3 +1,12 @@
+export interface NormalizedParticipant {
+  identity: string;
+  name: string;
+  metadata: string;
+  joinedAtMs: number;
+  isPublisher: boolean;
+  hidden: boolean;
+}
+
 export interface CreateRoomOptions {
   roomName: string;
   emptyTimeoutSeconds?: number;
@@ -21,6 +30,7 @@ export interface IVideoProviderService {
   kickParticipant(roomName: string, participantIdentity: string): Promise<boolean>;
   endRoom(roomName: string): Promise<boolean>;
   listActiveRooms(): Promise<Array<{ name: string; sid: string; numParticipants: number }>>;
+  listParticipants(roomName: string): Promise<NormalizedParticipant[]>;
 }
 
 export const VIDEO_PROVIDER_TOKEN = 'IVideoProviderService';

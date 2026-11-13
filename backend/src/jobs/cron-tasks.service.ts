@@ -7,6 +7,7 @@ import {
 } from '../modules/video/interfaces/video-provider.interface';
 import { RemindersService } from '../modules/notifications/reminders.service';
 import { StreamStatus, ViewingSessionStatus } from '@prisma/client';
+import { PresenceAccessor } from '../modules/chat/presence.accessor';
 
 @Injectable()
 export class CronTasksService {
@@ -206,5 +207,23 @@ export class CronTasksService {
     });
 
     this.logger.log(`Retention cleanup finished: Deleted ${deletedChat.count} old chat records, anonymized ${anonymizedIps.count} IP logs.`);
+  }
+
+  /**
+   * 5. Viewer Count Reconciler:
+   * Every 30s, reconcile Redis presence sets against LiveKit ground truth.
+   * Also corrects Stream.peakViewers (excluding streamer + hidden participants).
+   * Works in both api and worker processes — broadcasts via Redis pub/sub.
+   */
+  @Cron(CronExpression.EVERY_30_SECONDS)
+  async handlePresenceReconciler() {
+    if (process.env.RUN_CRONS === 'false') return;
+    const presenceService = PresenceAccessor.get();
+    if (!presenceService) return; // Not yet initialized (startup race)
+    try {
+      await presenceService.reconcileAll();
+    } catch (err: any) {
+      this.logger.warn(`Presence reconciler error: ${err.message}`);
+    }
   }
 }

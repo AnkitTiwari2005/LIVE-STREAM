@@ -4,6 +4,7 @@ import {
   IVideoProviderService,
   CreateRoomOptions,
   ParticipantTokenOptions,
+  NormalizedParticipant,
 } from '../interfaces/video-provider.interface';
 
 @Injectable()
@@ -102,6 +103,24 @@ export class LiveKitProviderService implements IVideoProviderService {
       }));
     } catch (err: any) {
       this.logger.error(`Failed to query LiveKit active rooms: ${err.message}`);
+      return [];
+    }
+  }
+
+  async listParticipants(roomName: string): Promise<NormalizedParticipant[]> {
+    try {
+      const participants = await this.roomService.listParticipants(roomName);
+      return participants.map((p) => ({
+        identity: p.identity,
+        name: p.name,
+        metadata: p.metadata,
+        // p.joinedAt is bigint (Unix seconds) — convert safely to avoid JSON.stringify crash
+        joinedAtMs: Number(p.joinedAt) * 1000,
+        isPublisher: p.isPublisher,
+        hidden: p.permission?.hidden ?? false,
+      }));
+    } catch (err: any) {
+      this.logger.warn(`listParticipants [${roomName}]: ${err.message}`);
       return [];
     }
   }
