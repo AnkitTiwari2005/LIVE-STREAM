@@ -171,21 +171,30 @@ export class WalletService {
       );
     }
 
-    // Terminate any previous active session on OTHER streams to enforce single-tab rule
-    await this.prisma.streamViewingSession.updateMany({
-      where: {
-        userId,
-        streamId: { not: streamId },
-        status: ViewingSessionStatus.ACTIVE,
-      },
-      data: {
-        status: ViewingSessionStatus.DISCONNECTED_TIMEOUT,
-        endedAt: new Date(),
-      },
-    });
-
     // B-09: Wrap debit, session creation, minute 1 tick, wallet ledger, and streamer earning in a single atomic transaction
     const startResult = await this.prisma.$transaction(async (tx) => {
+      // Serialise concurrent starts for the same user (double click, two tabs, retry): take the wallet
+      // row lock first, then re-check for an ACTIVE session. The second caller blocks here, sees the
+      // session the first one committed and reuses it instead of creating, debiting - and paying the
+      // streamer - twice.
+      const locked: any = await tx.$queryRawUnsafe(
+        `SELECT "id", "balanceCoins" FROM "UserWallet" WHERE "userId" = $1 FOR UPDATE`,
+        userId,
+      );
+      const raced = await tx.streamViewingSession.findFirst({
+        where: { userId, streamId, status: ViewingSessionStatus.ACTIVE },
+        orderBy: { startedAt: 'desc' },
+      });
+      if (raced) {
+        return {
+          reused: true as const,
+          sessionToken: raced.sessionToken,
+          balanceAfter: (locked?.[0]?.balanceCoins ?? wallet.balanceCoins) as number,
+          sessionId: raced.id,
+          streamTotalCoins: 0,
+        };
+      }
+
       const rawResult: any = await tx.$queryRawUnsafe(
         `UPDATE "UserWallet"
          SET "balanceCoins" = "balanceCoins" - $2,
@@ -213,6 +222,14 @@ export class WalletService {
       const walletId = rawResult[0].id;
       const balanceAfter = rawResult[0].balanceCoins;
       const sessionToken = `ses_${crypto.randomBytes(16).toString('hex')}`;
+
+      // Single-tab rule: end this user's sessions on OTHER streams only now that the debit succeeded,
+      // inside the same transaction (it used to run BEFORE the debit, so a failed debit still cost the
+      // viewer the session they already had).
+      await tx.streamViewingSession.updateMany({
+        where: { userId, streamId: { not: streamId }, status: ViewingSessionStatus.ACTIVE },
+        data: { status: ViewingSessionStatus.DISCONNECTED_TIMEOUT, endedAt: new Date() },
+      });
 
       // Create viewing session
       const session = await tx.streamViewingSession.create({
@@ -271,12 +288,23 @@ export class WalletService {
       });
 
       return {
+        reused: false as const,
         sessionToken,
         balanceAfter,
         sessionId: session.id,
         streamTotalCoins: earningAgg._sum.coins || 0,
       };
     });
+
+    if (startResult.reused) {
+      this.logger.log(`Devotee [${userId}] raced a concurrent start on stream [${streamId}], reusing its session.`);
+      return {
+        sessionToken: startResult.sessionToken,
+        remainingCoins: startResult.balanceAfter,
+        availableMinutes: Math.floor(startResult.balanceAfter / COINS_PER_MINUTE),
+        sessionId: startResult.sessionId,
+      };
+    }
 
     this.chatGateway.emitEarningsUpdated(stream.streamerId, {
       streamId,
@@ -322,6 +350,36 @@ export class WalletService {
         reason: 'SESSION_EXPIRED',
         message: 'Viewing session not found or concluded.',
       };
+    }
+
+    // Never bill (and never pay the streamer) for a stream that is over, or while the pandit is
+    // reconnecting and no video is being produced.
+    const liveState = await this.prisma.stream.findUnique({
+      where: { id: dto.streamId },
+      select: { status: true },
+    });
+    if (!liveState || liveState.status === 'ENDED' || liveState.status === 'CANCELLED') {
+      const w = await this.getWalletBalance(userId);
+      await this.prisma.streamViewingSession.updateMany({
+        where: { id: session.id, status: ViewingSessionStatus.ACTIVE },
+        data: { status: ViewingSessionStatus.COMPLETED_NATURAL, endedAt: new Date() },
+      });
+      return {
+        canContinue: false,
+        remainingCoins: w.balanceCoins,
+        reason: 'STREAM_ENDED',
+        message: 'This darshan has concluded.',
+      };
+    }
+    if (liveState.status === 'RECONNECTING_GRACE_PERIOD') {
+      const w = await this.getWalletBalance(userId);
+      // Keep the heartbeat fresh (without billing) so the 90 s watchdog does not evict everybody the
+      // moment the stream resumes; a viewer who truly left stops ticking and is reaped after resume.
+      await this.prisma.streamViewingSession.updateMany({
+        where: { id: session.id, status: ViewingSessionStatus.ACTIVE },
+        data: { lastTickAt: new Date() },
+      });
+      return { canContinue: true, remainingCoins: w.balanceCoins, nextTickInSeconds: 30, paused: true };
     }
 
     // B-10: Fast-path cooldown reject before opening a transaction
@@ -630,9 +688,18 @@ export class WalletService {
         return this.alreadyCredited(userId);
       }
 
-      const wallet = await tx.userWallet.update({
+      // upsert, like the webhook path: a paying user with no wallet row yet must still be credited
+      // (update would throw P2025 and roll the whole claim back after the money was captured).
+      const wallet = await tx.userWallet.upsert({
         where: { userId },
-        data: {
+        create: {
+          userId,
+          balanceCoins: order.coinsToCredit,
+          purchasedCoins: order.package.coins,
+          bonusCoins: order.package.bonusCoins,
+          lifetimeEarned: order.coinsToCredit,
+        },
+        update: {
           balanceCoins: { increment: order.coinsToCredit },
           purchasedCoins: { increment: order.package.coins },
           bonusCoins: { increment: order.package.bonusCoins },

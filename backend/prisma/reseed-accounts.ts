@@ -1,11 +1,13 @@
 import { PrismaClient, UserRole, UserStatus, KycStatus, WalletTxType, WalletTxCategory, StreamStatus, StreamVisibility } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { assertSafeToReseed } from './reseed-guard';
 
 const prisma = new PrismaClient();
 
-const COMMON_PASSWORD = 'Shubh@2026';
 
 async function main() {
+  // Throws BEFORE any database access unless the operator explicitly opted in (see reseed-guard.ts).
+  const COMMON_PASSWORD = assertSafeToReseed();
   console.log('🕉️ --- Starting Sacred Account Reseed & Sanitation --- 🕉️');
 
   // 1. Verify Admin Account
@@ -338,12 +340,12 @@ async function main() {
   console.log('\n=============================================');
   console.log('🎉 ALL ACCOUNTS CREATED & VERIFIED SUCCESSFULLY!');
   console.log('=============================================');
-  console.log(`Password for all accounts: ${COMMON_PASSWORD}`);
+  console.log('Password for all accounts: the value of RESEED_PASSWORD (not printed).');
   console.log('Admin Account: admin@platform-domain.com');
   console.log('Devotees (100 Coins Each):');
   console.log('  1. rajesh.patel@shubhdarshan.com');
   console.log('  2. priya.sharma@shubhdarshan.com');
-  console.log('Pandits (Gurukul Verified):');
+  console.log('Pandits (KYC approved):');
   console.log('  1. pandit.aarav@shubhdarshan.com (Pandit Aarav Sharma)');
   console.log('  2. pandit.hariram@shubhdarshan.com (Pandit Hariram Vyas)');
   console.log('  3. pandit.vishwanath@shubhdarshan.com (Pandit Vishwanath Bhatt)');

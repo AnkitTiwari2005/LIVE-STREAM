@@ -319,6 +319,8 @@ html[data-theme="light"] [class*="bg-orange-900"] {
   border-color: #fed7aa !important;
 }
 
+html:not([data-theme="dark"]) [class*="bg-orange-950"][class*="text-orange-"],
+html[data-theme="light"] [class*="bg-orange-950"][class*="text-orange-"],
 html:not([data-theme="dark"]) [class*="bg-orange-950"] [class*="text-orange-"],
 html:not([data-theme="dark"]) [class*="bg-orange-900"] [class*="text-orange-"],
 html[data-theme="light"] [class*="bg-orange-950"] [class*="text-orange-"],
@@ -1656,5 +1658,15 @@ html:not([data-theme="dark"]) :is(.video-overlay, .on-photo) .bg-gold {
 }
 html:not([data-theme="dark"]) :is(.video-overlay, .on-photo) .bg-gold svg,
 html[data-theme="light"] :is(.video-overlay, .on-photo) .bg-gold svg {
+  color: #0c0a09 !important;
+}
+
+
+/* D-02 (main13 leftovers)
+   `html .video-overlay [class*="bg-black"] *` forces pale text on EVERY descendant of a black overlay,
+   including gold buttons, so "Connect Camera & Mic" rendered amber-100 on amber-500 (1.9:1) in dark mode.
+   Higher specificity restores dark text on gold controls inside overlays. */
+html .video-overlay [class*="bg-black"] .bg-gold,
+html .video-overlay [class*="bg-black"] .bg-gold * {
   color: #0c0a09 !important;
 }

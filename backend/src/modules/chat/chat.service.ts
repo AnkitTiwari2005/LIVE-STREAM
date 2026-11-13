@@ -64,7 +64,7 @@ export class ChatService implements OnModuleInit {
   }
 
   async getRecentChat(streamId: string, limit = 50) {
-    return this.prisma.chatMessage.findMany({
+    const rows = await this.prisma.chatMessage.findMany({
       where: { streamId, isDeleted: false },
       include: {
         user: { select: { id: true, name: true, avatarUrl: true, role: true } },
@@ -72,5 +72,11 @@ export class ChatService implements OnModuleInit {
       orderBy: { createdAt: 'desc' },
       take: limit,
     });
+    // Messages whose author was deleted (onDelete: SetNull) or that predate login-only chat have no user.
+    // The client dereferences msg.user.*: never hand it null.
+    return rows.map((m) => ({
+      ...m,
+      user: m.user ?? { id: '', name: 'Deleted Devotee', avatarUrl: null, role: 'VIEWER' },
+    }));
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { RoomServiceClient, AccessToken } from 'livekit-server-sdk';
 import {
   IVideoProviderService,
@@ -36,8 +36,15 @@ export class LiveKitProviderService implements IVideoProviderService {
         this.logger.log(`LiveKit room [${options.roomName}] already exists. Reusing room.`);
         return { roomId: `rm_${options.roomName}`, roomName: options.roomName };
       }
-      this.logger.warn(`LiveKit room creation notice [${options.roomName}]: ${err.message}. Using virtual room identifier.`);
-      return { roomId: `rm_${options.roomName}`, roomName: options.roomName };
+      // The room did NOT get created. Pretending it did marks the stream LIVE with no media room
+      // (the server runs with auto_create:false), so viewers pay for a stream nobody can join.
+      // Dev-only escape hatch: LIVEKIT_AUTO_CREATE=true (the server then creates rooms on first join).
+      if (process.env.LIVEKIT_AUTO_CREATE === 'true') {
+        this.logger.warn(`LiveKit room creation failed [${options.roomName}]: ${err.message}. LIVEKIT_AUTO_CREATE=true, continuing.`);
+        return { roomId: `rm_${options.roomName}`, roomName: options.roomName };
+      }
+      this.logger.error(`LiveKit room creation failed [${options.roomName}]: ${err.message}`);
+      throw new ServiceUnavailableException('Video service is unavailable right now. Please try again in a moment.');
     }
   }
 
@@ -88,12 +95,16 @@ export class LiveKitProviderService implements IVideoProviderService {
       this.logger.log(`Closed LiveKit room [${roomName}]`);
       return true;
     } catch (err: any) {
+      // A room that no longer exists is the goal state, not a failure.
+      if (/not\s*found|does not exist|no such room/i.test(String(err?.message))) {
+        return true;
+      }
       this.logger.warn(`Failed to delete room [${roomName}]: ${err.message}`);
       return false;
     }
   }
 
-  async listActiveRooms(): Promise<Array<{ name: string; sid: string; numParticipants: number }>> {
+  async listActiveRooms(): Promise<Array<{ name: string; sid: string; numParticipants: number }> | null> {
     try {
       const rooms = await this.roomService.listRooms();
       return rooms.map((r) => ({
@@ -103,11 +114,32 @@ export class LiveKitProviderService implements IVideoProviderService {
       }));
     } catch (err: any) {
       this.logger.error(`Failed to query LiveKit active rooms: ${err.message}`);
-      return [];
+      return null;
     }
   }
 
-  async listParticipants(roomName: string): Promise<NormalizedParticipant[]> {
+  async getRoomParticipantCount(roomName: string): Promise<number | null> {
+    try {
+      const rooms = await this.roomService.listRooms([roomName]);
+      return rooms.find((r) => r.name === roomName)?.numParticipants ?? 0;
+    } catch (err: any) {
+      this.logger.warn(`Failed to read participant count for [${roomName}]: ${err.message}`);
+      return null;
+    }
+  }
+
+  async getParticipantPresence(roomName: string, identity: string): Promise<boolean | null> {
+    try {
+      await this.roomService.getParticipant(roomName, identity);
+      return true;
+    } catch (err: any) {
+      if (/not\s*found|does not exist|no such/i.test(String(err?.message))) return false;
+      this.logger.warn(`Failed to read participant [${identity}] in [${roomName}]: ${err.message}`);
+      return null;
+    }
+  }
+
+  async listParticipants(roomName: string): Promise<NormalizedParticipant[] | null> {
     try {
       const participants = await this.roomService.listParticipants(roomName);
       return participants.map((p) => ({
@@ -120,8 +152,9 @@ export class LiveKitProviderService implements IVideoProviderService {
         hidden: p.permission?.hidden ?? false,
       }));
     } catch (err: any) {
+      // null = "could not ask LiveKit" (never the same as "nobody is in the room")
       this.logger.warn(`listParticipants [${roomName}]: ${err.message}`);
-      return [];
+      return null;
     }
   }
 }

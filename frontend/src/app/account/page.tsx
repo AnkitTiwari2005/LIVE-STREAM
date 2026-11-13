@@ -532,7 +532,7 @@ export default function AccountPage() {
                     <span
                       className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full transition-colors ${
                         isSelected
-                          ? 'bg-white/25 text-white dark:bg-stone-950/20 dark:text-stone-950'
+                          ? 'bg-black/25 text-white dark:bg-stone-950/20 dark:text-stone-950'
                           : 'bg-stone-200 text-stone-800 dark:bg-gold/15 dark:text-gold-pale dark:border dark:border-gold/25'
                       }`}
                     >

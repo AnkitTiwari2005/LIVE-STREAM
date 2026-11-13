@@ -80,7 +80,7 @@ services:
       DATABASE_URL_UNPOOLED: postgresql://${APP_DB_USER}:${APP_DB_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       LIVEKIT_HOST: http://livekit:7880
-      LIVEKIT_PUBLIC_URL: ${LIVEKIT_PUBLIC_URL:-wss://live.${DOMAIN}}
+      LIVEKIT_PUBLIC_URL: ${LIVEKIT_PUBLIC_URL:-wss://live.${DOMAIN:?DOMAIN must be set in .env.production}}
       LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
       LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
       ENCRYPTION_MASTER_KEY: ${ENCRYPTION_MASTER_KEY}
@@ -128,7 +128,7 @@ services:
       DATABASE_URL_UNPOOLED: postgresql://${APP_DB_USER}:${APP_DB_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       LIVEKIT_HOST: http://livekit:7880
-      LIVEKIT_PUBLIC_URL: ${LIVEKIT_PUBLIC_URL:-wss://live.${DOMAIN}}
+      LIVEKIT_PUBLIC_URL: ${LIVEKIT_PUBLIC_URL:-wss://live.${DOMAIN:?DOMAIN must be set in .env.production}}
       LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
       LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
       ENCRYPTION_MASTER_KEY: ${ENCRYPTION_MASTER_KEY}
@@ -160,8 +160,8 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_URL: https://${DOMAIN}/api/v1
-      NEXT_PUBLIC_LIVEKIT_URL: wss://live.${DOMAIN}
+      NEXT_PUBLIC_API_URL: https://${DOMAIN:?DOMAIN must be set in .env.production}/api/v1
+      NEXT_PUBLIC_LIVEKIT_URL: wss://live.${DOMAIN:?DOMAIN must be set in .env.production}
     mem_limit: 768m
     cpu_shares: 512
     logging: *logging
@@ -203,6 +203,7 @@ services:
       - "443:443"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/cloudflare:/etc/nginx/cloudflare:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - /opt/pooja/certbot-www:/var/www/certbot:ro
     mem_limit: 128m

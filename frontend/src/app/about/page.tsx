@@ -49,7 +49,7 @@ export default function AboutPage() {
                 Varanasi Ghats &amp; Kashi Vishwanath
               </h3>
             </div>
-            <span className="text-xs text-gold-pale bg-obsidian/80 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-gold/25">
+            <span className="text-xs text-white bg-black/60 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/25">
               Live WebRTC broadcast point
             </span>
           </div>

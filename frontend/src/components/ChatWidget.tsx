@@ -77,14 +77,22 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
     }
     socket.on('connect', joinRoom);
 
-    socket.on('chat:history', (history: ChatMessage[]) => {
+    // Never trust the wire shape: a message whose author is gone has no user object, and the render
+    // code dereferences msg.user.* (one null user used to crash the chat for everyone joining).
+    const safe = (m: ChatMessage): ChatMessage => ({
+      ...m,
+      user: m.user ?? { id: '', name: 'Devotee', role: 'VIEWER' },
+    });
+
+    socket.on('chat:history', (rawHistory: ChatMessage[]) => {
+      const history = (Array.isArray(rawHistory) ? rawHistory : []).map(safe);
       setMessages(history);
       const pinned = history.find((m) => m.isPinned);
       if (pinned) setPinnedMessage(pinned);
     });
 
     socket.on('chat:message', (msg: ChatMessage) => {
-      setMessages((prev) => [...prev, msg]);
+      setMessages((prev) => [...prev, safe(msg)]);
     });
 
     socket.on('chat:message_deleted', (data: { messageId: string }) => {
@@ -239,7 +247,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
       // G10: only pass targetUserId if it looks like a real UUID (not a socket.id or guest string)
       const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const isRealUserId = UUID_PATTERN.test(msg.user?.id || '');
-      await fetch(`${apiUrl}/reports`, {
+      const res = await fetch(`${apiUrl}/reports`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -254,6 +262,13 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
           details: msg.message,
         }),
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        const m = Array.isArray(body?.message) ? body.message[0] : body?.message;
+        setErrorBanner(res.status === 401 ? 'Please sign in to report a message' : m || 'Could not submit the report');
+        setTimeout(() => setErrorBanner(null), 4000);
+        return;
+      }
       setErrorBanner('Report submitted for moderation 🙏');
       setTimeout(() => setErrorBanner(null), 3000);
     } catch {

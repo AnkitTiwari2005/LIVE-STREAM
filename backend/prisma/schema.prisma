@@ -305,7 +305,8 @@ model Report {
   targetUserId   String?
   targetUser     User?            @relation("ReportedUser", fields: [targetUserId], references: [id], onDelete: SetNull)
   chatMessageId  String?
-  chatMessage    ChatMessage?     @relation("ChatMessageReports", fields: [chatMessageId], references: [id], onDelete: Cascade)
+  chatMessage    ChatMessage?     @relation("ChatMessageReports", fields: [chatMessageId], references: [id], onDelete: SetNull)
+  reportedMessageText String?     @db.VarChar(500)
   reason         String           @db.VarChar(255)
   details        String?          @db.Text
   status         ReportStatus     @default(OPEN)

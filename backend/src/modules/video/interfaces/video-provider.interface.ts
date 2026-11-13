@@ -29,8 +29,13 @@ export interface IVideoProviderService {
   generateToken(options: ParticipantTokenOptions): Promise<string>;
   kickParticipant(roomName: string, participantIdentity: string): Promise<boolean>;
   endRoom(roomName: string): Promise<boolean>;
-  listActiveRooms(): Promise<Array<{ name: string; sid: string; numParticipants: number }>>;
-  listParticipants(roomName: string): Promise<NormalizedParticipant[]>;
+  /** `null` means "LiveKit could not be queried" - callers must NOT treat that as "no rooms". */
+  listActiveRooms(): Promise<Array<{ name: string; sid: string; numParticipants: number }> | null>;
+  /** Participants currently in the room; `null` if LiveKit could not be queried. */
+  getRoomParticipantCount(roomName: string): Promise<number | null>;
+  /** true/false = present/absent in the room; `null` if LiveKit could not be queried. */
+  getParticipantPresence(roomName: string, identity: string): Promise<boolean | null>;
+  listParticipants(roomName: string): Promise<NormalizedParticipant[] | null>;
 }
 
 export const VIDEO_PROVIDER_TOKEN = 'IVideoProviderService';

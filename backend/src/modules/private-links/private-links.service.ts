@@ -346,6 +346,7 @@ export class PrivateLinksService {
         where: { id: session.id },
         data: { isRemoved: true, leftAt: new Date() },
       });
+      await this.streamsService.evictChat(link.stream.id, { userId: session.userId, sessionId: session.id });
     }
 
     this.logger.log(`Private link ${linkId} revoked. Evicted ${link.sessions.length} viewers.`);

@@ -95,6 +95,9 @@ export default function StreamPlayerClient() {
   // N-06: Reconnect backoff state — cap retries and use exponential delay so a
   // rejected or ended room does not spin in a tight loop requesting new tokens.
   const reconnectAttemptsRef = useRef<number>(0);
+  // True only while the LiveKit media connection is actually up: the meter must not bill a viewer
+  // who is looking at a spinner (blocked UDP, TURN down, room full, stream not publishing).
+  const mediaConnectedRef = useRef<boolean>(false);
   const reconnectTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [showManualReconnect, setShowManualReconnect] = useState(false);
   // N-05: Track consecutive *transient* billing failures separately from auth/balance failures.
@@ -277,30 +280,55 @@ export default function StreamPlayerClient() {
     };
   }, [id]);
 
-  // H-06: Poll scheduled stream status so waiting viewers auto-enter when Pandit goes live
+  // H-06: Poll scheduled stream status so waiting viewers auto-enter when Pandit goes live.
+  // 10 s base interval (not 5 s: hundreds of devotees wait for a popular aarti, many behind one
+  // carrier/college NAT that shares the per-IP rate-limit bucket), paused while the tab is hidden,
+  // and exponential back-off (to 60 s) on 429 / 5xx / network errors instead of hammering the API.
   useEffect(() => {
     if (!isScheduled || !id || id === 'demo' || streamEnded) return;
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    const BASE_MS = 10_000;
+    const MAX_MS = 60_000;
+    let delay = BASE_MS;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
 
-    const pollInterval = setInterval(async () => {
-      try {
-        const res = await fetch(`${apiUrl}/streams/${id}`);
-        if (!res.ok) return;
-        const latest = await res.json();
-        if (latest.status === 'LIVE') {
-          clearInterval(pollInterval);
-          setIsScheduled(false);
-          await fetchStreamAndToken();
-        } else if (latest.status === 'ENDED' || latest.status === 'CANCELLED') {
-          clearInterval(pollInterval);
-          setIsScheduled(false);
-          setStreamEnded(true);
-          checkActiveLiveStreams(id);
+    const tick = async () => {
+      if (cancelled) return;
+      if (document.visibilityState !== 'hidden') {
+        try {
+          const res = await fetch(`${apiUrl}/streams/${id}`);
+          if (cancelled) return;
+          if (!res.ok) {
+            delay = Math.min(delay * 2, MAX_MS);
+          } else {
+            delay = BASE_MS;
+            const latest = await res.json();
+            if (cancelled) return;
+            if (latest.status === 'LIVE') {
+              setIsScheduled(false);
+              await fetchStreamAndToken();
+              return;
+            }
+            if (latest.status === 'ENDED' || latest.status === 'CANCELLED') {
+              setIsScheduled(false);
+              setStreamEnded(true);
+              checkActiveLiveStreams(id);
+              return;
+            }
+          }
+        } catch {
+          delay = Math.min(delay * 2, MAX_MS);
         }
-      } catch {}
-    }, 5000);
+      }
+      if (!cancelled) timer = setTimeout(tick, delay);
+    };
 
-    return () => clearInterval(pollInterval);
+    timer = setTimeout(tick, delay);
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
   }, [isScheduled, id, streamEnded]);
 
   // 60-Second Heartbeat Meter Loop
@@ -315,6 +343,9 @@ export default function StreamPlayerClient() {
     const storedToken = localStorage.getItem('pooja_token');
 
     meterIntervalRef.current = setInterval(async () => {
+      // No media connection => no billing. The session stops heartbeating, so the server watchdog
+      // reaps it after 90 s; if the viewer reconnects later the SESSION_EXPIRED path starts a fresh one.
+      if (!mediaConnectedRef.current) return;
       try {
         const res = await fetch(`${apiUrl}/wallet/meter-tick`, {
           method: 'POST',
@@ -720,7 +751,15 @@ export default function StreamPlayerClient() {
                   connect={true}
                   video={false}
                   audio={false}
+                  onConnected={() => {
+                    // A successful (re)connect clears the failure history; otherwise after ~5 blips in one
+                    // long session the player showed "Reconnect" and stopped retrying while still billing.
+                    mediaConnectedRef.current = true;
+                    reconnectAttemptsRef.current = 0;
+                    setShowManualReconnect(false);
+                  }}
                   onDisconnected={() => {
+                    mediaConnectedRef.current = false;
                     // Stop auto-reconnect if viewer was kicked
                     if (kickedRef.current) return;
 

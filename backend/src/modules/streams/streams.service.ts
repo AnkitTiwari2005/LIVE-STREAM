@@ -1,3 +1,4 @@
+import { finalizeStreamRecord } from '../../common/stream-lifecycle';
 import {
   Injectable,
   BadRequestException,
@@ -24,6 +25,7 @@ import { getLiveKitPublicUrl } from '../../common/livekit-url.util';
 @Injectable()
 export class StreamsService {
   private readonly logger = new Logger(StreamsService.name);
+  static readonly MAX_ROOM_PARTICIPANTS = 100;
 
   // Set via StreamsService.setDependencies() called from ChatGateway.afterInit()
   // to avoid circular NestJS DI (StreamsModule ↔ ChatModule).
@@ -89,7 +91,7 @@ export class StreamsService {
     const activeStreams = await this.prisma.stream.findMany({
       where: {
         streamerId,
-        status: StreamStatus.LIVE,
+        status: { in: [StreamStatus.LIVE, StreamStatus.RECONNECTING_GRACE_PERIOD] },
       },
     });
 
@@ -97,13 +99,7 @@ export class StreamsService {
       try {
         await this.videoProvider.endRoom(s.id);
       } catch {}
-      await this.prisma.stream.update({
-        where: { id: s.id },
-        data: {
-          status: StreamStatus.ENDED,
-          endedAt: new Date(),
-        },
-      });
+      await finalizeStreamRecord(this.prisma as any, s);
       this.logger.log(`Force-ended active live stream [${s.id}] for streamer [${streamerId}]`);
     }
 
@@ -126,10 +122,11 @@ export class StreamsService {
     validateStateTransition(stream.status, StreamStatus.LIVE);
 
     // Capacity Gate 1: Check if streamer already has another active live stream
+    const BROADCASTING = [StreamStatus.LIVE, StreamStatus.RECONNECTING_GRACE_PERIOD];
     const activeStreamForUser = await this.prisma.stream.findFirst({
       where: {
         streamerId,
-        status: StreamStatus.LIVE,
+        status: { in: BROADCASTING },
         id: { not: streamId },
       },
     });
@@ -138,8 +135,13 @@ export class StreamsService {
     }
 
     // Capacity Gate 2: Check global concurrent live streams limit (max 3 for single VPS NFR-P1)
+    // Streams in the reconnect grace period still occupy a slot; this stream (resuming from grace) and
+    // the one about to be force-ended do not count against itself.
     const totalLiveStreams = await this.prisma.stream.count({
-      where: { status: StreamStatus.LIVE, id: { not: activeStreamForUser?.id } },
+      where: {
+        status: { in: BROADCASTING },
+        id: { notIn: [streamId, ...(activeStreamForUser && forceEndPrevious ? [activeStreamForUser.id] : [])] },
+      },
     });
     if (totalLiveStreams >= 3 && stream.status !== StreamStatus.LIVE) {
       throw new ServiceUnavailableException(
@@ -151,24 +153,39 @@ export class StreamsService {
     const room = await this.videoProvider.createRoom({
       roomName: stream.id,
       emptyTimeoutSeconds: 600,
-      maxParticipants: 100,
+      maxParticipants: StreamsService.MAX_ROOM_PARTICIPANTS,
     });
 
     const startedAt = stream.startedAt || new Date();
 
-    // Now end previous stream and mark new stream LIVE in one transaction
+    // LiveKit is a network call: never make it inside the interactive transaction (default 5 s timeout
+    // -> P2028 -> a 500 after the new room was already created).
+    if (activeStreamForUser && forceEndPrevious) {
+      try {
+        await this.videoProvider.endRoom(activeStreamForUser.id);
+      } catch {}
+    }
+
+    // Now end previous stream and mark new stream LIVE in one transaction. The advisory lock makes the
+    // capacity re-count + status flip atomic, so concurrent go-lives cannot overshoot the cap.
     const [updatedStream] = await this.prisma.$transaction(async (tx) => {
-      if (activeStreamForUser && forceEndPrevious) {
-        try {
-          await this.videoProvider.endRoom(activeStreamForUser.id);
-        } catch {}
-        await tx.stream.update({
-          where: { id: activeStreamForUser.id },
-          data: { status: StreamStatus.ENDED, endedAt: new Date() },
+      await tx.$executeRawUnsafe(`SELECT pg_advisory_xact_lock(727001)`);
+      if (stream.status !== StreamStatus.LIVE) {
+        const liveNow = await tx.stream.count({
+          where: {
+            status: { in: BROADCASTING },
+            id: { notIn: [streamId, ...(activeStreamForUser && forceEndPrevious ? [activeStreamForUser.id] : [])] },
+          },
         });
-        await tx.streamViewingSession.updateMany({
-          where: { streamId: activeStreamForUser.id, status: ViewingSessionStatus.ACTIVE },
-          data: { status: ViewingSessionStatus.DISCONNECTED_TIMEOUT, endedAt: new Date() },
+        if (liveNow >= 3) {
+          throw new ServiceUnavailableException(
+            'Platform streaming capacity is currently full (3 concurrent streams). Please wait a few moments.',
+          );
+        }
+      }
+      if (activeStreamForUser && forceEndPrevious) {
+        await finalizeStreamRecord(tx as any, activeStreamForUser, {
+          sessionStatus: ViewingSessionStatus.DISCONNECTED_TIMEOUT,
         });
       }
 
@@ -313,6 +330,27 @@ export class StreamsService {
       // If user is not the stream host/pandit or platform admin, meter their darshan session
       const isExempt = verifiedUser.id === stream.streamerId || verifiedUser.role === UserRole.ADMIN;
       if (!isExempt) {
+        // A viewer who already holds an ACTIVE session is only reconnecting (page reload, network blip):
+        // they have paid for it, so these gates apply to brand-new sessions only.
+        const existingSession = await this.prisma.streamViewingSession.findFirst({
+          where: { userId: verifiedUser.id, streamId, status: ViewingSessionStatus.ACTIVE },
+          select: { id: true },
+        });
+        if (!existingSession) {
+          if (stream.status === StreamStatus.RECONNECTING_GRACE_PERIOD) {
+            throw new ServiceUnavailableException(
+              'The pandit is reconnecting. Please try again in a minute - you have not been charged.',
+            );
+          }
+          // Do not take coins for a room that cannot admit the viewer (LiveKit enforces maxParticipants).
+          // Fail open when LiveKit cannot be queried: the room limit still holds server-side.
+          const inRoom = await this.videoProvider.getRoomParticipantCount(stream.id);
+          if (inRoom !== null && inRoom >= StreamsService.MAX_ROOM_PARTICIPANTS) {
+            throw new ServiceUnavailableException(
+              'This darshan is full right now. Please try again shortly - you have not been charged.',
+            );
+          }
+        }
         viewingSession = await this.walletService.startViewingSession(verifiedUser.id, streamId, ip);
       }
     }
@@ -358,6 +396,11 @@ export class StreamsService {
     const where: any = {
       visibility: StreamVisibility.PUBLIC,
       status: { in: [StreamStatus.LIVE, StreamStatus.SCHEDULED] },
+      // Stale SCHEDULED rows (never went live) are only cancelled after 48 h: don't list them meanwhile.
+      OR: [
+        { status: StreamStatus.LIVE },
+        { scheduledAt: { gte: new Date(Date.now() - 6 * 3600 * 1000) } },
+      ],
     };
 
     if (categoryId) {
@@ -365,9 +408,13 @@ export class StreamsService {
     }
 
     if (search) {
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
+      where.AND = [
+        {
+          OR: [
+            { title: { contains: search, mode: 'insensitive' } },
+            { description: { contains: search, mode: 'insensitive' } },
+          ],
+        },
       ];
     }
 
@@ -388,6 +435,7 @@ export class StreamsService {
         { scheduledAt: 'asc' },
         { createdAt: 'desc' },
       ],
+      take: 100,
     });
 
     // B-14: Explicitly sort LIVE streams before SCHEDULED streams
@@ -414,16 +462,38 @@ export class StreamsService {
     if (stream.status !== StreamStatus.DRAFT && stream.status !== StreamStatus.SCHEDULED) {
       throw new BadRequestException('Only draft or scheduled streams can be updated');
     }
-    return this.prisma.stream.update({
+    const newSchedule = dto.scheduledAt ? new Date(dto.scheduledAt) : null;
+    if (newSchedule && Number.isNaN(newSchedule.getTime())) {
+      throw new BadRequestException('Invalid scheduled time');
+    }
+    if (newSchedule && newSchedule.getTime() <= Date.now()) {
+      throw new BadRequestException('Scheduled time must be in the future');
+    }
+    const scheduleChanged =
+      !!newSchedule && newSchedule.getTime() !== (stream.scheduledAt ? stream.scheduledAt.getTime() : NaN);
+
+    const updated = await this.prisma.stream.update({
       where: { id: streamId },
       data: {
         title: dto.title ?? stream.title,
         description: dto.description ?? stream.description,
         categoryId: dto.categoryId ?? stream.categoryId,
-        scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : stream.scheduledAt,
+        scheduledAt: newSchedule ?? stream.scheduledAt,
         thumbnailUrl: dto.thumbnailUrl ?? stream.thumbnailUrl,
+        // A draft that gets a future time becomes a scheduled stream (same rule as createStream);
+        // otherwise it never shows in the public list and never sends reminders.
+        ...(newSchedule && stream.status === StreamStatus.DRAFT ? { status: StreamStatus.SCHEDULED } : {}),
       },
     });
+
+    // New time => subscribers who were already reminded about the old one must be reminded again.
+    if (scheduleChanged) {
+      await this.prisma.streamReminder.updateMany({
+        where: { streamId },
+        data: { isSentScheduled: false, isSent15Min: false },
+      });
+    }
+    return updated;
   }
 
   async deleteStream(streamId: string, streamerId: string) {
@@ -477,12 +547,31 @@ export class StreamsService {
       }
     }
 
+    // Drafts are private work-in-progress: only the owner/admin can read them (CANCELLED stays readable -
+    // the player's status poll needs to see it).
+    if (stream.status === StreamStatus.DRAFT) {
+      const isOwner = caller && caller.id === stream.streamerId;
+      const isAdmin = caller && caller.role === 'ADMIN';
+      if (!isOwner && !isAdmin) {
+        throw new NotFoundException('Stream not found');
+      }
+    }
+
     return stream;
   }
 
   // ---------------------------------------------------------------------------
   // Feature C — Kick / Remove viewer (public + private streams)
   // ---------------------------------------------------------------------------
+
+  /** Drop a user's / guest session's chat sockets from a stream room (kick, revoke, block). */
+  async evictChat(streamId: string, who: { userId?: string | null; sessionId?: string | null }) {
+    try {
+      await this.chatGateway?.evict?.(streamId, who);
+    } catch (err: any) {
+      this.logger.warn(`Chat eviction failed for stream ${streamId}: ${err.message}`);
+    }
+  }
 
   async kickViewer(
     streamId: string,
@@ -507,15 +596,17 @@ export class StreamsService {
 
     // 3. Stop coin billing (StreamViewingSession → EVICTED_BY_MODERATOR)
     // StreamViewingSession is keyed by userId only (guests don't have metered billing)
-    const billingWhere: Record<string, any> = { streamId, status: 'ACTIVE' };
-    if (targetUserId) billingWhere.userId = targetUserId;
-    await this.prisma.streamViewingSession.updateMany({
-      where: billingWhere,
-      data: {
-        status: ViewingSessionStatus.EVICTED_BY_MODERATOR,
-        endedAt: new Date(),
-      },
-    });
+    // Only a registered user can have a metered session. For a guest there is nothing to stop, and a
+    // where-clause without userId would end EVERY viewer's billing session on the stream.
+    if (targetUserId) {
+      await this.prisma.streamViewingSession.updateMany({
+        where: { streamId, userId: targetUserId, status: 'ACTIVE' },
+        data: {
+          status: ViewingSessionStatus.EVICTED_BY_MODERATOR,
+          endedAt: new Date(),
+        },
+      });
+    }
 
     // 4. Mark ViewerSession as removed
     if (targetSessionId) {
@@ -530,15 +621,29 @@ export class StreamsService {
       });
     }
 
+    // 4b. Remove their chat sockets from the room right now (otherwise the 10 s access cache and the open
+    //     socket keep them talking after the kick)
+    await this.evictChat(streamId, { userId: targetUserId, sessionId: targetSessionId });
+
     // 5. Block if requested — create a BlockedViewer record
     if (dto.block) {
+      // claimLink matches guests by IP (sessionFingerprint = ip) and users by userId; a session id never
+      // matches anything, so resolve the guest's IP from their session.
+      let guestIp: string | null = null;
+      if (targetSessionId) {
+        const sess = await this.prisma.viewerSession.findFirst({
+          where: { id: targetSessionId, streamId },
+          select: { ipAddress: true },
+        });
+        guestIp = sess?.ipAddress ?? null;
+      }
       try {
         // Check if already blocked to avoid duplicates
         const existing = await this.prisma.blockedViewer.findFirst({
           where: {
             streamId,
             ...(targetUserId ? { userId: targetUserId } : {}),
-            ...(targetSessionId ? { sessionFingerprint: targetSessionId } : {}),
+            ...(targetSessionId ? { sessionFingerprint: guestIp ?? targetSessionId } : {}),
           },
         });
         if (!existing) {
@@ -546,7 +651,7 @@ export class StreamsService {
             data: {
               streamId,
               ...(targetUserId ? { userId: targetUserId } : {}),
-              ...(targetSessionId ? { sessionFingerprint: targetSessionId } : {}),
+              ...(targetSessionId ? { sessionFingerprint: guestIp ?? targetSessionId } : {}),
               reason: dto.reason,
             },
           });

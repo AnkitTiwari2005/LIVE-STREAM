@@ -78,12 +78,31 @@ class InMemoryChatCache {
   }
 }
 
+/**
+ * Browsers must come from our own origin(s). Native/server clients send no Origin header and are allowed
+ * (auth is the explicit handshake token, never cookies, so there is no cross-site hijack path either way).
+ */
+export function isAllowedSocketOrigin(origin: string | undefined, env: NodeJS.ProcessEnv = process.env): boolean {
+  if (!origin) return true;
+  const allowed = new Set<string>();
+  for (const v of [env.FRONTEND_ORIGIN, env.FRONTEND_URL, env.CORS_ORIGIN, ...(env.CORS_ORIGINS || '').split(',')]) {
+    if (v && v.trim()) allowed.add(v.trim().replace(/\/$/, ''));
+  }
+  if (env.DOMAIN) {
+    allowed.add(`https://${env.DOMAIN}`);
+    allowed.add(`https://www.${env.DOMAIN}`);
+  }
+  if (env.NODE_ENV !== 'production') {
+    allowed.add('http://localhost:3000');
+    allowed.add('http://127.0.0.1:3000');
+    allowed.add('http://localhost:4000');
+  }
+  return allowed.has(origin.replace(/\/$/, ''));
+}
+
 @WebSocketGateway({
   cors: {
-    origin: process.env.FRONTEND_URL
-      ? [process.env.FRONTEND_URL, 'http://localhost:3000']
-      : (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) =>
-          callback(null, true),
+    origin: (origin, callback) => callback(null, isAllowedSocketOrigin(origin)),
     credentials: true,
   },
   namespace: '/',
@@ -95,6 +114,13 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   private readonly logger = new Logger(ChatGateway.name);
   private redis: Redis | null = null;
   private readonly memoryCache = new InMemoryChatCache();
+  // Short-lived caches so a busy chat does not turn into 3 DB reads per message.
+  private readonly streamCache = new Map<string, { at: number; row: any }>();
+  private readonly accessCache = new Map<string, { at: number; ok: boolean; reason?: string }>();
+  private readonly muteCache = new Map<string, { at: number; until: number }>();
+  static readonly STREAM_TTL_MS = 5_000;
+  static readonly ACCESS_TTL_MS = 10_000;
+  static readonly MUTE_TTL_MS = 15_000;
 
   constructor(
     private readonly chatService: ChatService,
@@ -113,6 +139,10 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       });
       this.redis.on('error', (err) => {
         this.logger.debug(`Redis offline: ${err.message}`);
+      });
+      // lazyConnect never connected on its own, so every Redis branch below was dead code.
+      this.redis.connect().catch(() => {
+        /* Redis is optional: the in-memory limiter and DB-backed mutes keep working */
       });
     } catch {
       this.redis = null;
@@ -184,21 +214,120 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       client.handshake.auth?.token ||
       (client.handshake.headers?.authorization as string)?.replace('Bearer ', '');
     client.data.user = await this.resolveVerifiedSocketUser(token);
-    if (client.data.user?.sub) {
-      client.join(`user:${client.data.user.sub}`);
+    client.data.joinedStreams = new Set<string>();
+    client.data.sessionIds = {} as Record<string, string>;
+    if (client.data.user?.sub) client.join(`user:${client.data.user.sub}`);
+  }
+
+  private async getStreamRow(streamId: string) {
+    const hit = this.streamCache.get(streamId);
+    if (hit && Date.now() - hit.at < ChatGateway.STREAM_TTL_MS) return hit.row;
+    const row = await this.prisma.stream.findUnique({ where: { id: streamId } });
+    this.streamCache.set(streamId, { at: Date.now(), row });
+    if (this.streamCache.size > 500) this.streamCache.clear();
+    return row;
+  }
+
+  /** Is this sender still allowed to speak in the stream (not blocked; private: session still valid)? */
+  private async checkSenderAccess(
+    client: Socket,
+    stream: any,
+    userId: string | null,
+    guestSessionId: string | null = null,
+  ): Promise<{ ok: boolean; reason?: string }> {
+    const key = `${stream.id}:${userId ?? `g:${guestSessionId}`}`;
+    const hit = this.accessCache.get(key);
+    if (hit && Date.now() - hit.at < ChatGateway.ACCESS_TTL_MS) return hit;
+    let res: { ok: boolean; reason?: string } = { ok: true };
+    const isModerator = (!!userId && userId === stream.streamerId) || client.data.user?.role === UserRole.ADMIN;
+    if (!isModerator && !userId && guestSessionId) {
+      // private-link guest: the ViewerSession must still be valid, and its IP must not be blocked
+      const session = await this.prisma.viewerSession.findFirst({
+        where: { id: guestSessionId, streamId: stream.id, leftAt: null, isRemoved: false },
+      });
+      if (!session) res = { ok: false, reason: 'Your access to this private pooja has ended' };
+      else if (session.ipAddress) {
+        const blocked = await this.prisma.blockedViewer.findFirst({
+          where: { streamId: stream.id, sessionFingerprint: session.ipAddress },
+        });
+        if (blocked) res = { ok: false, reason: 'You have been blocked from this stream' };
+      }
+    } else if (!isModerator && userId) {
+      const blocked = await this.prisma.blockedViewer.findFirst({ where: { streamId: stream.id, userId } });
+      if (blocked) res = { ok: false, reason: 'You have been blocked from this stream' };
+      else if (stream.visibility === 'PRIVATE') {
+        const sessionId = client.data.sessionIds?.[stream.id];
+        const session = await this.prisma.viewerSession.findFirst({
+          where: {
+            streamId: stream.id,
+            leftAt: null,
+            isRemoved: false,
+            OR: [{ userId }, ...(sessionId ? [{ id: sessionId }] : [])],
+          },
+        });
+        if (!session) res = { ok: false, reason: 'Your access to this private pooja has ended' };
+      }
     }
+    this.accessCache.set(key, { at: Date.now(), ...res });
+    if (this.accessCache.size > 5000) this.accessCache.clear();
+    return res;
+  }
+
+  /** Mutes survive restarts: the ModerationAction row is the source of truth, memory/Redis are caches. */
+  private async isMutedDurable(streamId: string, userId: string): Promise<boolean> {
+    const key = `${streamId}:${userId}`;
+    const hit = this.muteCache.get(key);
+    if (hit && Date.now() - hit.at < ChatGateway.MUTE_TTL_MS) return hit.until > Date.now();
+    let until = 0;
+    try {
+      const last = await this.prisma.moderationAction.findFirst({
+        where: { streamId, targetUserId: userId, actionType: 'MUTE' },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (last?.durationMinutes) until = last.createdAt.getTime() + last.durationMinutes * 60_000;
+    } catch {
+      /* DB hiccup: fall back to the in-memory mute only */
+    }
+    this.muteCache.set(key, { at: Date.now(), until });
+    if (this.muteCache.size > 5000) this.muteCache.clear();
+    return until > Date.now();
+  }
+
+  /**
+   * Remove a user/session from a stream's chat room NOW (kick, revoke, block). Clears the caches that
+   * would otherwise keep authorising them for up to ACCESS_TTL_MS.
+   */
+  async evict(streamId: string, who: { userId?: string | null; sessionId?: string | null }): Promise<number> {
+    if (who.userId) this.accessCache.delete(`${streamId}:${who.userId}`);
+    if (!this.server) return 0;
+    let n = 0;
+    const sockets = await this.server.in(`stream:${streamId}`).fetchSockets();
+    for (const sk of sockets) {
+      const uid = sk.data?.user?.sub;
+      const sid = sk.data?.sessionIds?.[streamId];
+      if ((who.userId && uid === who.userId) || (who.sessionId && sid === who.sessionId)) {
+        sk.emit('chat:error', { message: 'You have been removed from this stream chat' });
+        sk.leave(`stream:${streamId}`);
+        sk.data?.joinedStreams?.delete?.(streamId);
+        n++;
+      }
+    }
+    return n;
+  }
+
+  /** Drop every socket of a user (account banned/suspended/deleted mid-stream). */
+  async evictUser(userId: string): Promise<void> {
+    for (const k of [...this.accessCache.keys()]) if (k.endsWith(`:${userId}`)) this.accessCache.delete(k);
+    if (this.server) this.server.in(`user:${userId}`).disconnectSockets(true);
   }
 
   async handleDisconnect(client: Socket) {
-    const streamId = client.data?.streamId;
-    const identity = client.data?.livekitIdentity || client.data?.user?.sub;
-    const isStreamer = client.data?.isStreamer;
-
-    if (streamId && identity) {
-      client.leave(`identity:${streamId}:${identity}`);
-
-      // Only track viewer removal for non-streamers
-      if (!isStreamer) {
+    // One socket can join several streams (tab navigation): release the presence of EVERY one of them,
+    // not only the last (client.data.streamId), or the earlier streams keep a ghost viewer forever.
+    const tracked: Map<string, string> | undefined = client.data?.presence;
+    if (tracked) {
+      for (const [streamId, identity] of tracked.entries()) {
+        client.leave(`identity:${streamId}:${identity}`);
         const { isViewerRemoved, count } = await this.presenceService.removeViewerSocket(
           streamId,
           identity,
@@ -206,14 +335,22 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         );
         if (isViewerRemoved) {
           this.presenceService.broadcastCount(streamId, count);
-          this.server.to(`stream:${streamId}`).emit('stream:viewer_left', {
-            streamId,
-            identity,
-          });
+          this.server.to(`stream:${streamId}`).emit('stream:viewer_left', { streamId, identity });
         }
       }
     }
     client.data = {};
+  }
+
+  /** Display names come from the database; whatever a client sends is cut down to a short, plain label. */
+  private static safeName(raw: unknown, fallback = 'Devotee'): string {
+    const cleaned = String(raw ?? '')
+      .normalize('NFKC')
+      .replace(/[\u0000-\u001f\u007f\u200b-\u200f\u2028-\u202e\u2060\ufeff]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 40);
+    return cleaned || fallback;
   }
 
   @SubscribeMessage('chat:join')
@@ -227,6 +364,11 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     // Check if stream exists
     const stream = await this.prisma.stream.findUnique({ where: { id: streamId } });
     if (!stream) return;
+
+    // The only guest identity we ever trust is a ViewerSession row that exists, belongs to this stream and
+    // is still valid. A sessionId the client merely claims on a public stream proves nothing.
+    let validGuestSession: { id: string; guestName?: string | null } | null = null;
+    let validSessionId: string | null = null;
 
     // S-01/S-02 / B-17: Private stream chat requires authorized streamer/admin or active session token/ID
     if (stream.visibility === 'PRIVATE') {
@@ -250,6 +392,8 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
           client.emit('chat:error', { message: 'Unauthorized: Private pooja chat requires an active consultation pass' });
           return;
         }
+        validSessionId = (session as any).id;
+        if (!userId) validGuestSession = session as any;
       }
     }
 
@@ -267,6 +411,12 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
     client.join(`stream:${streamId}`);
     client.data.streamId = streamId;
+    (client.data.joinedStreams ??= new Set<string>()).add(streamId);
+    // Only a session the database confirmed is remembered; a sessionId the client merely claims is not.
+    if (validSessionId) (client.data.sessionIds ??= {})[streamId] = validSessionId;
+    if (validGuestSession) {
+      (client.data.guestNames ??= {})[streamId] = ChatGateway.safeName(validGuestSession.guestName, 'Guest Devotee');
+    }
 
     // Persist sessionId for guest identity resolution later
     if (data.sessionId) {
@@ -275,22 +425,30 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
     // Join per-identity room for targeted kick events
     const userId2 = client.data.user?.sub;
-    const sessionId2 = data.sessionId || client.handshake.auth?.sessionId;
     const isStreamer = Boolean(userId2 && userId2 === stream.streamerId);
-    const livekitIdentity = userId2 || (sessionId2 ? `priv_guest_${sessionId2}` : `guest_${client.id}`);
-    
-    client.data.isStreamer = isStreamer;
-    client.data.livekitIdentity = livekitIdentity;
-    client.join(`identity:${streamId}:${livekitIdentity}`);
+    // Counted identities: a signed-in user, or a validated private-link guest. An anonymous socket on a
+    // public stream is a lurker: it receives chat and counts, but it is not a devotee in the room (it
+    // cannot even obtain a video token), so it never enters presence, peakViewers or the join banner.
+    const livekitIdentity: string | null = userId2
+      ? userId2
+      : validGuestSession
+        ? `priv_guest_${validGuestSession.id}`
+        : null;
 
-    // If Devotee / Viewer (NOT the streamer broadcaster):
-    if (!isStreamer) {
-      const displayName =
-        client.data.user?.name ||
-        client.handshake.auth?.guestName ||
-        (sessionId2 ? 'Guest Devotee' : 'Devotee');
+    client.data.isStreamer = isStreamer;
+    if (livekitIdentity) {
+      client.data.livekitIdentity = livekitIdentity;
+      client.join(`identity:${streamId}:${livekitIdentity}`);
+    }
+
+    if (!isStreamer && livekitIdentity) {
+      const displayName = ChatGateway.safeName(
+        client.data.user?.name ?? validGuestSession?.guestName,
+        validGuestSession ? 'Guest Devotee' : 'Devotee',
+      );
       const isGuest = !userId2;
       client.data.displayName = displayName;
+      (client.data.presence ??= new Map<string, string>()).set(streamId, livekitIdentity);
 
       const { isNewViewer, count } = await this.presenceService.addViewerSession(
         streamId,
@@ -300,12 +458,10 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         client.id,
       );
 
-      // If new devotee joined, broadcast join event & sacred announcement to chat
       if (isNewViewer) {
-        // Broadcast updated count to all clients
         this.presenceService.broadcastCount(streamId, count);
 
-        // Broadcast join event for studio real-time list
+        // Studio list (moderators' sockets only would be better; kept to the room for compatibility)
         this.server.to(`stream:${streamId}`).emit('stream:viewer_joined', {
           identity: livekitIdentity,
           displayName,
@@ -313,27 +469,22 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
           joinedAtMs: Date.now(),
         });
 
-        // Broadcast sacred spiritual join message into the chat room
-        this.server.to(`stream:${streamId}`).emit('chat:message', {
-          id: `join_${livekitIdentity}_${Date.now()}`,
-          streamId,
-          message: `${displayName} has joined the sacred darshan 🙏`,
-          createdAt: new Date().toISOString(),
-          user: {
-            id: livekitIdentity,
-            name: displayName,
-            role: isGuest ? 'GUEST' : 'DEVOTEE',
-          },
-          isSystem: true,
-          systemType: 'JOIN',
-        });
+        // Join banner: only while the room is small - at 100 devotees it is pure noise - and always from
+        // the sanitised, database-sourced name above.
+        if (count <= 25) {
+          this.server.to(`stream:${streamId}`).emit('chat:message', {
+            id: `join_${livekitIdentity}_${Date.now()}`,
+            streamId,
+            message: `${displayName} has joined the sacred darshan 🙏`,
+            createdAt: new Date().toISOString(),
+            user: { id: livekitIdentity, name: displayName, role: isGuest ? 'GUEST' : 'DEVOTEE' },
+            isSystem: true,
+            systemType: 'JOIN',
+          });
+        }
 
-        // Update peakViewers in DB if count grew
         if (count > stream.peakViewers) {
-          this.prisma.stream.update({
-            where: { id: streamId },
-            data: { peakViewers: count },
-          }).catch(() => {});
+          this.prisma.stream.update({ where: { id: streamId }, data: { peakViewers: count } }).catch(() => {});
         }
       }
     }
@@ -383,13 +534,41 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       }
     }
 
-    const { streamId, message, guestName } = data;
+    const { streamId, message } = data;
     if (!streamId || !message || typeof message !== 'string') return;
 
-    // Check if chat is enabled on this stream
-    const stream = await this.prisma.stream.findUnique({ where: { id: streamId } });
+    // Only signed-in devotees can speak (the UI already requires it). This also removes client-chosen
+    // display names ("Pandit") and anonymous rows that have no author.
+    // A private-link guest is allowed too, but only through the session chat:join validated.
+    const guestSessionId: string | null = !user?.sub ? (client.data.sessionIds?.[streamId] ?? null) : null;
+    if (!user?.sub && !guestSessionId) {
+      client.emit('chat:error', { message: 'Please sign in to participate in sacred live chat.' });
+      return;
+    }
+    const senderId: string = user?.sub ?? `priv_guest_${guestSessionId}`;
+
+    // Membership: you can only post into a room you were admitted to by chat:join (which ran the
+    // private-stream and block checks). Knowing a streamId is not enough.
+    if (!client.data.joinedStreams?.has(streamId)) {
+      client.emit('chat:error', { message: 'Join the stream chat before sending messages.' });
+      return;
+    }
+
+    // Check if chat is enabled on this stream, and that it is actually on air
+    const stream = await this.getStreamRow(streamId);
     if (!stream || !stream.isChatEnabled) {
       client.emit('chat:error', { message: 'Live chat is currently disabled for this stream.' });
+      return;
+    }
+    if (stream.status !== 'LIVE' && stream.status !== 'RECONNECTING_GRACE_PERIOD') {
+      client.emit('chat:error', { message: 'Chat is only open while the stream is live.' });
+      return;
+    }
+
+    // Re-check on every send (cached 10 s): blocked after joining, or private session revoked/kicked.
+    const access = await this.checkSenderAccess(client, stream, user?.sub ?? null, guestSessionId);
+    if (!access.ok) {
+      client.emit('chat:error', { message: access.reason });
       return;
     }
 
@@ -401,7 +580,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
 
     // FR-C2: Rate limit of 1 message per second
-    const actorId = user?.sub || client.id;
+    const actorId = senderId;
     const rateLimitKey = `rate:chat:${streamId}:${actorId}`;
     let isAllowed = this.memoryCache.checkRateLimit(rateLimitKey, 1000);
     try {
@@ -430,6 +609,8 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       // Redis unavailable
     }
 
+    if (!isMuted && user?.sub) isMuted = await this.isMutedDurable(streamId, user.sub);
+
     if (isMuted) {
       client.emit('chat:error', { message: 'You are currently muted in this live stream.' });
       return;
@@ -452,7 +633,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       createdAt: saved.createdAt,
       user: {
         id: saved.user?.id || actorId,
-        name: saved.user?.name || guestName || 'Devotee',
+        name: saved.user?.name || user?.name || client.data.guestNames?.[streamId] || 'Devotee',
         avatarUrl: saved.user?.avatarUrl || null,
         role: saved.user?.role || 'VIEWER',
       },
@@ -477,6 +658,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     ];
 
     if (!streamId || !allowedEmojis.includes(emoji)) return;
+    if (!client.data.joinedStreams?.has(streamId)) return;
 
     // Rate-limit reaction spam per client session (max 5 per second)
     const reactionKey = `rate:react:${streamId}:${client.id}`;
@@ -569,7 +751,15 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     const isModerator = stream.streamerId === user.sub || user.role === UserRole.ADMIN;
     if (!isModerator) return;
 
+    if (!data.targetUserId || typeof data.targetUserId !== 'string') return;
+    const target = await this.prisma.user.findUnique({ where: { id: data.targetUserId }, select: { id: true } });
+    if (!target) {
+      client.emit('chat:error', { message: 'That user cannot be muted.' });
+      return;
+    }
+
     const minutes = Math.min(Math.max(data.durationMinutes || 15, 1), 1440);
+    this.muteCache.delete(`${data.streamId}:${data.targetUserId}`);
     const muteKey = `mute:${data.streamId}:${data.targetUserId}`;
     this.memoryCache.mute(muteKey, minutes);
     try {

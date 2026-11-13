@@ -1,3 +1,4 @@
+import { finalizeStreamRecord } from '../../common/stream-lifecycle';
 import { Injectable, NotFoundException, BadRequestException, Inject, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { UserStatus, StreamStatus, UserRole } from '@prisma/client';
@@ -92,10 +93,7 @@ export class AdminService {
         });
         for (const st of activeStreams) {
           await this.videoProvider.endRoom(st.id).catch(() => {});
-          await this.prisma.stream.update({
-            where: { id: st.id },
-            data: { status: StreamStatus.ENDED, endedAt: new Date() },
-          });
+          await finalizeStreamRecord(this.prisma as any, st);
         }
       } catch (err: any) {
         this.logger.error(`Error terminating active streams for banned user ${userId}: ${err.message}`);
@@ -136,32 +134,27 @@ export class AdminService {
     const stream = await this.prisma.stream.findUnique({ where: { id: streamId } });
     if (!stream) throw new NotFoundException('Stream not found');
 
-    await this.videoProvider.endRoom(stream.id);
+    // A kill switch must not claim success while the media room is still running: report the real result.
+    const roomClosed = await this.videoProvider.endRoom(stream.id);
 
-    const endedAt = new Date();
-    const duration = Math.floor((endedAt.getTime() - new Date(stream.startedAt || stream.createdAt).getTime()) / 1000);
+    const { durationSeconds: duration } = await finalizeStreamRecord(this.prisma as any, stream);
+    await this.prisma.auditLog.create({
+      data: {
+        actorId: adminId,
+        actorEmail: adminEmail,
+        action: 'ADMIN_FORCE_END_STREAM',
+        targetResource: `Stream:${streamId}`,
+        details: { durationSeconds: duration, peakViewers: stream.peakViewers, roomClosed },
+      },
+    });
 
-    await this.prisma.$transaction([
-      this.prisma.stream.update({
-        where: { id: streamId },
-        data: {
-          status: StreamStatus.ENDED,
-          endedAt,
-          durationSeconds: duration > 0 ? duration : 0,
-        },
-      }),
-      this.prisma.auditLog.create({
-        data: {
-          actorId: adminId,
-          actorEmail: adminEmail,
-          action: 'ADMIN_FORCE_END_STREAM',
-          targetResource: `Stream:${streamId}`,
-          details: { durationSeconds: duration, peakViewers: stream.peakViewers },
-        },
-      }),
-    ]);
-
-    return { message: 'Stream forcibly terminated.' };
+    return roomClosed
+      ? { message: 'Stream forcibly terminated.', roomClosed: true }
+      : {
+          message:
+            'Stream marked ended, but LiveKit did not confirm closing the media room. It will be cleaned up automatically within a minute; check LiveKit if the broadcast is still visible.',
+          roomClosed: false,
+        };
   }
 
   async getAuditLogs(limit = 100) {

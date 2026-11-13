@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateReportDto, ResolveReportDto } from './dto/create-report.dto';
 import { ReportStatus } from '@prisma/client';
@@ -10,6 +10,27 @@ export class ReportsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async createReport(reporterId: string, dto: CreateReportDto) {
+    // Validate every reference first: a bad id used to surface as a foreign-key 500 after the reporter
+    // already saw the form succeed. Guests' socket ids, for example, are not user ids.
+    if (dto.streamId && !(await this.prisma.stream.findUnique({ where: { id: dto.streamId }, select: { id: true } }))) {
+      throw new NotFoundException('Reported stream not found');
+    }
+    if (dto.targetUserId && !(await this.prisma.user.findUnique({ where: { id: dto.targetUserId }, select: { id: true } }))) {
+      throw new NotFoundException('Reported user not found');
+    }
+    let reportedMessageText: string | null = null;
+    if (dto.chatMessageId) {
+      const msg = await this.prisma.chatMessage.findUnique({
+        where: { id: dto.chatMessageId },
+        select: { id: true, message: true, streamId: true },
+      });
+      if (!msg) throw new NotFoundException('Reported message not found');
+      if (dto.streamId && msg.streamId !== dto.streamId) {
+        throw new BadRequestException('Reported message does not belong to that stream');
+      }
+      reportedMessageText = msg.message; // evidence survives the 30-day chat purge
+    }
+
     const report = await this.prisma.report.create({
       data: {
         reporterId,
@@ -17,6 +38,7 @@ export class ReportsService {
         streamId: dto.streamId || null,
         targetUserId: dto.targetUserId || null,
         chatMessageId: dto.chatMessageId || null,
+        reportedMessageText,
         reason: dto.reason,
         details: dto.details || null,
         status: ReportStatus.OPEN,
@@ -28,7 +50,10 @@ export class ReportsService {
   }
 
   async getReportsQueue(status?: ReportStatus) {
-    return this.prisma.report.findMany({
+    if (status && !Object.values(ReportStatus).includes(status)) {
+      throw new BadRequestException('Invalid report status');
+    }
+    const rows = await this.prisma.report.findMany({
       where: status ? { status } : undefined,
       include: {
         reporter: { select: { id: true, name: true, email: true } },
@@ -37,7 +62,14 @@ export class ReportsService {
         chatMessage: { select: { id: true, message: true, createdAt: true } },
       },
       orderBy: { createdAt: 'desc' },
+      take: 200,
     });
+    // The live chat row is purged after 30 days; fall back to the snapshot taken at report time.
+    return rows.map((r) =>
+      r.chatMessage || !r.reportedMessageText
+        ? r
+        : { ...r, chatMessage: { id: null, message: r.reportedMessageText, createdAt: r.createdAt, purged: true } },
+    );
   }
 
   async resolveReport(reportId: string, adminId: string, adminEmail: string, dto: ResolveReportDto) {

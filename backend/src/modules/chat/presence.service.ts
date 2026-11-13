@@ -31,6 +31,8 @@ export interface ViewerEntry {
 
 interface InternalViewerRecord extends ViewerEntry {
   socketIds: Set<string>;
+  /** true while LiveKit reports this identity in the room (webhook / reconciler) */
+  inLivekit: boolean;
 }
 
 @Injectable()
@@ -58,6 +60,7 @@ export class PresenceService {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private gateway: any = null;
+  private reconcileTimer: NodeJS.Timeout | null = null;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -74,6 +77,9 @@ export class PresenceService {
       this.redis.on('error', (err) =>
         this.logger.debug(`PresenceService Redis offline: ${err.message}`),
       );
+      // lazyConnect + isRedisReady() guard meant nothing ever triggered a connection: connect explicitly.
+      // (ioredis reconnects by itself after this; offline commands fail fast and fall back to memory.)
+      this.redis.connect().catch(() => {});
     } catch {
       this.redis = null;
     }
@@ -86,6 +92,16 @@ export class PresenceService {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setGateway(gw: any) {
     this.gateway = gw;
+    // The viewer registry lives in THIS process's memory, so the reconciler has to run in the process
+    // that owns the sockets (the API). The cron worker never gets a gateway (afterInit does not run in a
+    // standalone application context) and compose sets RUN_CRONS=false on the API, so the old
+    // cron-driven reconcileAll() ran nowhere.
+    if (!this.reconcileTimer) {
+      this.reconcileTimer = setInterval(() => {
+        this.reconcileAll().catch(() => {});
+      }, 30_000);
+      this.reconcileTimer.unref?.();
+    }
     if (!this.redisSubscriber) {
       const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
       try {
@@ -95,9 +111,12 @@ export class PresenceService {
           maxRetriesPerRequest: 0,
         });
         this.redisSubscriber.on('error', () => {});
-        this.redisSubscriber
-          .subscribe('shubh:presence:count')
-          .catch(() => {});
+        // subscribe() on a not-yet-connected client with enableOfflineQueue:false is rejected, so the
+        // relay was never registered. Connect first, subscribe on every (re)connect.
+        const sub = this.redisSubscriber;
+        const subscribe = () => sub.subscribe('shubh:presence:count').catch(() => {});
+        sub.on('ready', subscribe);
+        sub.connect().catch(() => {});
         this.redisSubscriber.on('message', (_channel, msg) => {
           try {
             const payload = JSON.parse(msg);
@@ -132,6 +151,7 @@ export class PresenceService {
     displayName: string = 'Devotee',
     isGuest: boolean = false,
     socketId?: string,
+    source: 'socket' | 'livekit' = 'socket',
   ): Promise<{ isNewViewer: boolean; count: number }> {
     let streamMap = this.streamViewers.get(streamId);
     if (!streamMap) {
@@ -144,6 +164,7 @@ export class PresenceService {
 
     if (record) {
       if (socketId) record.socketIds.add(socketId);
+      if (source === 'livekit') record.inLivekit = true;
       if (displayName && displayName !== 'Devotee') {
         record.displayName = displayName;
       }
@@ -155,6 +176,7 @@ export class PresenceService {
         isGuest,
         joinedAtMs: Date.now(),
         socketIds: new Set(socketId ? [socketId] : []),
+        inLivekit: source === 'livekit',
       };
       streamMap.set(identity, record);
     }
@@ -189,8 +211,9 @@ export class PresenceService {
 
   /** Backward-compatible helper (calls addViewerSession) */
   async addViewer(streamId: string, identity: string) {
-    const isGuest = identity.startsWith('priv_guest_') || identity.startsWith('guest_');
-    await this.addViewerSession(streamId, identity, 'Devotee', isGuest);
+    // Called by the LiveKit webhook (participant_joined)
+    const isGuest = identity.startsWith('priv_guest_');
+    await this.addViewerSession(streamId, identity, 'Devotee', isGuest, undefined, 'livekit');
   }
 
   /**
@@ -210,9 +233,13 @@ export class PresenceService {
       if (record) {
         if (socketId) {
           record.socketIds.delete(socketId);
+        } else {
+          // webhook participant_left / reconciler: LiveKit no longer has this identity
+          record.inLivekit = false;
         }
-        // Evict if no socketId specified or zero remaining sockets
-        if (!socketId || record.socketIds.size === 0) {
+        // A viewer is present while they hold a chat socket OR a LiveKit participant: dropping the
+        // chat socket must not hide someone who is still watching the video (mobile networks flap).
+        if (record.socketIds.size === 0 && !record.inLivekit) {
           streamMap.delete(identity);
           isViewerRemoved = true;
           if (streamMap.size === 0) {
@@ -248,7 +275,7 @@ export class PresenceService {
     return { isViewerRemoved, count };
   }
 
-  /** Backward-compatible helper */
+  /** LiveKit webhook participant_left */
   async removeViewer(streamId: string, identity: string) {
     await this.removeViewerSocket(streamId, identity);
   }
@@ -366,7 +393,7 @@ export class PresenceService {
 
     // 3. Supplement with LiveKit room participants (best-effort)
     try {
-      const participants = await this.videoProvider.listParticipants(streamId);
+      const participants = (await this.videoProvider.listParticipants(streamId)) ?? [];
       for (const p of participants) {
         if (!p.hidden && p.identity !== streamerId) {
           const existing = viewersMap.get(p.identity);
@@ -381,7 +408,7 @@ export class PresenceService {
             viewersMap.set(p.identity, {
               identity: p.identity,
               displayName: p.name || 'Devotee',
-              isGuest: p.identity.startsWith('priv_guest_') || p.identity.startsWith('guest_'),
+              isGuest: p.identity.startsWith('priv_guest_'),
               joinedAtMs: p.joinedAtMs || Date.now(),
             });
           }
@@ -452,17 +479,33 @@ export class PresenceService {
       for (const stream of activeStreams) {
         try {
           const participants = await this.videoProvider.listParticipants(stream.id);
+          if (participants === null) continue; // LiveKit unreachable: change nothing, never read it as "room empty"
           const livekitViewers = participants.filter(
             (p) => !p.hidden && p.identity !== stream.streamerId,
           );
+          const lkIds = new Set(livekitViewers.map((p) => p.identity));
 
-          // Add any LiveKit participants into presence
+          // 1. LiveKit is the ground truth for the video side: forget identities it no longer has
+          //    (a missed participant_left webhook would otherwise leave a ghost forever). A viewer
+          //    that still has a chat socket stays; one that has neither is removed.
+          const known = this.streamViewers.get(stream.id);
+          if (known) {
+            for (const [identity, rec] of [...known.entries()]) {
+              if (rec.inLivekit && !lkIds.has(identity)) {
+                await this.removeViewerSocket(stream.id, identity);
+              }
+            }
+          }
+
+          // 2. Add anyone LiveKit has that we do not know about yet
           for (const p of livekitViewers) {
             await this.addViewerSession(
               stream.id,
               p.identity,
               p.name || 'Devotee',
-              p.identity.startsWith('priv_guest_') || p.identity.startsWith('guest_'),
+              p.identity.startsWith('priv_guest_'),
+              undefined,
+              'livekit',
             );
           }
 
