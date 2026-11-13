@@ -40,6 +40,7 @@ import { CoinTopupModal } from '@/components/CoinTopupModal';
 import SevaBookingModal from '@/components/SevaBookingModal';
 import { useToast } from '@/components/Toast';
 import { STARTER_PRICE_INR } from '@/lib/economy';
+import { decodeJwtClaims } from '@/lib/auth-session';
 
 interface Stream {
   id: string;
@@ -260,12 +261,28 @@ export default function HomePage() {
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem('pooja_user');
-    if (stored) {
-      try {
-        setUser(JSON.parse(stored));
-      } catch {}
-    }
+    const syncUser = () => {
+      const stored = localStorage.getItem('pooja_user');
+      const token = localStorage.getItem('pooja_token');
+      const claims = decodeJwtClaims(token);
+      if (stored && token) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (!claims?.sub || parsed.id === claims.sub) {
+            setUser(parsed);
+          } else {
+            setUser(null);
+          }
+        } catch {
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+    };
+
+    syncUser();
+    window.addEventListener('sd-auth-change', syncUser);
 
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
@@ -282,6 +299,10 @@ export default function HomePage() {
         setBookingModalOpen(true);
       }
     }
+
+    return () => {
+      window.removeEventListener('sd-auth-change', syncUser);
+    };
   }, []);
 
   useEffect(() => {

@@ -23,6 +23,7 @@ import {
   Megaphone,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { purgeClientSession } from '@/lib/auth-session';
 import { useToast } from '@/components/Toast';
 import { DiyaIcon } from '@/components/icons/SpiritualIcons';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
@@ -105,8 +106,7 @@ export default function AdminConsolePage() {
       } catch (err: any) {
         if (cancelled) return;
         if (err?.status === 401 || err?.status === 403) {
-          localStorage.removeItem('pooja_token');
-          localStorage.removeItem('pooja_user');
+          purgeClientSession();
           router.push('/login?redirect=/admin');
           return;
         }

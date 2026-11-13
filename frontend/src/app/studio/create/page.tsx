@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Video, Calendar, AlertCircle, LogIn, Sparkles, UserCheck, Lock } from 'lucide-react';
 import { OmIcon, DiyaIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
+import { decodeJwtClaims, purgeClientSession } from '@/lib/auth-session';
 
 export default function CreateStreamPage() {
   const router = useRouter();
@@ -31,18 +32,25 @@ export default function CreateStreamPage() {
       const storedUser = localStorage.getItem('pooja_user');
       const storedToken = localStorage.getItem('pooja_token');
 
-      if (!storedToken || !storedUser) {
+      if (!storedToken) {
         setError('Please sign in to your verified Pandit account to setup a live broadcast.');
         return;
       }
 
-      try {
-        const parsed = JSON.parse(storedUser);
-        setCurrentUser(parsed);
-        if (parsed.role === 'VIEWER') {
-          setIsViewerRole(true);
-        }
-      } catch {}
+      const claims = decodeJwtClaims(storedToken);
+      if (storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser);
+          if (!claims?.sub || parsed.id === claims.sub) {
+            setCurrentUser(parsed);
+            if (parsed.role === 'VIEWER') {
+              setIsViewerRole(true);
+            }
+          } else {
+            localStorage.removeItem('pooja_user');
+          }
+        } catch {}
+      }
     }
 
     async function checkActiveLiveStream() {
@@ -96,9 +104,8 @@ export default function CreateStreamPage() {
   };
 
   const handleSwitchAccount = () => {
-    localStorage.removeItem('pooja_token');
-    localStorage.removeItem('pooja_user');
-    router.push('/login?redirect=/studio/create');
+    purgeClientSession();
+    window.location.href = '/login?redirect=/studio/create';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

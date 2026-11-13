@@ -30,6 +30,7 @@ import { OmIcon, CoinIcon, DiyaIcon, VerifiedPanditBadge } from '@/components/ic
 import { useToast } from '@/components/Toast';
 import SevaBookingModal, { BookingRecord } from '@/components/SevaBookingModal';
 import { PANDIT_PRICING_CATALOG } from '@/data/poojaCatalog';
+import { decodeJwtClaims, purgeClientSession } from '@/lib/auth-session';
 
 export default function AccountPage() {
   const router = useRouter();
@@ -132,17 +133,33 @@ export default function AccountPage() {
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
     try {
-      const res = await fetch(`${apiUrl}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const cacheBust = Date.now();
+      const res = await fetch(`${apiUrl}/auth/me?_t=${cacheBust}`, {
+        cache: 'no-store',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          Pragma: 'no-cache',
+        },
       });
       if (res.ok) {
         const data = await res.json();
+        // SD-SEC-2026-004: Validate verified user ID against token claims to prevent session bleed
+        const claims = decodeJwtClaims(token);
+        if (claims?.sub && data.id !== claims.sub) {
+          purgeClientSession();
+          router.push('/login');
+          return;
+        }
+
         setUser(data);
         setNameInput(data.name || '');
         localStorage.setItem('pooja_user', JSON.stringify(data));
-        // Bug #6 fix: reload bookings with the confirmed real user ID from the API response
         loadBookings(data.id);
       } else {
+        if (res.status === 401) {
+          purgeClientSession();
+        }
         router.push('/login');
       }
     } catch {
@@ -153,14 +170,29 @@ export default function AccountPage() {
   };
 
   useEffect(() => {
-    // Bug #6 fix: Read cached userId immediately so bookings load from correct key right away,
-    // then loadProfile() validates/refreshes from API in parallel.
+    const token = typeof window !== 'undefined' ? localStorage.getItem('pooja_token') : null;
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+
+    const claims = decodeJwtClaims(token);
     const cachedUser = typeof window !== 'undefined'
       ? JSON.parse(localStorage.getItem('pooja_user') || 'null')
       : null;
-    if (cachedUser?.id) {
+
+    // SD-SEC-2026-004: Only pre-hydrate bookings if cached user ID matches active JWT claim!
+    if (claims?.sub && cachedUser?.id === claims.sub) {
+      setUser(cachedUser);
+      setNameInput(cachedUser.name || '');
       loadBookings(cachedUser.id);
+    } else {
+      // Stale or contaminated cache: do not render previous user data
+      localStorage.removeItem('pooja_user');
+      setUser(null);
+      setBookings([]);
     }
+
     loadProfile();
   }, []);
 
@@ -269,8 +301,7 @@ export default function AccountPage() {
         credentials: 'include',
       });
       if (res.ok) {
-        localStorage.removeItem('pooja_user');
-        localStorage.removeItem('pooja_token');
+        purgeClientSession();
         toast.success('Your account and personal data have been scheduled for deletion under DPDP Act 2023.');
         setTimeout(() => {
           window.location.href = '/';

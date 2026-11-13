@@ -26,6 +26,7 @@ import { ChatWidget } from '@/components/ChatWidget';
 import { WhatsAppShareModal } from '@/components/WhatsAppShareModal';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiFetch } from '@/lib/api';
+import { decodeJwtClaims, purgeClientSession } from '@/lib/auth-session';
 import { useToast } from '@/components/Toast';
 import {
   Camera,
@@ -146,10 +147,21 @@ export default function StudioClient() {
       router.push('/login');
       return;
     }
+
+    const claims = decodeJwtClaims(storedToken);
     if (storedUser) {
       try {
-        setCurrentUser(JSON.parse(storedUser));
-      } catch {}
+        const parsed = JSON.parse(storedUser);
+        if (!claims?.sub || parsed.id === claims.sub) {
+          setCurrentUser(parsed);
+        } else {
+          // Contaminated session: drop immediately
+          localStorage.removeItem('pooja_user');
+          setCurrentUser(null);
+        }
+      } catch {
+        setCurrentUser(null);
+      }
     }
 
     let isDisposed = false;

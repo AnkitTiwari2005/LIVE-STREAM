@@ -6,6 +6,7 @@ import { Send, Pin, Trash2, VolumeX, ShieldAlert, Sparkles, Flag, UserX } from '
 import { OmIcon, DiyaIcon, PranamIcon, CoinIcon } from '@/components/icons/SpiritualIcons';
 import { KickedScreen } from '@/components/KickedScreen';
 import { KickViewerModal } from '@/components/KickViewerModal';
+import { decodeJwtClaims } from '@/lib/auth-session';
 
 interface ChatMessage {
   id: string;
@@ -45,10 +46,21 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
       setActiveUser(currentUser);
     } else if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('pooja_user');
+      const token = localStorage.getItem('pooja_token');
+      const claims = decodeJwtClaims(token);
       if (stored) {
         try {
-          setActiveUser(JSON.parse(stored));
-        } catch {}
+          const parsed = JSON.parse(stored);
+          if (!claims?.sub || parsed.id === claims.sub) {
+            setActiveUser(parsed);
+          } else {
+            setActiveUser(null);
+          }
+        } catch {
+          setActiveUser(null);
+        }
+      } else {
+        setActiveUser(null);
       }
     }
   }, [currentUser]);
@@ -157,7 +169,18 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
     if (!trimmed) return;
 
     const storedUser = typeof window !== 'undefined' ? localStorage.getItem('pooja_user') : null;
-    const resolvedUser = currentUser || (storedUser ? JSON.parse(storedUser) : null);
+    const storedToken = typeof window !== 'undefined' ? localStorage.getItem('pooja_token') : null;
+    const claims = decodeJwtClaims(storedToken);
+
+    let resolvedUser = currentUser;
+    if (!resolvedUser && storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        if (!claims?.sub || parsed.id === claims.sub) {
+          resolvedUser = parsed;
+        }
+      } catch {}
+    }
 
     // G8: allow guests with sessionId to send without being logged in
     if (!resolvedUser && !sessionId) {
@@ -171,8 +194,6 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
       setTimeout(() => setErrorBanner(null), 3000);
       return;
     }
-
-    const storedToken = typeof window !== 'undefined' ? localStorage.getItem('pooja_token') : null;
 
     socket.emit('chat:send', {
       streamId,

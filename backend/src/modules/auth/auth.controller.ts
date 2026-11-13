@@ -10,6 +10,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Header,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
@@ -46,6 +47,8 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @Header('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+  @Header('Pragma', 'no-cache')
   @ApiOperation({ summary: 'Authenticate user and set secure HttpOnly cookies (FR-A1, FR-A3)' })
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
     const result = await this.authService.login(dto);
@@ -66,6 +69,8 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('verify-totp')
   @HttpCode(HttpStatus.OK)
+  @Header('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+  @Header('Pragma', 'no-cache')
   @ApiOperation({ summary: 'Verify 2FA TOTP code for admin login' })
   async verifyTotp(
     @Body() dto: VerifyTotpDto,
@@ -110,6 +115,8 @@ export class AuthController {
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
+  @Header('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+  @Header('Pragma', 'no-cache')
   @ApiOperation({ summary: 'Refresh access token using HTTP-only refresh cookie or payload' })
   async refresh(
     @Req() req: Request,
@@ -147,20 +154,25 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
+  @Header('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+  @Header('Pragma', 'no-cache')
   @ApiOperation({ summary: 'Log out and clear session cookies (FR-A3)' })
   async logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie('access_token', { path: '/' });
-    res.clearCookie('refresh_token', { path: '/api/v1/auth/refresh' });
+    this.clearAuthCookies(res);
     return { message: 'Logged out successfully' };
   }
 
   @Get('me')
+  @Header('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+  @Header('Pragma', 'no-cache')
   @ApiOperation({ summary: 'Get current user profile and session data' })
   async getMe(@CurrentUser() user: any) {
     return user;
   }
 
   @Patch('profile')
+  @Header('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+  @Header('Pragma', 'no-cache')
   @ApiOperation({ summary: 'Update devotee profile name and details' })
   async updateProfile(
     @CurrentUser('id') userId: string,
@@ -171,15 +183,33 @@ export class AuthController {
 
   @Post('delete-account')
   @HttpCode(HttpStatus.OK)
+  @Header('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+  @Header('Pragma', 'no-cache')
   @ApiOperation({ summary: 'Self-serve account and personal data erasure under DPDP Act 2023' })
   async deleteAccount(
     @CurrentUser('id') userId: string,
     @Res({ passthrough: true }) res: Response,
   ) {
     const result = await this.authService.deleteAccount(userId);
-    res.clearCookie('access_token', { path: '/' });
-    res.clearCookie('refresh_token', { path: '/api/v1/auth/refresh' });
+    this.clearAuthCookies(res);
     return result;
+  }
+
+  private clearAuthCookies(res: Response) {
+    const isProd = process.env.NODE_ENV === 'production';
+    const clearOpts = {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'lax' as const,
+    };
+
+    // Standard RFC clearCookie with matching security flags
+    res.clearCookie('access_token', { ...clearOpts, path: '/' });
+    res.clearCookie('refresh_token', { ...clearOpts, path: '/api/v1/auth/refresh' });
+
+    // Defense-in-depth: explicit maxAge 0 and expired date for all user agents
+    res.cookie('access_token', '', { ...clearOpts, path: '/', maxAge: 0, expires: new Date(0) });
+    res.cookie('refresh_token', '', { ...clearOpts, path: '/api/v1/auth/refresh', maxAge: 0, expires: new Date(0) });
   }
 
   private setAuthCookies(res: Response, accessToken: string, refreshToken: string) {

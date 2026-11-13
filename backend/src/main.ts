@@ -70,6 +70,17 @@ async function bootstrap() {
 
   const expressApp = app.getHttpAdapter().getInstance();
 
+  // SD-SEC-2026-004: Strict Anti-Cache Enforcement on all REST API endpoints.
+  // Prevents Hostinger edge CDN (hcdn) and browser HTTP caches from injecting default
+  // public caching headers (e.g. Cache-Control: public, max-age=259200) onto user/session APIs.
+  expressApp.use('/api', (_req: any, res: any, next: any) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+    next();
+  });
+
   // Root Express discovery endpoints for AI agents and search engines
   expressApp.get('/robots.txt', (_req: any, res: any) => {
     res.type('text/plain; charset=utf-8');

@@ -22,6 +22,7 @@ import { CoinTopupModal } from './CoinTopupModal';
 import { SearchPalette } from './SearchPalette';
 import { ThemeToggle } from './ThemeToggle';
 import { OmIcon, CoinIcon, PranamIcon, DiyaIcon } from '@/components/icons/SpiritualIcons';
+import { decodeJwtClaims, purgeClientSession } from '@/lib/auth-session';
 
 export function Navbar() {
   const [user, setUser] = useState<any>(null);
@@ -51,24 +52,35 @@ export function Navbar() {
 
   // Re-read auth state whenever login/logout fires sd-auth-change
   const refreshAuthState = () => {
-    // Bug #3 fix: Clear React state FIRST to prevent flash of stale role-based UI
-    // (e.g., Admin Console visible briefly for a Viewer after account switch)
+    // Clear React state FIRST to prevent flash of stale role-based UI
     setUser(null);
     setCoinBalance(null);
 
+    const storedToken = localStorage.getItem('pooja_token');
     const storedUser = localStorage.getItem('pooja_user');
     const storedBalance = localStorage.getItem('pooja_wallet_balance');
-    if (storedBalance !== null && !isNaN(Number(storedBalance))) {
-      setCoinBalance(Number(storedBalance));
-    }
-    if (storedUser) {
-      try {
-        const parsed = JSON.parse(storedUser);
-        setUser(parsed);
-        if (parsed.wallet?.balanceCoins !== undefined && storedBalance === null) {
-          setCoinBalance(parsed.wallet.balanceCoins);
+
+    if (storedToken) {
+      const claims = decodeJwtClaims(storedToken);
+      if (storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser);
+          // If cached user ID does not match the active JWT token sub, purge contamination immediately
+          if (claims?.sub && parsed.id && parsed.id !== claims.sub) {
+            purgeClientSession();
+            return;
+          }
+          setUser(parsed);
+          if (parsed.wallet?.balanceCoins !== undefined && storedBalance === null) {
+            setCoinBalance(parsed.wallet.balanceCoins);
+          }
+        } catch {
+          setUser(null);
         }
-      } catch {}
+      }
+      if (storedBalance !== null && !isNaN(Number(storedBalance))) {
+        setCoinBalance(Number(storedBalance));
+      }
     } else {
       setUser(null);
       setCoinBalance(null);
@@ -102,32 +114,45 @@ export function Navbar() {
     const storedToken = localStorage.getItem('pooja_token');
     const storedBalance = localStorage.getItem('pooja_wallet_balance');
 
-    if (storedBalance !== null && !isNaN(Number(storedBalance))) {
-      setCoinBalance(Number(storedBalance));
-    }
-
-    if (storedUser) {
-      try {
-        const parsed = JSON.parse(storedUser);
-        setUser(parsed);
-        if (parsed.wallet?.balanceCoins !== undefined && storedBalance === null) {
-          setCoinBalance(parsed.wallet.balanceCoins);
-        }
-      } catch {}
-    }
-
     if (storedToken) {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const claims = decodeJwtClaims(storedToken);
+      let isValidUser = false;
 
-      // Validate session with /auth/me to eliminate ghost logins if token expired
-      fetch(`${apiUrl}/auth/me`, {
-        headers: { Authorization: `Bearer ${storedToken}` },
+      if (storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser);
+          if (!claims?.sub || parsed.id === claims.sub) {
+            setUser(parsed);
+            isValidUser = true;
+            if (parsed.wallet?.balanceCoins !== undefined && storedBalance === null) {
+              setCoinBalance(parsed.wallet.balanceCoins);
+            }
+          } else {
+            // Contaminated storage: drop immediately
+            localStorage.removeItem('pooja_user');
+          }
+        } catch {}
+      }
+
+      if (storedBalance !== null && !isNaN(Number(storedBalance))) {
+        setCoinBalance(Number(storedBalance));
+      }
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      const cacheBust = Date.now();
+
+      // SD-SEC-2026-004: Validate session with /auth/me using cache: 'no-store' + timestamp to prevent CDN ghost responses
+      fetch(`${apiUrl}/auth/me?_t=${cacheBust}`, {
+        cache: 'no-store',
+        headers: {
+          Authorization: `Bearer ${storedToken}`,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          Pragma: 'no-cache',
+        },
       })
         .then((res) => {
           if (res.status === 401) {
-            localStorage.removeItem('pooja_user');
-            localStorage.removeItem('pooja_token');
-            localStorage.removeItem('pooja_wallet_balance');
+            purgeClientSession();
             setUser(null);
             setCoinBalance(null);
             return null;
@@ -136,15 +161,25 @@ export function Navbar() {
         })
         .then((freshUser) => {
           if (freshUser) {
-            setUser(freshUser);
-            localStorage.setItem('pooja_user', JSON.stringify(freshUser));
+            // Ensure freshUser matches current token's claim
+            const currentToken = localStorage.getItem('pooja_token');
+            const currentClaims = decodeJwtClaims(currentToken);
+            if (!currentClaims || currentClaims.sub === freshUser.id) {
+              setUser(freshUser);
+              localStorage.setItem('pooja_user', JSON.stringify(freshUser));
+            }
           }
         })
         .catch(() => {});
 
-      // Fetch live wallet balance from backend
-      fetch(`${apiUrl}/wallet/balance`, {
-        headers: { Authorization: `Bearer ${storedToken}` },
+      // Fetch live wallet balance from backend with cache: 'no-store'
+      fetch(`${apiUrl}/wallet/balance?_t=${cacheBust}`, {
+        cache: 'no-store',
+        headers: {
+          Authorization: `Bearer ${storedToken}`,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          Pragma: 'no-cache',
+        },
       })
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
@@ -154,26 +189,27 @@ export function Navbar() {
           }
         })
         .catch(() => {});
+    } else {
+      setUser(null);
+      setCoinBalance(null);
     }
   }, []);
 
   const handleLogout = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
-      await fetch(`${apiUrl}/auth/logout`, {
+      await fetch(`${apiUrl}/auth/logout?_t=${Date.now()}`, {
         method: 'POST',
         credentials: 'include',
+        cache: 'no-store',
       });
     } catch {}
-    // Bug #2 fix: Clear all user-scoped state on logout so next login starts clean.
-    // Note: We do NOT clear shubhdarshan_bookings_<userId> — bookings are preserved
-    // per-user and will reappear when the same account logs back in.
-    localStorage.removeItem('pooja_user');
-    localStorage.removeItem('pooja_token');
-    localStorage.removeItem('pooja_wallet_balance');
+
+    // SD-SEC-2026-004: Purge all client session data and perform hard window reload to destroy memory closures
+    purgeClientSession();
     setUser(null);
     setCoinBalance(null);
-    window.location.href = '/';
+    window.location.href = '/login';
   };
 
   return (

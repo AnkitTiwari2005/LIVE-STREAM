@@ -26,6 +26,7 @@ import {
   PranamIcon,
 } from '@/components/icons/SpiritualIcons';
 import { useToast } from '@/components/Toast';
+import { decodeJwtClaims } from '@/lib/auth-session';
 import {
   COMPREHENSIVE_POOJA_CATALOG,
   PANDIT_PRICING_CATALOG,
@@ -167,12 +168,17 @@ function SevaBookingFlow({
     if (typeof window !== 'undefined') {
       try {
         const stored = localStorage.getItem('pooja_user');
+        const storedToken = localStorage.getItem('pooja_token');
+        const claims = decodeJwtClaims(storedToken);
         if (stored) {
           const parsed = JSON.parse(stored);
-          setUser(parsed);
-          // Bug #5 fix: Always overwrite devoteeName from current auth — no !devoteeName guard
-          // so switching accounts always pre-fills the right user's name
-          setDevoteeName(parsed.name || parsed.fullName || parsed.email?.split('@')[0] || '');
+          if (!claims?.sub || parsed.id === claims.sub) {
+            setUser(parsed);
+            setDevoteeName(parsed.name || parsed.fullName || parsed.email?.split('@')[0] || '');
+          } else {
+            setUser(null);
+            setDevoteeName('');
+          }
         } else {
           setUser(null);
         }

@@ -7,6 +7,7 @@ import { Lock, Mail, ShieldAlert, KeyRound, Sparkles } from 'lucide-react';
 import { OmIcon, DiyaIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
 
 import { getSafeRedirect } from '@/lib/api';
+import { purgeClientSession, setClientSession } from '@/lib/auth-session';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -57,26 +58,24 @@ export default function LoginPage() {
         return;
       }
 
-      // Bug #2 & #4 fix: Clear previous user's cached wallet balance before writing new session.
-      // This prevents the old balance from briefly flashing in the navbar for the new account.
-      localStorage.removeItem('pooja_wallet_balance');
-      localStorage.setItem('pooja_user', JSON.stringify(data.user));
-      localStorage.setItem('pooja_token', data.accessToken);
-      window.dispatchEvent(new Event('sd-auth-change'));
+      // SD-SEC-2026-004: Purge all prior user data from memory/storage before writing new session
+      purgeClientSession();
+      setClientSession(data.user, data.accessToken);
 
       const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
       const safeTarget = getSafeRedirect(params?.get('redirect'));
+      
+      let destination = '/';
       if (safeTarget) {
-        router.push(safeTarget);
+        destination = safeTarget;
       } else if (data.user?.role === 'ADMIN') {
-        if (!data.user?.isTwoFactorEnabled) {
-          router.push('/account#2fa');
-        } else {
-          router.push('/admin');
-        }
-      } else {
-        router.push('/');
+        destination = data.user?.isTwoFactorEnabled ? '/admin' : '/account#2fa';
+      } else if (data.user?.role === 'STREAMER') {
+        destination = '/studio/create';
       }
+
+      // SD-SEC-2026-004: Clean hard document reload wipes all React closures, singletons, and stale caches
+      window.location.href = destination;
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -100,23 +99,23 @@ export default function LoginPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Invalid 2FA code');
 
-      // Bug #2 & #4 fix: same as handleLogin — clear previous session's cached balance
-      localStorage.removeItem('pooja_wallet_balance');
-      localStorage.setItem('pooja_user', JSON.stringify(data.user));
-      localStorage.setItem('pooja_token', data.accessToken);
-      window.dispatchEvent(new Event('sd-auth-change'));
+      // SD-SEC-2026-004: Purge all prior session state and write new session
+      purgeClientSession();
+      setClientSession(data.user, data.accessToken);
 
       const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
       const safeTarget = getSafeRedirect(params?.get('redirect'));
+      
+      let destination = '/';
       if (safeTarget) {
-        router.push(safeTarget);
+        destination = safeTarget;
       } else if (data.user?.role === 'ADMIN') {
-        router.push('/admin');
+        destination = '/admin';
       } else if (data.user?.role === 'STREAMER') {
-        router.push('/studio/create');
-      } else {
-        router.push('/');
+        destination = '/studio/create';
       }
+
+      window.location.href = destination;
     } catch (err: any) {
       setError(err.message);
     } finally {

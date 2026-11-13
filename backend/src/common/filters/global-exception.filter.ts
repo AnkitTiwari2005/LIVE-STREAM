@@ -31,6 +31,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       );
     }
 
+    // SD-SEC-2026-004: Ensure error responses never inherit Hostinger CDN public cache headers
+    response.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+    response.setHeader('Pragma', 'no-cache');
+    response.setHeader('Expires', '0');
+    response.setHeader('Surrogate-Control', 'no-store');
+
     response.status(status).json({
       statusCode: status,
       timestamp: new Date().toISOString(),

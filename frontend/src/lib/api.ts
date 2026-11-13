@@ -22,6 +22,7 @@ export async function apiFetch<T = any>(
   }
 
   const res = await fetch(url, {
+    cache: init?.cache || 'no-store',
     ...init,
     headers,
   });

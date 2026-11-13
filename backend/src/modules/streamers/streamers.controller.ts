@@ -23,6 +23,8 @@ export class StreamersController {
   constructor(private readonly streamersService: StreamersService) {}
 
   @Get('me')
+  @Header('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+  @Header('Pragma', 'no-cache')
   @ApiOperation({ summary: 'Retrieve current authenticated applicant/streamer profile and KYC status (B-15)' })
   async getMyProfile(@CurrentUser('id') userId: string) {
     return this.streamersService.getMyProfile(userId);
