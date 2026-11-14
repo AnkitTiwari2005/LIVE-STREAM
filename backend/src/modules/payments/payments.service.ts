@@ -296,65 +296,81 @@ export class PaymentsService {
 
     const event = body?.event;
 
-    // N5: Handle payment failure
+    // N5: A failed ATTEMPT is not a failed ORDER - Razorpay lets the customer retry on the same order,
+    // and a later payment.captured must still credit the coins. Only record the reason; keep PENDING.
     if (event === 'payment.failed') {
-      const orderId = body.payload?.payment?.entity?.order_id || body.data?.order?.order_id;
+      const ent = body.payload?.payment?.entity;
+      const orderId = ent?.order_id || body.data?.order?.order_id;
       if (orderId) {
         await this.prisma.walletTopupOrder.updateMany({
           where: { orderId, status: PaymentStatus.PENDING },
-          data: { status: PaymentStatus.FAILED },
+          data: { failureReason: String(ent?.error_description || ent?.error_code || 'payment attempt failed').slice(0, 250) },
         });
-        this.logger.log(`Webhook marked topup order [${orderId}] as FAILED`);
-        return { received: true, reconciled: 'payment_failed' };
+        this.logger.log(`Webhook recorded failed attempt for topup order [${orderId}] (order stays PENDING)`);
+        return { received: true, reconciled: 'payment_attempt_failed' };
       }
     }
 
-    // N5: Handle refund processing with wallet balance and ledger debit
+    // N5: Refund -> claw back the refunded coins. Partial refunds are proportional, every refund id is
+    // applied once (idempotency key), the debit is one atomic statement (no stale read, never negative),
+    // and coins the user already spent are written to the audit log as uncollected.
     if (event === 'refund.processed') {
-      const paymentId = body.payload?.refund?.entity?.payment_id || body.payload?.payment?.entity?.id;
+      const refund = body.payload?.refund?.entity;
+      const paymentId = refund?.payment_id || body.payload?.payment?.entity?.id;
       if (paymentId) {
-        const topupOrder = await this.prisma.walletTopupOrder.findFirst({
-          where: { paymentId, status: PaymentStatus.SUCCESS },
-          include: { package: true },
-        });
-
+        const topupOrder = await this.prisma.walletTopupOrder.findFirst({ where: { paymentId } });
         if (topupOrder) {
-          await this.prisma.$transaction(async (tx) => {
-            await tx.walletTopupOrder.update({
-              where: { id: topupOrder.id },
-              data: { status: PaymentStatus.FAILED },
-            });
+          const orderPaise = Math.round(Number(topupOrder.amountInr) * 100);
+          const refundPaise = Number(refund?.amount);
+          const fraction =
+            Number.isFinite(refundPaise) && refundPaise > 0 && orderPaise > 0
+              ? Math.min(1, refundPaise / orderPaise)
+              : 1; // amount absent from payload: treat as full
+          const wantCoins = Math.min(topupOrder.coinsToCredit, Math.ceil(topupOrder.coinsToCredit * fraction));
+          const idemKey = `refund_wh_${refund?.id || topupOrder.id}`;
 
-            const wallet = await tx.userWallet.findUnique({
-              where: { userId: topupOrder.userId },
-            });
-
-            if (wallet) {
-              const debitCoins = Math.min(wallet.balanceCoins, topupOrder.coinsToCredit);
-              const debitPurchased = Math.min(wallet.purchasedCoins, topupOrder.package?.coins || debitCoins);
-
-              const updatedWallet = await tx.userWallet.update({
-                where: { id: wallet.id },
-                data: {
-                  balanceCoins: { decrement: debitCoins },
-                  purchasedCoins: { decrement: debitPurchased },
-                },
-              });
-
+          const result = await this.prisma.$transaction(async (tx) => {
+            if (await tx.walletTransaction.findUnique({ where: { idempotencyKey: idemKey } })) {
+              return { duplicate: true as const };
+            }
+            const rows: any = await tx.$queryRawUnsafe(
+              `WITH old AS (
+                 SELECT "id", "balanceCoins" AS bal FROM "UserWallet" WHERE "userId" = $1 FOR UPDATE
+               )
+               UPDATE "UserWallet" w
+               SET "balanceCoins"   = w."balanceCoins" - LEAST(old.bal, $2),
+                   "purchasedCoins" = GREATEST(0, w."purchasedCoins" - LEAST(old.bal, $2)),
+                   "updatedAt" = NOW()
+               FROM old WHERE w."id" = old."id"
+               RETURNING w."id" AS id, old.bal AS before, w."balanceCoins" AS after`,
+              topupOrder.userId,
+              wantCoins,
+            );
+            const row = rows?.[0];
+            const before = Number(row?.before ?? 0);
+            const after = Number(row?.after ?? 0);
+            const debited = before - after;
+            const shortfall = wantCoins - debited;
+            if (row) {
               await tx.walletTransaction.create({
                 data: {
-                  walletId: wallet.id,
+                  walletId: row.id,
                   type: WalletTxType.DEBIT,
                   category: WalletTxCategory.ADMIN_ADJUSTMENT,
-                  amountCoins: debitCoins,
-                  balanceBefore: wallet.balanceCoins,
-                  balanceAfter: updatedWallet.balanceCoins,
+                  amountCoins: debited,
+                  balanceBefore: before,
+                  balanceAfter: after,
                   referenceId: `refund_${paymentId}`,
-                  idempotencyKey: `refund_wh_${topupOrder.id}`,
+                  idempotencyKey: idemKey,
                 },
               });
             }
-
+            if (fraction >= 1) {
+              await tx.walletTopupOrder.update({
+                where: { id: topupOrder.id },
+                data: { failureReason: 'REFUNDED' },
+              });
+            }
             await tx.auditLog.create({
               data: {
                 actorId: topupOrder.userId,
@@ -363,13 +379,17 @@ export class PaymentsService {
                 targetResource: `WalletTopupOrder:${topupOrder.id}`,
                 details: {
                   paymentId,
+                  refundId: refund?.id,
                   orderId: topupOrder.orderId,
-                  coinsDebited: topupOrder.coinsToCredit,
+                  coinsRequested: wantCoins,
+                  coinsDebited: debited,
+                  coinsUncollected: shortfall,
                 },
               },
             });
+            return { duplicate: false as const, debited, shortfall };
           });
-          this.logger.log(`Webhook reconciled refund for topup order [${topupOrder.id}]`);
+          this.logger.log(`Webhook reconciled refund for topup order [${topupOrder.id}]: ${JSON.stringify(result)}`);
           return { received: true, reconciled: 'refund_processed' };
         }
       }

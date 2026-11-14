@@ -16,6 +16,7 @@
     "prisma:seed": "ts-node prisma/seed.ts",
     "test:e2e:all": "ts-node scripts/test-full-api-suite.ts",
     "test:audit": "ts-node scripts/failopen.test.ts && ts-node scripts/storage.test.ts",
+    "test:n23": "ts-node scripts/n23-service.test.ts && ts-node scripts/n23.test.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix"
   },
   "dependencies": {

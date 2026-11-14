@@ -340,20 +340,25 @@ export class StreamersService {
 
   async getStreamerEarnings(userId: string, userRole?: string) {
     const isAdmin = userRole === UserRole.ADMIN;
-    const streams = await this.prisma.stream.findMany({
-      where: isAdmin ? { deletedAt: null } : { streamerId: userId, deletedAt: null },
-      select: {
-        id: true,
-        title: true,
-        visibility: true,
-        status: true,
-        startedAt: true,
-        endedAt: true,
-        durationSeconds: true,
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    });
+    const streamWhere: any = isAdmin ? { deletedAt: null } : { streamerId: userId, deletedAt: null };
+    // N13: the per-stream table shows the latest 50 streams, but every total must cover ALL streams.
+    const [streams, totalStreams] = await Promise.all([
+      this.prisma.stream.findMany({
+        where: streamWhere,
+        select: {
+          id: true,
+          title: true,
+          visibility: true,
+          status: true,
+          startedAt: true,
+          endedAt: true,
+          durationSeconds: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      }),
+      this.prisma.stream.count({ where: streamWhere }),
+    ]);
     const streamIds = streams.map((s) => s.id);
     const streamMap = new Map(streams.map((s) => [s.id, s]));
 
@@ -390,7 +395,7 @@ export class StreamersService {
     ] = await Promise.all([
       this.prisma.streamerEarning.groupBy({
         by: ['source'],
-        where: { streamId: { in: streamIds } },
+        where: { stream: streamWhere },
         _sum: { coins: true },
       }),
       this.prisma.streamerEarning.groupBy({
@@ -400,7 +405,7 @@ export class StreamersService {
       }),
       this.prisma.dakshinaOffering.findMany({
         where: {
-          streamId: { in: streamIds },
+          stream: streamWhere,
           status: PaymentStatus.SUCCESS,
         },
         orderBy: { createdAt: 'desc' },
@@ -416,7 +421,7 @@ export class StreamersService {
       }),
       this.prisma.dakshinaOffering.aggregate({
         where: {
-          streamId: { in: streamIds },
+          stream: streamWhere,
           status: PaymentStatus.SUCCESS,
           coins: null,
           amount: { not: null },
@@ -425,7 +430,7 @@ export class StreamersService {
         _count: { id: true },
       }),
       this.prisma.streamViewingSession.aggregate({
-        where: { streamId: { in: streamIds } },
+        where: { stream: streamWhere },
         _sum: {
           totalMinutesWatched: true,
           totalCoinsDebited: true,
@@ -489,7 +494,7 @@ export class StreamersService {
     const totalCoinsConsumed = viewingAggregate._sum.totalCoinsDebited || 0;
 
     return {
-      totalStreams: streams.length,
+      totalStreams,
       totalCoins,
       dakshinaCoins,
       watchTimeCoins,

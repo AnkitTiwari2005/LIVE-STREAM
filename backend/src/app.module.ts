@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD, APP_FILTER } from '@nestjs/core';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { TokenAwareThrottlerGuard } from './common/guards/token-aware-throttler.guard';
 
 import { PrismaModule } from './database/prisma.module';
 import { VideoModule } from './modules/video/video.module';
@@ -53,7 +54,7 @@ import { CronTasksService } from './jobs/cron-tasks.service';
     // unauthenticated endpoints (login, register, forgot-password).
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: TokenAwareThrottlerGuard,
     },
     {
       provide: APP_GUARD,

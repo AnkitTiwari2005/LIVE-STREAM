@@ -6,6 +6,7 @@ export class TokenBlacklistService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(TokenBlacklistService.name);
   private redis: Redis | null = null;
   private readonly inMemoryRevoked = new Map<string, number>(); // jti -> expiresAtMs
+  private sweeper: NodeJS.Timeout | null = null;
 
   onModuleInit() {
     const redisUrl = process.env.REDIS_URL;
@@ -15,7 +16,7 @@ export class TokenBlacklistService implements OnModuleInit, OnModuleDestroy {
           maxRetriesPerRequest: 1,
           lazyConnect: true,
           enableOfflineQueue: false,
-          retryStrategy: () => null,
+          retryStrategy: (times: number) => Math.min(times * 500, 10000), // N11: keep reconnecting; never give up permanently
         });
         this.redis.on('error', (err) => {
           this.logger.debug(`TokenBlacklist Redis offline: ${err.message}`);
@@ -29,7 +30,7 @@ export class TokenBlacklistService implements OnModuleInit, OnModuleDestroy {
     }
 
     // Periodic sweep of expired in-memory blacklist entries every 5 minutes
-    setInterval(() => {
+    this.sweeper = setInterval(() => {
       const now = Date.now();
       for (const [jti, exp] of this.inMemoryRevoked.entries()) {
         if (now > exp) {
@@ -86,6 +87,7 @@ export class TokenBlacklistService implements OnModuleInit, OnModuleDestroy {
   }
 
   onModuleDestroy() {
+    if (this.sweeper) clearInterval(this.sweeper);
     if (this.redis) {
       this.redis.disconnect();
     }

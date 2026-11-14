@@ -9,7 +9,7 @@ import {
   MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Logger, Inject, forwardRef } from '@nestjs/common';
+import { Logger, Inject, forwardRef, Optional } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { PresenceService } from './presence.service';
 import { PresenceAccessor } from './presence.accessor';
@@ -19,6 +19,7 @@ import Redis from 'ioredis';
 import { UserRole, UserStatus } from '@prisma/client';
 import { StreamsService } from '../streams/streams.service';
 import { isDevMode } from '../../common/runtime-mode';
+import { TokenBlacklistService } from '../../common/token-blacklist.service';
 
 class InMemoryChatCache {
   private rateLimits = new Map<string, number>();
@@ -130,6 +131,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly prisma: PrismaService,
     @Inject(forwardRef(() => StreamsService))
     private readonly streamsService: StreamsService,
+    @Optional() private readonly tokenBlacklist?: TokenBlacklistService,
   ) {
     const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
     try {
@@ -176,6 +178,10 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       const cleanToken = rawToken.replace(/^Bearer\s+/i, '');
       const payload = this.jwtService.verify(cleanToken, { secret });
       if (!payload?.sub || payload?.purpose === '2fa_challenge' || payload?.is2FAChallenge) {
+        return null;
+      }
+      // N11: a logged-out / rotated token must not open or keep a socket either
+      if (payload.jti && this.tokenBlacklist && (await this.tokenBlacklist.isRevoked(payload.jti))) {
         return null;
       }
 
