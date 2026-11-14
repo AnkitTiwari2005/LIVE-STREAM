@@ -1,5 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
+import { isDevMode } from '../../common/runtime-mode';
+
+/** HTML-escape anything user- or streamer-controlled before it goes into an email body. */
+export function escapeHtml(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+const SEND_TIMEOUT_MS = 10_000;
 
 export interface EmailOptions {
   to: string;
@@ -22,12 +35,13 @@ export class MailerService {
 
   constructor() {
     this.apiKey = process.env.BREVO_API_KEY || '';
-    this.senderEmail = process.env.EMAIL_FROM_ADDRESS || '12328.uspc@gmail.com';
+    // No built-in default: a personal address as sender is rejected by Brevo and leaks into every mail.
+    this.senderEmail = (process.env.EMAIL_FROM_ADDRESS || '').trim();
     this.senderName = process.env.EMAIL_FROM_NAME || 'Shubhdarshan Live';
 
     this.smtpHost = process.env.SMTP_HOST || 'smtp-relay.brevo.com';
     this.smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
-    this.smtpUser = process.env.BREVO_SMTP_USER || process.env.SMTP_USER || this.senderEmail;
+    this.smtpUser = process.env.BREVO_SMTP_USER || process.env.SMTP_USER || '';
     this.smtpPass = process.env.BREVO_SMTP_KEY || process.env.SMTP_PASS || '';
 
     // Initialize SMTP transporter if SMTP password is provided
@@ -41,6 +55,10 @@ export class MailerService {
             user: this.smtpUser,
             pass: this.smtpPass,
           },
+          // Without these an unreachable relay holds the request (and the reminder loop) for minutes.
+          connectionTimeout: SEND_TIMEOUT_MS,
+          greetingTimeout: SEND_TIMEOUT_MS,
+          socketTimeout: SEND_TIMEOUT_MS * 2,
         });
       } catch (err: any) {
         this.logger.warn(`Could not initialize SMTP transport: ${err.message}`);
@@ -49,6 +67,14 @@ export class MailerService {
   }
 
   async sendEmail(options: EmailOptions): Promise<boolean> {
+    const delivery = this.apiKey || this.smtpTransporter;
+    if (!isDevMode() && (!this.senderEmail || !delivery)) {
+      // Production-like and not configured: say so and report failure. Never pretend it was sent.
+      this.logger.error(
+        `Email NOT sent to ${options.to} ("${options.subject}"): set EMAIL_FROM_ADDRESS and BREVO_API_KEY or BREVO_SMTP_KEY`,
+      );
+      return false;
+    }
     // 1. Try Brevo REST API if an xkeysib- key is configured
     if (this.apiKey && this.apiKey.startsWith('xkeysib-') && !this.apiKey.includes('your_brevo_api_key')) {
       try {
@@ -65,6 +91,7 @@ export class MailerService {
             subject: options.subject,
             htmlContent: options.htmlContent,
           }),
+          signal: AbortSignal.timeout(SEND_TIMEOUT_MS),
         });
 
         if (response.ok) {
@@ -96,14 +123,17 @@ export class MailerService {
       }
     }
 
-    // 3. Fallback: Log email contents so verification links are always accessible
-    this.logger.warn(`[DEV/MOCK EMAIL DISPATCH] To: ${options.to} | Subject: ${options.subject}`);
-    const linkMatch = options.htmlContent.match(/href="([^"]+)"/);
-    if (linkMatch && linkMatch[1]) {
-      this.logger.warn(`[MOCK VERIFY URL]: ${linkMatch[1]}`);
+    // 3. Nothing delivered.
+    if (isDevMode()) {
+      // Local development only: show the link so a developer can click it. Never in production logs -
+      // a reset or verify link in a log file is a working credential for whoever can read the log.
+      this.logger.warn(`[DEV EMAIL - not sent] To: ${options.to} | Subject: ${options.subject}`);
+      const linkMatch = options.htmlContent.match(/href="([^"]+)"/);
+      if (linkMatch?.[1]) this.logger.warn(`[DEV LINK]: ${linkMatch[1].replace(/&amp;/g, '&')}`);
+      return true;
     }
-
-    return true;
+    this.logger.error(`Email to ${options.to} ("${options.subject}") could not be delivered by any configured channel`);
+    return false;
   }
 
   private getOrigin(): string {
@@ -123,7 +153,7 @@ export class MailerService {
             <h1 style="color: #b45309; font-size: 24px; margin: 0;">Shubhdarshan</h1>
             <p style="color: #78716c; font-size: 12px; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.1em;">Sacred Darshan Network</p>
           </div>
-          <h2 style="color: #9a3412;">Namaste ${name},</h2>
+          <h2 style="color: #9a3412;">Namaste ${escapeHtml(name)},</h2>
           <p style="font-size: 14px; line-height: 1.6; color: #44403c;">
             Thank you for joining our spiritual live streaming platform.
           </p>
@@ -131,11 +161,11 @@ export class MailerService {
             Please click the sacred button below to verify your email address, receive your <strong>100 Free Welcome Coins</strong>, and unlock live community chat and darshan reminders:
           </p>
           <div style="margin: 30px 0; text-align: center;">
-            <a href="${link}" style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 9999px; font-weight: bold; font-size: 14px; display: inline-block; box-shadow: 0 4px 12px rgba(180, 83, 9, 0.25);">Verify Email &amp; Claim 100 Coins</a>
+            <a href="${escapeHtml(link)}" style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 9999px; font-weight: bold; font-size: 14px; display: inline-block; box-shadow: 0 4px 12px rgba(180, 83, 9, 0.25);">Verify Email &amp; Claim 100 Coins</a>
           </div>
           <p style="color: #78716c; font-size: 12px; line-height: 1.5;">
             Or copy and paste this verification URL into your browser:<br/>
-            <a href="${link}" style="color: #b45309; word-break: break-all;">${link}</a>
+            <a href="${escapeHtml(link)}" style="color: #b45309; word-break: break-all;">${escapeHtml(link)}</a>
           </p>
           <hr style="border: none; border-top: 1px solid #f0e6dc; margin: 25px 0;" />
           <p style="color: #a8a29e; font-size: 11px; text-align: center; margin: 0;">
@@ -160,7 +190,7 @@ export class MailerService {
             <h1 style="color: #b45309; font-size: 24px; margin: 0;">Shubhdarshan</h1>
             <p style="color: #78716c; font-size: 12px; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.1em;">Sacred Darshan Network</p>
           </div>
-          <h2 style="color: #9a3412;">Namaste ${name},</h2>
+          <h2 style="color: #9a3412;">Namaste ${escapeHtml(name)},</h2>
           <p style="font-size: 14px; line-height: 1.6; color: #44403c;">
             We received a request to reset your password on the Shubhdarshan Live platform.
           </p>
@@ -168,7 +198,7 @@ export class MailerService {
             Click the button below to choose a new password. This link is valid for 1 hour:
           </p>
           <div style="margin: 30px 0; text-align: center;">
-            <a href="${link}" style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 9999px; font-weight: bold; font-size: 14px; display: inline-block;">Reset Password</a>
+            <a href="${escapeHtml(link)}" style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 9999px; font-weight: bold; font-size: 14px; display: inline-block;">Reset Password</a>
           </div>
           <p style="color: #78716c; font-size: 12px; line-height: 1.5;">
             If you did not request this, you can safely ignore this email. Your account remains secure.
@@ -188,10 +218,10 @@ export class MailerService {
       htmlContent: `
         <div style="font-family: Arial, sans-serif; color: #222; max-width: 600px; margin: auto; padding: 20px;">
           <h2 style="color: #c2410c;">🪔 Sacred Reminder: Live Darshan in 15 Minutes</h2>
-          <p>Namaste ${name},</p>
-          <p>The scheduled live session <strong>"${streamTitle}"</strong> conducted by <strong>${streamerName}</strong> is starting in 15 minutes.</p>
+          <p>Namaste ${escapeHtml(name)},</p>
+          <p>The scheduled live session <strong>"${escapeHtml(streamTitle)}"</strong> conducted by <strong>${escapeHtml(streamerName)}</strong> is starting in 15 minutes.</p>
           <div style="margin: 25px 0;">
-            <a href="${streamUrl}" style="background-color: #ea580c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Join Live Pooja Room</a>
+            <a href="${escapeHtml(streamUrl)}" style="background-color: #ea580c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Join Live Pooja Room</a>
           </div>
           <p style="color: #666; font-size: 13px;">Har Har Mahadev 🙏</p>
         </div>
@@ -209,10 +239,10 @@ export class MailerService {
       htmlContent: `
         <div style="font-family: Arial, sans-serif; color: #222; max-width: 600px; margin: auto; padding: 20px;">
           <h2 style="color: #c2410c;">🔔 Live Broadcast Started</h2>
-          <p>Namaste ${name},</p>
-          <p><strong>${streamerName}</strong> has just started broadcasting: <strong>"${streamTitle}"</strong>.</p>
+          <p>Namaste ${escapeHtml(name)},</p>
+          <p><strong>${escapeHtml(streamerName)}</strong> has just started broadcasting: <strong>"${escapeHtml(streamTitle)}"</strong>.</p>
           <div style="margin: 25px 0;">
-            <a href="${streamUrl}" style="background-color: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Watch Live Now</a>
+            <a href="${escapeHtml(streamUrl)}" style="background-color: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Watch Live Now</a>
           </div>
         </div>
       `,

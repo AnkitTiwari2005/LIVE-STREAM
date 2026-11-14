@@ -633,6 +633,11 @@ export class AuthService {
     return updated;
   }
 
+  async hasPassword(userId: string): Promise<boolean> {
+    const row = await this.prisma.user.findUnique({ where: { id: userId }, select: { passwordHash: true } });
+    return !!row?.passwordHash;
+  }
+
   async deleteAccount(userId: string, password?: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },

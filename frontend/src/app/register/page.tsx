@@ -7,6 +7,7 @@ import { Lock, Mail, User, ShieldAlert, CheckCircle2, Sparkles } from 'lucide-re
 import { OmIcon, CoinIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
 
 import { getSafeRedirect } from '@/lib/api';
+import { isJwtTokenExpired } from '@/lib/auth-session';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -21,9 +22,12 @@ export default function RegisterPage() {
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Skip the form only for a token that is still valid; an expired one must reach the form
+      // (and its "session expired" notice) instead of bouncing through /account.
       const token = localStorage.getItem('pooja_token');
-      if (token) {
-        router.replace('/account');
+      if (token && !isJwtTokenExpired(token)) {
+        const target = getSafeRedirect(new URLSearchParams(window.location.search).get('redirect'));
+        router.replace(target || '/account');
         return;
       }
       const params = new URLSearchParams(window.location.search);

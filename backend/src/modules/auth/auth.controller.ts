@@ -196,7 +196,8 @@ export class AuthController {
   @Header('Pragma', 'no-cache')
   @ApiOperation({ summary: 'Get current user profile and session data' })
   async getMe(@CurrentUser() user: any) {
-    return user;
+    // The client needs to know whether a password exists (Google-only accounts have none), never the hash.
+    return { ...user, hasPassword: await this.authService.hasPassword(user.id) };
   }
 
   @Patch('profile')

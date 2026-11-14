@@ -105,7 +105,7 @@ export class RemindersService {
         htmlContent: `
           <div style="font-family: Arial, sans-serif; color: #222;">
             <h3>New Support Query</h3>
-            <p><strong>From:</strong> ${safeName} (${dto.email})</p>
+            <p><strong>From:</strong> ${safeName} (${escapeHtml(dto.email)})</p>
             <p><strong>Subject:</strong> ${safeSubject}</p>
             <p><strong>Message:</strong></p>
             <blockquote style="background: #f4f4f4; padding: 10px;">${safeMessage}</blockquote>
@@ -170,8 +170,8 @@ export class RemindersService {
         htmlContent: `
           <div style="font-family: Arial, sans-serif; color: #222;">
             <h3 style="color: #c2410c;">Statutory Grievance Registered [${ticketId}]</h3>
-            <p><strong>Complainant:</strong> ${safeName} (${dto.email})</p>
-            <p><strong>Phone:</strong> ${dto.phone || 'Not provided'}</p>
+            <p><strong>Complainant:</strong> ${safeName} (${escapeHtml(dto.email)})</p>
+            <p><strong>Phone:</strong> ${escapeHtml(dto.phone || 'Not provided')}</p>
             <p><strong>Category:</strong> ${safeType}</p>
             <p><strong>Details:</strong></p>
             <blockquote style="background: #f4f4f4; padding: 12px; border-left: 4px solid #c2410c;">${safeDetails}</blockquote>
@@ -213,23 +213,31 @@ export class RemindersService {
       },
     });
 
+    let delivered = 0;
     for (const item of dueReminders) {
-      await this.mailer.send15MinuteReminder(
-        item.user.email,
-        item.user.name,
-        item.stream.title,
-        item.stream.streamer.name,
-        item.stream.id,
-      );
-
-      await this.prisma.streamReminder.update({
-        where: { id: item.id },
-        data: { isSent15Min: true },
-      });
+      // One bad address or a mail outage must neither stop the loop nor mark an undelivered
+      // reminder as sent; it stays due and is retried on the next run.
+      try {
+        const ok = await this.mailer.send15MinuteReminder(
+          item.user.email,
+          item.user.name,
+          item.stream.title,
+          item.stream.streamer.name,
+          item.stream.id,
+        );
+        if (!ok) continue;
+        await this.prisma.streamReminder.update({
+          where: { id: item.id },
+          data: { isSent15Min: true },
+        });
+        delivered++;
+      } catch (err: any) {
+        this.logger.error(`15-minute reminder ${item.id} failed: ${err?.message}`);
+      }
     }
 
     if (dueReminders.length > 0) {
-      this.logger.log(`Dispatched ${dueReminders.length} 15-minute reminder emails.`);
+      this.logger.log(`Dispatched ${delivered}/${dueReminders.length} 15-minute reminder emails.`);
     }
   }
 }

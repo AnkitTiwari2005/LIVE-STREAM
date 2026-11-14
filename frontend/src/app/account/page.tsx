@@ -292,7 +292,8 @@ export default function AccountPage() {
   };
 
   const handleDeleteAccount = async () => {
-    if (user?.passwordHash !== null && !deletePassword) {
+    // hasPassword comes from /auth/me; Google-only accounts have no password to confirm with
+    if (user?.hasPassword !== false && !deletePassword) {
       toast.error('Please enter your password to confirm permanent account erasure.');
       return;
     }
@@ -307,7 +308,7 @@ export default function AccountPage() {
           Authorization: `Bearer ${token}`,
         },
         credentials: 'include',
-        body: JSON.stringify({ password: deletePassword }),
+        body: JSON.stringify(user?.hasPassword === false ? {} : { password: deletePassword }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
@@ -918,8 +919,13 @@ export default function AccountPage() {
                     <span>Confirm Permanent Account &amp; Personal Data Erasure</span>
                   </div>
                   <p className="text-[11px] text-stone-700 dark:text-stone-300 leading-relaxed">
-                    Under Section 12(3) of the DPDP Act 2023, this action will immediately revoke all access, permanently anonymize your profile records, and clear any remaining darshan coins. This action is irreversible.
+                    Under Section 12(3) of the DPDP Act 2023, this action will immediately revoke all access, permanently anonymize your profile records, and forfeit any remaining darshan coins (they are not refunded). This action is irreversible.
                   </p>
+                  {user?.hasPassword === false ? (
+                    <p className="text-[11px] text-stone-700 dark:text-stone-300">
+                      You signed in with Google, so no password is needed. Press the button below to confirm.
+                    </p>
+                  ) : (
                   <div>
                     <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1.5">
                       Enter Account Password to Confirm Deletion:
@@ -932,6 +938,7 @@ export default function AccountPage() {
                       className="w-full max-w-sm px-3.5 py-2 bg-white dark:bg-obsidian border border-red-300 dark:border-red-800/80 rounded-xl text-xs text-stone-900 dark:text-white focus:outline-none focus:border-red-500 transition"
                     />
                   </div>
+                  )}
                   <div className="flex flex-wrap gap-2 pt-1">
                     <button
                       onClick={handleDeleteAccount}

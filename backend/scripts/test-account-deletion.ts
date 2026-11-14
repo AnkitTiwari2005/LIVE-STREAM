@@ -4,6 +4,7 @@ import { AuthService } from '../src/modules/auth/auth.service';
 import { JwtService } from '@nestjs/jwt';
 import { MailerService } from '../src/modules/notifications/mailer.service';
 import { StorageService } from '../src/modules/storage/storage.service';
+import { TokenBlacklistService } from '../src/common/token-blacklist.service';
 
 const prisma = new PrismaClient();
 
@@ -18,8 +19,8 @@ async function runTest() {
     jwtService,
     mailerService,
     storageService,
-    null as any, // streamsService
-    null as any, // throttler
+    new TokenBlacklistService(),
+    undefined, // streamsService (optional)
   );
 
   const testEmail = `dpdp_test_${Date.now()}@example.com`;
