@@ -548,13 +548,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
     const senderId: string = user?.sub ?? `priv_guest_${guestSessionId}`;
 
-    // Membership: you can only post into a room you were admitted to by chat:join (which ran the
-    // private-stream and block checks). Knowing a streamId is not enough.
-    if (!client.data.joinedStreams?.has(streamId)) {
-      client.emit('chat:error', { message: 'Join the stream chat before sending messages.' });
-      return;
-    }
-
     // Check if chat is enabled on this stream, and that it is actually on air
     const stream = await this.getStreamRow(streamId);
     if (!stream || !stream.isChatEnabled) {
@@ -571,6 +564,20 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     if (!access.ok) {
       client.emit('chat:error', { message: access.reason });
       return;
+    }
+
+    // Self-healing room admission: If client reconnected or joined before DB handshake finished,
+    // auto-admit to room and presence now that stream status and access rights are fully verified.
+    if (!client.data.joinedStreams?.has(streamId)) {
+      client.join(`stream:${streamId}`);
+      client.data.streamId = streamId;
+      (client.data.joinedStreams ??= new Set<string>()).add(streamId);
+      if (user?.sub) {
+        client.join(`identity:${streamId}:${user.sub}`);
+        const displayName = ChatGateway.safeName(user.name, 'Devotee');
+        (client.data.presence ??= new Map<string, string>()).set(streamId, user.sub);
+        this.presenceService.addViewerSession(streamId, user.sub, displayName, false, client.id).catch(() => {});
+      }
     }
 
     // FR-C2: Message length capped at 500 characters
@@ -659,7 +666,21 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     ];
 
     if (!streamId || !allowedEmojis.includes(emoji)) return;
-    if (!client.data.joinedStreams?.has(streamId)) return;
+    if (!client.data.joinedStreams?.has(streamId)) {
+      const stream = await this.getStreamRow(streamId);
+      if (stream && (stream.status === 'LIVE' || stream.status === 'RECONNECTING_GRACE_PERIOD')) {
+        const access = await this.checkSenderAccess(client, stream, client.data.user?.sub ?? null, null);
+        if (access.ok) {
+          client.join(`stream:${streamId}`);
+          client.data.streamId = streamId;
+          (client.data.joinedStreams ??= new Set<string>()).add(streamId);
+        } else {
+          return;
+        }
+      } else {
+        return;
+      }
+    }
 
     // Rate-limit reaction spam per client session (max 5 per second)
     const reactionKey = `rate:react:${streamId}:${client.id}`;

@@ -76,6 +76,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
       joinRoom();
     }
     socket.on('connect', joinRoom);
+    (socket.io as any)?.on?.('reconnect', joinRoom);
 
     // Never trust the wire shape: a message whose author is gone has no user object, and the render
     // code dereferences msg.user.* (one null user used to crash the chat for everyone joining).
@@ -113,6 +114,9 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
     });
 
     socket.on('chat:error', (err: { message: string }) => {
+      if (err.message && err.message.toLowerCase().includes('join the stream chat')) {
+        joinRoom();
+      }
       setErrorBanner(err.message);
       setTimeout(() => setErrorBanner(null), 4000);
     });
@@ -154,6 +158,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
 
     return () => {
       socket.off('connect', joinRoom);
+      (socket.io as any)?.off?.('reconnect', joinRoom);
       socket.off('chat:history');
       socket.off('chat:message');
       socket.off('chat:message_deleted');
@@ -202,6 +207,9 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
       setTimeout(() => setErrorBanner(null), 3000);
       return;
     }
+
+    // Proactively emit join to guarantee socket membership on rapid reconnects
+    socket.emit('chat:join', { streamId, sessionId: sessionId || undefined });
 
     socket.emit('chat:send', {
       streamId,
