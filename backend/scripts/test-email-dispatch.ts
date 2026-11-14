@@ -1,7 +1,9 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
 import { MailerService } from '../src/modules/notifications/mailer.service';
 
 async function testEmail() {
-  console.log('--- Testing MailerService Email Dispatch ---');
+  console.log('--- Testing MailerService Email Dispatch with Loaded .env ---');
   const mailer = new MailerService();
 
   const success = await mailer.sendVerificationEmail(
