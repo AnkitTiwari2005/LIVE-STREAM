@@ -1,7 +1,8 @@
 import * as crypto from 'crypto';
 import { BadGatewayException, BadRequestException } from '@nestjs/common';
+import { isProductionLike } from './runtime-mode';
 
-export const isProd = (): boolean => process.env.NODE_ENV === 'production';
+export const isProd = (): boolean => isProductionLike();
 
 const basicAuth = (): string =>
   'Basic ' + Buffer.from(`${process.env.RAZORPAY_KEY_ID}:${process.env.RAZORPAY_KEY_SECRET}`).toString('base64');

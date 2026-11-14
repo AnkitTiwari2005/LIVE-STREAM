@@ -673,4 +673,7 @@ async function runTestSuite() {
   }
 }
 
-runTestSuite();
+runTestSuite().catch((err) => {
+  console.error('FATAL ERROR DURING BOOTSTRAP:', err);
+  process.exit(1);
+});

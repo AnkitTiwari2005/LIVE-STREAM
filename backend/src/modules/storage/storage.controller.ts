@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import * as fs from 'fs';
-import { StorageService } from './storage.service';
+import { StorageService, KEY_RE } from './storage.service';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -53,8 +53,14 @@ export class StorageController {
       throw new BadRequestException('key query parameter is required');
     }
 
-    // B-06: Prevent cross-user key tampering - bind upload to owner user ID
-    if (user?.role !== UserRole.ADMIN && user?.id && !key.includes(user.id)) {
+    const match = key.match(KEY_RE);
+    if (!match) {
+      throw new BadRequestException('Invalid storage key format');
+    }
+    const [_, _folder, ownerId] = match;
+
+    // B-06 & N3: Prevent cross-user key tampering - bind upload strictly to owner user ID
+    if (user?.role !== UserRole.ADMIN && user?.id && ownerId !== user.id) {
       throw new ForbiddenException('Unauthorized: storage key does not belong to this account');
     }
 

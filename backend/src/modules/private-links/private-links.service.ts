@@ -16,6 +16,7 @@ import {
   VIDEO_PROVIDER_TOKEN,
 } from '../video/interfaces/video-provider.interface';
 import { getLiveKitPublicUrl } from '../../common/livekit-url.util';
+import { isProductionLike } from '../../common/runtime-mode';
 import { StreamStatus, StreamVisibility, UserStatus } from '@prisma/client';
 import { forwardRef } from '@nestjs/common';
 import { StreamsService } from '../streams/streams.service';
@@ -23,7 +24,7 @@ import { StreamsService } from '../streams/streams.service';
 function getFrontendOrigin(): string {
   const origin = process.env.FRONTEND_ORIGIN || (process.env.DOMAIN ? `https://${process.env.DOMAIN}` : null);
   if (origin) return origin.replace(/\/$/, '');
-  if (process.env.NODE_ENV === 'production') {
+  if (isProductionLike()) {
     throw new BadRequestException('FRONTEND_ORIGIN or DOMAIN environment variable must be configured in production (N-13)');
   }
   return 'http://localhost:3000';

@@ -10,6 +10,7 @@ import {
   Req,
   HttpCode,
   HttpStatus,
+  Header,
 } from '@nestjs/common';
 import { StreamsService } from './streams.service';
 import { CreateStreamDto } from './dto/create-stream.dto';
@@ -92,6 +93,7 @@ export class StreamsController {
 
   @Public()
   @Get('public')
+  @Header('Cache-Control', 'public, max-age=15, stale-while-revalidate=30')
   @ApiOperation({ summary: 'List active and upcoming public streams (FR-L8)' })
   async getPublicStreams(
     @Query('categoryId') categoryId?: string,

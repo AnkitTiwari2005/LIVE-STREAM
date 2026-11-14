@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { isDevMode } from '../runtime-mode';
 import { createHmac } from 'crypto';
 
 const PLACEHOLDER_SUBSTRINGS = [
@@ -75,7 +76,7 @@ export function validateProductionSecrets(context: string = 'Bootstrap'): void {
     },
   ];
 
-  if (process.env.NODE_ENV !== 'production') {
+  if (isDevMode()) {
     for (const item of [...hardRequiredSecrets, ...softRequiredSecrets]) {
       const val = process.env[item.name];
       if (!val || val.trim() === '') {

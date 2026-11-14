@@ -18,6 +18,7 @@ import { PrismaService } from '../../database/prisma.service';
 import Redis from 'ioredis';
 import { UserRole, UserStatus } from '@prisma/client';
 import { StreamsService } from '../streams/streams.service';
+import { isDevMode } from '../../common/runtime-mode';
 
 class InMemoryChatCache {
   private rateLimits = new Map<string, number>();
@@ -92,7 +93,7 @@ export function isAllowedSocketOrigin(origin: string | undefined, env: NodeJS.Pr
     allowed.add(`https://${env.DOMAIN}`);
     allowed.add(`https://www.${env.DOMAIN}`);
   }
-  if (env.NODE_ENV !== 'production') {
+  if (isDevMode(env)) {
     allowed.add('http://localhost:3000');
     allowed.add('http://127.0.0.1:3000');
     allowed.add('http://localhost:4000');
@@ -168,7 +169,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     if (!rawToken) return null;
     const secret =
       process.env.JWT_ACCESS_SECRET ||
-      (process.env.NODE_ENV !== 'production' ? 'jwt_default_insecure_access_secret_key' : '');
+      (isDevMode() ? 'jwt_default_insecure_access_secret_key' : '');
     if (!secret) return null;
 
     try {

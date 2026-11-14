@@ -6,7 +6,7 @@ import { AuthModule } from '../auth/auth.module';
 import { StreamsModule } from '../streams/streams.module';
 
 @Module({
-  imports: [AuthModule, forwardRef(() => StreamsModule)],
+  imports: [forwardRef(() => AuthModule), forwardRef(() => StreamsModule)],
   providers: [ChatGateway, ChatService, PresenceService],
   exports: [ChatService, ChatGateway, PresenceService],
 })

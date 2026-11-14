@@ -99,6 +99,7 @@ services:
       RUN_CRONS: "false"
     volumes:
       - uploads_data:/app/public/uploads
+      - kyc_data:/app/storage/kyc
     mem_limit: 1024m
     cpu_shares: 512
     healthcheck:
@@ -225,3 +226,4 @@ volumes:
   postgres_data:
   redis_data:
   uploads_data:
+  kyc_data:

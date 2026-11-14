@@ -12,6 +12,7 @@ const cookieParser = require('cookie-parser');
 const compression = require('compression');
 import helmet from 'helmet';
 import { validateProductionSecrets } from './common/config/validate-env';
+import { isDevMode, isProductionLike } from './common/runtime-mode';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -53,7 +54,7 @@ async function bootstrap() {
           frameSrc: ["'self'", 'https://api.razorpay.com', 'https://checkout.razorpay.com'],
           formAction: ["'self'", 'https://api.razorpay.com', 'https://checkout.razorpay.com'],
           workerSrc: ["'self'", 'blob:'],
-          upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null,
+          upgradeInsecureRequests: isProductionLike() ? [] : null,
         },
       },
     }),
@@ -335,7 +336,7 @@ Sitemap: ${siteOrigin}/sitemap.xml
   );
 
   // Swagger OpenAPI Documentation (Secured in Production)
-  if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_SWAGGER === 'true') {
+  if (isDevMode() || process.env.ENABLE_SWAGGER === 'true') {
     const config = new DocumentBuilder()
       .setTitle('Shubhdarshan Live Streaming Platform API')
       .setDescription('Self-hosted WebRTC & Live Chat Platform API for Sacred Spiritual Broadcasts')

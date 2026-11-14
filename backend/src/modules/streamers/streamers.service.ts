@@ -352,6 +352,7 @@ export class StreamersService {
         durationSeconds: true,
       },
       orderBy: { createdAt: 'desc' },
+      take: 50,
     });
     const streamIds = streams.map((s) => s.id);
     const streamMap = new Map(streams.map((s) => [s.id, s]));

@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '../../../database/prisma.service';
+import { TokenBlacklistService } from '../../../common/token-blacklist.service';
 import { UserStatus } from '@prisma/client';
 
 export interface JwtPayload {
@@ -11,11 +12,15 @@ export interface JwtPayload {
   purpose?: string;
   is2FAChallenge?: boolean;
   iat?: number; // H-10: standard JWT issued-at, used to detect pre-reset tokens
+  jti?: string; // N11: unique token identifier for server-side revocation
 }
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly tokenBlacklistService: TokenBlacklistService,
+  ) {
     // N-04: No insecure fallback — if JWT_ACCESS_SECRET is missing the app should
     // have already failed at validateProductionSecrets(). Using a hardcoded default
     // here would let the app start in production with a known, forgeable secret.
@@ -39,6 +44,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload) {
+    // N11: Reject revoked or logged-out tokens
+    if (payload.jti) {
+      const isRevoked = await this.tokenBlacklistService.isRevoked(payload.jti);
+      if (isRevoked) {
+        throw new UnauthorizedException('Session has been revoked or logged out');
+      }
+    }
+
     // C-05: Reject 2FA challenge tokens attempting to access session endpoints
     if (payload.purpose === '2fa_challenge' || payload.is2FAChallenge) {
       throw new UnauthorizedException('2FA challenge token cannot access protected resources');

@@ -17,6 +17,7 @@ import { UserRole } from '@prisma/client';
 import { Request } from 'express';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { JwtService } from '@nestjs/jwt';
+import { isDevMode } from '../../common/runtime-mode';
 
 @ApiTags('Private Streams')
 @Controller('private-links')
@@ -71,7 +72,7 @@ export class PrivateLinksController {
 
       const secret =
         process.env.JWT_ACCESS_SECRET ||
-        (process.env.NODE_ENV !== 'production' ? 'jwt_default_insecure_access_secret_key' : undefined);
+        (isDevMode() ? 'jwt_default_insecure_access_secret_key' : undefined);
 
       if (rawToken && secret) {
         try {

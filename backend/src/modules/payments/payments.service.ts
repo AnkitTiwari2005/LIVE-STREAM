@@ -23,6 +23,7 @@ import {
   WalletTxType,
   WalletTxCategory,
   StreamerEarningSource,
+  ViewingSessionStatus,
 } from '@prisma/client';
 import { isProd, safeEqualHex } from '../../common/payments.util';
 
@@ -130,6 +131,7 @@ export class PaymentsService {
         const rawWallet: any = await tx.$queryRawUnsafe(
           `UPDATE "UserWallet"
            SET "balanceCoins" = "balanceCoins" - $2,
+               "bonusCoins" = GREATEST(0, "bonusCoins" - $2),
                "lifetimeSpent" = "lifetimeSpent" + $2,
                "updatedAt" = NOW()
            WHERE "userId" = $1 AND "balanceCoins" >= $2
@@ -293,6 +295,103 @@ export class PaymentsService {
     }
 
     const event = body?.event;
+
+    // N5: Handle payment failure
+    if (event === 'payment.failed') {
+      const orderId = body.payload?.payment?.entity?.order_id || body.data?.order?.order_id;
+      if (orderId) {
+        await this.prisma.walletTopupOrder.updateMany({
+          where: { orderId, status: PaymentStatus.PENDING },
+          data: { status: PaymentStatus.FAILED },
+        });
+        this.logger.log(`Webhook marked topup order [${orderId}] as FAILED`);
+        return { received: true, reconciled: 'payment_failed' };
+      }
+    }
+
+    // N5: Handle refund processing with wallet balance and ledger debit
+    if (event === 'refund.processed') {
+      const paymentId = body.payload?.refund?.entity?.payment_id || body.payload?.payment?.entity?.id;
+      if (paymentId) {
+        const topupOrder = await this.prisma.walletTopupOrder.findFirst({
+          where: { paymentId, status: PaymentStatus.SUCCESS },
+          include: { package: true },
+        });
+
+        if (topupOrder) {
+          await this.prisma.$transaction(async (tx) => {
+            await tx.walletTopupOrder.update({
+              where: { id: topupOrder.id },
+              data: { status: PaymentStatus.FAILED },
+            });
+
+            const wallet = await tx.userWallet.findUnique({
+              where: { userId: topupOrder.userId },
+            });
+
+            if (wallet) {
+              const debitCoins = Math.min(wallet.balanceCoins, topupOrder.coinsToCredit);
+              const debitPurchased = Math.min(wallet.purchasedCoins, topupOrder.package?.coins || debitCoins);
+
+              const updatedWallet = await tx.userWallet.update({
+                where: { id: wallet.id },
+                data: {
+                  balanceCoins: { decrement: debitCoins },
+                  purchasedCoins: { decrement: debitPurchased },
+                },
+              });
+
+              await tx.walletTransaction.create({
+                data: {
+                  walletId: wallet.id,
+                  type: WalletTxType.DEBIT,
+                  category: WalletTxCategory.ADMIN_ADJUSTMENT,
+                  amountCoins: debitCoins,
+                  balanceBefore: wallet.balanceCoins,
+                  balanceAfter: updatedWallet.balanceCoins,
+                  referenceId: `refund_${paymentId}`,
+                  idempotencyKey: `refund_wh_${topupOrder.id}`,
+                },
+              });
+            }
+
+            await tx.auditLog.create({
+              data: {
+                actorId: topupOrder.userId,
+                actorEmail: 'system@razorpay.webhook',
+                action: 'PAYMENT_REFUND_PROCESSED',
+                targetResource: `WalletTopupOrder:${topupOrder.id}`,
+                details: {
+                  paymentId,
+                  orderId: topupOrder.orderId,
+                  coinsDebited: topupOrder.coinsToCredit,
+                },
+              },
+            });
+          });
+          this.logger.log(`Webhook reconciled refund for topup order [${topupOrder.id}]`);
+          return { received: true, reconciled: 'refund_processed' };
+        }
+      }
+    }
+
+    // N5: Record payment dispute for compliance & fraud review
+    if (event === 'payment.dispute.created') {
+      const paymentId = body.payload?.dispute?.entity?.payment_id || body.payload?.payment?.entity?.id;
+      const disputeId = body.payload?.dispute?.entity?.id;
+      await this.prisma.auditLog.create({
+        data: {
+          actorId: 'system',
+          actorEmail: 'system@razorpay.webhook',
+          action: 'PAYMENT_DISPUTE_RAISED',
+          targetResource: `Payment:${paymentId}`,
+          details: { disputeId, paymentId, dispute: body.payload?.dispute?.entity },
+        },
+      }).catch((err) => this.logger.warn(`Failed to log dispute: ${err.message}`));
+      this.logger.warn(`Payment dispute created for payment [${paymentId}], dispute [${disputeId}]`);
+      return { received: true, reconciled: 'dispute_recorded' };
+    }
+
     if (event === 'payment.captured' || event === 'order.paid') {
       const orderId = body.payload?.payment?.entity?.order_id || body.data?.order?.order_id;
       const paymentId = body.payload?.payment?.entity?.id || body.data?.payment?.payment_id;
@@ -372,8 +471,20 @@ export class PaymentsService {
     const isStreamerOrAdmin =
       callerRole === UserRole.ADMIN || (callerUserId && stream.streamerId === callerUserId);
 
-    if (stream.visibility === StreamVisibility.PRIVATE && !isStreamerOrAdmin && !callerUserId) {
-      throw new NotFoundException('Private session offerings are restricted');
+    if (stream.visibility === StreamVisibility.PRIVATE && !isStreamerOrAdmin) {
+      if (!callerUserId) {
+        throw new NotFoundException('Private session offerings are restricted');
+      }
+      const activeSession = await this.prisma.streamViewingSession.findFirst({
+        where: {
+          streamId,
+          userId: callerUserId,
+          status: ViewingSessionStatus.ACTIVE,
+        },
+      });
+      if (!activeSession) {
+        throw new NotFoundException('Private session offerings are restricted');
+      }
     }
 
     const offerings = await this.prisma.dakshinaOffering.findMany({

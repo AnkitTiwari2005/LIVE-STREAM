@@ -198,6 +198,7 @@ export class WalletService {
       const rawResult: any = await tx.$queryRawUnsafe(
         `UPDATE "UserWallet"
          SET "balanceCoins" = "balanceCoins" - $2,
+             "bonusCoins" = GREATEST(0, "bonusCoins" - $2),
              "lifetimeSpent" = "lifetimeSpent" + $2,
              "updatedAt" = NOW()
          WHERE "userId" = $1 AND "balanceCoins" >= $2
@@ -402,6 +403,7 @@ export class WalletService {
         const rawResult: any = await tx.$queryRawUnsafe(
           `UPDATE "UserWallet"
            SET "balanceCoins" = "balanceCoins" - $2,
+               "bonusCoins" = GREATEST(0, "bonusCoins" - $2),
                "lifetimeSpent" = "lifetimeSpent" + $2,
                "updatedAt" = NOW()
            WHERE "userId" = $1 AND "balanceCoins" >= $2

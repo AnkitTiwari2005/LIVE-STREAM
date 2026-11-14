@@ -6,6 +6,7 @@ import {
   MaxLength,
   IsDateString,
   IsIn,
+  Matches,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { StreamVisibility } from '@prisma/client';
@@ -30,6 +31,10 @@ export class CreateStreamDto {
   @ApiProperty({ example: 'https://assets.platform-domain.com/thumbnails/rudra.jpg', required: false })
   @IsOptional()
   @IsString()
+  @MaxLength(1000)
+  @Matches(/^(\/uploads\/[a-zA-Z0-9_\-\.\/]+|https:\/\/[a-zA-Z0-9_\-\.\/]+)$/, {
+    message: 'thumbnailUrl must be a local /uploads/ path or a valid HTTPS URL',
+  })
   thumbnailUrl?: string;
 
   @ApiProperty({ enum: StreamVisibility, default: StreamVisibility.PUBLIC })

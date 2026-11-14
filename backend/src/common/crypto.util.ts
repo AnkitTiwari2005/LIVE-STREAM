@@ -1,9 +1,10 @@
 import * as crypto from 'crypto';
+import { isProductionLike } from './runtime-mode';
 
 export class CryptoUtil {
   private static getKey(): Buffer {
     const rawKey = process.env.ENCRYPTION_MASTER_KEY;
-    if (process.env.NODE_ENV === 'production') {
+    if (isProductionLike()) {
       if (!rawKey || rawKey.includes('default_insecure') || rawKey.includes('placeholder')) {
         throw new Error('ENCRYPTION_MASTER_KEY must be securely defined in production (32 bytes or 44 base64 chars).');
       }

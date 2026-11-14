@@ -15,16 +15,23 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
-import { LoginDto, ForgotPasswordDto, ResetPasswordDto, VerifyTotpDto } from './dto/login.dto';
+import { LoginDto, ForgotPasswordDto, ResetPasswordDto, VerifyTotpDto, DeleteAccountDto } from './dto/login.dto';
 import { Response, Request } from 'express';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { isProductionLike } from '../../common/runtime-mode';
+import { TokenBlacklistService } from '../../common/token-blacklist.service';
+import { JwtService } from '@nestjs/jwt';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly jwtService: JwtService,
+    private readonly tokenBlacklistService: TokenBlacklistService,
+  ) {}
 
   @Public()
   // H-09: Tight limit — 10 registration attempts per minute per IP
@@ -156,10 +163,32 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Header('Cache-Control', 'no-store, no-cache, must-revalidate, private')
   @Header('Pragma', 'no-cache')
-  @ApiOperation({ summary: 'Log out and clear session cookies (FR-A3)' })
-  async logout(@Res({ passthrough: true }) res: Response) {
+  @ApiOperation({ summary: 'Log out, clear cookies, and revoke session tokens (N11)' })
+  async logout(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const rawAccess =
+      req.cookies?.access_token ||
+      (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.slice(7) : null);
+    const rawRefresh = req.cookies?.refresh_token;
+
+    for (const raw of [rawAccess, rawRefresh]) {
+      if (raw && typeof raw === 'string') {
+        try {
+          const payload: any = this.jwtService.decode(raw);
+          if (payload?.jti) {
+            const ttl = payload.exp
+              ? Math.max(60, payload.exp - Math.floor(Date.now() / 1000))
+              : 30 * 24 * 3600;
+            await this.tokenBlacklistService.revokeToken(payload.jti, ttl);
+          }
+        } catch {}
+      }
+    }
+
     this.clearAuthCookies(res);
-    return { message: 'Logged out successfully' };
+    return { message: 'Logged out successfully and session revoked.' };
   }
 
   @Get('me')
@@ -185,18 +214,19 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Header('Cache-Control', 'no-store, no-cache, must-revalidate, private')
   @Header('Pragma', 'no-cache')
-  @ApiOperation({ summary: 'Self-serve account and personal data erasure under DPDP Act 2023' })
+  @ApiOperation({ summary: 'Self-serve account and personal data erasure under DPDP Act 2023 (N4)' })
   async deleteAccount(
     @CurrentUser('id') userId: string,
+    @Body() body: DeleteAccountDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const result = await this.authService.deleteAccount(userId);
+    const result = await this.authService.deleteAccount(userId, body?.password);
     this.clearAuthCookies(res);
     return result;
   }
 
   private clearAuthCookies(res: Response) {
-    const isProd = process.env.NODE_ENV === 'production';
+    const isProd = isProductionLike();
     const clearOpts = {
       httpOnly: true,
       secure: isProd,
@@ -213,7 +243,7 @@ export class AuthController {
   }
 
   private setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
-    const isProd = process.env.NODE_ENV === 'production';
+    const isProd = isProductionLike();
 
     res.cookie('access_token', accessToken, {
       httpOnly: true,

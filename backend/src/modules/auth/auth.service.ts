@@ -6,19 +6,42 @@ import {
   ConflictException,
   ForbiddenException,
   Logger,
+  Inject,
+  Optional,
+  forwardRef,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../database/prisma.service';
 import { MailerService } from '../notifications/mailer.service';
 import { StorageService } from '../storage/storage.service';
+import { StreamsService } from '../streams/streams.service';
+import { TokenBlacklistService } from '../../common/token-blacklist.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto, ResetPasswordDto, VerifyTotpDto } from './dto/login.dto';
 import { CryptoUtil } from '../../common/crypto.util';
 import { resolveTwoFactorSecret } from '../../common/config/validate-env';
+import { isDevMode, isProductionLike } from '../../common/runtime-mode';
 import * as bcrypt from 'bcryptjs';
-import { Prisma, UserRole, UserStatus, WalletTxType, WalletTxCategory } from '@prisma/client';
+import * as crypto from 'crypto';
+import { Prisma, UserRole, UserStatus, WalletTxType, WalletTxCategory, StreamStatus } from '@prisma/client';
 import { authenticator } from 'otplib';
 import * as qrcode from 'qrcode';
+
+export function normalizeEmail(email: string): string {
+  const trimmed = (email || '').trim().toLowerCase();
+  const atIndex = trimmed.indexOf('@');
+  if (atIndex === -1) return trimmed;
+
+  const localPart = trimmed.slice(0, atIndex);
+  const domainPart = trimmed.slice(atIndex + 1);
+
+  if (domainPart === 'gmail.com' || domainPart === 'googlemail.com') {
+    const cleanedLocal = localPart.replace(/\./g, '').split('+')[0];
+    return `${cleanedLocal}@${domainPart}`;
+  }
+
+  return trimmed;
+}
 
 @Injectable()
 export class AuthService {
@@ -84,11 +107,19 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly mailerService: MailerService,
     private readonly storageService: StorageService,
+    private readonly tokenBlacklistService: TokenBlacklistService,
+    @Optional()
+    @Inject(forwardRef(() => StreamsService))
+    private readonly streamsService?: StreamsService,
   ) {}
 
   async register(dto: RegisterDto) {
-    const existing = await this.prisma.user.findUnique({
-      where: { email: dto.email.toLowerCase() },
+    const normalizedEmail = normalizeEmail(dto.email);
+    const existing = await this.prisma.user.findFirst({
+      where: {
+        OR: [{ email: normalizedEmail }, { email: dto.email.trim().toLowerCase() }],
+        deletedAt: null,
+      },
     });
     if (existing) {
       throw new ConflictException('An account with this email address already exists');
@@ -101,7 +132,7 @@ export class AuthService {
     // Initial wallet has 0 balance. Welcome bonus is credited upon verified email (B-10 Anti-Abuse)
     const user = await this.prisma.user.create({
       data: {
-        email: dto.email.toLowerCase(),
+        email: normalizedEmail,
         passwordHash,
         name: dto.name,
         role: UserRole.VIEWER,
@@ -135,7 +166,7 @@ export class AuthService {
       message: 'Registration successful. Please check your email to verify your account and claim your 100 welcome darshan coins.',
       userId: user.id,
       email: user.email,
-      debugVerifyToken: process.env.NODE_ENV !== 'production' ? rawVerifyToken : undefined,
+      debugVerifyToken: isDevMode() ? rawVerifyToken : undefined,
     };
   }
 
@@ -214,8 +245,13 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    const user = await this.prisma.user.findUnique({
-      where: { email: dto.email.toLowerCase() },
+    const normalizedEmail = normalizeEmail(dto.email);
+    const rawEmail = dto.email.trim().toLowerCase();
+    const user = await this.prisma.user.findFirst({
+      where: {
+        OR: [{ email: normalizedEmail }, { email: rawEmail }],
+        deletedAt: null,
+      },
       include: { streamerProfile: true, wallet: true },
     });
 
@@ -296,9 +332,16 @@ export class AuthService {
     const isValid = authenticator.verify({ token: dto.token, secret: totpSecret });
 
     if (!isValid) {
-      // Check backup codes
-      const tokenHash = CryptoUtil.hashSha256(dto.token);
-      const backupIndex = user.twoFactorBackupCodes.indexOf(tokenHash);
+      // Check backup codes (N8: support salted HMAC-SHA256 and legacy plain SHA-256)
+      const normalizedToken = dto.token.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+      const hmacHash = crypto.createHmac('sha256', resolveTwoFactorSecret()).update(normalizedToken).digest('hex');
+      const legacyHash = CryptoUtil.hashSha256(dto.token.trim());
+
+      let backupIndex = user.twoFactorBackupCodes.indexOf(hmacHash);
+      if (backupIndex === -1) {
+        backupIndex = user.twoFactorBackupCodes.indexOf(legacyHash);
+      }
+
       if (backupIndex === -1) {
         // R-05: Count this failed attempt (window stays anchored to first failure)
         const fails = this.incrementTotpFail(userId);
@@ -357,9 +400,15 @@ export class AuthService {
     // Encrypt secret with AES-256-GCM before saving
     const encryptedSecret = CryptoUtil.encryptAesGcm(secret);
 
-    // Generate 4 backup codes
-    const backupCodes = Array.from({ length: 4 }, () => CryptoUtil.generate128BitToken().slice(0, 8));
-    const hashedBackupCodes = backupCodes.map((code) => CryptoUtil.hashSha256(code));
+    // N8: Generate 8 backup codes of 16 hex chars (64 bits entropy), formatted XXXX-XXXX-XXXX-XXXX
+    const backupCodes = Array.from({ length: 8 }, () => {
+      const raw = crypto.randomBytes(8).toString('hex').toLowerCase();
+      return `${raw.slice(0, 4)}-${raw.slice(4, 8)}-${raw.slice(8, 12)}-${raw.slice(12, 16)}`;
+    });
+    const hashedBackupCodes = backupCodes.map((code) => {
+      const normalized = code.replace(/-/g, '');
+      return crypto.createHmac('sha256', resolveTwoFactorSecret()).update(normalized).digest('hex');
+    });
 
     // Save secret without activating yet (S-04: require confirmation with valid code first)
     await this.prisma.user.update({
@@ -400,7 +449,14 @@ export class AuthService {
   }
 
   async forgotPassword(email: string) {
-    const user = await this.prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+    const normalizedEmail = normalizeEmail(email);
+    const rawEmail = email.trim().toLowerCase();
+    const user = await this.prisma.user.findFirst({
+      where: {
+        OR: [{ email: normalizedEmail }, { email: rawEmail }],
+        deletedAt: null,
+      },
+    });
     if (!user) {
       // Generic success to prevent user enumeration
       return { message: 'If an account with that email exists, a password reset link has been dispatched.' };
@@ -424,8 +480,19 @@ export class AuthService {
 
     return {
       message: 'If an account with that email exists, a password reset link has been dispatched.',
-      debugResetToken: process.env.NODE_ENV !== 'production' ? rawResetToken : undefined,
+      debugResetToken: isDevMode() ? rawResetToken : undefined,
     };
+  }
+
+  private getSecret(name: 'JWT_ACCESS_SECRET' | 'JWT_REFRESH_SECRET', fallback: string): string {
+    const val = process.env[name];
+    if (val && val.trim() !== '') {
+      return val;
+    }
+    if (isProductionLike()) {
+      throw new Error(`FATAL: ${name} must be configured in production.`);
+    }
+    return fallback;
   }
 
   async refreshSession(refreshToken: string) {
@@ -436,10 +503,20 @@ export class AuthService {
     let payload: any;
     try {
       payload = this.jwtService.verify(refreshToken, {
-        secret: process.env.JWT_REFRESH_SECRET || 'jwt_default_insecure_refresh_secret_key',
+        secret: this.getSecret('JWT_REFRESH_SECRET', 'jwt_default_insecure_refresh_secret_key'),
       });
     } catch {
       throw new UnauthorizedException('Session expired or invalid. Please log in again.');
+    }
+
+    // N11: Reject revoked refresh tokens and rotate
+    if (payload.jti) {
+      const isRevoked = await this.tokenBlacklistService.isRevoked(payload.jti);
+      if (isRevoked) {
+        throw new UnauthorizedException('Session expired or revoked. Please log in again.');
+      }
+      const ttl = payload.exp ? Math.max(60, payload.exp - Math.floor(Date.now() / 1000)) : 30 * 24 * 3600;
+      await this.tokenBlacklistService.revokeToken(payload.jti, ttl);
     }
 
     const user = await this.prisma.user.findUnique({
@@ -497,20 +574,22 @@ export class AuthService {
   }
 
   generateTokens(user: any) {
+    const jti = CryptoUtil.generate128BitToken();
     const payload = {
       sub: user.id,
       email: user.email,
       role: user.role,
+      jti,
     };
 
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: '7d',
-      secret: process.env.JWT_ACCESS_SECRET || 'jwt_default_insecure_access_secret_key',
+      secret: this.getSecret('JWT_ACCESS_SECRET', 'jwt_default_insecure_access_secret_key'),
     });
 
     const refreshToken = this.jwtService.sign(payload, {
       expiresIn: '30d',
-      secret: process.env.JWT_REFRESH_SECRET || 'jwt_default_insecure_refresh_secret_key',
+      secret: this.getSecret('JWT_REFRESH_SECRET', 'jwt_default_insecure_refresh_secret_key'),
     });
 
     return {
@@ -554,12 +633,23 @@ export class AuthService {
     return updated;
   }
 
-  async deleteAccount(userId: string) {
+  async deleteAccount(userId: string, password?: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      include: { streamerProfile: true },
+      include: { streamerProfile: true, wallet: true },
     });
     if (!user) throw new NotFoundException('User not found');
+
+    // N-06 & N4: Verify password if account has one (Google OAuth-only users have passwordHash === null)
+    if (user.passwordHash) {
+      if (!password) {
+        throw new BadRequestException('Password confirmation is required to delete your account.');
+      }
+      const isMatch = await bcrypt.compare(password, user.passwordHash);
+      if (!isMatch) {
+        throw new UnauthorizedException('Incorrect password. Account deletion aborted.');
+      }
+    }
 
     // N-06: Guard against deleting the last remaining platform administrator
     if (user.role === UserRole.ADMIN) {
@@ -588,6 +678,58 @@ export class AuthService {
       }
     }
 
+    // N4: Anonymize all DakshinaOffering rows to remove devotee personal data (name, gotra, prayer message)
+    await this.prisma.dakshinaOffering.updateMany({
+      where: { devoteeId: userId },
+      data: {
+        devoteeName: 'Deleted Devotee',
+        gotra: null,
+        prayerMessage: null,
+      },
+    });
+
+    // N4: Conclude any active or scheduled streams owned by the user
+    const liveStreams = await this.prisma.stream.findMany({
+      where: {
+        streamerId: userId,
+        status: { in: [StreamStatus.LIVE, StreamStatus.SCHEDULED] },
+      },
+    });
+
+    for (const s of liveStreams) {
+      try {
+        if (s.status === StreamStatus.LIVE && this.streamsService) {
+          await this.streamsService.endStream(s.id, userId, true);
+        } else {
+          await this.prisma.stream.update({
+            where: { id: s.id },
+            data: {
+              status: s.status === StreamStatus.LIVE ? StreamStatus.ENDED : StreamStatus.CANCELLED,
+              endedAt: new Date(),
+            },
+          });
+        }
+      } catch (err: any) {
+        this.logger.warn(`Failed to conclude stream ${s.id} on user deletion: ${err.message}`);
+      }
+    }
+
+    // N4: Revoke all private stream links created by this user
+    await this.prisma.privateAccessLink.updateMany({
+      where: { stream: { streamerId: userId }, isRevoked: false },
+      data: { isRevoked: true },
+    }).catch(() => {});
+
+    // N4: Track forfeited coin balances
+    const forfeitedPaidCoins = user.wallet?.purchasedCoins || 0;
+    const forfeitedBonusCoins = user.wallet?.bonusCoins || 0;
+    if (user.wallet && user.wallet.balanceCoins > 0) {
+      await this.prisma.userWallet.update({
+        where: { id: user.wallet.id },
+        data: { balanceCoins: 0, bonusCoins: 0, purchasedCoins: 0 },
+      }).catch(() => {});
+    }
+
     const anonymizedEmail = `deleted_${Date.now()}_${user.id.slice(0, 8)}@shubhdarshan.privacy`;
 
     await this.prisma.user.update({
@@ -613,17 +755,24 @@ export class AuthService {
       },
     });
 
-    // N-06: Do NOT retain the original user's email in the audit log after DPDP erasure
+    // N-06 & N4: Do NOT retain the original user's email in the audit log after DPDP erasure
     await this.prisma.auditLog.create({
       data: {
         actorId: userId,
         actorEmail: '[DPDP_REDACTED]',
         action: 'DPDP_USER_ACCOUNT_DELETED',
         targetResource: `User:${userId}`,
-        details: { reason: 'DPDP Act 2023 self-serve deletion request' },
+        details: {
+          reason: 'DPDP Act 2023 self-serve deletion request',
+          forfeitedPaidCoins,
+          forfeitedBonusCoins,
+        },
       },
     });
 
-    return { message: 'Account and personal data successfully deleted under DPDP Act 2023.' };
+    return {
+      message:
+        'Account and personal data successfully deleted under DPDP Act 2023. Financial transaction records retained anonymously for statutory audit requirements.',
+    };
   }
 }

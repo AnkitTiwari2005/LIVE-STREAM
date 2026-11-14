@@ -1,3 +1,5 @@
+import { isProductionLike } from './runtime-mode';
+
 /**
  * Resolves the public-facing LiveKit WebSocket URL.
  * Throws in production if not explicitly configured to prevent connecting
@@ -13,7 +15,7 @@ export function getLiveKitPublicUrl(): string {
     return url;
   }
 
-  if (process.env.NODE_ENV === 'production') {
+  if (isProductionLike()) {
     throw new Error('LIVEKIT_PUBLIC_URL must be configured in production');
   }
 
