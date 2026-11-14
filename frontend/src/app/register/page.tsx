@@ -21,13 +21,18 @@ export default function RegisterPage() {
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('pooja_token');
+      if (token) {
+        router.replace('/account');
+        return;
+      }
       const params = new URLSearchParams(window.location.search);
       const safe = getSafeRedirect(params.get('redirect'));
       if (safe) {
         setRedirectUrl(safe);
       }
     }
-  }, []);
+  }, [router]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +64,7 @@ export default function RegisterPage() {
         throw new Error(data.message || 'Registration failed.');
       }
 
-      setSuccess('Account created! Please check your email for the verification link before participating in chat.');
+      setSuccess('Account created! We have sent a sacred activation link to your email. Please click the link in your inbox to verify your account and claim your 100 Free Welcome Coins.');
     } catch (err: any) {
       setError(err.message);
     } finally {

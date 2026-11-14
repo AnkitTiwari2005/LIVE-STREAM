@@ -21,6 +21,11 @@ export default function LoginPage() {
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('pooja_token');
+      if (token) {
+        router.replace('/account');
+        return;
+      }
       const params = new URLSearchParams(window.location.search);
       const red = params.get('redirect');
       if (red && red.startsWith('/')) {
@@ -30,7 +35,7 @@ export default function LoginPage() {
         setError('Your previous session has expired. Please sign in again.');
       }
     }
-  }, []);
+  }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

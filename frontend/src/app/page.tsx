@@ -1292,35 +1292,71 @@ export default function HomePage() {
           <div className="mandala-bg absolute inset-0 opacity-40 pointer-events-none" />
 
           <div className="relative z-10 max-w-2xl mx-auto space-y-5">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-gold-pale">
-              <Sparkles className="w-4 h-4 text-gold" /> 100 Free Coins on Joining
-            </span>
+            {user ? (
+              <>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-gold-pale">
+                  <Sparkles className="w-4 h-4 text-gold" /> Sanatana Dharma Worldwide • 100% Shastric Integrity
+                </span>
 
-            <h2 className="font-serif text-3xl sm:text-5xl font-bold text-white">
-              Your first Darshan is on us
-            </h2>
+                <h2 className="font-serif text-3xl sm:text-5xl font-bold text-white">
+                  Participate in Sacred Live Darshan
+                </h2>
 
-            <p className="text-stone-300 text-xs sm:text-base leading-relaxed">
-              Experience authentic Vedic rituals and personalized poojas today. Join devotees across the globe receiving live blessings from KYC-verified Pandits.
-            </p>
+                <p className="text-stone-300 text-xs sm:text-base leading-relaxed">
+                  Connect with Bharat’s holy sanctums, receive blessings from verified Vedic Pandits, and book personalized sanctum poojas.
+                </p>
 
-            <div className="pt-2 flex flex-wrap items-center justify-center gap-4">
-              <Link
-                href="/register"
-                className="rounded-full bg-gold px-8 py-3.5 text-sm font-bold text-obsidian shadow-[0_0_36px_rgba(245,158,11,0.4)] hover:bg-gold-deep transition"
-              >
-                Join Free &amp; Claim 100 Coins
-              </Link>
-              <button
-                onClick={() => {
-                  setSelectedSevaId(undefined);
-                  setBookingModalOpen(true);
-                }}
-                className="rounded-full border border-gold/40 bg-obsidian-soft hover:bg-gold/10 px-6 py-3.5 text-sm font-bold text-gold-pale transition"
-              >
-                Book a Live Pooja Session
-              </button>
-            </div>
+                <div className="pt-2 flex flex-wrap items-center justify-center gap-4">
+                  <Link
+                    href="/pooja"
+                    className="rounded-full bg-gold px-8 py-3.5 text-sm font-bold text-obsidian shadow-[0_0_36px_rgba(245,158,11,0.4)] hover:bg-gold-deep transition"
+                  >
+                    Explore Sanctum Poojas
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setSelectedSevaId(undefined);
+                      setBookingModalOpen(true);
+                    }}
+                    className="rounded-full border border-gold/40 bg-obsidian-soft hover:bg-gold/10 px-6 py-3.5 text-sm font-bold text-gold-pale transition"
+                  >
+                    Book a Live Pooja Session
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-gold-pale">
+                  <Sparkles className="w-4 h-4 text-gold" /> 100 Free Coins on Joining
+                </span>
+
+                <h2 className="font-serif text-3xl sm:text-5xl font-bold text-white">
+                  Your first Darshan is on us
+                </h2>
+
+                <p className="text-stone-300 text-xs sm:text-base leading-relaxed">
+                  Experience authentic Vedic rituals and personalized poojas today. Join devotees across the globe receiving live blessings from KYC-verified Pandits.
+                </p>
+
+                <div className="pt-2 flex flex-wrap items-center justify-center gap-4">
+                  <Link
+                    href="/register"
+                    className="rounded-full bg-gold px-8 py-3.5 text-sm font-bold text-obsidian shadow-[0_0_36px_rgba(245,158,11,0.4)] hover:bg-gold-deep transition"
+                  >
+                    Join Free &amp; Claim 100 Coins
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setSelectedSevaId(undefined);
+                      setBookingModalOpen(true);
+                    }}
+                    className="rounded-full border border-gold/40 bg-obsidian-soft hover:bg-gold/10 px-6 py-3.5 text-sm font-bold text-gold-pale transition"
+                  >
+                    Book a Live Pooja Session
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </section>

@@ -45,6 +45,7 @@ export default function AccountPage() {
 
   const [verifyMsg, setVerifyMsg] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Profile Edit State
@@ -291,26 +292,35 @@ export default function AccountPage() {
   };
 
   const handleDeleteAccount = async () => {
+    if (user?.passwordHash !== null && !deletePassword) {
+      toast.error('Please enter your password to confirm permanent account erasure.');
+      return;
+    }
     setDeleteLoading(true);
     const token = localStorage.getItem('pooja_token');
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
     try {
       const res = await fetch(`${apiUrl}/auth/delete-account`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         credentials: 'include',
+        body: JSON.stringify({ password: deletePassword }),
       });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
         purgeClientSession();
-        toast.success('Your account and personal data have been scheduled for deletion under DPDP Act 2023.');
+        toast.success('Your account and personal data have been permanently erased under DPDP Act 2023.');
         setTimeout(() => {
           window.location.href = '/';
         }, 1500);
       } else {
-        toast.error('Failed to delete account. Please contact support.');
+        toast.error(data.message || 'Failed to delete account. Please verify your password.');
       }
-    } catch {
-      toast.error('Network error while requesting deletion.');
+    } catch (err: any) {
+      toast.error(err.message || 'Network error while requesting deletion.');
     } finally {
       setDeleteLoading(false);
     }
@@ -342,6 +352,31 @@ export default function AccountPage() {
           </div>
         ) : (
           <div className="space-y-8">
+            {/* Unverified Email Alert Banner */}
+            {user && !user.isEmailVerified && (
+              <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-500 shrink-0">
+                    <AlertCircle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200 block">
+                      Email Address Not Verified
+                    </span>
+                    <span className="text-[11px] text-stone-600 dark:text-stone-300 block mt-0.5 leading-relaxed">
+                      Please verify your email ({user.email}) to unlock your <strong>100 Free Welcome Coins</strong> and participate in live community chat.
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={handleResendVerify}
+                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-stone-950 font-bold text-xs transition shadow shrink-0"
+                >
+                  Resend Verification Email
+                </button>
+              </div>
+            )}
+
             {/* User Info Card */}
             <div className="bg-obsidian-soft border border-gold/15 rounded-3xl p-6 sm:p-8 shadow-xl">
             <div className="flex items-center justify-between mb-4">
@@ -877,24 +912,40 @@ export default function AccountPage() {
               </p>
 
               {deleteConfirm ? (
-                <div className="p-4 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-500/30 rounded-2xl space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-bold text-red-700 dark:text-red-400">
-                    <AlertTriangle className="w-4 h-4" /> Are you certain you want to permanently erase your account?
+                <div className="p-4 sm:p-5 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-500/30 rounded-2xl space-y-4">
+                  <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-red-700 dark:text-red-400">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span>Confirm Permanent Account &amp; Personal Data Erasure</span>
                   </div>
-                  <p className="text-[11px] text-stone-700 dark:text-stone-300">
-                    This action will immediately revoke all access, anonymize personal identification records, and clear remaining darshan coins. This action is irreversible.
+                  <p className="text-[11px] text-stone-700 dark:text-stone-300 leading-relaxed">
+                    Under Section 12(3) of the DPDP Act 2023, this action will immediately revoke all access, permanently anonymize your profile records, and clear any remaining darshan coins. This action is irreversible.
                   </p>
-                  <div className="flex gap-2">
+                  <div>
+                    <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1.5">
+                      Enter Account Password to Confirm Deletion:
+                    </label>
+                    <input
+                      type="password"
+                      value={deletePassword}
+                      onChange={(e) => setDeletePassword(e.target.value)}
+                      placeholder="Enter your current password"
+                      className="w-full max-w-sm px-3.5 py-2 bg-white dark:bg-obsidian border border-red-300 dark:border-red-800/80 rounded-xl text-xs text-stone-900 dark:text-white focus:outline-none focus:border-red-500 transition"
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-2 pt-1">
                     <button
                       onClick={handleDeleteAccount}
                       disabled={deleteLoading}
-                      className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-xl text-xs font-bold transition"
+                      className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-xl text-xs font-bold transition shadow"
                     >
                       {deleteLoading ? 'Erasing...' : 'Confirm Permanent Deletion'}
                     </button>
                     <button
-                      onClick={() => setDeleteConfirm(false)}
-                      className="px-4 py-2 bg-stone-200 hover:bg-stone-300 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-300 rounded-xl text-xs font-semibold"
+                      onClick={() => {
+                        setDeleteConfirm(false);
+                        setDeletePassword('');
+                      }}
+                      className="px-4 py-2 bg-stone-200 hover:bg-stone-300 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-300 rounded-xl text-xs font-semibold transition"
                     >
                       Cancel
                     </button>
