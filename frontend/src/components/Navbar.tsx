@@ -17,6 +17,7 @@ import {
   User,
   Search,
   CheckCircle2,
+  Orbit,
 } from 'lucide-react';
 import { CoinTopupModal } from './CoinTopupModal';
 import { SearchPalette } from './SearchPalette';
@@ -252,6 +253,13 @@ export function Navbar() {
               <span>Book Pooja</span>
             </Link>
             <Link
+              href="/kundli"
+              className="hidden 2xl:flex whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5 items-center gap-1"
+            >
+              <Orbit className="w-3.5 h-3.5" />
+              <span>Kundli</span>
+            </Link>
+            <Link
               href="/#upcoming"
               className="whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5"
             >
@@ -277,6 +285,14 @@ export function Navbar() {
 
               {moreDropdownOpen && (
                 <div className="navbar-more-dropdown absolute left-0 top-full mt-2 w-52 rounded-2xl p-2 z-[9999] text-xs bg-obsidian-soft border border-gold/25 shadow-2xl backdrop-blur-xl">
+                  <Link
+                    href="/kundli"
+                    onClick={() => setMoreDropdownOpen(false)}
+                    className="2xl:hidden flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
+                  >
+                    <Orbit className="w-3.5 h-3.5 text-gold shrink-0" />
+                    <span>Free Kundli</span>
+                  </Link>
                   <Link
                     href="/about"
                     onClick={() => setMoreDropdownOpen(false)}
@@ -562,6 +578,14 @@ export function Navbar() {
                 className="mobile-nav-link font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
               >
                 Verified Pandits Directory
+              </Link>
+              <Link
+                href="/kundli"
+                onClick={() => setMobileMenuOpen(false)}
+                className="mobile-nav-link flex items-center gap-2 font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
+              >
+                <Orbit className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+                <span>Free Kundli</span>
               </Link>
               <Link
                 href="/about"

@@ -81,6 +81,14 @@ const STATIC_DIRECTORY: SearchItem[] = [
     image: '/images/photo-1681797849099-0053b1567d95.webp',
     keywords: 'about mission company team pandit kyc heritage',
   },
+  {
+    title: 'Free Kundli',
+    subtitle: 'Janam kundali, moon sign, dasha & avakhada',
+    category: 'Astrology',
+    url: '/kundli',
+    image: '/images/photo-1681797849099-0053b1567d95.webp',
+    keywords: 'kundli kundali janam birth chart horoscope rashi nakshatra dasha lagna astrology jyotish',
+  },
 ];
 
 export function SearchPalette({

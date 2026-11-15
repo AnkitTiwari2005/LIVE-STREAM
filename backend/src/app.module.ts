@@ -19,6 +19,7 @@ import { HealthModule } from './modules/health/health.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { WalletModule } from './modules/wallet/wallet.module';
 import { StorageModule } from './modules/storage/storage.module';
+import { KundliModule } from './modules/kundli/kundli.module';
 
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
@@ -47,6 +48,7 @@ import { CronTasksService } from './jobs/cron-tasks.service';
     PaymentsModule,
     WalletModule,
     StorageModule,
+    KundliModule,
   ],
   providers: [
     CronTasksService,

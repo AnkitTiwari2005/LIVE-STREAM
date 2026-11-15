@@ -76,6 +76,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/kundli" className="text-stone-400 hover:text-gold-pale transition">
+                  Free Kundli
+                </Link>
+              </li>
+              <li>
                 <Link href="/wallet/topup" className="text-stone-400 hover:text-gold-pale transition">
                   Sacred Coins Top-up
                 </Link>

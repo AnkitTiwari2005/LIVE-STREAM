@@ -172,6 +172,12 @@ Sitemap: ${siteOrigin}/sitemap.xml
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>${siteOrigin}/kundli</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>${siteOrigin}/about</loc>
     <lastmod>${today}</lastmod>
     <changefreq>weekly</changefreq>

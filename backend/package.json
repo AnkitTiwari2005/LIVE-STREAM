@@ -18,6 +18,7 @@
     "test:audit": "ts-node scripts/failopen.test.ts && ts-node scripts/storage.test.ts",
     "test:n25": "ts-node scripts/n25.test.ts",
     "test:n23": "ts-node scripts/n23-service.test.ts && ts-node scripts/n23.test.ts",
+    "test:kundli": "ts-node scripts/test-kundli.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix"
   },
   "dependencies": {
