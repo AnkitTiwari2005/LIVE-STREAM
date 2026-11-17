@@ -15,13 +15,16 @@
   <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL 16" />
   <img src="https://img.shields.io/badge/Prisma-5-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma 5" />
   <img src="https://img.shields.io/badge/Redis-7.2-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Redis 7.2" />
+  <img src="https://img.shields.io/badge/AstroLogics-Vedic_Kundli-8B5CF6?style=for-the-badge&logoColor=white" alt="AstroLogics Vedic Kundli" />
   <img src="https://img.shields.io/badge/Razorpay-Top--Ups-0C2451?style=for-the-badge&logo=razorpay&logoColor=white" alt="Razorpay Top-Ups" />
+  <img src="https://img.shields.io/badge/Brevo-REST_%26_SMTP-0092FF?style=for-the-badge&logo=brevo&logoColor=white" alt="Brevo REST & SMTP" />
   <img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
 </p>
 
 <p>
   <a href="#architecture"><strong>Architecture</strong></a> &nbsp;&bull;&nbsp;
   <a href="#sacred-coin-economy--earnings"><strong>Coin Economy</strong></a> &nbsp;&bull;&nbsp;
+  <a href="#free-vedic-kundli-astrology"><strong>Vedic Kundli</strong></a> &nbsp;&bull;&nbsp;
   <a href="#security--billing-design"><strong>Security &amp; Billing</strong></a> &nbsp;&bull;&nbsp;
   <a href="#local-development--testing"><strong>Quick Start</strong></a> &nbsp;&bull;&nbsp;
   <a href="#production-deployment"><strong>Production</strong></a> &nbsp;&bull;&nbsp;
@@ -63,6 +66,20 @@
       </p>
     </td>
   </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>Free Vedic Kundli &amp; Astrology Engine</h3>
+      <p>
+        Powered by the <strong>AstroLogics API</strong> with interactive D1 (Lagna) and D9 (Navamsa) SVG charts in North &amp; South Indian styles. Calculates precise planetary degrees, Moon sign, Nakshatra, pada, Avakhada chakra, and multi-level Vimshottari Dasha with seamless Pandit consultation booking.
+      </p>
+    </td>
+    <td width="50%" valign="top">
+      <h3>Hardened Dual-Delivery Email &amp; Auth (main25)</h3>
+      <p>
+        Production-hardened transactional email with Brevo REST primary and SMTP relay fallback (<code>587</code> with 10s timeouts). Production zero-leakage guarantee (verification &amp; reset links never written to logs), per-recipient reminder loop resilience, HTML-escaped metadata, and Google-only account deletion.
+      </p>
+    </td>
+  </tr>
 </table>
 
 ---
@@ -89,17 +106,17 @@ flowchart LR
     unified --> pg
     api --> redis["Redis 7.2"]
     unified --> redis
-    api --> pay["Razorpay Top-Ups and Brevo"]
+    api --> pay["Razorpay, Brevo & AstroLogics"]
     unified --> pay
 ```
 
 | Layer | Technology | Responsibility |
 | :--- | :--- | :--- |
-| **Frontend Web** | Next.js 14 (App Router), React 18, Tailwind CSS | Static export (`backend/public/client`) via `scripts/sync-client.sh` or standalone SSR container (`BUILD_STANDALONE=true`) |
+| **Frontend Web** | Next.js 14 (App Router), React 18, Tailwind CSS | Static export (`backend/public/client`) via `scripts/sync-client.sh` or standalone SSR container (`BUILD_STANDALONE=true`), with devotee Kundli UI (`/kundli`) |
 | **Video SFU & TURN** | LiveKit Server `v1.7.2` + `@livekit/components-react` | `7882/udp` media, `7881/tcp` fallback, `3478/udp` + `5349/tcp` TURN, rendered from `livekit/livekit.yaml.template` |
-| **Backend API & WS** | NestJS 10, Prisma 5, Socket.IO (`@socket.io/redis-adapter`) | REST `/api/v1/*`, Helmet CSP, global `@Throttle()`, raw-body webhooks, live chat, Dakshina & private Studio telemetry |
-| **Background Worker** | NestJS Application Context (`worker.main.ts`) | 30s coin-meter eviction, disconnect watchdog, LiveKit room reconciler, 15m stream reminders, DPDP purge |
-| **Database & Cache** | PostgreSQL 16 (or Neon Pooled/Unpooled) + Redis 7.2 | Least-privilege `pooja_app` runtime DB role (`backend/docker/initdb/01-app-role.sh`) + `noeviction` Redis |
+| **Backend API & WS** | NestJS 10, Prisma 5, Socket.IO (`@socket.io/redis-adapter`) | REST `/api/v1/*`, Helmet CSP, global `@Throttle()`, raw-body webhooks, live chat, Dakshina & private Studio telemetry, Kundli API (`KundliModule`) |
+| **Background Worker** | NestJS Application Context (`worker.main.ts`) | 30s coin-meter eviction, disconnect watchdog, LiveKit room reconciler, 15m stream reminders (isolated try/catch), DPDP purge |
+| **Database & Cache** | PostgreSQL 16 (or Neon Pooled/Unpooled) + Redis 7.2 | Least-privilege `pooja_app` runtime DB role (`backend/docker/initdb/01-app-role.sh`) + `noeviction` Redis + 6h in-memory Kundli cache |
 
 ---
 
@@ -205,6 +222,76 @@ flowchart LR
 
 ---
 
+## Free Vedic Kundli & Astrology Engine
+
+Shubhdarshan integrates a full Vedic astrology computation engine powered by the **AstroLogics API**, providing devotees with complimentary, authentic Janam Kundali calculations, planetary dignities, Avakhada chakra, and multi-level Vimshottari Dasha, bridged directly to verified Pandit consultations.
+
+```mermaid
+flowchart LR
+    devotee["Devotee Input (/kundli)"] -->|"Birth Details & Place"| api["KundliController (/api/v1/kundli)"]
+    api -->|"Cache Check (6h TTL)"| cache[("In-Memory SHA-256 Cache")]
+    cache -->|"Cache Miss"| client["AstroLogicsClient (Queue & RPS Gate)"]
+    client -->|"HTTPS Bearer Auth"| astro["AstroLogics Vedic Engine"]
+    astro -->|"JSON Kundli & SVG Charts"| client
+    client -->|"assertSafeSvg & Sanitization"| svc["KundliService"]
+    svc -->|"Blob URL in <img>"| ui["Interactive Kundli Dashboard"]
+```
+
+### Core Astrological Capabilities & Endpoints
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <strong>Vedic Planetary &amp; Dasha Models</strong>
+      <ul>
+        <li><strong>Lagna &amp; Planetary Positions:</strong> Precise zodiac sign, degrees (formatted as <code>26°18′</code>), Nakshatra, pada (1–4), Nakshatra lord, and retrograde indicators across 9 Vedic grahas (Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn, Rahu, Ketu).</li>
+        <li><strong>D1 &amp; D9 Charts:</strong> Interactive high-res SVG chart renderings for Lagna (D1) and Navamsa (D9) in both <strong>North Indian</strong> (diamond) and <strong>South Indian</strong> (square) traditional formats.</li>
+        <li><strong>Vimshottari Dasha:</strong> Current Mahadasha, Antardasha, and Pratyantardasha periods with exact start and end dates.</li>
+        <li><strong>Avakhada Chakra:</strong> Varna, Vashya, Yoni, Gana, Nadi, and Nakshatra lord for Vedic matchmaking and spiritual guidance.</li>
+        <li><strong>Theme Synchronization:</strong> Chart SVGs automatically track the user's active dark or light theme via <code>MutationObserver</code>.</li>
+      </ul>
+    </td>
+    <td width="50%" valign="top">
+      <strong>API Endpoints &amp; Protection Contracts</strong>
+      <table>
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>Type &amp; Rate Limit</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>GET /api/v1/kundli/status</code></td>
+            <td>Public, unmetered</td>
+            <td>Reports whether AstroLogics API integration is active (<code>enabled: true/false</code>)</td>
+          </tr>
+          <tr>
+            <td><code>POST /api/v1/kundli/generate</code></td>
+            <td>Signed-in, 8 req/min (10 per 10m user window)</td>
+            <td>Computes Lagna, Grahas, Avakhada, and Dasha with graceful degradation (<code>Promise.allSettled</code>)</td>
+          </tr>
+          <tr>
+            <td><code>POST /api/v1/kundli/chart</code></td>
+            <td>Signed-in, 20 req/min (30 per 10m user window)</td>
+            <td>Renders D1/D9 SVG charts in North/South Indian styles with strict CSP headers</td>
+          </tr>
+        </tbody>
+      </table>
+    </td>
+  </tr>
+</table>
+
+### Astrological Security & Reliability Architecture
+
+- **Defense-in-Depth SVG Sanitization:** Chart SVGs generated upstream undergo strict server-side validation (`assertSafeSvg`) in `kundli.service.ts`, immediately rejecting payloads with `<script>`, `<foreignObject>`, `<iframe|object|embed>`, `on*` event handlers, `javascript:`, or sizes exceeding 400KB. On the client, SVGs render exclusively via `URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }))` within an `<img>` tag, permanently disallowing browser script execution.
+- **Upstream Rate Limiting & Concurrency Queue:** `AstroLogicsClient` enforces a strict 2 requests/second limiter, a concurrency semaphore (max 2 active requests in flight), a waiter queue, and automatic retry on HTTP 429 (`rate_limited`) with `Retry-After` backing.
+- **Credit Quota Management:** Configurable daily credit cap (`KUNDLI_DAILY_CREDIT_CAP`, default 100 credits/day) prevents runaway API charges while reserving credits atomically and refunding them upon upstream failures.
+- **Zero Ephemeral Data Persistence (DPDP Act 2023):** Devotee birth date, time, and coordinates are processed in-memory for calculation and caching only; they are never stored in the database or written to server logs.
+
+---
+
 ## Security & Billing Design
 
 ### Metered Sacred Coins Lifecycle
@@ -243,6 +330,8 @@ sequenceDiagram
 | **Rate Limiting & CSP** | Global `ThrottlerModule` (`300` req/min default, `@SkipThrottle()` on health probes, webhooks, and `meter-tick`) + Helmet / Nginx CSP headers | [`app.module.ts`](backend/src/app.module.ts), [`main.ts`](backend/src/main.ts) |
 | **Moderation & Chat Safety** | 60-second synced `IndicWordFilter` with Devanagari/NFKC normalization on both chat and Dakshina names/prayers, kick/ban socket sync, verified socket JWT lookup | [`chat.service.ts`](backend/src/modules/chat/chat.service.ts) |
 | **Wallet & Earnings No-Cache** | `Cache-Control: no-store, no-cache, must-revalidate, private` on wallet balance, ledger, and streamer earnings endpoints + Razorpay HMAC signature verification | [`wallet.controller.ts`](backend/src/modules/wallet/wallet.controller.ts), [`streamers.controller.ts`](backend/src/modules/streamers/streamers.controller.ts) |
+| **Email Privacy & Hardening (main25)** | Mock verification/reset links strictly suppressed in production/staging (preventing credential leakage into logs); Brevo REST primary with SMTP relay fallback (`587` with 10s connection & greeting timeouts); 15m reminder loops wrapped in per-item try/catch so a single failure never aborts other reminders; HTML sanitization on streamer titles and usernames; Google-only account deletion supported (`hasPassword: false` bypasses password requirement) | [`mailer.service.ts`](backend/src/modules/notifications/mailer.service.ts), [`reminders.service.ts`](backend/src/modules/notifications/reminders.service.ts) |
+| **Kundli SVG & Cache Security** | Birth data processed ephemerally with DPDP 2023 compliance; upstream AstroLogics calls restricted by queue semaphore (2 in-flight) and rate limiter (2 RPS); in-memory 6h cache (max 300 entries); per-user sliding window limit (10 gen / 30 chart per 10m); SVG sanitization rejects scripts, foreignObjects, iframes, and inline event handlers | [`kundli.service.ts`](backend/src/modules/kundli/kundli.service.ts), [`astrologics.client.ts`](backend/src/modules/kundli/astrologics.client.ts) |
 
 ---
 
@@ -267,6 +356,12 @@ sequenceDiagram
 │   │   ├── client/                       # Verified Next.js static export served by Express
 │   │   └── uploads/                      # Public uploaded thumbnails/assets
 │   ├── scripts/
+│   │   ├── test-kundli.ts                # AstroLogics API client, SVG security, rate limit & cache tests
+│   │   ├── n25.test.ts                   # main25 email hardening, reminder resilience & auth tests
+│   │   ├── n23.test.ts                   # N23 throttler bucket isolation & token-aware rate limiting
+│   │   ├── n23-service.test.ts           # N23 refund accounting, coin clawback & streamer ledger tests
+│   │   ├── failopen.test.ts              # Runtime mode (fail-closed) & email normalization tests
+│   │   ├── storage.test.ts               # Storage security, MIME validation & path traversal guards
 │   │   ├── test-wallet-system.ts         # Coin-only economy, meter-tick, Dakshina & earnings E2E tests
 │   │   ├── test-neon-e2e.ts              # Live Neon DB schema & ledger verification script
 │   │   └── test-full-api-suite.ts        # Full HTTP API regression suite
@@ -277,17 +372,18 @@ sequenceDiagram
 │   │   │   │   └── validate-env.ts       # Production boot secret & origin enforcement
 │   │   │   ├── decorators/               # @Public, @Roles, @CurrentUser
 │   │   │   ├── filters/                  # GlobalExceptionFilter
-│   │   │   ├── guards/                   # JwtAuthGuard, RolesGuard, InternalKeyGuard
+│   │   │   ├── guards/                   # JwtAuthGuard, RolesGuard, InternalKeyGuard, TokenAwareThrottlerGuard
 │   │   │   └── *.util.ts                 # crypto.util.ts, livekit-url.util.ts, payments.util.ts
 │   │   ├── database/                     # PrismaModule & PrismaService
 │   │   ├── jobs/                         # cron-tasks.service.ts (watchdogs, reconciler, retention)
 │   │   ├── modules/
 │   │   │   ├── admin/                    # KPIs, KYC approval queue, stream kill switch, CMS, filters
-│   │   │   ├── auth/                     # JWT, bcryptjs, Google OAuth, 18+ DPDP gate, TOTP 2FA
+│   │   │   ├── auth/                     # JWT, bcryptjs, Google OAuth, 18+ DPDP gate, TOTP 2FA, hasPassword
 │   │   │   ├── chat/                     # Socket.IO chat gateway, user:<id> telemetry, Indic NFKC filter
 │   │   │   ├── health/                   # GET /api/v1/health/live & /api/v1/health/ready
 │   │   │   ├── internal/                 # Internal live-stream count check (X-Internal-Key)
-│   │   │   ├── notifications/            # Brevo transactional mailer & 15-minute alerts
+│   │   │   ├── kundli/                   # AstroLogics client, D1/D9 SVG charts, Lagna, Dasha & Avakhada
+│   │   │   ├── notifications/            # Brevo transactional REST & SMTP mailer, 15m reminder loops
 │   │   │   ├── payments/                 # POST /payments/dakshina (coin-only), /payments/webhook (top-up)
 │   │   │   ├── private-links/            # 128-bit SHA-256 invite links & AES-256-GCM room access
 │   │   │   ├── reports/                  # Viewer safety report queue
@@ -302,10 +398,11 @@ sequenceDiagram
 ├── frontend/                             # Next.js 14 Web Application
 │   ├── public/images/                    # Platform emblem & verified Pandit WebP portraits
 │   ├── src/
-│   │   ├── app/                          # /, /stream/[id], /studio/[id], /streamer/earnings, /join/[tokenSlug], /admin, /wallet/*, etc.
+│   │   ├── app/                          # /, /kundli, /stream/[id], /studio/[id], /streamer/earnings, /join/[tokenSlug], /admin, /wallet/*
+│   │   │   └── kundli/                   # Devotee Vedic Kundli UI, D1/D9 SVG switcher, North/South styles
 │   │   ├── components/                   # ChatWidget, DakshinaModal, CoinTopupModal, ConfirmDialog, etc.
 │   │   └── lib/
-│   │       ├── api.ts                    # Typed REST client
+│   │       ├── api.ts                    # Typed REST client (JSON & SVG text support, safe redirects)
 │   │       ├── economy.ts                # Frontend rate constants, paise breakdown & sd-wallet-updated sync
 │   │       └── meter-tick.ts             # 60s meter-tick response classifier
 │   ├── next.config.js                    # Dual mode: 'export' (default) or 'standalone'
@@ -376,6 +473,7 @@ When `NODE_ENV=production`, startup aborts immediately if any rule below is viol
 ```bash
 cp .env.example .env
 # Populate DATABASE_URL, DATABASE_URL_UNPOOLED, REDIS_URL, JWT secrets, ENCRYPTION_MASTER_KEY, LIVEKIT_*
+# Optional: ASTROLOGICS_API_KEY (Free Vedic Kundli; page reports "setting up" when unset), BREVO_API_KEY / BREVO_SMTP_*
 ```
 
 ### 2. Start Backend API & Worker
@@ -398,17 +496,21 @@ npm install
 npm run dev
 ```
 
-### 4. Verification & Typechecks
+### 4. Verification & Testing Suites
 ```bash
 # Typecheck backend & frontend
 cd backend && npx tsc --noEmit
 cd ../frontend && npx tsc --noEmit
 
-# Run coin economy, Neon, and API verification suites (from backend/)
+# Run full automated test suites (from backend/)
 cd ../backend
+npm run test:audit      # N1/N6 fail-closed runtime checks, email normalization & N3 storage hardening
+npm run test:n23        # N23 refund accounting, partial clawbacks & throttler bucket isolation
+npm run test:n25        # main25 email hardening, 15m reminder loops & Google-only account deletion
+npm run test:kundli     # AstroLogics API client, SVG security, date/place validation, cache & rate limits
 npx ts-node scripts/test-wallet-system.ts   # Coin Dakshina, 5-coin meter-tick, StreamerEarning & RBAC checks
 npx ts-node scripts/test-neon-e2e.ts        # Database & migration sanity suite
-npm run test:e2e:all                        # Full HTTP regression suite (requires non-2FA test credentials or 2FA token)
+npm run test:e2e:all                        # Full HTTP regression suite
 ```
 
 ### 5. Sync Unified Static Client Before Release
@@ -489,7 +591,7 @@ docker exec -it pooja_api npm run prisma:seed
    - **Application Root:** `backend`
    - **Build Command:** `npm run build` (`npx prisma generate && nest build`)
    - **Start Command:** `npm run start:prod` (`node dist/main`)
-3. **Set Production Environment Variables:** Supply `NODE_ENV=production`, `FRONTEND_ORIGIN`, `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `REDIS_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `JWT_2FA_SECRET`, `ENCRYPTION_MASTER_KEY`, `LIVEKIT_*`, `RAZORPAY_*`, `BREVO_API_KEY`, and set `RUN_CRONS=true` if no dedicated worker container is running.
+3. **Set Production Environment Variables:** Supply `NODE_ENV=production`, `FRONTEND_ORIGIN`, `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `REDIS_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `JWT_2FA_SECRET`, `ENCRYPTION_MASTER_KEY`, `LIVEKIT_*`, `RAZORPAY_*`, `BREVO_API_KEY`, `BREVO_SMTP_*`, `ASTROLOGICS_API_KEY` (along with `ASTROLOGICS_MAX_RPS=2`, `ASTROLOGICS_MAX_CONCURRENCY=2`, `KUNDLI_DAILY_CREDIT_CAP=100`), and set `RUN_CRONS=true` if no dedicated worker container is running.
 4. **Migrate & Seed:** Run `npx prisma migrate deploy` and `npm run prisma:seed` (and `npx ts-node prisma/seed-wallet.ts` if refreshing packages on an existing DB) against your Neon PostgreSQL database, then purge CDN/edge cache after deployment.
 
 ---
