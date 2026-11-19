@@ -227,7 +227,7 @@ export function Navbar() {
           <Link href="/" className="group flex items-center gap-2 sm:gap-2.5 shrink min-w-0">
             <div className="relative flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-gold/40 bg-gradient-to-b from-[#2a1e12] to-obsidian shadow-[0_0_18px_rgba(245,158,11,0.3)] transition group-hover:border-gold/75 group-hover:shadow-[0_0_22px_rgba(245,158,11,0.5)] p-0.5 overflow-hidden shrink-0">
               <img
-                src="/logo.png"
+                src="/logo.webp"
                 alt="Shubhdarshan Mandir Logo"
                 className="h-full w-full object-contain filter drop-shadow group-hover:scale-105 transition-transform duration-300"
               />

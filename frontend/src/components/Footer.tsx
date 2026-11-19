@@ -29,7 +29,7 @@ export function Footer() {
             <Link href="/" className="group inline-flex items-center gap-3">
               <div className="relative flex h-11 w-11 items-center justify-center rounded-full border border-gold/40 bg-gradient-to-b from-[#2a1e12] to-obsidian shadow-[0_0_15px_rgba(245,158,11,0.3)] p-0.5 overflow-hidden">
                 <img
-                  src="/logo.png"
+                  src="/logo.webp"
                   alt="Shubhdarshan Mandir Logo"
                   className="h-full w-full object-contain filter drop-shadow group-hover:scale-105 transition-transform"
                 />

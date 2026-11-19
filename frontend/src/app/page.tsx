@@ -597,7 +597,7 @@ export default function HomePage() {
                   {/* Center Sacred Diya & Message */}
                   <div className="relative z-10 text-center py-2 sm:py-3">
                     <div className="w-14 h-14 mx-auto mb-2 rounded-2xl bg-amber-100/70 dark:bg-gradient-to-b dark:from-amber-500/10 dark:to-transparent border border-amber-300 dark:border-gold/30 flex items-center justify-center shadow-sm dark:shadow-[0_0_24px_rgba(245,158,11,0.25)]">
-                      <img src="/logo.png" alt="Shubhdarshan" className="w-10 h-10 object-contain drop-shadow" />
+                      <img src="/logo.webp" alt="Shubhdarshan" className="w-10 h-10 object-contain drop-shadow" />
                     </div>
                     <h3 className="altar-repose-title font-serif text-xl sm:text-2xl font-bold tracking-tight">
                       Live Pooja Altar in Repose

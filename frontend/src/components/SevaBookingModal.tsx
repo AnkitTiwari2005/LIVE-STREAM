@@ -300,7 +300,7 @@ function SevaBookingFlow({
         <div className="p-6 pb-4 border-b border-gold/15 flex items-center justify-between bg-gradient-to-r from-obsidian via-obsidian-soft to-obsidian">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-gold/10 border border-gold/30 flex items-center justify-center shadow-inner">
-              <img src="/logo.png" alt="Shubhdarshan" className="w-7 h-7 object-contain drop-shadow" />
+              <img src="/logo.webp" alt="Shubhdarshan" className="w-7 h-7 object-contain drop-shadow" />
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-soft">

@@ -338,7 +338,7 @@ export default function AccountPage() {
           </div>
           <div>
             <h1 className="font-serif text-2xl sm:text-3xl font-bold text-white flex items-center gap-2">
-              <img src="/logo.png" alt="Shubhdarshan" className="w-8 h-8 object-contain inline-block drop-shadow" /> My Sacred Profile &amp; Settings
+              <img src="/logo.webp" alt="Shubhdarshan" className="w-8 h-8 object-contain inline-block drop-shadow" /> My Sacred Profile &amp; Settings
             </h1>
             <p className="text-xs text-stone-400 mt-0.5">
               Manage your personal information, security, and devotional preferences

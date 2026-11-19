@@ -93,8 +93,8 @@ export const metadata: Metadata = {
       'Real-time live devotional broadcasts, online pooja sankalp, and Vedic astrological consultations with verified Acharyas.',
   },
   icons: {
-    icon: '/logo.png',
-    apple: '/logo.png',
+    icon: '/logo.webp',
+    apple: '/logo.webp',
   },
   robots: {
     index: true,
@@ -124,7 +124,7 @@ export default function RootLayout({
         name: 'Shubhdarshan',
         legalName: 'Shubhdarshan Devotional Media Private Limited',
         url: SITE_URL,
-        logo: `${SITE_URL}/logo.png`,
+        logo: `${SITE_URL}/logo.webp`,
         description:
           'Premier platform for live Hindu devotional broadcasts, temple pooja streaming, and Vedic astrological consultations worldwide.',
         address: {

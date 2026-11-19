@@ -248,7 +248,7 @@ export const DakshinaModal: React.FC<DakshinaModalProps> = ({
           <form onSubmit={handleOffering} className="space-y-4">
             <div className="flex items-center justify-between gap-3 border-b border-stone-200 dark:border-stone-800 pb-4 pr-8">
               <div className="flex items-center gap-3">
-                <img src="/logo.png" alt="Shubhdarshan" className="w-8 h-8 object-contain drop-shadow" />
+                <img src="/logo.webp" alt="Shubhdarshan" className="w-8 h-8 object-contain drop-shadow" />
                 <div>
                   <h2 className="text-lg font-bold text-stone-900 dark:text-white">Offer Sacred Dakshina</h2>
                   <p className="text-xs text-stone-600 dark:text-stone-400">
