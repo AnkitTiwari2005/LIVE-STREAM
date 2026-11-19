@@ -57,6 +57,17 @@ const server = http.createServer((req, res) => {
   try { await s.match('u6', { personA: A, personB: B }); } catch (x) { e = x; }
   ok(e?.getResponse?.().code === 'unavailable', 'an upstream answer without a score is an error, not "0/36"');
 
+  // Real upstream behaviour: ambiguity comes back with an unscoped param ("birth.place.query")
+  mode = 'ambA'; s = mk(); e = undefined;
+  try { await s.match('u7', { personA: { ...A, placeQuery: 'Mumbai' }, personB: { ...B, placeQuery: 'Aurangabad' } }); } catch (x) { e = x; }
+  ok(e?.getResponse?.().target === 'personB', 'A unique (Mumbai), B ambiguous (Aurangabad) -> list goes to Partner 2');
+  s = mk(); e = undefined;
+  try { await s.match('u8', { personA: { ...A, placeQuery: 'Aurangabad' }, personB: { ...B, placeQuery: 'Mumbai' } }); } catch (x) { e = x; }
+  ok(e?.getResponse?.().target === 'personA' && /Aurangabad/.test(e.getResponse().message), 'A ambiguous, B unique -> Partner 1, and the typed place is named in the message');
+  s = mk(); e = undefined;
+  try { await s.match('u9', { personA: { ...A, placeQuery: 'Aurangabad' }, personB: { ...B, placeQuery: 'Aurangabad, Maharashtra' } }); } catch (x) { e = x; }
+  ok(e?.getResponse?.().target === 'personA', 'same city typed twice: the less specific text is the ambiguous one');
+
   const dto: any = plainToInstance(require('../src/modules/kundli/dto/kundli.dto').KundliMatchDto, { personA: A, personB: { ...B, date: 'x' } });
   ok((await validate(dto)).length > 0, 'DTO rejects a bad date on nested person');
   console.log(`\n${pass} passed, ${fail} failed`); server.close(); process.exit(fail ? 1 : 0);

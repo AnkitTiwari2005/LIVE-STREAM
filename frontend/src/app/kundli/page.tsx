@@ -1287,23 +1287,27 @@ export default function KundliPage() {
                     <span className="text-xs font-semibold text-stone-400">Maximum: 36 Points</span>
                   </div>
                   <div className="overflow-x-auto -mx-1">
-                    <table className="w-full min-w-[34rem] text-xs text-left">
+                    <table className="w-full sm:min-w-[34rem] text-xs text-left">
                       <thead>
                         <tr className="text-stone-400 border-b border-gold/15">
                           <th className="py-2.5 px-2 font-semibold">Koota</th>
-                          <th className="py-2.5 px-2 font-semibold">Significance</th>
+                          <th className="hidden md:table-cell py-2.5 px-2 font-semibold">Significance</th>
                           <th className="py-2.5 px-2 font-semibold text-center">Score</th>
                           <th className="py-2.5 px-2 font-semibold text-center">Max</th>
-                          <th className="py-2.5 px-2 font-semibold">Alignment Notes</th>
+                          <th className="hidden sm:table-cell py-2.5 px-2 font-semibold">Alignment Notes</th>
                         </tr>
                       </thead>
                       <tbody>
                         {matchResult.kootas.map((k) => (
                           <tr key={k.name} className="border-b border-gold/10 last:border-0 text-stone-200">
-                            <td className="py-2.5 px-2 font-semibold text-white whitespace-nowrap">
+                            <td className="py-2.5 px-2 font-semibold text-white md:whitespace-nowrap">
                               {k.label || pretty(k.name)}
+                              <span className="md:hidden block text-[10px] text-stone-400 font-normal leading-tight mt-0.5">
+                                {KOOTA_EXPLANATIONS[k.name]}
+                              </span>
+                              {k.note && <span className="sm:hidden block text-[10px] text-stone-300 font-normal leading-tight mt-0.5">{k.note}</span>}
                             </td>
-                            <td className="py-2.5 px-2 text-stone-400 max-w-[14rem]">
+                            <td className="hidden md:table-cell py-2.5 px-2 text-stone-400 max-w-[14rem]">
                               {KOOTA_EXPLANATIONS[k.name] || 'Vedic marital compatibility dimension'}
                             </td>
                             <td className="py-2.5 px-2 text-center font-bold text-gold">
@@ -1312,7 +1316,7 @@ export default function KundliPage() {
                             <td className="py-2.5 px-2 text-center text-stone-400">
                               {k.max}
                             </td>
-                            <td className="py-2.5 px-2 text-stone-300">
+                            <td className="hidden sm:table-cell py-2.5 px-2 text-stone-300">
                               {k.note || 'Calculated'}
                             </td>
                           </tr>
@@ -1320,16 +1324,17 @@ export default function KundliPage() {
                       </tbody>
                       <tfoot>
                         <tr className="border-t-2 border-gold/30 font-bold text-white">
-                          <td className="py-3 px-2 text-gold-pale font-serif text-sm" colSpan={2}>
+                          <td className="py-3 px-2 text-gold-pale font-serif text-sm">
                             Total Ashtakoot Guna Milan Score
                           </td>
+                          <td className="hidden md:table-cell" />
                           <td className="py-3 px-2 text-center text-gold font-serif text-base">
                             {matchResult.total}
                           </td>
                           <td className="py-3 px-2 text-center text-stone-300">
                             36
                           </td>
-                          <td className="py-3 px-2 text-xs text-gold-soft">
+                          <td className="hidden sm:table-cell py-3 px-2 text-xs text-gold-soft">
                             {matchResult.total >= 18 ? 'Acceptable Vedic Alliance' : 'Caution / Remedies Advised'}
                           </td>
                         </tr>

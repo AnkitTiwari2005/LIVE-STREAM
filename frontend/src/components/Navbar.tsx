@@ -39,6 +39,33 @@ export function Navbar() {
   const moreDropdownRef = useRef<HTMLDivElement>(null);
   const kundliDropdownRef = useRef<HTMLDivElement>(null);
 
+  // One menu at a time: opening a menu closes the other two.
+  const toggleMenu = (menu: 'kundli' | 'more' | 'user') => {
+    setKundliDropdownOpen(menu === 'kundli' ? (o) => !o : false);
+    setMoreDropdownOpen(menu === 'more' ? (o) => !o : false);
+    setUserDropdownOpen(menu === 'user' ? (o) => !o : false);
+  };
+
+  // Escape closes whatever is open and hands focus back to its button.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      const open: [boolean, React.RefObject<HTMLDivElement>][] = [
+        [kundliDropdownOpen, kundliDropdownRef],
+        [moreDropdownOpen, moreDropdownRef],
+        [userDropdownOpen, dropdownRef],
+      ];
+      const hit = open.find(([isOpen]) => isOpen);
+      if (!hit) return;
+      setKundliDropdownOpen(false);
+      setMoreDropdownOpen(false);
+      setUserDropdownOpen(false);
+      hit[1].current?.querySelector('button')?.focus();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [kundliDropdownOpen, moreDropdownOpen, userDropdownOpen]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -261,7 +288,9 @@ export function Navbar() {
             {/* Kundli Dropdown — always visible in desktop nav */}
             <div className="relative shrink-0 hidden 2xl:block" ref={kundliDropdownRef}>
               <button
-                onClick={() => setKundliDropdownOpen(!kundliDropdownOpen)}
+                onClick={() => toggleMenu('kundli')}
+                aria-expanded={kundliDropdownOpen}
+                aria-haspopup="menu"
                 className="whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5 flex items-center gap-1 font-semibold text-stone-300"
                 aria-label="Kundli & Astrology"
               >
@@ -324,7 +353,9 @@ export function Navbar() {
             {/* More Dropdown (About, FAQ, Ethics, Support) */}
             <div className="relative shrink-0" ref={moreDropdownRef}>
               <button
-                onClick={() => setMoreDropdownOpen(!moreDropdownOpen)}
+                onClick={() => toggleMenu('more')}
+                aria-expanded={moreDropdownOpen}
+                aria-haspopup="menu"
                 className="whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5 flex items-center gap-1 font-semibold text-stone-300"
                 aria-label="More devotional links"
               >
@@ -437,7 +468,9 @@ export function Navbar() {
                 {/* Devotee / Pandit Profile with Solid High-Contrast Dropdown */}
                 <div className="relative shrink-0" ref={dropdownRef}>
                   <button
-                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                    onClick={() => toggleMenu('user')}
+                    aria-expanded={userDropdownOpen}
+                    aria-haspopup="menu"
                     className="whitespace-nowrap shrink-0 flex items-center gap-1.5 text-xs font-semibold text-stone-700 dark:text-stone-200 hover:text-stone-950 dark:hover:text-gold-pale transition h-8 px-2.5 rounded-full bg-white dark:bg-obsidian-soft border border-stone-200 dark:border-gold/20 hover:border-amber-400 dark:hover:border-gold/40 max-w-[115px] sm:max-w-[130px] shadow-sm"
                     title="Devotee & Broadcaster Menu"
                   >

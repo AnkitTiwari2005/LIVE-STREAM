@@ -92,8 +92,8 @@ export default function ContactPage() {
             <h3 className="text-sm font-bold text-stone-900 dark:text-white mb-1">Registered Office</h3>
             <p className="text-xs text-stone-400">
               Shubhdarshan Devotional Media Pvt. Ltd.<br />
-              Rohini Sector 15, Rohini,<br />
-              Delhi 110089, India
+              Suite 402, Sacred Heights, Barakhamba Road, Connaught Place,<br />
+              New Delhi 110001, India
             </p>
           </div>
         </div>

@@ -113,17 +113,24 @@ export class KundliService {
       if (err instanceof UnprocessableEntityException) {
         const resp: any = err.getResponse();
         if (resp?.code === 'place_ambiguous' && Array.isArray(resp?.candidates)) {
-          // The API checks person A's place before person B's, so an ambiguity belongs to A unless A is
-          // already fixed by a place id. Trust an explicit upstream hint first; never guess from the text.
-          const target: 'personA' | 'personB' =
-            resp.target === 'personA' || resp.target === 'personB'
-              ? resp.target
-              : dto.personA.placeId
-                ? 'personB'
-                : 'personA';
+          // The API names the field only as "birth.place.query" (no person), so the person must be worked out.
+          // 1) an explicit hint, 2) a person already fixed by a place id is not the ambiguous one,
+          // 3) otherwise match the candidates' names against what each person typed.
+          const seg = (q?: string) => (q || '').split(',')[0].trim().toLowerCase();
+          const names = new Set((resp.candidates as any[]).map((c) => String(c?.name || '').trim().toLowerCase()));
+          const segs = (q?: string) => (q || '').split(',').filter((x) => x.trim()).length;
+          const hitA = !dto.personA.placeId && names.has(seg(dto.personA.placeQuery));
+          const hitB = !dto.personB.placeId && names.has(seg(dto.personB.placeQuery));
+          let target: 'personA' | 'personB';
+          if (resp.target === 'personA' || resp.target === 'personB') target = resp.target;
+          else if (dto.personA.placeId) target = 'personB';
+          else if (dto.personB.placeId) target = 'personA';
+          else if (hitA !== hitB) target = hitB ? 'personB' : 'personA';
+          else target = segs(dto.personB.placeQuery) < segs(dto.personA.placeQuery) ? 'personB' : 'personA'; // the less specific text is the ambiguous one
+          const typed = (target === 'personB' ? dto.personB.placeQuery : dto.personA.placeQuery) || '';
 
           throw new UnprocessableEntityException({
-            message: `More than one place matches for ${target === 'personB' ? (dto.personB.name || 'Partner 2') : (dto.personA.name || 'Partner 1')}. Please choose the location from the list.`,
+            message: `More than one place matches for ${target === 'personB' ? (dto.personB.name || 'Partner 2') : (dto.personA.name || 'Partner 1')}${typed ? ` ("${typed.slice(0, 60)}")` : ''}. Please choose the location from the list.`,
             code: 'place_ambiguous',
             target,
             candidates: resp.candidates,
