@@ -36,6 +36,7 @@ import {
   BellIcon,
   VerifiedPanditBadge,
 } from '@/components/icons/SpiritualIcons';
+import { SpecialPanditBadge } from '@/components/SpecialPanditBadge';
 import { CoinTopupModal } from '@/components/CoinTopupModal';
 import SevaBookingModal from '@/components/SevaBookingModal';
 import { useToast } from '@/components/Toast';
@@ -192,6 +193,8 @@ const CURATED_PANDITS = [
     experience: '18 Years Seva',
     specialties: ['Matrimonial Advisor', 'Kundli Milan', 'Vedic Astrology', 'Vivah Sanskar'],
     image: '/images/pandits/pandit-rohit-tiwari.webp',
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'संस्थापक एवं मुख्य ज्योतिषाचार्य',
   },
   {
     slug: 'santosh-shastri',
@@ -200,6 +203,8 @@ const CURATED_PANDITS = [
     experience: '20 Years Seva',
     specialties: ['Vedic Astrology', 'Vastu Shastra', 'Kundli Milan', 'Grah Shanti'],
     image: '/images/pandits/pandit-santosh-shastri.webp',
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'सह-संस्थापक एवं वास्तु रत्न',
   },
   {
     slug: 'ravi-pathak',
@@ -208,6 +213,8 @@ const CURATED_PANDITS = [
     experience: '12 Years Seva',
     specialties: ['Karmakand', 'Maha Yagya', 'Ganesh Pujan', 'Vedic Anushthan'],
     image: '/images/pandits/pandit-ravi-pathak.webp',
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'कर्मकाण्ड रत्न',
   },
   {
     slug: 'nitin-sharma',
@@ -216,6 +223,8 @@ const CURATED_PANDITS = [
     experience: '10 Years Seva',
     specialties: ['Karmakand', 'Sundarkand Path', 'Hanuman Aradhana', 'Vedic Path'],
     image: '/images/pandits/pandit-nitin-sharma.webp',
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'सुंदरकांड रत्न',
   },
   {
     slug: 'umesh-shastri',
@@ -224,6 +233,8 @@ const CURATED_PANDITS = [
     experience: '16 Years Seva',
     specialties: ['Rudrabhishek', 'Devi Pooja', 'Durga Path', 'Maha Abhishek'],
     image: '/images/pandits/pandit-umesh-shastri.webp',
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'रुद्राभिषेक शिरोमणि',
   },
   {
     slug: 'kuber-tripathi',
@@ -232,6 +243,8 @@ const CURATED_PANDITS = [
     experience: '14 Years Seva',
     specialties: ['Jyotish', 'Karmakand', 'Bhajan Sandhya', 'Sankalp Seva'],
     image: '/images/pandits/acharya-kuber-tripathi.webp',
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'ज्योतिष कर्मकाण्ड भूषण',
   },
   {
     slug: 'subhash-shastri',
@@ -240,6 +253,8 @@ const CURATED_PANDITS = [
     experience: '15 Years Seva',
     specialties: ['Satyanarayan Pooja', 'Durga Saptashati', 'Navgrah Poojan', 'Rudrabhishek'],
     image: '/images/pandits/pandit-subhash-shastri.webp',
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'वैदिक विद्वान रत्न',
   },
 ];
 
@@ -1123,6 +1138,11 @@ export default function HomePage() {
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+                {p.hasSpecialBadge && (
+                  <div className="absolute top-3 left-3 z-10 max-w-[65%]">
+                    <SpecialPanditBadge title={p.specialBadgeTitle} size="sm" />
+                  </div>
+                )}
                 <div className="absolute top-3 right-3 rounded-full bg-black/80 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-amber-200 flex items-center gap-1 border border-amber-400/40 shadow-md">
                   <VerifiedPanditBadge size={12} />
                   <span className="text-amber-200">Verified</span>
@@ -1138,6 +1158,11 @@ export default function HomePage() {
               <div className="p-4 space-y-2">
                 <h3 className="pandit-name font-serif text-lg font-bold">{p.name}</h3>
                 <p className="text-[11px] text-stone-600 dark:text-stone-400 leading-tight">{p.title}</p>
+                {p.hasSpecialBadge && (
+                  <div className="pt-1">
+                    <SpecialPanditBadge title={p.specialBadgeTitle} size="sm" />
+                  </div>
+                )}
                 <div className="pandit-stats flex items-center justify-between text-[11px] pt-1 font-semibold">
                   <span>{p.experience}</span>
                   {/* R-04: Removed fake review count */}

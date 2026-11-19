@@ -1,7 +1,7 @@
 import { finalizeStreamRecord } from '../../common/stream-lifecycle';
 import { Injectable, NotFoundException, BadRequestException, Inject, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { UserStatus, StreamStatus, UserRole } from '@prisma/client';
+import { UserStatus, StreamStatus, UserRole, KycStatus } from '@prisma/client';
 import {
   IVideoProviderService,
   VIDEO_PROVIDER_TOKEN,
@@ -311,5 +311,141 @@ export class AdminService {
       ...payload,
       updatedAt: row.updatedAt,
     };
+  }
+
+  // --- Pandit Management & Special Badges ---
+  async getPanditsList() {
+    const streamers = await this.prisma.streamerProfile.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatarUrl: true,
+            role: true,
+            status: true,
+            createdAt: true,
+          },
+        },
+        _count: {
+          select: {
+            followers: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const userIds = streamers.map((s) => s.userId);
+    const streamCounts = await this.prisma.stream.groupBy({
+      by: ['streamerId'],
+      where: { streamerId: { in: userIds } },
+      _count: { id: true },
+    });
+
+    const streamCountMap = new Map<string, number>();
+    for (const sc of streamCounts) {
+      streamCountMap.set(sc.streamerId, sc._count.id);
+    }
+
+    return streamers.map((s) => ({
+      id: s.id,
+      userId: s.userId,
+      name: s.user.name,
+      email: s.user.email,
+      avatarUrl: s.user.avatarUrl,
+      role: s.user.role,
+      status: s.user.status,
+      bio: s.bio,
+      languages: s.languages,
+      specialties: s.specialties,
+      kycStatus: s.kycStatus,
+      isVerifiedBadge: s.isVerifiedBadge,
+      hasSpecialBadge: s.hasSpecialBadge,
+      specialBadgeTitle: s.specialBadgeTitle || 'आचार्य रत्न',
+      followerCount: s._count?.followers ?? s.followerCount,
+      totalStreams: streamCountMap.get(s.userId) || 0,
+      createdAt: s.createdAt,
+      updatedAt: s.updatedAt,
+    }));
+  }
+
+  async toggleSpecialBadge(
+    profileId: string,
+    hasSpecialBadge: boolean,
+    specialBadgeTitle?: string,
+    adminId?: string,
+    adminEmail?: string,
+  ) {
+    const profile = await this.prisma.streamerProfile.findUnique({
+      where: { id: profileId },
+      include: { user: true },
+    });
+    if (!profile) throw new NotFoundException('Pandit profile not found');
+
+    const updated = await this.prisma.streamerProfile.update({
+      where: { id: profileId },
+      data: {
+        hasSpecialBadge,
+        specialBadgeTitle: specialBadgeTitle !== undefined ? specialBadgeTitle : profile.specialBadgeTitle,
+      },
+    });
+
+    if (adminId && adminEmail) {
+      await this.prisma.auditLog.create({
+        data: {
+          actorId: adminId,
+          actorEmail: adminEmail,
+          action: hasSpecialBadge ? 'GRANT_PANDIT_SPECIAL_BADGE' : 'REVOKE_PANDIT_SPECIAL_BADGE',
+          targetResource: `StreamerProfile:${profileId}`,
+          details: {
+            panditName: profile.user.name,
+            hasSpecialBadge,
+            specialBadgeTitle: updated.specialBadgeTitle,
+          },
+        },
+      });
+    }
+
+    return updated;
+  }
+
+  async toggleVerifiedBadge(
+    profileId: string,
+    isVerifiedBadge: boolean,
+    adminId?: string,
+    adminEmail?: string,
+  ) {
+    const profile = await this.prisma.streamerProfile.findUnique({
+      where: { id: profileId },
+      include: { user: true },
+    });
+    if (!profile) throw new NotFoundException('Pandit profile not found');
+
+    const updated = await this.prisma.streamerProfile.update({
+      where: { id: profileId },
+      data: {
+        isVerifiedBadge,
+        kycStatus: isVerifiedBadge ? KycStatus.APPROVED : profile.kycStatus,
+      },
+    });
+
+    if (adminId && adminEmail) {
+      await this.prisma.auditLog.create({
+        data: {
+          actorId: adminId,
+          actorEmail: adminEmail,
+          action: isVerifiedBadge ? 'GRANT_PANDIT_VERIFIED_BADGE' : 'REVOKE_PANDIT_VERIFIED_BADGE',
+          targetResource: `StreamerProfile:${profileId}`,
+          details: {
+            panditName: profile.user.name,
+            isVerifiedBadge,
+          },
+        },
+      });
+    }
+
+    return updated;
   }
 }

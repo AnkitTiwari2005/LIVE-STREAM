@@ -22,6 +22,7 @@ import {
   PranamIcon,
   VerifiedPanditBadge,
 } from '@/components/icons/SpiritualIcons';
+import { SpecialPanditBadge } from '@/components/SpecialPanditBadge';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
@@ -46,6 +47,8 @@ interface PanditData {
   temple: string;
   followerCount: number;
   isCurated?: boolean;
+  hasSpecialBadge?: boolean;
+  specialBadgeTitle?: string;
   upcoming: Array<{
     id: string;
     title: string;
@@ -67,6 +70,8 @@ const CURATED_SHOWCASE: Record<string, PanditData> = {
     temple: 'Delhi Mandir Parampara & Shubhdarshan Foundation',
     followerCount: 1420,
     isCurated: true,
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'संस्थापक एवं मुख्य ज्योतिषाचार्य',
     upcoming: [
       {
         id: 'navgrah-shanti',
@@ -95,6 +100,8 @@ const CURATED_SHOWCASE: Record<string, PanditData> = {
     temple: 'Delhi Sanatan Tradition Sanctuary',
     followerCount: 1280,
     isCurated: true,
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'सह-संस्थापक एवं वास्तु रत्न',
     upcoming: [
       {
         id: 'vastu-purusha-pujan',
@@ -123,6 +130,8 @@ const CURATED_SHOWCASE: Record<string, PanditData> = {
     temple: 'Vedic Karmakand Parampara',
     followerCount: 920,
     isCurated: true,
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'कर्मकाण्ड रत्न',
     upcoming: [
       {
         id: 'ganesh-riddhi-siddhi',
@@ -151,6 +160,8 @@ const CURATED_SHOWCASE: Record<string, PanditData> = {
     temple: 'Shukla Yajurveda Shanti Parampara',
     followerCount: 810,
     isCurated: true,
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'सुंदरकांड रत्न',
     upcoming: [
       {
         id: 'sunderkand-path',
@@ -179,6 +190,8 @@ const CURATED_SHOWCASE: Record<string, PanditData> = {
     temple: 'Shiva Shakti Sanctum Parampara',
     followerCount: 1050,
     isCurated: true,
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'रुद्राभिषेक शिरोमणि',
     upcoming: [
       {
         id: 'rudrabhishek-live',
@@ -207,6 +220,8 @@ const CURATED_SHOWCASE: Record<string, PanditData> = {
     temple: 'Sanatan Jyotish Vidya Peeth',
     followerCount: 890,
     isCurated: true,
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'ज्योतिष कर्मकाण्ड भूषण',
     upcoming: [
       {
         id: 'bhajan-sandhya-deepotsav',
@@ -235,6 +250,8 @@ const CURATED_SHOWCASE: Record<string, PanditData> = {
     temple: 'Sanatan Dharmarth Vidhi Parampara',
     followerCount: 960,
     isCurated: true,
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'वैदिक विद्वान रत्न',
     upcoming: [
       {
         id: 'satyanarayan-vrat-katha',
@@ -412,6 +429,8 @@ export default function PanditProfileClient() {
             bio: curated?.bio || prof.bio || 'Vedic Acharya consecrated to daily Darshan and sacred Pooja rituals.',
             temple: curated?.temple || prof.templeAffiliation || 'Vedic Tradition Sanctuary',
             followerCount: prof.followerCount || curated?.followerCount || 0,
+            hasSpecialBadge: prof.hasSpecialBadge !== undefined ? prof.hasSpecialBadge : (curated?.hasSpecialBadge ?? true),
+            specialBadgeTitle: prof.specialBadgeTitle || curated?.specialBadgeTitle || 'आचार्य रत्न',
             isCurated: false,
             upcoming: combinedUpcoming,
           });
@@ -558,10 +577,18 @@ export default function PanditProfileClient() {
             <div className="on-photo relative w-36 h-36 sm:w-44 sm:h-44 rounded-3xl overflow-hidden border-2 border-gold/40 shadow-xl shrink-0 bg-stone-900">
               <img src={pandit.image} alt={pandit.name} className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+              {pandit.hasSpecialBadge && (
+                <div className="absolute top-2.5 left-2.5 z-10">
+                  <SpecialPanditBadge title={pandit.specialBadgeTitle} size="sm" />
+                </div>
+              )}
             </div>
 
             <div className="flex-1 text-center md:text-left space-y-3">
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                {pandit.hasSpecialBadge && (
+                  <SpecialPanditBadge title={pandit.specialBadgeTitle} size="md" />
+                )}
                 <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-gold/15 text-gold border border-gold/30">
                   <VerifiedPanditBadge size={14} /> KYC Verified Pandit
                 </span>

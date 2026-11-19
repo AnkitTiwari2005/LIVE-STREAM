@@ -135,6 +135,8 @@ model StreamerProfile {
   kycReviewedAt    DateTime?    @db.Timestamptz
   rejectionReason  String?
   isVerifiedBadge  Boolean      @default(false)
+  hasSpecialBadge  Boolean      @default(false)
+  specialBadgeTitle String?     @default("आचार्य रत्न")
   followerCount    Int          @default(0)
   createdAt        DateTime     @default(now()) @db.Timestamptz
   updatedAt        DateTime     @updatedAt @db.Timestamptz

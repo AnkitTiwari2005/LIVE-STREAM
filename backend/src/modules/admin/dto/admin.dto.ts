@@ -123,3 +123,22 @@ export class UpdateBannerDto {
   @MaxLength(50)
   gradient?: string;
 }
+
+export class ToggleSpecialBadgeDto {
+  @ApiProperty({ example: true })
+  @IsBoolean()
+  hasSpecialBadge: boolean;
+
+  @ApiProperty({ required: false, example: 'आचार्य रत्न' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  specialBadgeTitle?: string;
+}
+
+export class ToggleVerifiedBadgeDto {
+  @ApiProperty({ example: true })
+  @IsBoolean()
+  isVerifiedBadge: boolean;
+}
+

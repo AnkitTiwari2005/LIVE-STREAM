@@ -21,18 +21,32 @@ import {
   Bell,
   Eye,
   Megaphone,
+  Award,
+  Crown,
+  ExternalLink,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import { purgeClientSession } from '@/lib/auth-session';
 import { useToast } from '@/components/Toast';
-import { DiyaIcon } from '@/components/icons/SpiritualIcons';
+import { DiyaIcon, VerifiedPanditBadge } from '@/components/icons/SpiritualIcons';
+import { SpecialPanditBadge } from '@/components/SpecialPanditBadge';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 export default function AdminConsolePage() {
   const router = useRouter();
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<'kpi' | 'kyc' | 'streams' | 'reports' | 'wordFilters' | 'users' | 'audit' | 'banner'>('kpi');
+  const [activeTab, setActiveTab] = useState<'kpi' | 'pandits' | 'kyc' | 'streams' | 'reports' | 'wordFilters' | 'users' | 'audit' | 'banner'>('kpi');
   const [stats, setStats] = useState<any>(null);
+  const [panditsList, setPanditsList] = useState<any[]>([]);
+  const [searchPandit, setSearchPandit] = useState('');
+  const [panditFilter, setPanditFilter] = useState<'all' | 'special' | 'verified'>('all');
+  const [editingSpecialBadge, setEditingSpecialBadge] = useState<{
+    profileId: string;
+    panditName: string;
+    title: string;
+    hasSpecialBadge: boolean;
+  } | null>(null);
+  const [updatingPanditId, setUpdatingPanditId] = useState<string | null>(null);
   const [kycList, setKycList] = useState<any[]>([]);
   const [liveStreams, setLiveStreams] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
@@ -167,6 +181,10 @@ export default function AdminConsolePage() {
       const dashRes = await fetch(`${apiUrl}/admin/dashboard`, { headers });
       if (dashRes.ok) setStats(await dashRes.json());
 
+      // 1.5. Pandits Roster & Badges
+      const panditsRes = await fetch(`${apiUrl}/admin/pandits`, { headers });
+      if (panditsRes.ok) setPanditsList(await panditsRes.json());
+
       // 2. Pending KYC
       const kycRes = await fetch(`${apiUrl}/streamers/admin/applications`, { headers });
       if (kycRes.ok) setKycList(await kycRes.json());
@@ -247,6 +265,60 @@ export default function AdminConsolePage() {
       toast.error(err.message || 'Error updating banner');
     } finally {
       setSavingBanner(false);
+    }
+  };
+
+  const handleToggleSpecialBadge = async (profileId: string, hasSpecialBadge: boolean, title?: string) => {
+    setUpdatingPanditId(profileId);
+    try {
+      await apiFetch(`/admin/pandits/${profileId}/special-badge`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          hasSpecialBadge,
+          specialBadgeTitle: title,
+        }),
+      });
+      setPanditsList((prev) =>
+        prev.map((p) =>
+          p.id === profileId
+            ? { ...p, hasSpecialBadge, specialBadgeTitle: title || p.specialBadgeTitle }
+            : p
+        )
+      );
+      toast.success(
+        hasSpecialBadge
+          ? `Awarded Special Honors Badge "${title || 'आचार्य रत्न'}" to pandit!`
+          : 'Special Honors Badge revoked.'
+      );
+      setEditingSpecialBadge(null);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update special badge');
+    } finally {
+      setUpdatingPanditId(null);
+    }
+  };
+
+  const handleToggleVerifiedBadge = async (profileId: string, isVerifiedBadge: boolean) => {
+    setUpdatingPanditId(profileId);
+    try {
+      await apiFetch(`/admin/pandits/${profileId}/verified-badge`, {
+        method: 'PATCH',
+        body: JSON.stringify({ isVerifiedBadge }),
+      });
+      setPanditsList((prev) =>
+        prev.map((p) =>
+          p.id === profileId ? { ...p, isVerifiedBadge } : p
+        )
+      );
+      toast.success(
+        isVerifiedBadge
+          ? 'KYC Verified Badge enabled for pandit.'
+          : 'Verified Badge disabled.'
+      );
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update verified badge');
+    } finally {
+      setUpdatingPanditId(null);
     }
   };
 
@@ -403,6 +475,124 @@ export default function AdminConsolePage() {
         </div>
       )}
 
+      {/* Special Badge Customization & Award Modal */}
+      {editingSpecialBadge && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-obsidian-soft border border-gold/30 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative space-y-5">
+            <div className="flex items-center justify-between border-b border-gold/15 pb-4">
+              <div className="flex items-center gap-2">
+                <Crown className="w-5 h-5 text-amber-400" />
+                <h3 className="font-serif text-lg font-bold text-white">
+                  Special Vedic Honors Badge
+                </h3>
+              </div>
+              <button
+                onClick={() => setEditingSpecialBadge(null)}
+                className="text-stone-400 hover:text-white p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-stone-300 leading-relaxed">
+              Award or update the prestigious Special Acharya Badge for{' '}
+              <strong className="text-amber-300 font-serif">{editingSpecialBadge.panditName}</strong>. This badge shines prominently on their public profile, search catalog, and live broadcasts.
+            </p>
+
+            {/* Live Badge Preview */}
+            <div className="bg-obsidian border border-gold/20 rounded-2xl p-4 text-center space-y-2">
+              <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider block">Live Badge Preview</span>
+              <div className="flex justify-center items-center py-2">
+                <SpecialPanditBadge title={editingSpecialBadge.title || 'आचार्य रत्न'} size="lg" />
+              </div>
+            </div>
+
+            {/* Title Input */}
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-stone-200">
+                Honorific Title (हिंदी / Sanskrit)
+              </label>
+              <input
+                type="text"
+                value={editingSpecialBadge.title}
+                onChange={(e) =>
+                  setEditingSpecialBadge((prev) => prev ? { ...prev, title: e.target.value } : null)
+                }
+                placeholder="e.g. आचार्य रत्न, कर्मकाण्ड रत्न"
+                className="w-full px-3.5 py-2.5 bg-obsidian border border-gold/30 rounded-xl text-white text-xs focus:outline-none focus:border-amber-400"
+              />
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {[
+                  'आचार्य रत्न',
+                  'कर्मकाण्ड रत्न',
+                  'वास्तु रत्न',
+                  'सुंदरकांड रत्न',
+                  'रुद्राभिषेक शिरोमणि',
+                  'ज्योतिष कर्मकाण्ड भूषण',
+                  'वैदिक विद्वान रत्न',
+                ].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() =>
+                      setEditingSpecialBadge((prev) => prev ? { ...prev, title: preset } : null)
+                    }
+                    className="text-[10px] px-2 py-0.5 rounded-md bg-stone-900 hover:bg-stone-800 text-stone-300 border border-stone-700 hover:border-gold/40 transition"
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-between gap-3 pt-3 border-t border-gold/15">
+              {editingSpecialBadge.hasSpecialBadge ? (
+                <button
+                  type="button"
+                  disabled={updatingPanditId === editingSpecialBadge.profileId}
+                  onClick={() =>
+                    handleToggleSpecialBadge(editingSpecialBadge.profileId, false)
+                  }
+                  className="px-4 py-2 bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/50 rounded-xl text-xs font-semibold transition"
+                >
+                  Revoke Badge
+                </button>
+              ) : (
+                <div />
+              )}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingSpecialBadge(null)}
+                  className="px-4 py-2 bg-stone-900 hover:bg-stone-800 text-stone-300 rounded-xl text-xs font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={updatingPanditId === editingSpecialBadge.profileId}
+                  onClick={() =>
+                    handleToggleSpecialBadge(
+                      editingSpecialBadge.profileId,
+                      true,
+                      editingSpecialBadge.title.trim() || 'आचार्य रत्न'
+                    )
+                  }
+                  className="px-5 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-obsidian rounded-xl text-xs font-bold transition shadow-md"
+                >
+                  {updatingPanditId === editingSpecialBadge.profileId
+                    ? 'Saving...'
+                    : editingSpecialBadge.hasSpecialBadge
+                    ? 'Update Badge'
+                    : 'Award Special Badge'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="relative max-w-7xl mx-auto px-5 lg:px-8">
         <div className="flex items-center justify-between mb-8 pb-4 border-b border-gold/15">
           <div>
@@ -425,6 +615,7 @@ export default function AdminConsolePage() {
       <div className="flex items-center gap-2 border-b border-stone-200 dark:border-stone-800 pb-3 mb-8 overflow-x-auto w-full max-w-full min-w-0 no-scrollbar">
         {[
           { key: 'kpi', label: 'Overview Metrics' },
+          { key: 'pandits', label: `Vedic Pandits (${panditsList.length})` },
           { key: 'kyc', label: `Pending KYC (${kycList.length})` },
           { key: 'streams', label: `Live Monitor (${liveStreams.length})` },
           { key: 'reports', label: `Safety Reports (${reports.length})` },
@@ -473,6 +664,216 @@ export default function AdminConsolePage() {
           <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
             <span className="text-[11px] text-rose-700 dark:text-rose-400 uppercase font-semibold block">Open Reports</span>
             <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{stats.openReports}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Vedic Pandits Directory & Special Badges */}
+      {activeTab === 'pandits' && (
+        <div className="space-y-6">
+          {/* Summary metrics for Pandits */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm">
+              <span className="text-[11px] text-stone-500 dark:text-stone-400 uppercase font-semibold block">Total Pandits</span>
+              <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{panditsList.length}</span>
+            </div>
+            <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm">
+              <span className="text-[11px] text-amber-500 uppercase font-semibold block">Special Honors (आचार्य रत्न)</span>
+              <span className="text-2xl font-extrabold text-amber-400 mt-1 block">
+                {panditsList.filter((p) => p.hasSpecialBadge).length}
+              </span>
+            </div>
+            <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm">
+              <span className="text-[11px] text-emerald-500 uppercase font-semibold block">KYC Verified Badges</span>
+              <span className="text-2xl font-extrabold text-emerald-400 mt-1 block">
+                {panditsList.filter((p) => p.isVerifiedBadge).length}
+              </span>
+            </div>
+            <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm">
+              <span className="text-[11px] text-orange-500 uppercase font-semibold block">Broadcasts Conducted</span>
+              <span className="text-2xl font-extrabold text-orange-400 mt-1 block">
+                {panditsList.reduce((acc, p) => acc + (p.totalStreams || 0), 0)}
+              </span>
+            </div>
+          </div>
+
+          {/* Search & Filter Bar */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-stone-900/60 p-4 rounded-2xl border border-stone-800">
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 absolute left-3 top-3 text-stone-400" />
+              <input
+                type="text"
+                placeholder="Search pandits by name, email, or specialty..."
+                value={searchPandit}
+                onChange={(e) => setSearchPandit(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold/40"
+              />
+            </div>
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+              {(['all', 'special', 'verified'] as const).map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => setPanditFilter(filter)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition ${
+                    panditFilter === filter
+                      ? 'bg-gold text-obsidian font-bold shadow'
+                      : 'bg-stone-950 text-stone-400 hover:text-white border border-stone-800'
+                  }`}
+                >
+                  {filter === 'all'
+                    ? `All (${panditsList.length})`
+                    : filter === 'special'
+                    ? `Special Honors (${panditsList.filter((p) => p.hasSpecialBadge).length})`
+                    : `Verified (${panditsList.filter((p) => p.isVerifiedBadge).length})`}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Pandit Cards Grid */}
+          <div className="space-y-4">
+            {panditsList
+              .filter((p) => {
+                if (panditFilter === 'special' && !p.hasSpecialBadge) return false;
+                if (panditFilter === 'verified' && !p.isVerifiedBadge) return false;
+                if (!searchPandit) return true;
+                const query = searchPandit.toLowerCase();
+                return (
+                  p.name.toLowerCase().includes(query) ||
+                  p.email.toLowerCase().includes(query) ||
+                  (p.specialties || []).some((s: string) => s.toLowerCase().includes(query)) ||
+                  (p.specialBadgeTitle || '').toLowerCase().includes(query)
+                );
+              })
+              .map((pandit) => (
+                <div
+                  key={pandit.id}
+                  className="bg-stone-900 border border-stone-800 hover:border-gold/30 p-5 rounded-2xl transition shadow-lg flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5"
+                >
+                  <div className="flex items-start gap-4 flex-1 min-w-0">
+                    <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-stone-950 border border-gold/30 shrink-0 shadow-md">
+                      <img
+                        src={pandit.avatarUrl || '/images/pandits/pandit-rohit-tiwari.webp'}
+                        alt={pandit.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/images/pandits/pandit-rohit-tiwari.webp';
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-1.5 min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h4 className="font-serif font-bold text-white text-base">
+                          {pandit.name}
+                        </h4>
+                        {pandit.isVerifiedBadge && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950/60 text-emerald-400 border border-emerald-500/40">
+                            <VerifiedPanditBadge size={12} /> KYC Verified
+                          </span>
+                        )}
+                        {pandit.hasSpecialBadge && (
+                          <SpecialPanditBadge title={pandit.specialBadgeTitle} size="sm" />
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-3 text-[11px] text-stone-400">
+                        <span>{pandit.email}</span>
+                        <span>•</span>
+                        <span>{pandit.followerCount || 0} Followers</span>
+                        <span>•</span>
+                        <span>{pandit.totalStreams || 0} Broadcasts</span>
+                        <span>•</span>
+                        <span className="uppercase text-[10px] font-bold text-amber-500/90">
+                          KYC: {pandit.kycStatus}
+                        </span>
+                      </div>
+
+                      {pandit.bio && (
+                        <p className="text-xs text-stone-300 line-clamp-2 leading-relaxed pt-0.5">
+                          {pandit.bio}
+                        </p>
+                      )}
+
+                      {pandit.specialties && pandit.specialties.length > 0 && (
+                        <div className="flex flex-wrap gap-1 pt-1">
+                          {pandit.specialties.map((spec: string) => (
+                            <span
+                              key={spec}
+                              className="text-[9px] font-medium px-2 py-0.5 rounded-md bg-stone-950 text-stone-400 border border-stone-800"
+                            >
+                              {spec}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions Toolbar */}
+                  <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto shrink-0 justify-end border-t lg:border-t-0 border-stone-800 pt-3 lg:pt-0">
+                    {/* Grant / Edit Special Honors Badge Button */}
+                    <button
+                      onClick={() =>
+                        setEditingSpecialBadge({
+                          profileId: pandit.id,
+                          panditName: pandit.name,
+                          title: pandit.specialBadgeTitle || 'आचार्य रत्न',
+                          hasSpecialBadge: pandit.hasSpecialBadge,
+                        })
+                      }
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition shadow-sm ${
+                        pandit.hasSpecialBadge
+                          ? 'bg-amber-950/50 hover:bg-amber-900/60 text-amber-200 border border-amber-500/50'
+                          : 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-obsidian'
+                      }`}
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>{pandit.hasSpecialBadge ? 'Edit Special Badge' : 'Award Special Badge'}</span>
+                    </button>
+
+                    {/* Toggle Verified KYC Badge Button */}
+                    <button
+                      disabled={updatingPanditId === pandit.id}
+                      onClick={() =>
+                        handleToggleVerifiedBadge(pandit.id, !pandit.isVerifiedBadge)
+                      }
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition border ${
+                        pandit.isVerifiedBadge
+                          ? 'bg-stone-950 text-emerald-400 border-emerald-500/40 hover:bg-stone-800'
+                          : 'bg-emerald-600 hover:bg-emerald-700 text-white border-transparent'
+                      }`}
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      <span>{pandit.isVerifiedBadge ? 'Revoke Verified' : 'Mark Verified'}</span>
+                    </button>
+
+                    {/* View Public Profile Link */}
+                    {(() => {
+                      const SLUG_MAP: Record<string, string> = {
+                        'rohit.tiwari@shubhdarshan.com': 'rohit-tiwari',
+                        'skjyotish@gmail.com': 'santosh-shastri',
+                        'ravi.pathak@shubhdarshan.com': 'ravi-pathak',
+                        'nitin.sharma@shubhdarshan.com': 'nitin-sharma',
+                        'umesh.shastri@shubhdarshan.com': 'umesh-shastri',
+                        'kuber.tripathi@shubhdarshan.com': 'kuber-tripathi',
+                        'subhash.shastri@shubhdarshan.com': 'subhash-shastri',
+                      };
+                      const slug = SLUG_MAP[pandit.email] || pandit.id;
+                      return (
+                        <a
+                          href={`/pandit/${slug}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-stone-950 hover:bg-stone-800 text-stone-300 border border-stone-800 transition"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>View Profile</span>
+                        </a>
+                      );
+                    })()}
+                  </div>
+                </div>
+              ))}
           </div>
         </div>
       )}

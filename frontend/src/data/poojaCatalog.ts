@@ -24,6 +24,8 @@ export interface PanditPricing {
   specialties: string[];
   dakshinaCoins: number; // custom price for this pooja
   isAvailableToday: boolean;
+  hasSpecialBadge?: boolean;
+  specialBadgeTitle?: string;
 }
 
 export const COMPREHENSIVE_POOJA_CATALOG: PoojaItem[] = [
@@ -365,6 +367,8 @@ export const PANDIT_PRICING_CATALOG: PanditPricing[] = [
     specialties: ['Matrimonial Advisor', 'Kundli Milan', 'Vedic Astrology', 'Vivah Sanskar'],
     dakshinaCoins: 160,
     isAvailableToday: true,
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'संस्थापक एवं मुख्य ज्योतिषाचार्य',
   },
   {
     panditId: '8cfb4f7f-f337-4475-8885-d0d91ae0939e',
@@ -378,6 +382,8 @@ export const PANDIT_PRICING_CATALOG: PanditPricing[] = [
     specialties: ['Vedic Astrology', 'Vastu Shastra', 'Kundli Milan', 'Grah Shanti'],
     dakshinaCoins: 150,
     isAvailableToday: true,
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'सह-संस्थापक एवं वास्तु रत्न',
   },
   {
     panditId: 'pandit_ravi_pathak',
@@ -391,6 +397,8 @@ export const PANDIT_PRICING_CATALOG: PanditPricing[] = [
     specialties: ['Karmakand', 'Maha Yagya', 'Ganesh Pujan', 'Vedic Anushthan'],
     dakshinaCoins: 130,
     isAvailableToday: true,
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'कर्मकाण्ड रत्न',
   },
   {
     panditId: 'pandit_nitin_sharma',
@@ -404,6 +412,8 @@ export const PANDIT_PRICING_CATALOG: PanditPricing[] = [
     specialties: ['Karmakand', 'Sundarkand Path', 'Hanuman Aradhana', 'Vedic Path'],
     dakshinaCoins: 125,
     isAvailableToday: true,
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'सुंदरकांड रत्न',
   },
   {
     panditId: 'pandit_umesh_shastri',
@@ -417,6 +427,8 @@ export const PANDIT_PRICING_CATALOG: PanditPricing[] = [
     specialties: ['Rudrabhishek', 'Devi Pooja', 'Durga Path', 'Maha Abhishek'],
     dakshinaCoins: 145,
     isAvailableToday: true,
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'रुद्राभिषेक शिरोमणि',
   },
   {
     panditId: 'acharya_kuber_tripathi',
@@ -430,6 +442,8 @@ export const PANDIT_PRICING_CATALOG: PanditPricing[] = [
     specialties: ['Jyotish', 'Karmakand', 'Bhajan Sandhya', 'Sankalp Seva'],
     dakshinaCoins: 135,
     isAvailableToday: true,
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'ज्योतिष कर्मकाण्ड भूषण',
   },
   {
     panditId: 'pandit_subhash_shastri',
@@ -443,6 +457,8 @@ export const PANDIT_PRICING_CATALOG: PanditPricing[] = [
     specialties: ['Satyanarayan Pooja', 'Durga Saptashati', 'Navgrah Poojan', 'Rudrabhishek'],
     dakshinaCoins: 140,
     isAvailableToday: true,
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'वैदिक विद्वान रत्न',
   },
 ];
 

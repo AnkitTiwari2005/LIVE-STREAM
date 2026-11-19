@@ -269,6 +269,8 @@ export class StreamersService {
         languages: profile.languages,
         specialties: profile.specialties,
         isVerifiedBadge: profile.isVerifiedBadge,
+        hasSpecialBadge: (profile as any).hasSpecialBadge ?? false,
+        specialBadgeTitle: (profile as any).specialBadgeTitle ?? 'आचार्य रत्न',
         followerCount: (profile as any)._count?.followers ?? profile.followerCount,
       },
       streams: activeStreams,

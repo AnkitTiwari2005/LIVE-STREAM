@@ -25,6 +25,7 @@ import {
   CoinIcon,
   PranamIcon,
 } from '@/components/icons/SpiritualIcons';
+import { SpecialPanditBadge } from '@/components/SpecialPanditBadge';
 import { useToast } from '@/components/Toast';
 import { decodeJwtClaims } from '@/lib/auth-session';
 import {
@@ -495,6 +496,11 @@ function SevaBookingFlow({
                               <VerifiedPanditBadge size={14} />
                             </div>
                           </div>
+                          {pandit.hasSpecialBadge && (
+                            <div className="mb-1">
+                              <SpecialPanditBadge title={pandit.specialBadgeTitle} size="sm" />
+                            </div>
+                          )}
                           <p className="text-[11px] text-gold-soft font-medium leading-tight mb-1 truncate">
                             {pandit.title}
                           </p>

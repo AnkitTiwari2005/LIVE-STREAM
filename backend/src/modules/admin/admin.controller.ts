@@ -22,6 +22,8 @@ import {
   AddWordFilterDto,
   UpdateStaticPageDto,
   UpdateBannerDto,
+  ToggleSpecialBadgeDto,
+  ToggleVerifiedBadgeDto,
 } from './dto/admin.dto';
 
 @ApiTags('Admin Panel')
@@ -150,5 +152,45 @@ export class AdminController {
   @ApiOperation({ summary: 'Update occasion announcement banner config (Admin only)' })
   async updateBanner(@Body() dto: UpdateBannerDto) {
     return this.adminService.updateBannerConfig(dto);
+  }
+
+  // --- Pandit Management & Special Badges ---
+  @Get('pandits')
+  @ApiOperation({ summary: 'Get list of all verified & applicant pandits with badges and metrics' })
+  async getPandits() {
+    return this.adminService.getPanditsList();
+  }
+
+  @Patch('pandits/:id/special-badge')
+  @ApiOperation({ summary: 'Grant or revoke special Vedic honors badge (Acharya Ratna)' })
+  async toggleSpecialBadge(
+    @Param('id') profileId: string,
+    @CurrentUser('id') adminId: string,
+    @CurrentUser('email') adminEmail: string,
+    @Body() dto: ToggleSpecialBadgeDto,
+  ) {
+    return this.adminService.toggleSpecialBadge(
+      profileId,
+      dto.hasSpecialBadge,
+      dto.specialBadgeTitle,
+      adminId,
+      adminEmail,
+    );
+  }
+
+  @Patch('pandits/:id/verified-badge')
+  @ApiOperation({ summary: 'Toggle verified KYC badge on a pandit profile' })
+  async toggleVerifiedBadge(
+    @Param('id') profileId: string,
+    @CurrentUser('id') adminId: string,
+    @CurrentUser('email') adminEmail: string,
+    @Body() dto: ToggleVerifiedBadgeDto,
+  ) {
+    return this.adminService.toggleVerifiedBadge(
+      profileId,
+      dto.isVerifiedBadge,
+      adminId,
+      adminEmail,
+    );
   }
 }

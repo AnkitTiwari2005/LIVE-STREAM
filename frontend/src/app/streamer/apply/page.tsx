@@ -62,8 +62,8 @@ const UPLOAD_SLOTS: UploadSlot[] = [
   {
     id: 'pan',
     label: 'Upload Your PAN Card',
-    hint: 'Government-issued PAN Card (JPG/PNG/PDF)',
-    required: true,
+    hint: 'Government-issued PAN Card (optional - for TDS/tax records)',
+    required: false,
     documentType: 'PAN_CARD',
     accept: 'image/*,application/pdf',
   },
