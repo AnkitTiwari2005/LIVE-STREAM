@@ -354,55 +354,94 @@ export const COMPREHENSIVE_POOJA_CATALOG: PoojaItem[] = [
 
 export const PANDIT_PRICING_CATALOG: PanditPricing[] = [
   {
-    panditId: '73b080c9-8bfb-41e6-8c5a-dba40c9409c5',
-    name: 'Pandit Aarav Sharma',
-    title: 'Head Archak, Kashi Vishwanath Parampara',
-    lineage: 'Sampurnanand Sanskrit Vishwavidyalaya, Varanasi',
-    experience: '22 Years Seva',
+    panditId: '73b080c9-8bfb-41e6-8c5a-dba40c9409c5', // Backward compatibility for saved bookings
+    name: 'पंडित रोहित तिवारी (ज्योतिषाचार्य)',
+    title: 'Matrimonial advisor & Astrologer (Founder)',
+    lineage: 'Parashari Vedic Parampara & Jyotish Visharad, Delhi',
+    experience: '18 Years Seva',
     rating: '4.98',
     reviewsCount: '1,420',
-    avatar: '/images/photo-1543934776-32d1cc654abb.webp',
-    specialties: ['Rudrabhishek', 'Mahamrityunjaya Jaap', 'Ganga Aarti', 'Satyanarayan Katha'],
-    dakshinaCoins: 150,
+    avatar: '/images/pandits/pandit-rohit-tiwari.webp',
+    specialties: ['Matrimonial Advisor', 'Kundli Milan', 'Vedic Astrology', 'Vivah Sanskar'],
+    dakshinaCoins: 160,
     isAvailableToday: true,
   },
   {
     panditId: '8cfb4f7f-f337-4475-8885-d0d91ae0939e',
-    name: 'Acharya Devrat Sharma',
-    title: 'Shukla Yajurveda Acharya & Jyotish Visharad',
-    lineage: 'Haridwar Sanskrit Vishwavidyalaya Tradition',
-    experience: '18 Years Seva',
+    name: 'पंडित संतोष कुमार शास्त्री',
+    title: 'ज्योतिष एवं वास्तु विशेषज्ञ (Co-Founder)',
+    lineage: 'Vedic Vastu & Jyotish Parampara, Delhi',
+    experience: '20 Years Seva',
+    rating: '4.96',
+    reviewsCount: '1,280',
+    avatar: '/images/pandits/pandit-santosh-shastri.webp',
+    specialties: ['Vedic Astrology', 'Vastu Shastra', 'Kundli Milan', 'Grah Shanti'],
+    dakshinaCoins: 150,
+    isAvailableToday: true,
+  },
+  {
+    panditId: 'pandit_ravi_pathak',
+    name: 'पंडित रवि पाठक',
+    title: 'कर्मकाण्ड विशेषज्ञ',
+    lineage: 'Vedic Karmakand & Anushthan Parampara',
+    experience: '12 Years Seva',
     rating: '4.94',
     reviewsCount: '920',
-    avatar: '/images/photo-1762838105804-c3264c29a390.webp',
-    specialties: ['Navgrah Shanti', 'Kundli Matching', 'Kaal Sarp Dosh', 'Vastu'],
+    avatar: '/images/pandits/pandit-ravi-pathak.webp',
+    specialties: ['Karmakand', 'Maha Yagya', 'Ganesh Pujan', 'Vedic Anushthan'],
+    dakshinaCoins: 130,
+    isAvailableToday: true,
+  },
+  {
+    panditId: 'pandit_nitin_sharma',
+    name: 'पंडित नितिन शर्मा',
+    title: 'कर्मकाण्ड, सुंदरकांड विशेषज्ञ',
+    lineage: 'Shukla Yajurveda & Sunderkand Parampara',
+    experience: '10 Years Seva',
+    rating: '4.92',
+    reviewsCount: '810',
+    avatar: '/images/pandits/pandit-nitin-sharma.webp',
+    specialties: ['Karmakand', 'Sundarkand Path', 'Hanuman Aradhana', 'Vedic Path'],
     dakshinaCoins: 125,
     isAvailableToday: true,
   },
   {
-    panditId: 'pandit_vyas',
-    name: 'Pandit Hariram Vyas',
-    title: 'Senior Purohit, Haridwar Ganga Sabha',
-    lineage: 'Rishikesh Parampara',
-    experience: '20 Years Seva',
+    panditId: 'pandit_umesh_shastri',
+    name: 'पंडित उमेश शास्त्री',
+    title: 'रुद्राभिषेक एवं देवी पूजा',
+    lineage: 'Shiva-Shakti Aradhana & Dashashwamedh Parampara',
+    experience: '16 Years Seva',
     rating: '4.95',
-    reviewsCount: '980',
-    avatar: '/images/photo-1544186196-6908a9d76ab3.webp',
-    specialties: ['Sandhya Aarti', 'Family Sankalp', 'Sundarkand', 'Pitru Tarpana'],
-    dakshinaCoins: 140,
+    reviewsCount: '1,050',
+    avatar: '/images/pandits/pandit-umesh-shastri.webp',
+    specialties: ['Rudrabhishek', 'Devi Pooja', 'Durga Path', 'Maha Abhishek'],
+    dakshinaCoins: 145,
     isAvailableToday: true,
   },
   {
-    panditId: 'pandit_bhatt',
-    name: 'Pandit Vishwanath Bhatt',
-    title: 'Vedic Scholar, Tirupati Tradition',
-    lineage: 'Tirumala Veda Pathashala',
-    experience: '26 Years Seva',
-    rating: '5.0',
-    reviewsCount: '2,140',
-    avatar: '/images/photo-1596604820148-da737958af16.webp',
-    specialties: ['Vishnu Sahasranama', 'Satyanarayan Katha', 'Griha Pravesh', 'Chandi Havan'],
-    dakshinaCoins: 160,
+    panditId: 'acharya_kuber_tripathi',
+    name: 'आचार्य कुबेर दत्त त्रिपाठी',
+    title: 'ज्योतिष कर्मकाण्ड विशेषज्ञ',
+    lineage: 'Sanskrit Vishwavidyalaya & Jyotish Acharya',
+    experience: '14 Years Seva',
+    rating: '4.93',
+    reviewsCount: '890',
+    avatar: '/images/pandits/acharya-kuber-tripathi.webp',
+    specialties: ['Jyotish', 'Karmakand', 'Bhajan Sandhya', 'Sankalp Seva'],
+    dakshinaCoins: 135,
+    isAvailableToday: true,
+  },
+  {
+    panditId: 'pandit_subhash_shastri',
+    name: 'पंडित सुभाष शास्त्री',
+    title: 'सत्य नारायण पूजा, दुर्गासप्तशती पाठ, नवग्रहपूजन, रुद्राभिषेक',
+    lineage: 'Sanatan Vedic Dharmarth Vidhi Parampara',
+    experience: '15 Years Seva',
+    rating: '4.94',
+    reviewsCount: '960',
+    avatar: '/images/pandits/pandit-subhash-shastri.webp',
+    specialties: ['Satyanarayan Pooja', 'Durga Saptashati', 'Navgrah Poojan', 'Rudrabhishek'],
+    dakshinaCoins: 140,
     isAvailableToday: true,
   },
 ];
@@ -413,14 +452,17 @@ export const PANDIT_PRICING_CATALOG: PanditPricing[] = [
  */
 export function getPanditDakshinaForPooja(pandit: PanditPricing, pooja: PoojaItem): number {
   const base = pooja.baseDakshina;
-  if (pandit.name.includes('Vishwanath Bhatt')) {
-    return Math.round(base * 1.15); // Senior scholar
+  if (pandit.name.includes('रोहित तिवारी') || pandit.name.includes('Rohit Tiwari')) {
+    return Math.round(base * 1.15); // Founder & Senior Astrologer
   }
-  if (pandit.name.includes('Aarav Sharma')) {
-    return Math.round(base * 1.1); // Head Archak
+  if (pandit.name.includes('संतोष कुमार शास्त्री') || pandit.name.includes('Santosh Kumar Shastri')) {
+    return Math.round(base * 1.12); // Co-Founder & Vastu Specialist
   }
-  if (pandit.name.includes('Hariram Vyas')) {
+  if (pandit.name.includes('उमेश शास्त्री') || pandit.name.includes('Umesh Shastri')) {
+    return Math.round(base * 1.08);
+  }
+  if (pandit.name.includes('सुभाष शास्त्री') || pandit.name.includes('Subhash Shastri')) {
     return Math.round(base * 1.05);
   }
-  return base; // Acharya Devrat base rate
+  return base;
 }

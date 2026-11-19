@@ -687,10 +687,10 @@ export default function AccountPage() {
                           <div className="lg:col-span-5 rounded-xl bg-obsidian-soft border border-gold/25 p-3.5 flex items-center justify-between gap-3 shadow-sm">
                             <div className="flex items-center gap-2.5 min-w-0">
                               <img
-                                src={b.panditAvatar || '/images/photo-1543934776-32d1cc654abb.webp'}
+                                src={b.panditAvatar || '/images/pandits/pandit-rohit-tiwari.webp'}
                                 alt={b.panditName}
                                 onError={(e) => {
-                                  (e.target as HTMLImageElement).src = '/images/photo-1543934776-32d1cc654abb.webp';
+                                  (e.target as HTMLImageElement).src = '/images/pandits/pandit-rohit-tiwari.webp';
                                 }}
                                 className="w-11 h-11 rounded-full object-cover border border-gold/30 shrink-0"
                               />

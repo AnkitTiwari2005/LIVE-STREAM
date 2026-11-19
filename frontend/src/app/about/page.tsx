@@ -172,17 +172,20 @@ export default function AboutPage() {
                     </p>
                     <p className="text-xs sm:text-sm font-semibold text-stone-700 dark:text-gold-soft flex items-center gap-1.5 mt-1">
                       <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-gold flex-shrink-0" />
-                      <span>ज्योतिषाचार्य (Jyotishacharya) • Vedic Astrologer</span>
+                      <span>ज्योतिषाचार्य (Jyotishacharya) • Matrimonial Advisor &amp; Astrologer</span>
                     </p>
                   </div>
                 </div>
 
                 <p className="text-stone-600 dark:text-stone-300 text-xs sm:text-sm leading-relaxed mb-4">
-                  Distinguished scholar of classical Parashari and Vedic astrology based in Delhi. Pandit Rohit Tiwari champions an enlightened, fear-free astrological approach—empowering devotees with truthful planetary insights, auspicious muhurat selection, and spiritually uplifting remedies rooted in scriptural discipline.
+                  Distinguished scholar of classical Parashari and Vedic astrology based in Delhi. Pandit Rohit Tiwari serves as Founder, Matrimonial Advisor, and senior Astrologer—empowering devotees with authentic matrimonial guidance, truthful planetary insights, auspicious muhurat selection, and spiritually uplifting remedies rooted in scriptural discipline.
                 </p>
 
                 {/* Specialties Tags */}
                 <div className="flex flex-wrap gap-1.5">
+                  <span className="px-2.5 py-1 rounded-lg bg-stone-100 dark:bg-obsidian border border-stone-200 dark:border-gold/15 text-[11px] text-stone-700 dark:text-stone-300 font-medium">
+                    वैवाहिक परामर्श (Matrimonial Advisor)
+                  </span>
                   <span className="px-2.5 py-1 rounded-lg bg-stone-100 dark:bg-obsidian border border-stone-200 dark:border-gold/15 text-[11px] text-stone-700 dark:text-stone-300 font-medium">
                     वैदिक ज्योतिष (Vedic Astrology)
                   </span>

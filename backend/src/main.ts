@@ -299,10 +299,12 @@ Sitemap: ${siteOrigin}/sitemap.xml
         if (fs.existsSync(joinFile)) return res.sendFile(joinFile);
       }
 
-      // Dynamic pandit profile fallback: /pandit/:id -> /pandit/aarav-sharma/index.html
+      // Dynamic pandit profile fallback: /pandit/:id -> /pandit/rohit-tiwari/index.html
       if (cleanPath.startsWith('pandit/')) {
-        const panditFile = path.join(clientDir, 'pandit', 'aarav-sharma', 'index.html');
+        const panditFile = path.join(clientDir, 'pandit', 'rohit-tiwari', 'index.html');
         if (fs.existsSync(panditFile)) return res.sendFile(panditFile);
+        const legacyFile = path.join(clientDir, 'pandit', 'aarav-sharma', 'index.html');
+        if (fs.existsSync(legacyFile)) return res.sendFile(legacyFile);
       }
 
       // Explicit schedule route check (/schedule -> /schedule/index.html)

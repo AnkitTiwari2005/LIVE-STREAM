@@ -465,7 +465,7 @@ function SevaBookingFlow({
                           src={pandit.avatar}
                           alt={pandit.name}
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/images/photo-1543934776-32d1cc654abb.webp';
+                            (e.target as HTMLImageElement).src = '/images/pandits/pandit-rohit-tiwari.webp';
                           }}
                           className="w-12 h-12 rounded-full object-cover border border-gold/30 shrink-0 shadow-md"
                         />

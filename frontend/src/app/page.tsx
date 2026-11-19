@@ -145,7 +145,7 @@ const FALLBACK_SCHEDULED_BROADCASTS = [
     title: 'Maha Rudrabhishek & Swasti Vachan',
     description: 'Vedic Panchamrit Abhishek with resonant Rudra Sukta recitation for peace, health, and family prosperity.',
     category: 'Rudrabhishek',
-    streamer: 'Pandit Aarav Sharma',
+    streamer: 'पंडित उमेश शास्त्री',
     isVerified: true,
     scheduledText: 'Today, 06:00 PM IST',
     quality: '1080p',
@@ -156,7 +156,7 @@ const FALLBACK_SCHEDULED_BROADCASTS = [
     title: 'Navgrah Shanti & Vedic Kundli Remedial Pooja',
     description: 'Auspicious 9-graha oblations and personalized horoscope dosha nivaran chanting by verified Vedic scholar.',
     category: 'Astrology & Kundli',
-    streamer: 'Acharya Devrat Sharma',
+    streamer: 'पंडित रोहित तिवारी (ज्योतिषाचार्य)',
     isVerified: true,
     scheduledText: 'Tomorrow, 07:30 AM IST',
     quality: '1080p HD',
@@ -167,7 +167,7 @@ const FALLBACK_SCHEDULED_BROADCASTS = [
     title: 'Sandhya Deepotsav & Divine Aarti',
     description: 'Devotional evening lamp invocation with conch shell reverberations and sacred mantra pushpam.',
     category: 'Aarti & Darshan',
-    streamer: 'Pandit Hariram Vyas',
+    streamer: 'पंडित संतोष कुमार शास्त्री',
     isVerified: true,
     scheduledText: 'Tomorrow, 06:30 PM IST',
     quality: '1080p',
@@ -186,40 +186,60 @@ const FALLBACK_THUMBNAILS = [
 
 const CURATED_PANDITS = [
   {
-    slug: 'aarav-sharma',
-    name: 'Pandit Aarav Sharma',
-    title: 'Head Archak, Kashi Vishwanath Parampara',
-    experience: '22 Years Seva',
-    // R-04: Removed invented rating (4.98) and review count (1,420)
-    specialties: ['Rudrabhishek', 'Mahamrityunjaya Jaap', 'Ganga Aarti'],
-    image: '/images/photo-1543934776-32d1cc654abb.webp',
-  },
-  {
-    slug: 'hariram-vyas',
-    name: 'Pandit Hariram Vyas',
-    title: 'Senior Purohit, Haridwar Ganga Sabha',
+    slug: 'rohit-tiwari',
+    name: 'पंडित रोहित तिवारी (ज्योतिषाचार्य)',
+    title: 'Matrimonial advisor & Astrologer (Founder)',
     experience: '18 Years Seva',
-    // R-04: Removed invented rating (4.95) and review count (980)
-    specialties: ['Sandhya Aarti', 'Navgrah Shanti', 'Kavach Path'],
-    image: '/images/photo-1544186196-6908a9d76ab3.webp',
+    specialties: ['Matrimonial Advisor', 'Kundli Milan', 'Vedic Astrology', 'Vivah Sanskar'],
+    image: '/images/pandits/pandit-rohit-tiwari.webp',
   },
   {
-    slug: 'vishwanath-bhatt',
-    name: 'Pandit Vishwanath Bhatt',
-    title: 'Vedic Scholar, Tirupati Devasthanam Tradition',
-    experience: '26 Years Seva',
-    // R-04: Removed invented rating (5.0) and review count (2,140)
-    specialties: ['Vishnu Sahasranama', 'Satyanarayan Katha', 'Vedic Chanting'],
-    image: '/images/photo-1596604820148-da737958af16.webp',
+    slug: 'santosh-shastri',
+    name: 'पंडित संतोष कुमार शास्त्री',
+    title: 'ज्योतिष एवं वास्तु विशेषज्ञ (Co-Founder)',
+    experience: '20 Years Seva',
+    specialties: ['Vedic Astrology', 'Vastu Shastra', 'Kundli Milan', 'Grah Shanti'],
+    image: '/images/pandits/pandit-santosh-shastri.webp',
   },
   {
-    slug: 'devrishi',
-    name: 'Acharya Devrishi',
-    title: 'Sanskrit & Jyotish Acharya, Rishikesh',
+    slug: 'ravi-pathak',
+    name: 'पंडित रवि पाठक',
+    title: 'कर्मकाण्ड विशेषज्ञ',
+    experience: '12 Years Seva',
+    specialties: ['Karmakand', 'Maha Yagya', 'Ganesh Pujan', 'Vedic Anushthan'],
+    image: '/images/pandits/pandit-ravi-pathak.webp',
+  },
+  {
+    slug: 'nitin-sharma',
+    name: 'पंडित नितिन शर्मा',
+    title: 'कर्मकाण्ड, सुंदरकांड विशेषज्ञ',
+    experience: '10 Years Seva',
+    specialties: ['Karmakand', 'Sundarkand Path', 'Hanuman Aradhana', 'Vedic Path'],
+    image: '/images/pandits/pandit-nitin-sharma.webp',
+  },
+  {
+    slug: 'umesh-shastri',
+    name: 'पंडित उमेश शास्त्री',
+    title: 'रुद्राभिषेक एवं देवी पूजा',
+    experience: '16 Years Seva',
+    specialties: ['Rudrabhishek', 'Devi Pooja', 'Durga Path', 'Maha Abhishek'],
+    image: '/images/pandits/pandit-umesh-shastri.webp',
+  },
+  {
+    slug: 'kuber-tripathi',
+    name: 'आचार्य कुबेर दत्त त्रिपाठी',
+    title: 'ज्योतिष कर्मकाण्ड विशेषज्ञ',
+    experience: '14 Years Seva',
+    specialties: ['Jyotish', 'Karmakand', 'Bhajan Sandhya', 'Sankalp Seva'],
+    image: '/images/pandits/acharya-kuber-tripathi.webp',
+  },
+  {
+    slug: 'subhash-shastri',
+    name: 'पंडित सुभाष शास्त्री',
+    title: 'सत्य नारायण पूजा, दुर्गासप्तशती पाठ, नवग्रहपूजन, रुद्राभिषेक',
     experience: '15 Years Seva',
-    // R-04: Removed invented rating (4.92) and review count (810)
-    specialties: ['Vedic Astrology', 'Kundli Milan', 'Vastu Shanti'],
-    image: '/images/photo-1762838105804-c3264c29a390.webp',
+    specialties: ['Satyanarayan Pooja', 'Durga Saptashati', 'Navgrah Poojan', 'Rudrabhishek'],
+    image: '/images/pandits/pandit-subhash-shastri.webp',
   },
 ];
 
@@ -1090,7 +1110,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {CURATED_PANDITS.map((p) => (
             <div
               key={p.name}
