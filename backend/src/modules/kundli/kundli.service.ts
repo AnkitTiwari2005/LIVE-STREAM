@@ -106,7 +106,38 @@ export class KundliService {
     if (hit) return { ...(hit as object), cached: true };
 
     const body = { person_a: personA, person_b: personB, options };
-    const res = await this.upstream('/v1/match/ashtakoot', 'POST', body, 1);
+    let res: AstroEnvelope;
+    try {
+      res = await this.upstream('/v1/match/ashtakoot', 'POST', body, 1);
+    } catch (err: any) {
+      if (err instanceof UnprocessableEntityException) {
+        const resp: any = err.getResponse();
+        if (resp?.code === 'place_ambiguous' && Array.isArray(resp?.candidates)) {
+          const firstCand = (resp.candidates[0]?.name || '').toLowerCase();
+          const qA = (dto.personA.placeQuery || '').toLowerCase();
+          const qB = (dto.personB.placeQuery || '').toLowerCase();
+
+          let target: 'personA' | 'personB' = 'personA';
+          if (dto.personA.placeId && !dto.personB.placeId) {
+            target = 'personB';
+          } else if (!dto.personA.placeId && dto.personB.placeId) {
+            target = 'personA';
+          } else if (firstCand && (qB.includes(firstCand) || firstCand.includes(qB.split(',')[0].trim()))) {
+            target = 'personB';
+          } else if (firstCand && (qA.includes(firstCand) || firstCand.includes(qA.split(',')[0].trim()))) {
+            target = 'personA';
+          }
+
+          throw new UnprocessableEntityException({
+            message: `More than one place matches for ${target === 'personB' ? (dto.personB.name || 'Partner 2') : (dto.personA.name || 'Partner 1')}. Please choose the location from the list.`,
+            code: 'place_ambiguous',
+            target,
+            candidates: resp.candidates,
+          });
+        }
+      }
+      throw err;
+    }
 
     const result = {
       ...this.mapMatch(res),

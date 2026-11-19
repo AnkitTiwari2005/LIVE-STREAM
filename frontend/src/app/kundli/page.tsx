@@ -347,12 +347,31 @@ export default function KundliPage() {
         purgeClientSession();
         setAuth('out');
       } else if (e?.body?.code === 'place_ambiguous' && Array.isArray(e.body.candidates) && e.body.candidates.length) {
-        if (e?.body?.target === 'personB') {
+        const firstCand = (e.body.candidates[0]?.name || '').toLowerCase();
+        const qA = placeA.toLowerCase();
+        const qB = placeB.toLowerCase();
+
+        let isPersonB = e?.body?.target === 'personB';
+        if (!e?.body?.target) {
+          if (placeIdA && !placeIdB) {
+            isPersonB = true;
+          } else if (!placeIdA && placeIdB) {
+            isPersonB = false;
+          } else if (firstCand && (qB.includes(firstCand) || firstCand.includes(qB.split(',')[0].trim()))) {
+            isPersonB = true;
+          } else if (firstCand && (qA.includes(firstCand) || firstCand.includes(qA.split(',')[0].trim()))) {
+            isPersonB = false;
+          }
+        }
+
+        if (isPersonB) {
           setCandidatesB(e.body.candidates);
+          setCandidatesA(null);
         } else {
           setCandidatesA(e.body.candidates);
+          setCandidatesB(null);
         }
-        setMatchError(e.message);
+        setMatchError(e.message || `Please choose the location from the options below.`);
       } else {
         setMatchError(e?.message || 'Failed to calculate Kundli matching. Please check the birth details.');
       }
