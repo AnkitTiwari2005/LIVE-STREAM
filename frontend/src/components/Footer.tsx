@@ -134,11 +134,6 @@ export function Footer() {
                   Broadcaster Studio
                 </Link>
               </li>
-              <li>
-                <Link href="/streamer/earnings" className="text-stone-400 hover:text-gold-pale transition">
-                  Pandit Earnings &amp; Dakshina
-                </Link>
-              </li>
             </ul>
           </div>
 
