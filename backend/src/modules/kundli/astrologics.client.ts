@@ -7,7 +7,7 @@ export class AstroApiError extends Error {
     public readonly status: number,
     public readonly code: string,
     message: string,
-    public readonly extra: { candidates?: any[]; retryAfterSec?: number; requestId?: string } = {},
+    public readonly extra: { candidates?: any[]; retryAfterSec?: number; requestId?: string; param?: string } = {},
   ) {
     super(message);
   }
@@ -162,6 +162,7 @@ export class AstroLogicsClient {
         throw new AstroApiError(res.status, code, String(e.message || 'Upstream error').slice(0, 200), {
           candidates: Array.isArray(e.candidates) ? e.candidates : undefined,
           requestId: typeof e.request_id === 'string' ? e.request_id : undefined,
+          param: typeof e.param === 'string' ? e.param : undefined,
           retryAfterSec: retryAfter,
         });
       }

@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { AstroApiError, AstroLogicsClient, AstroEnvelope } from './astrologics.client';
-import { KundliBirthDto, KundliChartDto } from './dto/kundli.dto';
+import { KundliBirthDto, KundliChartDto, KundliMatchDto, MatchPersonDto } from './dto/kundli.dto';
 
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 const CACHE_MAX_ENTRIES = 300;
@@ -20,6 +20,10 @@ const MAX_SVG_BYTES = 400_000;
 const str = (v: unknown, max = 80): string | undefined =>
   typeof v === 'string' && v.length > 0 ? v.slice(0, max) : undefined;
 const num = (v: unknown): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
+const pretty = (s: unknown): string =>
+  typeof s === 'string'
+    ? s.split('_').filter(Boolean).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    : '';
 
 @Injectable()
 export class KundliService {
@@ -91,6 +95,27 @@ export class KundliService {
     return safe;
   }
 
+  async match(userId: string, dto: KundliMatchDto) {
+    this.enforceUserLimit(`m:${userId}`, MAX_GENERATE_PER_WINDOW);
+    const personA = this.buildPersonRequest(dto.personA, 'Partner 1');
+    const personB = this.buildPersonRequest(dto.personB, 'Partner 2');
+    const options = { ayanamsa: dto.ayanamsa ?? 'lahiri', lang: dto.lang ?? 'en' };
+
+    const key = this.cacheKey('match', { personA, personB, options });
+    const hit = this.cacheGet(key);
+    if (hit) return { ...(hit as object), cached: true };
+
+    const body = { person_a: personA, person_b: personB, options };
+    const res = await this.upstream('/v1/match/ashtakoot', 'POST', body, 1);
+
+    const result = {
+      ...this.mapMatch(res),
+      cached: false,
+    };
+    this.cachePut(key, { ...result, cached: undefined });
+    return result;
+  }
+
   // ----------------------------------------------------------------- internals
 
   private buildRequest(dto: KundliBirthDto) {
@@ -128,6 +153,31 @@ export class KundliService {
     return { birth, options };
   }
 
+  private buildPersonRequest(dto: MatchPersonDto, label = 'Person') {
+    const date = dto.date;
+    const parsed = new Date(`${date}T00:00:00Z`);
+    const valid =
+      !Number.isNaN(parsed.getTime()) &&
+      parsed.toISOString().slice(0, 10) === date &&
+      date >= '1900-01-01' &&
+      parsed.getTime() <= Date.now() + 24 * 3600 * 1000;
+    if (!valid) {
+      throw new BadRequestException(`Please enter a valid date of birth for ${label} between 1900 and today.`);
+    }
+
+    const placeQuery = (dto.placeQuery || '').trim().replace(/\s+/g, ' ');
+    if (!dto.placeId && placeQuery.length < 2) {
+      throw new BadRequestException(`Please enter the place of birth for ${label}.`);
+    }
+
+    return {
+      date,
+      ...(dto.time ? { time: dto.time } : {}),
+      place: dto.placeId ? { place_id: dto.placeId } : { query: placeQuery },
+      timezone: 'auto',
+    };
+  }
+
   private async upstream(
     path: string,
     method: 'GET' | 'POST',
@@ -154,6 +204,7 @@ export class KundliService {
         return new UnprocessableEntityException({
           message: 'More than one place matches. Please choose your birth place from the list.',
           code: 'place_ambiguous',
+          target: err.extra.param?.includes('person_b') ? 'personB' : err.extra.param?.includes('person_a') ? 'personA' : undefined,
           candidates: (err.extra.candidates ?? []).slice(0, 10).map((c: any) => ({
             placeId: str(c?.place_id, 100),
             name: str(c?.name, 120),
@@ -258,6 +309,51 @@ export class KundliService {
       mahadasha,
       antardasha: level(d.antardasha),
       pratyantardasha: level(d.pratyantardasha),
+    };
+  }
+
+  private mapMatch(env: AstroEnvelope) {
+    const d = env.data ?? {};
+    const total = num(d.total) ?? 0;
+    const max = num(d.max) ?? 36;
+    const conclusion = str(d.conclusion, 100) ?? (total >= 18 ? 'Acceptable match' : 'Low compatibility');
+
+    const kootas = (Array.isArray(d.kootas) ? d.kootas : []).map((k: any) => ({
+      name: str(k?.name, 40) ?? '',
+      label: str(k?.label, 60) ?? pretty(k?.name),
+      score: num(k?.score) ?? 0,
+      max: num(k?.max) ?? 0,
+      note: str(k?.note, 120),
+    }));
+
+    const doshas = {
+      nadi: d.doshas?.nadi === true,
+      bhakoot: d.doshas?.bhakoot === true,
+    };
+
+    const mapPersonDetails = (p: any) =>
+      !p || typeof p !== 'object'
+        ? null
+        : {
+            rashi: str(p.rashi, 40),
+            nakshatra: str(p.nakshatra, 60),
+            gana: str(p.gana, 40),
+            nadi: str(p.nadi, 40),
+            yoni: str(p.yoni, 40),
+          };
+
+    return {
+      total,
+      max,
+      percentage: Math.round((total / (max || 36)) * 100),
+      conclusion,
+      kootas,
+      doshas,
+      personA: mapPersonDetails(d.person_a),
+      personB: mapPersonDetails(d.person_b),
+      meta: {
+        ayanamsa: str(env.meta?.ayanamsa, 24),
+      },
     };
   }
 

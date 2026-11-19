@@ -3,7 +3,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
-import { KundliBirthDto, KundliChartDto } from './dto/kundli.dto';
+import { KundliBirthDto, KundliChartDto, KundliMatchDto } from './dto/kundli.dto';
 import { KundliService } from './kundli.service';
 
 @ApiTags('Kundli')
@@ -35,5 +35,12 @@ export class KundliController {
   @ApiOperation({ summary: 'Chart drawing (D1 / D9, North or South Indian style) as SVG' })
   chart(@CurrentUser('id') userId: string, @Body() dto: KundliChartDto) {
     return this.kundliService.chart(userId, dto);
+  }
+
+  @Throttle({ default: { limit: 8, ttl: 60000 } })
+  @Post('match')
+  @ApiOperation({ summary: 'Calculate Ashtakoot Guna Milan compatibility between two charts' })
+  match(@CurrentUser('id') userId: string, @Body() dto: KundliMatchDto) {
+    return this.kundliService.match(userId, dto);
   }
 }
