@@ -285,8 +285,8 @@ export function Navbar() {
               <DiyaIcon size={13} />
               <span>Book Pooja</span>
             </Link>
-            {/* Kundli Dropdown — always visible in desktop nav */}
-            <div className="relative shrink-0 hidden 2xl:block" ref={kundliDropdownRef}>
+            {/* Kundli Dropdown — always visible in direct desktop nav */}
+            <div className="relative shrink-0" ref={kundliDropdownRef}>
               <button
                 onClick={() => toggleMenu('kundli')}
                 aria-expanded={kundliDropdownOpen}
@@ -365,22 +365,6 @@ export function Navbar() {
 
               {moreDropdownOpen && (
                 <div className="navbar-more-dropdown absolute left-0 top-full mt-2 w-52 rounded-2xl p-2 z-[9999] text-xs bg-obsidian-soft border border-gold/25 shadow-2xl backdrop-blur-xl">
-                  <Link
-                    href="/kundli"
-                    onClick={() => setMoreDropdownOpen(false)}
-                    className="2xl:hidden flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
-                  >
-                    <Orbit className="w-3.5 h-3.5 text-gold shrink-0" />
-                    <span>Free Kundli</span>
-                  </Link>
-                  <Link
-                    href="/kundli?tab=matching"
-                    onClick={() => setMoreDropdownOpen(false)}
-                    className="2xl:hidden flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
-                  >
-                    <HeartHandshake className="w-3.5 h-3.5 text-gold shrink-0" />
-                    <span>Kundli Matching</span>
-                  </Link>
                   <Link
                     href="/about"
                     onClick={() => setMoreDropdownOpen(false)}
