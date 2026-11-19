@@ -65,6 +65,7 @@ interface SevaBookingModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialSevaId?: string;
+  initialPanditId?: string;
 }
 
 export default function SevaBookingModal(props: SevaBookingModalProps) {
@@ -137,6 +138,7 @@ function SevaBookingFlow({
   isOpen,
   onClose,
   initialSevaId,
+  initialPanditId,
 }: SevaBookingModalProps) {
   const toast = useToast();
   const [step, setStep] = useState<1 | 2 | 3 | 4>(() => (initialSevaId ? 2 : 1));
@@ -147,7 +149,24 @@ function SevaBookingFlow({
     const found = COMPREHENSIVE_POOJA_CATALOG.find((s) => s.id === initialSevaId);
     return found || COMPREHENSIVE_POOJA_CATALOG[0];
   });
-  const [selectedPandit, setSelectedPandit] = useState<PanditPricing>(PANDIT_PRICING_CATALOG[0]);
+  const [selectedPandit, setSelectedPandit] = useState<PanditPricing>(() => {
+    if (initialPanditId) {
+      const found = PANDIT_PRICING_CATALOG.find(
+        (p) =>
+          p.panditId === initialPanditId ||
+          p.name.toLowerCase().includes(initialPanditId.toLowerCase()) ||
+          (initialPanditId === 'rohit-tiwari' && p.name.includes('रोहित')) ||
+          (initialPanditId === 'santosh-shastri' && p.name.includes('संतोष')) ||
+          (initialPanditId === 'ravi-pathak' && p.name.includes('रवि')) ||
+          (initialPanditId === 'nitin-sharma' && p.name.includes('नितिन')) ||
+          (initialPanditId === 'umesh-shastri' && p.name.includes('उमेश')) ||
+          (initialPanditId === 'kuber-tripathi' && p.name.includes('कुबेर')) ||
+          (initialPanditId === 'subhash-shastri' && p.name.includes('सुभाष'))
+      );
+      if (found) return found;
+    }
+    return PANDIT_PRICING_CATALOG[0];
+  });
   const [devoteeName, setDevoteeName] = useState('');
   const [devoteeGotra, setDevoteeGotra] = useState('');
   const [bookingDate, setBookingDate] = useState(() => {

@@ -196,7 +196,7 @@ export class StreamersService {
   }
 
   async getPublicProfile(profileIdOrUserId: string) {
-    const profile = await this.prisma.streamerProfile.findFirst({
+    let profile = await this.prisma.streamerProfile.findFirst({
       where: {
         OR: [{ id: profileIdOrUserId }, { userId: profileIdOrUserId }],
         kycStatus: KycStatus.APPROVED,
@@ -208,6 +208,43 @@ export class StreamersService {
         _count: { select: { followers: true } },
       },
     });
+
+    if (!profile) {
+      // Support slug resolution (e.g. 'rohit-tiwari', 'santosh-shastri')
+      const SLUG_TO_SEARCH: Record<string, string[]> = {
+        'rohit-tiwari': ['Rohit', 'रोहित'],
+        'santosh-shastri': ['Santosh', 'संतोष'],
+        'ravi-pathak': ['Ravi', 'रवि'],
+        'nitin-sharma': ['Nitin', 'नितिन'],
+        'umesh-shastri': ['Umesh', 'उमेश'],
+        'kuber-tripathi': ['Kuber', 'कुबेर'],
+        'subhash-shastri': ['Subhash', 'सुभाष'],
+        'aarav-sharma': ['Aarav', 'आरव'],
+        'hariram-vyas': ['Hariram', 'हरिराम'],
+        'vishwanath-bhatt': ['Vishwanath', 'विश्वनाथ'],
+        'devrishi': ['Devrishi', 'देवरिषि'],
+      };
+
+      const searchTerms = SLUG_TO_SEARCH[profileIdOrUserId.toLowerCase()];
+      if (searchTerms && searchTerms.length > 0) {
+        profile = await this.prisma.streamerProfile.findFirst({
+          where: {
+            kycStatus: KycStatus.APPROVED,
+            user: {
+              OR: searchTerms.map((term) => ({
+                name: { contains: term, mode: 'insensitive' },
+              })),
+            },
+          },
+          include: {
+            user: {
+              select: { id: true, name: true, avatarUrl: true, createdAt: true },
+            },
+            _count: { select: { followers: true } },
+          },
+        });
+      }
+    }
 
     if (!profile) throw new NotFoundException('Verified streamer profile not found');
 

@@ -12,15 +12,27 @@ import {
   Radio,
   AlertCircle,
   Clock,
+  Flame,
+  CheckCircle2,
 } from 'lucide-react';
 import {
   OmIcon,
   DiyaIcon,
+  CoinIcon,
+  PranamIcon,
   VerifiedPanditBadge,
 } from '@/components/icons/SpiritualIcons';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import SevaBookingModal from '@/components/SevaBookingModal';
+import {
+  COMPREHENSIVE_POOJA_CATALOG,
+  PANDIT_PRICING_CATALOG,
+  PoojaItem,
+  getPanditDakshinaForPooja,
+} from '@/data/poojaCatalog';
+import { formatInrFromCoins } from '@/lib/economy';
 
 interface PanditData {
   id?: string;
@@ -55,7 +67,22 @@ const CURATED_SHOWCASE: Record<string, PanditData> = {
     temple: 'Delhi Mandir Parampara & Shubhdarshan Foundation',
     followerCount: 1420,
     isCurated: true,
-    upcoming: [],
+    upcoming: [
+      {
+        id: 'navgrah-shanti',
+        title: 'Navgrah Shanti & Vedic Kundli Remedial Pooja',
+        category: 'Astrology & Kundli',
+        time: 'Daily • 07:30 AM IST',
+        isLive: false,
+      },
+      {
+        id: 'vivah-sanskar-muhurat',
+        title: 'Vedic Vivah Sanskar & Matrimonial Muhurat Aradhana',
+        category: 'Astrology & Kundli',
+        time: 'Today • 06:00 PM IST',
+        isLive: true,
+      },
+    ],
   },
   'santosh-shastri': {
     name: 'पंडित संतोष कुमार शास्त्री',
@@ -68,7 +95,22 @@ const CURATED_SHOWCASE: Record<string, PanditData> = {
     temple: 'Delhi Sanatan Tradition Sanctuary',
     followerCount: 1280,
     isCurated: true,
-    upcoming: [],
+    upcoming: [
+      {
+        id: 'vastu-purusha-pujan',
+        title: 'Vastu Purusha Pujan & Griha Shanti Hawan',
+        category: 'Vastu & Hawan',
+        time: 'Daily • 08:00 AM IST',
+        isLive: false,
+      },
+      {
+        id: 'sandhya-aarti',
+        title: 'Sandhya Deepotsav & Divine Aarti',
+        category: 'Aarti & Darshan',
+        time: 'Today • 06:30 PM IST',
+        isLive: true,
+      },
+    ],
   },
   'ravi-pathak': {
     name: 'पंडित रवि पाठक',
@@ -81,7 +123,22 @@ const CURATED_SHOWCASE: Record<string, PanditData> = {
     temple: 'Vedic Karmakand Parampara',
     followerCount: 920,
     isCurated: true,
-    upcoming: [],
+    upcoming: [
+      {
+        id: 'ganesh-riddhi-siddhi',
+        title: 'Ganesh Riddhi-Siddhi Aradhana & Shanti Path',
+        category: 'Pooja',
+        time: 'Daily • 09:00 AM IST',
+        isLive: false,
+      },
+      {
+        id: 'maha-yagya-anushthan',
+        title: 'Maha Yagya & Vedic Karmakand Anushthan',
+        category: 'Havans & Yagyas',
+        time: 'Tomorrow • 07:00 AM IST',
+        isLive: false,
+      },
+    ],
   },
   'nitin-sharma': {
     name: 'पंडित नितिन शर्मा',
@@ -94,7 +151,22 @@ const CURATED_SHOWCASE: Record<string, PanditData> = {
     temple: 'Shukla Yajurveda Shanti Parampara',
     followerCount: 810,
     isCurated: true,
-    upcoming: [],
+    upcoming: [
+      {
+        id: 'sunderkand-path',
+        title: 'Sampoorna Sunderkand Path & Hanuman Chalisa Mahajaap',
+        category: 'Katha & Path',
+        time: 'Today • 05:30 PM IST',
+        isLive: true,
+      },
+      {
+        id: 'shukla-yajurveda-shanti',
+        title: 'Shukla Yajurveda Shanti Anushthan',
+        category: 'Karmakand',
+        time: 'Tomorrow • 08:00 AM IST',
+        isLive: false,
+      },
+    ],
   },
   'umesh-shastri': {
     name: 'पंडित उमेश शास्त्री',
@@ -107,7 +179,22 @@ const CURATED_SHOWCASE: Record<string, PanditData> = {
     temple: 'Shiva Shakti Sanctum Parampara',
     followerCount: 1050,
     isCurated: true,
-    upcoming: [],
+    upcoming: [
+      {
+        id: 'rudrabhishek-live',
+        title: 'Maha Rudrabhishek & Shiva Sahasranama Aradhana',
+        category: 'Rudrabhishek',
+        time: 'Today • 06:00 PM IST',
+        isLive: true,
+      },
+      {
+        id: 'durga-saptashati-navchandi',
+        title: 'Durga Saptashati & Navchandi Mahapooja',
+        category: 'Devi Pooja',
+        time: 'Tomorrow • 07:30 AM IST',
+        isLive: false,
+      },
+    ],
   },
   'kuber-tripathi': {
     name: 'आचार्य कुबेर दत्त त्रिपाठी',
@@ -120,7 +207,22 @@ const CURATED_SHOWCASE: Record<string, PanditData> = {
     temple: 'Sanatan Jyotish Vidya Peeth',
     followerCount: 890,
     isCurated: true,
-    upcoming: [],
+    upcoming: [
+      {
+        id: 'bhajan-sandhya-deepotsav',
+        title: 'Devotional Bhajan Sandhya & Deepotsav Aarti',
+        category: 'Kirtan & Bhajan',
+        time: 'Today • 07:00 PM IST',
+        isLive: true,
+      },
+      {
+        id: 'jyotish-grah-shanti',
+        title: 'Jyotish Grah Shanti & Vedic Muhurat Session',
+        category: 'Astrology & Kundli',
+        time: 'Tomorrow • 08:30 AM IST',
+        isLive: false,
+      },
+    ],
   },
   'subhash-shastri': {
     name: 'पंडित सुभाष शास्त्री',
@@ -133,7 +235,22 @@ const CURATED_SHOWCASE: Record<string, PanditData> = {
     temple: 'Sanatan Dharmarth Vidhi Parampara',
     followerCount: 960,
     isCurated: true,
-    upcoming: [],
+    upcoming: [
+      {
+        id: 'satyanarayan-vrat-katha',
+        title: 'Sri Satyanarayan Vrat Katha & Purnima Mahapooja',
+        category: 'Vedic Kathas',
+        time: 'Daily • 10:00 AM IST',
+        isLive: false,
+      },
+      {
+        id: 'navgrah-durga-saptashati',
+        title: 'Navgrah Poojan & Durga Saptashati Recitation',
+        category: 'Pooja & Hawan',
+        time: 'Tomorrow • 09:00 AM IST',
+        isLive: false,
+      },
+    ],
   },
   'aarav-sharma': {
     name: 'Pandit Aarav Sharma',
@@ -189,6 +306,16 @@ const CURATED_SHOWCASE: Record<string, PanditData> = {
   },
 };
 
+const PANDIT_POOJA_MAP: Record<string, string[]> = {
+  'rohit-tiwari': ['kundli_matching', 'vivah_varshikotsav', 'mangal_dosh_shanti', 'navgrah', 'dasha_remedies'],
+  'santosh-shastri': ['griha_pravesh_vastu', 'kundli_matching', 'navgrah', 'shani_sade_sati', 'kaal_sarp_dosh'],
+  'ravi-pathak': ['gayatri_yagya', 'lakshmi_kuber_havan', 'family_sankalp', 'pitru_tarpana'],
+  'nitin-sharma': ['sundarkand', 'ramayan_chopai', 'bhagwat_geeta_path', 'gayatri_yagya'],
+  'umesh-shastri': ['rudrabhishek', 'mahamrityunjaya', 'laghurudra', 'chandi_havan', 'somwar_vrat'],
+  'kuber-tripathi': ['family_sankalp', 'lakshmi_kuber_havan', 'navgrah', 'dasha_remedies'],
+  'subhash-shastri': ['satyanarayan_katha', 'chandi_havan', 'navgrah', 'rudrabhishek'],
+};
+
 export default function PanditProfileClient() {
   const router = useRouter();
   const toast = useToast();
@@ -213,6 +340,8 @@ export default function PanditProfileClient() {
   const [followingAction, setFollowingAction] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
+  const [bookingModalOpen, setBookingModalOpen] = useState(false);
+  const [selectedBookingSevaId, setSelectedBookingSevaId] = useState<string | undefined>();
 
   useEffect(() => {
     if (pandit?.name) {
@@ -244,6 +373,7 @@ export default function PanditProfileClient() {
     setNotFound(false);
 
     async function loadProfile() {
+      const curated = CURATED_SHOWCASE[id];
       try {
         // N-07: Query real backend streamer profile
         const res = await apiFetch(`/streamers/profile/${id}`);
@@ -255,34 +385,43 @@ export default function PanditProfileClient() {
             ? prof.followers.some((f: any) => f.followerId === currentUser.id)
             : false;
 
+          const apiStreams = (res.streams || []).map((s: any) => ({
+            id: s.id,
+            title: s.title,
+            category: s.category?.name || 'Pooja',
+            time: s.scheduledAt
+              ? new Date(s.scheduledAt).toLocaleString('en-IN', {
+                  timeZone: 'Asia/Kolkata',
+                  dateStyle: 'medium',
+                  timeStyle: 'short',
+                })
+              : 'Live Broadcast',
+            isLive: s.status === 'LIVE',
+          }));
+
+          const combinedUpcoming = apiStreams.length > 0 ? apiStreams : (curated?.upcoming || []);
+
           setPandit({
             id: prof.id,
-            name: prof.name || 'Vedic Pandit',
-            title: prof.templeAffiliation ? `${prof.templeAffiliation} Acharya` : 'Verified Vedic Acharya',
-            experience: prof.experienceYears ? `${prof.experienceYears} Years Seva` : 'Traditional Lineage',
-            specialties: prof.specialties || [],
-            languages: prof.languages || ['Hindi', 'Sanskrit'],
-            image: prof.avatarUrl || '/images/photo-1543934776-32d1cc654abb.webp',
-            bio: prof.bio || 'Vedic Acharya consecrated to daily Darshan and sacred Pooja rituals.',
-            temple: prof.templeAffiliation || 'Vedic Tradition Sanctuary',
-            followerCount: prof.followerCount || 0,
+            name: prof.name || curated?.name || 'Vedic Pandit',
+            title: curated?.title || (prof.templeAffiliation ? `${prof.templeAffiliation} Acharya` : 'Verified Vedic Acharya'),
+            experience: curated?.experience || (prof.experienceYears ? `${prof.experienceYears} Years Seva` : 'Traditional Lineage'),
+            specialties: (prof.specialties && prof.specialties.length > 0) ? prof.specialties : (curated?.specialties || []),
+            languages: (prof.languages && prof.languages.length > 0) ? prof.languages : (curated?.languages || ['Hindi', 'Sanskrit']),
+            image: curated?.image || prof.avatarUrl || '/images/pandits/pandit-rohit-tiwari.webp',
+            bio: curated?.bio || prof.bio || 'Vedic Acharya consecrated to daily Darshan and sacred Pooja rituals.',
+            temple: curated?.temple || prof.templeAffiliation || 'Vedic Tradition Sanctuary',
+            followerCount: prof.followerCount || curated?.followerCount || 0,
             isCurated: false,
-            upcoming: (res.streams || []).map((s: any) => ({
-              id: s.id,
-              title: s.title,
-              category: s.category?.name || 'Pooja',
-              time: s.scheduledAt ? new Date(s.scheduledAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : 'Live Broadcast',
-              isLive: s.status === 'LIVE',
-            })),
+            upcoming: combinedUpcoming,
           });
           setIsFollowing(userFollowed);
-          setFollowerCount(prof.followerCount || 0);
+          setFollowerCount(prof.followerCount || curated?.followerCount || 0);
           setLoading(false);
           return;
         }
       } catch (err: any) {
         // Fallback check against curated lineage tradition items
-        const curated = CURATED_SHOWCASE[id];
         if (curated) {
           if (!isMounted) return;
           setPandit(curated);
@@ -381,6 +520,23 @@ export default function PanditProfileClient() {
       </div>
     );
   }
+
+  const panditPricing =
+    PANDIT_PRICING_CATALOG.find(
+      (p) =>
+        p.panditId === id ||
+        p.name.toLowerCase().includes(id.toLowerCase()) ||
+        (id === 'rohit-tiwari' && p.name.includes('रोहित')) ||
+        (id === 'santosh-shastri' && p.name.includes('संतोष')) ||
+        (id === 'ravi-pathak' && p.name.includes('रवि')) ||
+        (id === 'nitin-sharma' && p.name.includes('नितिन')) ||
+        (id === 'umesh-shastri' && p.name.includes('उमेश')) ||
+        (id === 'kuber-tripathi' && p.name.includes('कुबेर')) ||
+        (id === 'subhash-shastri' && p.name.includes('सुभाष'))
+    ) || PANDIT_PRICING_CATALOG[0];
+
+  const relevantPoojaIds = PANDIT_POOJA_MAP[id] || ['rudrabhishek', 'kundli_matching', 'satyanarayan_katha', 'navgrah'];
+  const specializedPoojas = COMPREHENSIVE_POOJA_CATALOG.filter((p) => relevantPoojaIds.includes(p.id));
 
   return (
     <div className="min-h-screen bg-obsidian text-foreground py-10 relative overflow-hidden">
@@ -537,6 +693,96 @@ export default function PanditProfileClient() {
             </div>
           )}
         </div>
+
+        {/* Book Personalized Pooja Section */}
+        <div className="space-y-6 pt-6 mt-8 border-t border-gold/15">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gold/10 border border-gold/25 text-[10px] font-bold text-gold-soft uppercase tracking-wider mb-1.5">
+                <Sparkles className="w-3 h-3 text-gold" /> Personalized Sankalp Sevas
+              </div>
+              <h2 className="font-serif text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+                <Flame className="w-5 h-5 text-amber-500" />
+                <span>Book Personalized Pooja with this Pandit</span>
+              </h2>
+              <p className="text-xs text-stone-400 mt-1">
+                Conducted with authentic Gotra chanting and family Sankalp via private interactive darshan.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {specializedPoojas.map((pooja) => {
+              const dakshinaCoins = getPanditDakshinaForPooja(panditPricing, pooja);
+              return (
+                <div
+                  key={pooja.id}
+                  className="rounded-2xl bg-obsidian-soft border border-gold/20 hover:border-gold/50 p-5 shadow-lg flex flex-col justify-between gap-4 transition group"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded">
+                        {pooja.category}
+                      </span>
+                      <span className="text-[11px] text-stone-400 font-semibold flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5 text-gold-soft" />
+                        {pooja.duration}
+                      </span>
+                    </div>
+
+                    <div>
+                      <h3 className="font-serif text-base sm:text-lg font-bold text-white group-hover:text-amber-200 transition">
+                        {pooja.name}
+                      </h3>
+                      {pooja.hindiName && (
+                        <p className="text-xs text-gold-soft font-serif font-medium mt-0.5">
+                          {pooja.hindiName}
+                        </p>
+                      )}
+                    </div>
+
+                    <p className="text-xs text-stone-300 leading-relaxed">
+                      {pooja.description}
+                    </p>
+
+                    <div className="pt-1 flex items-center gap-1.5 text-[11px] text-stone-400">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>{pooja.mantraTradition}</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-gold/10 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-7 h-7 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-300">
+                        <CoinIcon size={14} />
+                      </div>
+                      <div>
+                        <div className="text-sm font-black text-amber-200">
+                          {dakshinaCoins} Coins
+                        </div>
+                        <div className="text-[10px] text-stone-400">
+                          ≈ {formatInrFromCoins(dakshinaCoins)}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedBookingSevaId(pooja.id);
+                        setBookingModalOpen(true);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold transition shadow-md hover:scale-[1.02]"
+                    >
+                      <DiyaIcon size={14} />
+                      <span>Book Pooja (संकल्प लें)</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       <ConfirmDialog
@@ -551,6 +797,13 @@ export default function PanditProfileClient() {
           router.push(`/login?redirect=/pandit/${id}`);
         }}
         onCancel={() => setLoginPromptOpen(false)}
+      />
+
+      <SevaBookingModal
+        isOpen={bookingModalOpen}
+        onClose={() => setBookingModalOpen(false)}
+        initialSevaId={selectedBookingSevaId}
+        initialPanditId={id}
       />
     </div>
   );
