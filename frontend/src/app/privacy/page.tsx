@@ -44,7 +44,7 @@ export default function PrivacyPage() {
               Under the DPDP Act 2023, <strong>Shubhdarshan Devotional Media Private Limited</strong> acts as the <strong>Data Fiduciary</strong> responsible for determining the purpose and means of processing your personal data.
             </p>
             <div className="mt-3 p-3 bg-stone-950 border border-stone-800 rounded-xl text-xs space-y-1">
-              <div><strong>Registered Office:</strong> Level 5, Lotus Spiritual Tower, Andheri East, Mumbai, Maharashtra 400069, India</div>
+              <div><strong>Registered Office:</strong> Suite 402, Sacred Heights, Barakhamba Road, Connaught Place, New Delhi 110001, India</div>
               <div><strong>Data Protection Officer (DPO):</strong> Acharya Devrat Sharma</div>
               <div><strong>Dedicated DPO Email:</strong> privacy@shubhdarshan.com</div>
             </div>
