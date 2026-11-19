@@ -77,7 +77,11 @@ export default function ContactPage() {
             <h3 className="text-sm font-bold text-stone-900 dark:text-white mb-1">Devotee Support Desk</h3>
             <p className="text-xs text-stone-600 dark:text-stone-400 mb-2">Support hours: 6:00 AM – 10:00 PM IST daily:</p>
             <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-              +91 11 4019 7800
+              +91-92122-83098
+            </span>
+            <br />
+            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+              +91-96708-42038 (WhatsApp)
             </span>
           </div>
 
@@ -88,8 +92,8 @@ export default function ContactPage() {
             <h3 className="text-sm font-bold text-stone-900 dark:text-white mb-1">Registered Office</h3>
             <p className="text-xs text-stone-400">
               Shubhdarshan Devotional Media Pvt. Ltd.<br />
-              Suite 402, Sacred Heights, Barakhamba Road, Connaught Place,<br />
-              New Delhi 110001, India
+              Rohini Sector 15, Rohini,<br />
+              Delhi 110089, India
             </p>
           </div>
         </div>

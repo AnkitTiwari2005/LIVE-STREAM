@@ -18,6 +18,7 @@ import {
   Search,
   CheckCircle2,
   Orbit,
+  HeartHandshake,
 } from 'lucide-react';
 import { CoinTopupModal } from './CoinTopupModal';
 import { SearchPalette } from './SearchPalette';
@@ -32,9 +33,11 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
+  const [kundliDropdownOpen, setKundliDropdownOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const moreDropdownRef = useRef<HTMLDivElement>(null);
+  const kundliDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -43,6 +46,9 @@ export function Navbar() {
       }
       if (moreDropdownRef.current && !moreDropdownRef.current.contains(event.target as Node)) {
         setMoreDropdownOpen(false);
+      }
+      if (kundliDropdownRef.current && !kundliDropdownRef.current.contains(event.target as Node)) {
+        setKundliDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -252,13 +258,56 @@ export function Navbar() {
               <DiyaIcon size={13} />
               <span>Book Pooja</span>
             </Link>
-            <Link
-              href="/kundli"
-              className="hidden 2xl:flex whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5 items-center gap-1"
-            >
-              <Orbit className="w-3.5 h-3.5" />
-              <span>Kundli</span>
-            </Link>
+            {/* Kundli Dropdown — always visible in desktop nav */}
+            <div className="relative shrink-0" ref={kundliDropdownRef}>
+              <button
+                onClick={() => setKundliDropdownOpen(!kundliDropdownOpen)}
+                className="whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5 flex items-center gap-1 font-semibold text-stone-300"
+                aria-label="Kundli & Astrology"
+              >
+                <Orbit className="w-3.5 h-3.5 text-gold-soft" />
+                <span>Kundli</span>
+                <ChevronDown className={`w-3 h-3 text-gold-soft transition-transform ${kundliDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {kundliDropdownOpen && (
+                <div className="navbar-more-dropdown absolute left-0 top-full mt-2 w-60 rounded-2xl p-2 z-[9999] text-xs bg-obsidian-soft border border-gold/25 shadow-2xl backdrop-blur-xl">
+                  <Link
+                    href="/kundli"
+                    onClick={() => setKundliDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
+                  >
+                    <Orbit className="w-3.5 h-3.5 text-gold shrink-0" />
+                    <div>
+                      <div className="font-semibold">Check Your Horoscope</div>
+                      <div className="text-[10px] text-stone-400">Free Kundli & birth chart analysis</div>
+                    </div>
+                  </Link>
+                  <Link
+                    href="/kundli?tab=matching"
+                    onClick={() => setKundliDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
+                  >
+                    <HeartHandshake className="w-3.5 h-3.5 text-gold shrink-0" />
+                    <div>
+                      <div className="font-semibold">Kundli Matching</div>
+                      <div className="text-[10px] text-stone-400">Compatibility & Ashtakoota Milan</div>
+                    </div>
+                  </Link>
+                  <Link
+                    href="/pooja"
+                    onClick={() => setKundliDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
+                  >
+                    <Calendar className="w-3.5 h-3.5 text-gold shrink-0" />
+                    <div>
+                      <div className="font-semibold">Book a Personal Astrologer</div>
+                      <div className="text-[10px] text-stone-400">1-on-1 Vedic guidance with a verified pandit</div>
+                    </div>
+                  </Link>
+                </div>
+              )}
+            </div>
             <Link
               href="/#upcoming"
               className="whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5"
@@ -285,14 +334,6 @@ export function Navbar() {
 
               {moreDropdownOpen && (
                 <div className="navbar-more-dropdown absolute left-0 top-full mt-2 w-52 rounded-2xl p-2 z-[9999] text-xs bg-obsidian-soft border border-gold/25 shadow-2xl backdrop-blur-xl">
-                  <Link
-                    href="/kundli"
-                    onClick={() => setMoreDropdownOpen(false)}
-                    className="2xl:hidden flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
-                  >
-                    <Orbit className="w-3.5 h-3.5 text-gold shrink-0" />
-                    <span>Free Kundli</span>
-                  </Link>
                   <Link
                     href="/about"
                     onClick={() => setMoreDropdownOpen(false)}
@@ -579,14 +620,17 @@ export function Navbar() {
               >
                 Verified Pandits Directory
               </Link>
-              <Link
-                href="/kundli"
-                onClick={() => setMobileMenuOpen(false)}
-                className="mobile-nav-link flex items-center gap-2 font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
-              >
-                <Orbit className="w-4 h-4 text-amber-700 dark:text-amber-400" />
-                <span>Free Kundli</span>
-              </Link>
+              <div className="border-b border-stone-200 dark:border-stone-800/60">
+                <div className="mobile-nav-link font-bold py-1.5 flex items-center gap-2 text-stone-800 dark:text-stone-200">
+                  <Orbit className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+                  <span>Kundli & Astrology</span>
+                </div>
+                <div className="ml-6 pb-1 space-y-1">
+                  <Link href="/kundli" onClick={() => setMobileMenuOpen(false)} className="block text-xs text-stone-600 dark:text-stone-400 hover:text-amber-700 dark:hover:text-gold py-1 transition">🔮 Check Your Horoscope</Link>
+                  <Link href="/kundli?tab=matching" onClick={() => setMobileMenuOpen(false)} className="block text-xs text-stone-600 dark:text-stone-400 hover:text-amber-700 dark:hover:text-gold py-1 transition">💑 Kundli Matching</Link>
+                  <Link href="/pooja" onClick={() => setMobileMenuOpen(false)} className="block text-xs text-stone-600 dark:text-stone-400 hover:text-amber-700 dark:hover:text-gold py-1 transition">🗓️ Book a Personal Astrologer</Link>
+                </div>
+              </div>
               <Link
                 href="/about"
                 onClick={() => setMobileMenuOpen(false)}

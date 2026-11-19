@@ -14,18 +14,227 @@ import {
   Video,
   Clock,
   ArrowRight,
+  SlidersHorizontal,
+  X as XIcon,
 } from 'lucide-react';
 import { VerifiedPanditBadge } from '@/components/icons/SpiritualIcons';
 import { apiFetch } from '@/lib/api';
 
+// ─── Predefined Lists ───────────────────────────────────────────────────────
+
+const LANGUAGE_OPTIONS = [
+  'Hindi', 'Sanskrit', 'English', 'Tamil', 'Telugu', 'Kannada',
+  'Malayalam', 'Bengali', 'Marathi', 'Punjabi', 'Gujarati', 'Odia',
+  'Assamese', 'Urdu', 'Maithili', 'Konkani', 'Dogri', 'Kashmiri',
+  'Manipuri', 'Sindhi', 'Nepali', 'Bodo', 'Santhali',
+];
+
+const SPECIALTY_OPTIONS = [
+  'Vedic Pooja', 'Kundli Matching / Astrology', 'Vastu Consultation',
+  'Havan & Yagya', 'Marriage Rituals', 'Satyanarayan Katha',
+  'Rudrabhishek', 'Navagraha Puja', 'Griha Pravesh',
+  'Naming Ceremony (Naamkaran)', 'Pitru Paksha Rituals', 'Ganesh Puja',
+  'Lakshmi Puja', 'Durga Puja', 'Shiv Puja', 'Surya Puja',
+  'Planetary Remedies', 'Numerology', 'Palmistry',
+  'Tarot & Prashna Jyotish',
+];
+
+// ─── Upload slot definition ──────────────────────────────────────────────────
+
+interface UploadSlot {
+  id: string;
+  label: string;
+  hint: string;
+  required: boolean;
+  documentType: string;
+  accept: string;
+}
+
+const UPLOAD_SLOTS: UploadSlot[] = [
+  {
+    id: 'photograph',
+    label: 'Upload Your Photograph',
+    hint: 'Clear recent passport-size photo (JPG/PNG)',
+    required: true,
+    documentType: 'PAN_OR_CERTIFICATE',
+    accept: 'image/*',
+  },
+  {
+    id: 'pan',
+    label: 'Upload Your PAN Card',
+    hint: 'Government-issued PAN Card (JPG/PNG/PDF)',
+    required: true,
+    documentType: 'PAN_CARD',
+    accept: 'image/*,application/pdf',
+  },
+  {
+    id: 'id',
+    label: 'Upload Aadhaar / Any Other Legal ID Proof',
+    hint: 'Mask your Aadhaar number. Passport or Voter ID also accepted.',
+    required: true,
+    documentType: 'AADHAAR',
+    accept: 'image/*,application/pdf',
+  },
+  {
+    id: 'degree',
+    label: 'Upload Degree / Qualification Certificate',
+    hint: 'Vedic academy degree or certified astrology diploma (optional)',
+    required: false,
+    documentType: 'DEGREE_CERTIFICATE',
+    accept: 'image/*,application/pdf',
+  },
+];
+
+// ─── Multi-select pill component ─────────────────────────────────────────────
+
+function PillSelect({
+  options,
+  selected,
+  onChange,
+  label,
+  required,
+}: {
+  options: string[];
+  selected: string[];
+  onChange: (val: string[]) => void;
+  label: string;
+  required?: boolean;
+}) {
+  const toggle = (opt: string) => {
+    if (selected.includes(opt)) {
+      onChange(selected.filter((s) => s !== opt));
+    } else {
+      onChange([...selected, opt]);
+    }
+  };
+
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-stone-300 mb-2">
+        {label} {required && <span className="text-gold">*</span>}
+      </label>
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {selected.map((s) => (
+            <span
+              key={s}
+              className="flex items-center gap-1 px-2.5 py-1 bg-gold/20 border border-gold/40 rounded-full text-[11px] font-semibold text-gold-pale"
+            >
+              {s}
+              <button
+                type="button"
+                onClick={() => toggle(s)}
+                className="ml-0.5 text-gold/60 hover:text-gold transition"
+              >
+                <XIcon className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="flex flex-wrap gap-1.5 p-3 bg-obsidian border border-gold/20 rounded-xl max-h-44 overflow-y-auto">
+        {options
+          .filter((o) => !selected.includes(o))
+          .map((opt) => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => toggle(opt)}
+              className="px-2.5 py-1 rounded-full border border-stone-700 bg-obsidian-soft text-stone-300 hover:border-gold/50 hover:text-gold-pale text-[11px] transition"
+            >
+              {opt}
+            </button>
+          ))}
+        {options.filter((o) => !selected.includes(o)).length === 0 && (
+          <span className="text-[11px] text-stone-500 italic">All options selected</span>
+        )}
+      </div>
+      {selected.length === 0 && required && (
+        <p className="mt-1 text-[10px] text-stone-500">Select at least one option</p>
+      )}
+    </div>
+  );
+}
+
+// ─── Single upload zone ──────────────────────────────────────────────────────
+
+function UploadZone({
+  slot,
+  storageKey,
+  uploading,
+  onUpload,
+}: {
+  slot: UploadSlot;
+  storageKey: string | null;
+  uploading: boolean;
+  onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-stone-300">
+          {slot.label}
+          {slot.required ? (
+            <span className="text-gold ml-1">*</span>
+          ) : (
+            <span className="text-stone-500 ml-1 font-normal">(optional)</span>
+          )}
+        </span>
+        {storageKey && (
+          <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3" /> Attached
+          </span>
+        )}
+      </div>
+      <label
+        className={`flex items-center justify-center gap-2 p-3 border border-dashed rounded-xl cursor-pointer transition ${
+          storageKey
+            ? 'border-emerald-500/50 bg-emerald-950/20'
+            : 'border-gold/30 hover:border-gold bg-obsidian-soft'
+        } ${uploading ? 'opacity-60 cursor-not-allowed' : ''}`}
+      >
+        {storageKey ? (
+          <FileText className="w-4 h-4 text-emerald-400" />
+        ) : (
+          <UploadCloud className="w-4 h-4 text-gold" />
+        )}
+        <span className="text-xs text-stone-300">
+          {uploading
+            ? 'Uploading securely...'
+            : storageKey
+            ? 'Uploaded — click to replace'
+            : slot.hint}
+        </span>
+        <input
+          type="file"
+          onChange={onUpload}
+          accept={slot.accept}
+          className="hidden"
+          disabled={uploading}
+        />
+      </label>
+    </div>
+  );
+}
+
+// ─── Main Page ───────────────────────────────────────────────────────────────
+
 export default function StreamerApplyPage() {
   const router = useRouter();
   const [bio, setBio] = useState('');
-  const [languages, setLanguages] = useState('Hindi, Sanskrit, English');
-  const [specialties, setSpecialties] = useState('Vedic Pooja, Kundli Matching, Vastu Consultation');
-  const [documentKey, setDocumentKey] = useState<string | null>(null);
-  const [documentUrl, setDocumentUrl] = useState<string | null>(null);
-  const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['Hindi', 'Sanskrit', 'English']);
+  const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>(['Vedic Pooja', 'Kundli Matching / Astrology', 'Vastu Consultation']);
+  const [experienceYears, setExperienceYears] = useState(5);
+
+  // 4 upload slots
+  const [uploadKeys, setUploadKeys] = useState<Record<string, string | null>>({
+    photograph: null,
+    pan: null,
+    id: null,
+    degree: null,
+  });
+  const [uploadingSlot, setUploadingSlot] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +269,6 @@ export default function StreamerApplyPage() {
         } catch {}
       }
 
-      // Query current profile status from backend to verify if already applied
       apiFetch('/streamers/me')
         .then((profile) => {
           if (profile?.user?.role === 'STREAMER' || profile?.kycStatus === 'APPROVED') {
@@ -79,24 +287,26 @@ export default function StreamerApplyPage() {
     }
   }, []);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    slotId: string,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setError(null);
-    setUploadingDoc(true);
+    setUploadingSlot(slotId);
 
     const token = localStorage.getItem('pooja_token');
     if (!token) {
       setError('Please sign in before uploading verification documents');
-      setUploadingDoc(false);
+      setUploadingSlot(null);
       return;
     }
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
-      // 1. Get presigned upload URL with Bearer token (B-12)
       const preRes = await fetch(`${apiUrl}/storage/presigned-url`, {
         method: 'POST',
         headers: {
@@ -113,20 +323,18 @@ export default function StreamerApplyPage() {
       const preData = await preRes.json();
       if (!preRes.ok) throw new Error(preData.message || 'Failed to obtain upload token');
 
-      // 2. Upload file binary
       const upRes = await fetch(preData.uploadUrl, {
         method: 'PUT',
         body: file,
       });
 
-      if (!upRes.ok) throw new Error('Failed to upload credential document');
+      if (!upRes.ok) throw new Error('Failed to upload document');
 
-      setDocumentKey(preData.storageKey);
-      setDocumentUrl(preData.publicUrl);
+      setUploadKeys((prev) => ({ ...prev, [slotId]: preData.storageKey }));
     } catch (err: any) {
       setError(err.message || 'File upload failed');
     } finally {
-      setUploadingDoc(false);
+      setUploadingSlot(null);
     }
   };
 
@@ -134,9 +342,21 @@ export default function StreamerApplyPage() {
     e.preventDefault();
     setError(null);
 
-    if (!documentKey) {
-      setError('Please upload your Vedic certification or government ID document for KYC verification');
+    if (selectedLanguages.length === 0) {
+      setError('Please select at least one language');
       return;
+    }
+    if (selectedSpecialties.length === 0) {
+      setError('Please select at least one sacred specialty');
+      return;
+    }
+
+    const requiredSlots = UPLOAD_SLOTS.filter((s) => s.required);
+    for (const slot of requiredSlots) {
+      if (!uploadKeys[slot.id]) {
+        setError(`Please upload: ${slot.label}`);
+        return;
+      }
     }
 
     setLoading(true);
@@ -149,6 +369,16 @@ export default function StreamerApplyPage() {
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+
+      // Build kycDocuments array from all uploaded slots
+      const kycDocuments = UPLOAD_SLOTS.filter((slot) => uploadKeys[slot.id]).map((slot) => ({
+        documentType: slot.documentType,
+        storageKey: uploadKeys[slot.id],
+      }));
+
+      // Prepend experience to bio
+      const bioWithExp = `[${experienceYears} year${experienceYears !== 1 ? 's' : ''} of experience] ${bio}`.trim();
+
       const res = await fetch(`${apiUrl}/streamers/apply`, {
         method: 'POST',
         headers: {
@@ -156,13 +386,10 @@ export default function StreamerApplyPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          bio,
-          languages: languages.split(',').map((s) => s.trim()).filter(Boolean),
-          specialties: specialties.split(',').map((s) => s.trim()).filter(Boolean),
-          // N-01: documentType must match one of the allowed values in KycDocDto @IsIn list.
-          // publicUrl is NOT sent — it is a forbidden extra property (forbidNonWhitelisted).
-          // The storageKey is the value returned by the presigned-upload endpoint (kyc/<userId>_<random>.<ext>).
-          kycDocuments: documentKey ? [{ documentType: 'PAN_CARD', storageKey: documentKey }] : [],
+          bio: bioWithExp,
+          languages: selectedLanguages,
+          specialties: selectedSpecialties,
+          kycDocuments,
         }),
       });
 
@@ -192,7 +419,6 @@ export default function StreamerApplyPage() {
               <p className="text-xs text-stone-400">Verifying spiritual credentials...</p>
             </div>
           ) : existingRole === 'STREAMER' ? (
-            /* Already Verified Pandit State */
             <div className="text-center p-6 sm:p-8 space-y-4">
               <div className="p-3.5 bg-gold/15 text-gold border border-gold/30 rounded-3xl w-fit mx-auto shadow-lg shadow-gold/10">
                 <VerifiedPanditBadge size={44} />
@@ -201,7 +427,7 @@ export default function StreamerApplyPage() {
                 You are Already a Verified Vedic Pandit
               </h1>
               <p className="text-xs sm:text-sm text-stone-300 max-w-md mx-auto leading-relaxed">
-                Your account is already KYC verified and holds full live broadcasting privileges on Shubhdarshan. You do not need to re-apply.
+                Your account is already KYC verified and holds full live broadcasting privileges on Shubhdarshan.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
                 <Link
@@ -219,7 +445,6 @@ export default function StreamerApplyPage() {
               </div>
             </div>
           ) : existingRole === 'ADMIN' ? (
-            /* Administrator Account State */
             <div className="text-center p-6 sm:p-8 space-y-4">
               <div className="p-3 bg-amber-500/15 text-amber-400 border border-amber-500/30 rounded-2xl w-fit mx-auto">
                 <ShieldCheck className="w-8 h-8" />
@@ -241,7 +466,6 @@ export default function StreamerApplyPage() {
               </div>
             </div>
           ) : existingKycStatus === 'PENDING' ? (
-            /* Existing Application Under Review */
             <div className="text-center p-6 sm:p-8 space-y-4">
               <div className="p-3 bg-amber-500/15 text-amber-400 border border-amber-500/30 rounded-2xl w-fit mx-auto">
                 <Clock className="w-8 h-8" />
@@ -257,13 +481,12 @@ export default function StreamerApplyPage() {
                   href="/streamer/status"
                   className="inline-flex items-center gap-2 py-2.5 px-6 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs transition shadow"
                 >
-                  <span>View Application Status &amp; Updates</span>
+                  <span>View Application Status & Updates</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
             </div>
           ) : existingKycStatus === 'MORE_INFO_NEEDED' ? (
-            /* Additional Info Requested */
             <div className="text-center p-6 sm:p-8 space-y-4">
               <div className="p-3 bg-blue-500/15 text-blue-400 border border-blue-500/30 rounded-2xl w-fit mx-auto">
                 <AlertCircle className="w-8 h-8" />
@@ -285,7 +508,6 @@ export default function StreamerApplyPage() {
               </div>
             </div>
           ) : (
-            /* Standard Application Form for New Devotee Applicants */
             <>
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-3 bg-gold/10 text-gold border border-gold/30 rounded-2xl">
@@ -333,7 +555,7 @@ export default function StreamerApplyPage() {
                       className="w-full sm:w-auto py-2.5 px-6 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs transition-colors shadow flex items-center justify-center gap-2"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
-                      View Application Status &amp; Updates
+                      View Application Status & Updates
                     </Link>
                     <Link
                       href="/"
@@ -344,88 +566,92 @@ export default function StreamerApplyPage() {
                   </div>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form onSubmit={handleSubmit} className="space-y-6">
+
+                  {/* Vedic Bio */}
                   <div>
                     <label className="block text-xs font-semibold text-stone-300 mb-1.5">
-                      Vedic Bio &amp; Lineage *
+                      Vedic Bio & Lineage <span className="text-gold">*</span>
                     </label>
                     <textarea
                       required
                       rows={4}
                       value={bio}
                       onChange={(e) => setBio(e.target.value)}
-                      placeholder="Share your spiritual education, years conducting poojas, temples associated with, or astrology experience..."
+                      placeholder="Share your spiritual education, temples associated with, or astrology experience..."
                       className="w-full px-4 py-2.5 bg-obsidian border border-gold/20 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-gold transition"
                     />
                   </div>
 
+                  {/* Experience Slider */}
                   <div>
-                    <label className="block text-xs font-semibold text-stone-300 mb-1.5">
-                      Languages Spoken (comma separated) *
+                    <label className="block text-xs font-semibold text-stone-300 mb-3 flex items-center gap-2">
+                      <SlidersHorizontal className="w-3.5 h-3.5 text-gold-soft" />
+                      Years of Experience
+                      <span className="ml-auto text-gold font-bold text-sm">{experienceYears} yr{experienceYears !== 1 ? 's' : ''}</span>
                     </label>
                     <input
-                      type="text"
-                      required
-                      value={languages}
-                      onChange={(e) => setLanguages(e.target.value)}
-                      placeholder="Hindi, Sanskrit, English, Punjabi"
-                      className="w-full px-4 py-2 bg-obsidian border border-gold/20 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-gold transition"
+                      type="range"
+                      min={1}
+                      max={30}
+                      value={experienceYears}
+                      onChange={(e) => setExperienceYears(Number(e.target.value))}
+                      className="w-full h-2 rounded-full appearance-none cursor-pointer accent-amber-500"
+                      style={{
+                        background: `linear-gradient(to right, #d97706 0%, #d97706 ${((experienceYears - 1) / 29) * 100}%, #374151 ${((experienceYears - 1) / 29) * 100}%, #374151 100%)`,
+                      }}
                     />
+                    <div className="flex justify-between text-[10px] text-stone-500 mt-1">
+                      <span>1 yr</span>
+                      <span>15 yrs</span>
+                      <span>30 yrs</span>
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-stone-300 mb-1.5">
-                      Sacred Specialties (comma separated) *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={specialties}
-                      onChange={(e) => setSpecialties(e.target.value)}
-                      placeholder="Rudrabhishek, Navgrah Shanti, Kundli Match, Vastu"
-                      className="w-full px-4 py-2 bg-obsidian border border-gold/20 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-gold transition"
-                    />
-                  </div>
+                  {/* Languages Multi-select */}
+                  <PillSelect
+                    label="Languages Spoken"
+                    options={LANGUAGE_OPTIONS}
+                    selected={selectedLanguages}
+                    onChange={setSelectedLanguages}
+                    required
+                  />
 
-                  {/* Compliance Note regarding Aadhaar */}
-                  <div className="p-4 bg-obsidian border border-gold/15 rounded-2xl">
-                    <span className="text-xs font-semibold text-stone-300 flex items-center gap-1.5 mb-1">
-                      <ShieldCheck className="w-4 h-4 text-gold" /> Identity &amp; Certificate Verification
+                  {/* Specialties Multi-select */}
+                  <PillSelect
+                    label="Sacred Specialties"
+                    options={SPECIALTY_OPTIONS}
+                    selected={selectedSpecialties}
+                    onChange={setSelectedSpecialties}
+                    required
+                  />
+
+                  {/* Document Uploads */}
+                  <div className="p-4 bg-obsidian border border-gold/15 rounded-2xl space-y-4">
+                    <span className="text-xs font-semibold text-stone-300 flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-gold" /> Identity & Document Verification
                     </span>
-                    <p className="text-[11px] text-stone-400 leading-relaxed mb-3">
-                      Accepted proofs: Government PAN card, Vedic academy degree, or certified astrology diploma.
-                      <br />
-                      <span className="text-gold-soft font-medium">Important: Do NOT upload unmasked Aadhaar cards. Documents are deleted within 30 days of verification.</span>
+                    <p className="text-[11px] text-stone-400 leading-relaxed -mt-2">
+                      Upload clear copies of the documents below.{' '}
+                      <span className="text-gold-soft font-medium">
+                        Important: Do NOT upload unmasked Aadhaar cards. All documents are deleted within 30 days of verification.
+                      </span>
                     </p>
 
-                    <div className="flex flex-col gap-2">
-                      <label className="flex items-center justify-center gap-2 p-3 border border-dashed border-gold/30 hover:border-gold rounded-xl cursor-pointer bg-obsidian-soft transition">
-                        <UploadCloud className="w-4 h-4 text-gold" />
-                        <span className="text-xs text-stone-300">
-                          {uploadingDoc ? 'Uploading credential securely...' : 'Choose Certificate / ID Document'}
-                        </span>
-                        <input
-                          type="file"
-                          onChange={handleFileUpload}
-                          accept="image/*,application/pdf"
-                          className="hidden"
-                          disabled={uploadingDoc}
-                        />
-                      </label>
-
-                      {documentKey && (
-                        <div className="flex items-center gap-2 p-2 bg-obsidian-soft rounded-lg text-xs text-stone-300">
-                          <FileText className="w-3.5 h-3.5 text-emerald-400" />
-                          <span className="truncate flex-1 font-mono">{documentKey}</span>
-                          <span className="text-emerald-400 font-semibold text-[10px]">Attached ✓</span>
-                        </div>
-                      )}
-                    </div>
+                    {UPLOAD_SLOTS.map((slot) => (
+                      <UploadZone
+                        key={slot.id}
+                        slot={slot}
+                        storageKey={uploadKeys[slot.id]}
+                        uploading={uploadingSlot === slot.id}
+                        onUpload={(e) => handleFileUpload(slot.id, e)}
+                      />
+                    ))}
                   </div>
 
                   <button
                     type="submit"
-                    disabled={loading || uploadingDoc}
+                    disabled={loading || uploadingSlot !== null}
                     className="w-full py-3 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs sm:text-sm shadow-xl shadow-gold/20 transition-all disabled:opacity-50"
                   >
                     {loading ? 'Submitting Application...' : 'Submit Verification Profile'}
