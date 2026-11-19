@@ -690,6 +690,19 @@ export default function KundliPage() {
                   </button>
                 </div>
 
+                {(result.warnings.length > 0 || result.unavailable.length > 0 || !result.lagna) && (
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-200 space-y-1">
+                    {!result.lagna && (
+                      <p>Without a birth time the ascendant (lagna) and houses cannot be calculated. Sign-based details are shown.</p>
+                    )}
+                    {result.unavailable.includes('dasha') && <p>The dasha could not be loaded right now. Please try again later.</p>}
+                    {result.unavailable.includes('avakhada') && <p>The avakhada could not be loaded right now. Please try again later.</p>}
+                    {result.warnings.map((w) => (
+                      <p key={w}>{w}</p>
+                    ))}
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   <Stat label="Lagna (Ascendant)" value={result.lagna ? signName(result.lagna.sign, hindi) : 'Needs birth time'} sub={result.lagna ? `${formatDegree(result.lagna.degree)} · ${pretty(result.lagna.nakshatra)} pada ${result.lagna.pada ?? '-'}` : undefined} />
                   <Stat label="Moon sign (Rashi)" value={result.moon ? signName(result.moon.sign, hindi) : '-'} sub={result.moon ? `${pretty(result.moon.nakshatra)} pada ${result.moon.pada ?? '-'}` : undefined} />
@@ -810,6 +823,19 @@ export default function KundliPage() {
                   )}
                 </div>
 
+                {Object.keys(result.divisionalLagnas).length > 0 && (
+                  <div className={cardClass}>
+                    <h3 className="font-serif text-lg font-bold text-gold-pale mb-3">Divisional charts (ascendant sign)</h3>
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      {Object.entries(result.divisionalLagnas).map(([k, v]) => (
+                        <span key={k} className="px-3 py-1.5 rounded-full border border-gold/25 bg-gold/5 text-stone-200">
+                          <span className="font-bold text-gold-pale">{k}</span> {signName(v, hindi)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Consult verified pandit CTA */}
                 <div className="rounded-2xl border border-gold/25 bg-gradient-to-br from-gold/10 to-transparent p-6 text-center">
                   <h3 className="font-serif text-xl font-bold text-white">Want your Kundli analyzed by an Acharya?</h3>
@@ -825,6 +851,11 @@ export default function KundliPage() {
                     </Link>
                   </div>
                 </div>
+
+                <p className="text-[11px] text-stone-500 text-center leading-relaxed">
+                  Calculated with the {result.meta.ayanamsa ? pretty(result.meta.ayanamsa) : 'Lahiri'} ayanamsa using whole-sign houses.
+                  Astrology is offered for spiritual guidance and personal reflection, not as a substitute for medical, legal or financial advice.
+                </p>
               </div>
             )}
           </div>
@@ -859,6 +890,7 @@ export default function KundliPage() {
                       maxLength={60}
                       onChange={(e) => setNameA(e.target.value)}
                       placeholder="e.g. Rahul Sharma"
+                      aria-label="Partner 1 full name"
                       className={inputClass}
                     />
                   </div>
@@ -868,6 +900,7 @@ export default function KundliPage() {
                       <label className={labelClass}>Date of birth <span className="text-red-400">*</span></label>
                       <input
                         type="date"
+                        aria-label="Partner 1 date of birth"
                         value={dateA}
                         min="1900-01-01"
                         max={todayLocal()}
@@ -880,6 +913,7 @@ export default function KundliPage() {
                       <label className={labelClass}>Time of birth</label>
                       <input
                         type="time"
+                        aria-label="Partner 1 time of birth"
                         value={timeA}
                         disabled={unknownTimeA}
                         onChange={(e) => setTimeA(e.target.value)}
@@ -909,6 +943,7 @@ export default function KundliPage() {
                         setCandidatesA(null);
                       }}
                       placeholder="City, State (e.g. Delhi, India)"
+                      aria-label="Partner 1 place of birth"
                       className={inputClass}
                     />
                   </div>
@@ -950,6 +985,7 @@ export default function KundliPage() {
                       maxLength={60}
                       onChange={(e) => setNameB(e.target.value)}
                       placeholder="e.g. Priya Verma"
+                      aria-label="Partner 2 full name"
                       className={inputClass}
                     />
                   </div>
@@ -959,6 +995,7 @@ export default function KundliPage() {
                       <label className={labelClass}>Date of birth <span className="text-red-400">*</span></label>
                       <input
                         type="date"
+                        aria-label="Partner 2 date of birth"
                         value={dateB}
                         min="1900-01-01"
                         max={todayLocal()}
@@ -971,6 +1008,7 @@ export default function KundliPage() {
                       <label className={labelClass}>Time of birth</label>
                       <input
                         type="time"
+                        aria-label="Partner 2 time of birth"
                         value={timeB}
                         disabled={unknownTimeB}
                         onChange={(e) => setTimeB(e.target.value)}
@@ -1000,6 +1038,7 @@ export default function KundliPage() {
                         setCandidatesB(null);
                       }}
                       placeholder="City, State (e.g. Mumbai, Maharashtra)"
+                      aria-label="Partner 2 place of birth"
                       className={inputClass}
                     />
                   </div>

@@ -94,7 +94,7 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: '/logo.webp',
-    apple: '/logo.webp',
+    apple: '/logo.png',
   },
   robots: {
     index: true,

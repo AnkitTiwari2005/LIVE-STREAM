@@ -113,20 +113,14 @@ export class KundliService {
       if (err instanceof UnprocessableEntityException) {
         const resp: any = err.getResponse();
         if (resp?.code === 'place_ambiguous' && Array.isArray(resp?.candidates)) {
-          const firstCand = (resp.candidates[0]?.name || '').toLowerCase();
-          const qA = (dto.personA.placeQuery || '').toLowerCase();
-          const qB = (dto.personB.placeQuery || '').toLowerCase();
-
-          let target: 'personA' | 'personB' = 'personA';
-          if (dto.personA.placeId && !dto.personB.placeId) {
-            target = 'personB';
-          } else if (!dto.personA.placeId && dto.personB.placeId) {
-            target = 'personA';
-          } else if (firstCand && (qB.includes(firstCand) || firstCand.includes(qB.split(',')[0].trim()))) {
-            target = 'personB';
-          } else if (firstCand && (qA.includes(firstCand) || firstCand.includes(qA.split(',')[0].trim()))) {
-            target = 'personA';
-          }
+          // The API checks person A's place before person B's, so an ambiguity belongs to A unless A is
+          // already fixed by a place id. Trust an explicit upstream hint first; never guess from the text.
+          const target: 'personA' | 'personB' =
+            resp.target === 'personA' || resp.target === 'personB'
+              ? resp.target
+              : dto.personA.placeId
+                ? 'personB'
+                : 'personA';
 
           throw new UnprocessableEntityException({
             message: `More than one place matches for ${target === 'personB' ? (dto.personB.name || 'Partner 2') : (dto.personA.name || 'Partner 1')}. Please choose the location from the list.`,
@@ -204,6 +198,8 @@ export class KundliService {
     return {
       date,
       ...(dto.time ? { time: dto.time } : {}),
+      // Say explicitly when the time is not known, exactly as /kundli does; otherwise the API expects one.
+      time_accuracy: dto.time ? 'exact' : 'unknown',
       place: dto.placeId ? { place_id: dto.placeId } : { query: placeQuery },
       timezone: 'auto',
     };
@@ -345,7 +341,12 @@ export class KundliService {
 
   private mapMatch(env: AstroEnvelope) {
     const d = env.data ?? {};
-    const total = num(d.total) ?? 0;
+    // An answer without a score is a failed call, not "0 of 36": never show that to a devotee as a result.
+    if (num(d.total) === undefined) {
+      this.logger.error('Kundli match: upstream answer has no numeric total');
+      throw new ServiceUnavailableException({ message: 'Kundli matching is temporarily unavailable.', code: 'unavailable' });
+    }
+    const total = num(d.total) as number;
     const max = num(d.max) ?? 36;
     const conclusion = str(d.conclusion, 100) ?? (total >= 18 ? 'Acceptable match' : 'Low compatibility');
 
