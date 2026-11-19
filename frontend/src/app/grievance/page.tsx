@@ -45,10 +45,13 @@ export default function GrievancePage() {
               In accordance with the Information Technology Rules, 2021 and DPDP Act 2023, the details of our designated Resident Grievance Officer and Data Protection Officer are as follows:
             </p>
             <div className="mt-4 p-5 bg-stone-950 border border-stone-800 rounded-2xl space-y-3">
-              <div className="flex items-center justify-between border-b border-stone-800 pb-3">
-                <span className="text-white font-bold text-base">Acharya Devrat Sharma</span>
-                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-orange-600/20 text-orange-400 border border-orange-500/30">
-                  Resident Grievance Officer
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-stone-800 pb-3 gap-2">
+                <div>
+                  <span className="text-white font-bold text-base block">Pt. Rohit Tiwari &amp; Pt. Santosh Kumar Shastri</span>
+                  <span className="text-xs text-stone-400">Founders, Co-Founders &amp; Designated Resident Grievance Officers</span>
+                </div>
+                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-orange-600/20 text-orange-400 border border-orange-500/30 w-fit">
+                  Resident Grievance Officers
                 </span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
@@ -65,7 +68,7 @@ export default function GrievancePage() {
                   <MapPin className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
                   <div>
                     <span className="text-stone-400 block font-medium">Physical Postal Address</span>
-                    <span>Suite 402, Sacred Heights, Barakhamba Road, Connaught Place, New Delhi 110001, India</span>
+                    <span>Rohini Sector 15, Rohini, Delhi 110089, India</span>
                   </div>
                 </div>
               </div>

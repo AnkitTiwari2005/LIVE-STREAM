@@ -125,14 +125,26 @@ export default function RootLayout({
         legalName: 'Shubhdarshan Devotional Media Private Limited',
         url: SITE_URL,
         logo: `${SITE_URL}/logo.webp`,
+        founder: [
+          {
+            '@type': 'Person',
+            name: 'Pt. Rohit Tiwari',
+            jobTitle: 'Founder, Co-Founder & Grievance Officer',
+          },
+          {
+            '@type': 'Person',
+            name: 'Pt. Santosh Kumar Shastri',
+            jobTitle: 'Founder, Co-Founder & Grievance Officer',
+          },
+        ],
         description:
           'Premier platform for live Hindu devotional broadcasts, temple pooja streaming, and Vedic astrological consultations worldwide.',
         address: {
           '@type': 'PostalAddress',
-          streetAddress: 'Suite 402, Sacred Heights, Barakhamba Road, Connaught Place',
-          addressLocality: 'New Delhi',
+          streetAddress: 'Rohini Sector 15, Rohini',
+          addressLocality: 'Delhi',
           addressRegion: 'Delhi',
-          postalCode: '110001',
+          postalCode: '110089',
           addressCountry: 'IN',
         },
         contactPoint: [
