@@ -157,7 +157,7 @@ export default function AboutPage() {
                   <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                       <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300/80 dark:bg-gold/15 dark:text-gold-pale dark:border-gold/30 text-[10px] font-bold tracking-wider uppercase">
-                        सह-संस्थापक • Co-Founder
+                        संस्थापक • Founder
                       </span>
                       <span className="inline-flex items-center gap-1 text-[11px] text-stone-500 dark:text-stone-400 font-medium">
                         <MapPin className="w-3 h-3 text-amber-600 dark:text-gold" />

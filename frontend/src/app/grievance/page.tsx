@@ -47,8 +47,8 @@ export default function GrievancePage() {
             <div className="mt-4 p-5 bg-stone-950 border border-stone-800 rounded-2xl space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-stone-800 pb-3 gap-2">
                 <div>
-                  <span className="text-white font-bold text-base block">Pt. Rohit Tiwari &amp; Pt. Santosh Kumar Shastri</span>
-                  <span className="text-xs text-stone-400">Founders, Co-Founders &amp; Designated Resident Grievance Officers</span>
+                  <span className="text-white font-bold text-base block">Pt. Rohit Tiwari (Founder) &amp; Pt. Santosh Kumar Shastri (Co-Founder)</span>
+                  <span className="text-xs text-stone-400">Designated Resident Grievance Officers</span>
                 </div>
                 <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-orange-600/20 text-orange-400 border border-orange-500/30 w-fit">
                   Resident Grievance Officers

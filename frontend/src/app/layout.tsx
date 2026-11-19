@@ -129,12 +129,12 @@ export default function RootLayout({
           {
             '@type': 'Person',
             name: 'Pt. Rohit Tiwari',
-            jobTitle: 'Founder, Co-Founder & Grievance Officer',
+            jobTitle: 'Founder & Grievance Officer',
           },
           {
             '@type': 'Person',
             name: 'Pt. Santosh Kumar Shastri',
-            jobTitle: 'Founder, Co-Founder & Grievance Officer',
+            jobTitle: 'Co-Founder & Grievance Officer',
           },
         ],
         description:

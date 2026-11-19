@@ -45,7 +45,7 @@ export default function PrivacyPage() {
             </p>
             <div className="mt-3 p-3 bg-stone-950 border border-stone-800 rounded-xl text-xs space-y-1">
               <div><strong>Registered Office:</strong> Rohini Sector 15, Rohini, Delhi 110089, India</div>
-              <div><strong>Founders, Co-Founders &amp; Data Protection Officers (DPO):</strong> Pt. Rohit Tiwari &amp; Pt. Santosh Kumar Shastri</div>
+              <div><strong>Leadership &amp; Data Protection Officers (DPO):</strong> Pt. Rohit Tiwari (Founder) &amp; Pt. Santosh Kumar Shastri (Co-Founder)</div>
               <div><strong>Dedicated DPO Email:</strong> privacy@shubhdarshan.com</div>
             </div>
           </section>
