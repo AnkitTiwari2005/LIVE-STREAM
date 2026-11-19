@@ -222,9 +222,11 @@ function UploadZone({
 export default function StreamerApplyPage() {
   const router = useRouter();
   const [bio, setBio] = useState('');
+  const [phone, setPhone] = useState('');
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['Hindi', 'Sanskrit', 'English']);
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>(['Vedic Pooja', 'Kundli Matching / Astrology', 'Vastu Consultation']);
   const [experienceYears, setExperienceYears] = useState(5);
+  const [experienceInput, setExperienceInput] = useState('5');
 
   // 4 upload slots
   const [uploadKeys, setUploadKeys] = useState<Record<string, string | null>>({
@@ -376,8 +378,8 @@ export default function StreamerApplyPage() {
         storageKey: uploadKeys[slot.id],
       }));
 
-      // Prepend experience to bio
-      const bioWithExp = `[${experienceYears} year${experienceYears !== 1 ? 's' : ''} of experience] ${bio}`.trim();
+      // Prepend experience and phone to bio
+      const bioWithExp = `[${experienceYears} year${experienceYears !== 1 ? 's' : ''} of experience | Contact: +91-${phone}] ${bio}`.trim();
 
       const res = await fetch(`${apiUrl}/streamers/apply`, {
         method: 'POST',
@@ -583,24 +585,70 @@ export default function StreamerApplyPage() {
                     />
                   </div>
 
-                  {/* Experience Slider */}
+                  {/* Phone Number */}
+                  <div>
+                    <label className="block text-xs font-semibold text-stone-300 mb-1.5">
+                      WhatsApp / Contact Number <span className="text-gold">*</span>
+                    </label>
+                    <div className="flex items-center bg-obsidian border border-gold/20 rounded-xl overflow-hidden focus-within:border-gold transition">
+                      <span className="px-3 py-2 text-xs text-stone-400 border-r border-gold/20 shrink-0 bg-obsidian-soft">+91</span>
+                      <input
+                        type="tel"
+                        required
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                        placeholder="10-digit mobile number"
+                        pattern="[6-9][0-9]{9}"
+                        title="Enter a valid 10-digit Indian mobile number"
+                        className="flex-1 px-3 py-2 bg-transparent text-xs sm:text-sm text-white focus:outline-none"
+                      />
+                    </div>
+                    <p className="mt-1 text-[10px] text-stone-500">We will contact you on WhatsApp for verification</p>
+                  </div>
+
+                  {/* Experience Slider + Number Input */}
                   <div>
                     <label className="block text-xs font-semibold text-stone-300 mb-3 flex items-center gap-2">
                       <SlidersHorizontal className="w-3.5 h-3.5 text-gold-soft" />
                       Years of Experience
-                      <span className="ml-auto text-gold font-bold text-sm">{experienceYears} yr{experienceYears !== 1 ? 's' : ''}</span>
                     </label>
-                    <input
-                      type="range"
-                      min={1}
-                      max={30}
-                      value={experienceYears}
-                      onChange={(e) => setExperienceYears(Number(e.target.value))}
-                      className="w-full h-2 rounded-full appearance-none cursor-pointer accent-amber-500"
-                      style={{
-                        background: `linear-gradient(to right, #d97706 0%, #d97706 ${((experienceYears - 1) / 29) * 100}%, #374151 ${((experienceYears - 1) / 29) * 100}%, #374151 100%)`,
-                      }}
-                    />
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="range"
+                        min={1}
+                        max={30}
+                        value={experienceYears}
+                        onChange={(e) => {
+                          const v = Number(e.target.value);
+                          setExperienceYears(v);
+                          setExperienceInput(String(v));
+                        }}
+                        className="flex-1 h-2 rounded-full appearance-none cursor-pointer accent-amber-500"
+                        style={{
+                          background: `linear-gradient(to right, #d97706 0%, #d97706 ${((experienceYears - 1) / 29) * 100}%, #374151 ${((experienceYears - 1) / 29) * 100}%, #374151 100%)`,
+                        }}
+                      />
+                      <div className="flex items-center gap-1 shrink-0">
+                        <input
+                          type="number"
+                          min={1}
+                          max={30}
+                          value={experienceInput}
+                          onChange={(e) => {
+                            setExperienceInput(e.target.value);
+                            const v = Math.min(30, Math.max(1, Number(e.target.value)));
+                            if (!isNaN(v)) setExperienceYears(v);
+                          }}
+                          onBlur={() => {
+                            const v = Math.min(30, Math.max(1, Number(experienceInput) || 1));
+                            setExperienceYears(v);
+                            setExperienceInput(String(v));
+                          }}
+                          className="w-14 text-center px-2 py-1 bg-obsidian border border-gold/30 rounded-lg text-sm font-bold text-gold focus:outline-none focus:border-gold"
+                        />
+                        <span className="text-xs text-stone-400">yr{experienceYears !== 1 ? 's' : ''}</span>
+                      </div>
+                    </div>
                     <div className="flex justify-between text-[10px] text-stone-500 mt-1">
                       <span>1 yr</span>
                       <span>15 yrs</span>

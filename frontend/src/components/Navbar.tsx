@@ -626,9 +626,9 @@ export function Navbar() {
                   <span>Kundli & Astrology</span>
                 </div>
                 <div className="ml-6 pb-1 space-y-1">
-                  <Link href="/kundli" onClick={() => setMobileMenuOpen(false)} className="block text-xs text-stone-600 dark:text-stone-400 hover:text-amber-700 dark:hover:text-gold py-1 transition">🔮 Check Your Horoscope</Link>
-                  <Link href="/kundli?tab=matching" onClick={() => setMobileMenuOpen(false)} className="block text-xs text-stone-600 dark:text-stone-400 hover:text-amber-700 dark:hover:text-gold py-1 transition">💑 Kundli Matching</Link>
-                  <Link href="/pooja" onClick={() => setMobileMenuOpen(false)} className="block text-xs text-stone-600 dark:text-stone-400 hover:text-amber-700 dark:hover:text-gold py-1 transition">🗓️ Book a Personal Astrologer</Link>
+                  <Link href="/kundli" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-1.5 text-xs text-stone-600 dark:text-stone-400 hover:text-amber-700 dark:hover:text-gold py-1 transition"><Orbit className="w-3 h-3 text-amber-600 dark:text-gold-soft shrink-0" /><span>Check Your Horoscope</span></Link>
+                  <Link href="/kundli?tab=matching" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-1.5 text-xs text-stone-600 dark:text-stone-400 hover:text-amber-700 dark:hover:text-gold py-1 transition"><HeartHandshake className="w-3 h-3 text-amber-600 dark:text-gold-soft shrink-0" /><span>Kundli Matching</span></Link>
+                  <Link href="/pooja" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-1.5 text-xs text-stone-600 dark:text-stone-400 hover:text-amber-700 dark:hover:text-gold py-1 transition"><Calendar className="w-3 h-3 text-amber-600 dark:text-gold-soft shrink-0" /><span>Book a Personal Astrologer</span></Link>
                 </div>
               </div>
               <Link

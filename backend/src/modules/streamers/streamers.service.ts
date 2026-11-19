@@ -244,11 +244,6 @@ export class StreamersService {
     });
     if (!profile) throw new NotFoundException('Streamer not found');
 
-    const follower = await this.prisma.user.findUnique({ where: { id: followerId } });
-    if (!follower?.isEmailVerified) {
-      throw new BadRequestException('Email address must be verified before following streamers (FR-A2)');
-    }
-
     try {
       await this.prisma.$transaction([
         this.prisma.follow.create({
