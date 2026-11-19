@@ -202,10 +202,10 @@ export default function SchedulePage() {
                 {/* Thumbnail Container */}
                 <div className="relative aspect-video bg-black overflow-hidden on-photo">
                   <img
-                    src={stream.thumbnailUrl || '/images/photo-1681797849099-0053b1567d95.webp'}
+                    src={stream.thumbnailUrl || '/images/hero-bg-v2.webp'}
                     alt={stream.title}
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/images/photo-1681797849099-0053b1567d95.webp';
+                      (e.target as HTMLImageElement).src = '/images/hero-bg-v2.webp';
                     }}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />

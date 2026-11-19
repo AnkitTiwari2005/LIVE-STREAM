@@ -612,23 +612,32 @@ export default function StreamerApplyPage() {
                       <SlidersHorizontal className="w-3.5 h-3.5 text-gold-soft" />
                       Years of Experience
                     </label>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="range"
-                        min={1}
-                        max={30}
-                        value={experienceYears}
-                        onChange={(e) => {
-                          const v = Number(e.target.value);
-                          setExperienceYears(v);
-                          setExperienceInput(String(v));
-                        }}
-                        className="flex-1 h-2 rounded-full appearance-none cursor-pointer accent-amber-500"
-                        style={{
-                          background: `linear-gradient(to right, #d97706 0%, #d97706 ${((experienceYears - 1) / 29) * 100}%, #374151 ${((experienceYears - 1) / 29) * 100}%, #374151 100%)`,
-                        }}
-                      />
-                      <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center h-8">
+                          <input
+                            type="range"
+                            min={1}
+                            max={30}
+                            value={experienceYears}
+                            onChange={(e) => {
+                              const v = Number(e.target.value);
+                              setExperienceYears(v);
+                              setExperienceInput(String(v));
+                            }}
+                            className="w-full h-2 rounded-full appearance-none cursor-pointer accent-amber-500"
+                            style={{
+                              background: `linear-gradient(to right, #d97706 0%, #d97706 ${((experienceYears - 1) / 29) * 100}%, #374151 ${((experienceYears - 1) / 29) * 100}%, #374151 100%)`,
+                            }}
+                          />
+                        </div>
+                        <div className="flex justify-between text-[10px] text-stone-500 -mt-0.5">
+                          <span>1 yr</span>
+                          <span>15 yrs</span>
+                          <span>30 yrs</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0 h-8">
                         <input
                           type="number"
                           min={1}
@@ -648,11 +657,6 @@ export default function StreamerApplyPage() {
                         />
                         <span className="text-xs text-stone-400">yr{experienceYears !== 1 ? 's' : ''}</span>
                       </div>
-                    </div>
-                    <div className="flex justify-between text-[10px] text-stone-500 mt-1">
-                      <span>1 yr</span>
-                      <span>15 yrs</span>
-                      <span>30 yrs</span>
                     </div>
                   </div>
 

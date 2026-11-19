@@ -149,7 +149,7 @@ const FALLBACK_SCHEDULED_BROADCASTS = [
     isVerified: true,
     scheduledText: 'Today, 06:00 PM IST',
     quality: '1080p',
-    thumbnail: '/images/photo-1681797849099-0053b1567d95.webp',
+    thumbnail: '/images/hero-bg-v2.webp',
   },
   {
     id: 'navgrah-shanti',
@@ -176,7 +176,7 @@ const FALLBACK_SCHEDULED_BROADCASTS = [
 ];
 
 const FALLBACK_THUMBNAILS = [
-  '/images/photo-1681797849099-0053b1567d95.webp', // Ganga Sandhya Aarti
+  '/images/hero-bg-v2.webp', // Ganga Sandhya Aarti
   '/images/photo-1678593628844-6ea49dee8ce3.webp', // Kashi Mangala Aarti
   '/images/photo-1763479939733-eea29c578c17.webp', // Rudrabhishek Abhishekam
   '/images/photo-1763479168649-8ffb3bbb9103.webp', // Sandhya Deep Aarti
@@ -390,7 +390,7 @@ export default function HomePage() {
 
           {/* Sacred Temple Photography Backdrop */}
           <img
-            src="/images/photo-1681797849099-0053b1567d95.webp"
+            src="/images/hero-bg-v2.webp"
             alt="Sandhya Ganga Aarti Haridwar Sanctum"
             className="backdrop-photo h-full w-full object-cover opacity-35 scale-105"
           />
@@ -570,7 +570,7 @@ export default function HomePage() {
               <div className="relative rounded-3xl border border-stone-200 dark:border-gold/30 bg-white dark:bg-gradient-to-b dark:from-[#221810] dark:to-obsidian p-3 sm:p-4 shadow-xl dark:shadow-[0_25px_70px_rgba(0,0,0,0.85)] group transition hover:border-amber-400 dark:hover:border-gold/60 overflow-hidden">
                 <div className="altar-repose-card relative aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden bg-gradient-to-br from-amber-100/80 via-orange-50/70 to-rose-50/50 dark:bg-[#0c0a09] flex flex-col justify-between p-4 sm:p-6 border border-amber-300 dark:border-gold/20 shadow-inner">
                   <img
-                    src="/images/photo-1681797849099-0053b1567d95.webp"
+                    src="/images/hero-bg-v2.webp"
                     alt="Sanctum Repose"
                     className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-20 dark:opacity-40 mix-blend-multiply dark:mix-blend-normal"
                   />
@@ -838,7 +838,7 @@ export default function HomePage() {
                     src={stream.thumbnailUrl || fallbackImg}
                     alt={stream.title}
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/images/photo-1681797849099-0053b1567d95.webp';
+                      (e.target as HTMLImageElement).src = '/images/hero-bg-v2.webp';
                     }}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
@@ -929,7 +929,7 @@ export default function HomePage() {
                     src={thumbUrl}
                     alt={item.title}
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/images/photo-1681797849099-0053b1567d95.webp';
+                      (e.target as HTMLImageElement).src = '/images/hero-bg-v2.webp';
                     }}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />

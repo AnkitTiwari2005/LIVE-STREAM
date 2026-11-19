@@ -78,7 +78,7 @@ const STATIC_DIRECTORY: SearchItem[] = [
     subtitle: 'Our sacred lineage & mission',
     category: 'About',
     url: '/about',
-    image: '/images/photo-1681797849099-0053b1567d95.webp',
+    image: '/images/hero-bg-v2.webp',
     keywords: 'about mission company team pandit kyc heritage',
   },
   {
@@ -86,7 +86,7 @@ const STATIC_DIRECTORY: SearchItem[] = [
     subtitle: 'Janam kundali, moon sign, dasha & avakhada',
     category: 'Astrology',
     url: '/kundli',
-    image: '/images/photo-1681797849099-0053b1567d95.webp',
+    image: '/images/hero-bg-v2.webp',
     keywords: 'kundli kundali janam birth chart horoscope rashi nakshatra dasha lagna astrology jyotish',
   },
 ];
@@ -120,7 +120,7 @@ export function SearchPalette({
             subtitle: `${s.status === 'LIVE' ? '🔴 LIVE now' : '🗓 Scheduled'} · ${s.streamer?.name || 'Verified Pandit'}`,
             category: s.status === 'LIVE' ? 'Live' : 'Scheduled',
             url: `/stream/${s.id}`,
-            image: s.thumbnailUrl || '/images/photo-1681797849099-0053b1567d95.webp',
+            image: s.thumbnailUrl || '/images/hero-bg-v2.webp',
             keywords: `${s.title} ${s.streamer?.name || ''} live stream aarti pooja`,
           }));
         setLiveStreamItems(items);
