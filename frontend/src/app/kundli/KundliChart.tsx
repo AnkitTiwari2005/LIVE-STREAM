@@ -18,35 +18,45 @@ interface Props {
  */
 export default function KundliChart({ model, style, lang, title, label }: Props) {
   const cells = style === 'north' ? northCells() : southCells();
-  const stroke = '#C9A24B';
-  const ink = '#F5E7C4';
-  const faint = 'rgba(201,162,75,0.75)';
+  const stroke = 'var(--kc-stroke, #C9A24B)';
+  const ink = 'var(--kc-ink, #F5E7C4)';
+  const faint = 'var(--kc-faint, rgba(201,162,75,0.75))';
   const fontFam = lang === 'hi' ? "'Noto Sans Devanagari','Plus Jakarta Sans',sans-serif" : "'Plus Jakarta Sans',sans-serif";
 
   const signToHouse = new Map<number, number>();
   model.houses.forEach((h, i) => signToHouse.set(h.sign, i));
 
   return (
-    <svg viewBox="0 0 400 400" role="img" aria-label={label} className="w-full h-full" data-no-translate>
+    <svg viewBox="0 0 400 400" role="img" aria-label={label} className="w-full h-full kundli-chart-svg" data-no-translate>
       <title>{label}</title>
-      <rect x="1" y="1" width="398" height="398" fill="none" stroke={stroke} strokeWidth="2" />
+      <defs>
+        <style>{`
+          .kc-stroke { stroke: #B45309; }
+          .kc-ink { fill: #1C1917; }
+          .kc-faint { fill: #B45309; opacity: 0.85; }
+          html[data-theme="dark"] .kc-stroke, html.dark .kc-stroke { stroke: #C9A24B !important; }
+          html[data-theme="dark"] .kc-ink, html.dark .kc-ink { fill: #F5E7C4 !important; }
+          html[data-theme="dark"] .kc-faint, html.dark .kc-faint { fill: rgba(201,162,75,0.75) !important; opacity: 1 !important; }
+        `}</style>
+      </defs>
+      <rect x="1" y="1" width="398" height="398" fill="none" className="kc-stroke" stroke={stroke} strokeWidth="2" />
       {style === 'north' ? (
         <>
-          <line x1="0" y1="0" x2="400" y2="400" stroke={stroke} strokeWidth="1.2" />
-          <line x1="400" y1="0" x2="0" y2="400" stroke={stroke} strokeWidth="1.2" />
-          <polygon points="200,0 400,200 200,400 0,200" fill="none" stroke={stroke} strokeWidth="1.2" />
+          <line x1="0" y1="0" x2="400" y2="400" className="kc-stroke" stroke={stroke} strokeWidth="1.2" />
+          <line x1="400" y1="0" x2="0" y2="400" className="kc-stroke" stroke={stroke} strokeWidth="1.2" />
+          <polygon points="200,0 400,200 200,400 0,200" fill="none" className="kc-stroke" stroke={stroke} strokeWidth="1.2" />
         </>
       ) : (
         <>
-          <line x1="100" y1="0" x2="100" y2="400" stroke={stroke} strokeWidth="1.2" />
-          <line x1="300" y1="0" x2="300" y2="400" stroke={stroke} strokeWidth="1.2" />
-          <line x1="0" y1="100" x2="400" y2="100" stroke={stroke} strokeWidth="1.2" />
-          <line x1="0" y1="300" x2="400" y2="300" stroke={stroke} strokeWidth="1.2" />
-          <line x1="200" y1="0" x2="200" y2="100" stroke={stroke} strokeWidth="1.2" />
-          <line x1="200" y1="300" x2="200" y2="400" stroke={stroke} strokeWidth="1.2" />
-          <line x1="0" y1="200" x2="100" y2="200" stroke={stroke} strokeWidth="1.2" />
-          <line x1="300" y1="200" x2="400" y2="200" stroke={stroke} strokeWidth="1.2" />
-          <text x="200" y="196" textAnchor="middle" fontSize="19" fontWeight="700" fill={ink} fontFamily={fontFam}>
+          <line x1="100" y1="0" x2="100" y2="400" className="kc-stroke" stroke={stroke} strokeWidth="1.2" />
+          <line x1="300" y1="0" x2="300" y2="400" className="kc-stroke" stroke={stroke} strokeWidth="1.2" />
+          <line x1="0" y1="100" x2="400" y2="100" className="kc-stroke" stroke={stroke} strokeWidth="1.2" />
+          <line x1="0" y1="300" x2="400" y2="300" className="kc-stroke" stroke={stroke} strokeWidth="1.2" />
+          <line x1="200" y1="0" x2="200" y2="100" className="kc-stroke" stroke={stroke} strokeWidth="1.2" />
+          <line x1="200" y1="300" x2="200" y2="400" className="kc-stroke" stroke={stroke} strokeWidth="1.2" />
+          <line x1="0" y1="200" x2="100" y2="200" className="kc-stroke" stroke={stroke} strokeWidth="1.2" />
+          <line x1="300" y1="200" x2="400" y2="200" className="kc-stroke" stroke={stroke} strokeWidth="1.2" />
+          <text x="200" y="196" textAnchor="middle" fontSize="19" fontWeight="700" className="kc-ink" fill={ink} fontFamily={fontFam}>
             {title}
           </text>
         </>
@@ -60,9 +70,9 @@ export default function KundliChart({ model, style, lang, title, label }: Props)
         return (
           <g key={idx}>
             {style === 'south' && isLagna && (
-              <line x1={c.poly[0][0]} y1={c.poly[0][1] + 20} x2={c.poly[0][0] + 20} y2={c.poly[0][1]} stroke={stroke} strokeWidth="1.6" />
+              <line x1={c.poly[0][0]} y1={c.poly[0][1] + 20} x2={c.poly[0][0] + 20} y2={c.poly[0][1]} className="kc-stroke" stroke={stroke} strokeWidth="1.6" />
             )}
-            <text x={c.nx} y={c.ny} textAnchor="middle" fontSize={style === 'north' ? 15 : 11} fill={faint} fontFamily={fontFam}>
+            <text x={c.nx} y={c.ny} textAnchor="middle" fontSize={style === 'north' ? 15 : 11} className="kc-faint" fill={faint} fontFamily={fontFam}>
               {cellSignLabel(style, signIdx, lang)}
             </text>
             {lines.map((ln, i) => (
@@ -73,6 +83,7 @@ export default function KundliChart({ model, style, lang, title, label }: Props)
                 textAnchor="middle"
                 fontSize="14.5"
                 fontWeight="600"
+                className="kc-ink"
                 fill={ink}
                 fontFamily={fontFam}
               >

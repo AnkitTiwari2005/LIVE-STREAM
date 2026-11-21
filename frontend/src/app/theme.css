@@ -24,6 +24,9 @@ html[data-theme="light"] {
   --border: 0 33% 89%;
   --input: 0 33% 89%;
   --ring: 356 89% 48%;
+  --kc-stroke: #B45309;
+  --kc-ink: #1C1917;
+  --kc-faint: #B45309;
 }
 
 html:not([data-theme="dark"]) ::selection,

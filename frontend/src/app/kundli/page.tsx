@@ -710,7 +710,7 @@ export default function KundliPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="relative aspect-square max-w-md mx-auto flex items-center justify-center rounded-xl bg-stone-900/60 border border-stone-800 p-2">
+                  <div className="relative aspect-square max-w-md mx-auto flex items-center justify-center rounded-2xl bg-[#FFFDF7] dark:bg-stone-900/60 border border-amber-200/80 dark:border-stone-800 p-2.5 sm:p-3.5 shadow-sm dark:shadow-none transition-colors">
                     {chartModel ? (
                       <KundliChart
                         model={chartModel}
