@@ -212,7 +212,7 @@ export class Flow {
 
 export function sectionTitle(flow: Flow, title: string, sub?: string) {
   const { pen } = flow;
-  flow.ensure(34);
+  flow.ensure(110); // keep the heading together with the start of its table
   const x = MARGIN;
   pen.rect(x, flow.y + 1, 3.2, 15, COLORS.saffron);
   pen.text(title, x + 10, flow.y + 13, { size: 13, bold: true, color: COLORS.maroon });

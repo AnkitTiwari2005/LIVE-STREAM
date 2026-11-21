@@ -142,7 +142,7 @@ export function northCells(): Cell[] {
     const others = poly.filter((q) => q !== inner);
     const baseMid: Pt = [(others[0][0] + others[1][0]) / 2, (others[0][1] + others[1][1]) / 2];
     const p = side ? lerp(c, baseMid, 0.3) : lerp(c, inner, 0.3);
-    const n = lerp(c, inner, 0.82);
+    const n = lerp(c, inner, 0.6);
     return { house: i + 1, sign: 0, poly, cx: p[0], cy: p[1], nx: n[0], ny: n[1], perLine: side ? 1 : 2 };
   });
 }
