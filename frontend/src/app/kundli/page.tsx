@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   AlertCircle,
@@ -19,7 +19,27 @@ import {
 import { DiyaIcon, OmIcon } from '@/components/icons/SpiritualIcons';
 import { apiFetch } from '@/lib/api';
 import { isJwtTokenExpired, purgeClientSession } from '@/lib/auth-session';
-import { formatDate, formatDegree, pretty, signName, todayLocal } from './kundli-utils';
+import { formatDegree, todayLocal } from './kundli-utils';
+import { useLang } from '@/lib/i18n/context';
+import {
+  bandSummary,
+  avakhadaKeyLabel,
+  conclusionText,
+  formatDateL,
+  kootaExplanation,
+  kootaLabel,
+  kootaNote,
+  matchBand,
+  nakshatraName,
+  planetName,
+  prettySlug,
+  signLabel,
+  texts,
+  traitValue,
+} from './kundli-i18n';
+import { buildChart, type Varga } from './kundli-chart';
+import KundliChart from './KundliChart';
+import DownloadPdfButton from './DownloadPdfButton';
 
 interface Planet {
   id?: string;
@@ -99,17 +119,6 @@ const inputClass =
 const labelClass = 'block text-xs font-semibold text-stone-300 mb-1';
 const cardClass = 'bg-obsidian-soft border border-gold/20 rounded-2xl p-5 shadow-lg';
 
-const KOOTA_EXPLANATIONS: Record<string, string> = {
-  varna: 'Spiritual ego, work inclination & spiritual compatibility',
-  vashya: 'Mutual attraction, dominance balance & emotional connection',
-  tara_dina: 'Destiny, health, well-being & mutual prosperity',
-  yoni: 'Intimate compatibility, nature & biological sync',
-  graha_maitri: 'Mental friendship, intellectual harmony & communication',
-  gana: 'Temperament, lifestyle & behavioral compatibility',
-  bhakoot: 'Emotional bonding, family prosperity & marital happiness',
-  nadi: 'Hereditary health, energetic harmony & genetic compatibility',
-};
-
 export default function KundliPage() {
   const [auth, setAuth] = useState<'checking' | 'in' | 'out'>('checking');
   const [enabled, setEnabled] = useState<boolean | null>(null);
@@ -122,7 +131,10 @@ export default function KundliPage() {
   const [unknownTime, setUnknownTime] = useState(false);
   const [place, setPlace] = useState('');
   const [placeId, setPlaceId] = useState<string | null>(null);
-  const [lang, setLang] = useState<'en' | 'hi'>('en');
+  const { lang } = useLang();
+  const hindi = lang === 'hi';
+  const t = texts(lang);
+  const L = (en: string, hi: string) => (hindi ? hi : en);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -133,12 +145,7 @@ export default function KundliPage() {
   const resultRef = useRef<HTMLDivElement>(null);
 
   const [style, setStyle] = useState<'north' | 'south'>('north');
-  const [varga, setVarga] = useState<'D1' | 'D9'>('D1');
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [chartUrl, setChartUrl] = useState<string | null>(null);
-  const [chartLoading, setChartLoading] = useState(false);
-  const [chartError, setChartError] = useState(false);
-  const chartSeq = useRef(0);
+  const [varga, setVarga] = useState<Varga>('D1');
 
   // --- Kundli Matching State ---
   const [nameA, setNameA] = useState('');
@@ -199,62 +206,23 @@ export default function KundliPage() {
     }
   };
 
-  // Sync theme
-  useEffect(() => {
-    const read = () => setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
-    read();
-    const mo = new MutationObserver(read);
-    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-    return () => mo.disconnect();
-  }, []);
-
-  // Janam Kundli SVG chart rendering
-  useEffect(() => {
-    if (!result || !submitted) return;
-    const seq = ++chartSeq.current;
-    setChartLoading(true);
-    setChartError(false);
-    apiFetch<string>('/kundli/chart', {
-      method: 'POST',
-      body: JSON.stringify({ ...submitted, varga, style, theme }),
-    })
-      .then((svg) => {
-        if (seq !== chartSeq.current || typeof svg !== 'string') return;
-        const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
-        setChartUrl((old) => {
-          if (old) URL.revokeObjectURL(old);
-          return url;
-        });
-      })
-      .catch(() => {
-        if (seq === chartSeq.current) setChartError(true);
-      })
-      .finally(() => {
-        if (seq === chartSeq.current) setChartLoading(false);
-      });
-  }, [result, submitted, varga, style, theme]);
-
-  useEffect(() => () => {
-    chartSeq.current++;
-  }, []);
-
   // Janam Kundli Generator
   const buildPayload = useCallback(
     (chosenPlaceId?: string | null): Payload => ({
       date,
       ...(unknownTime ? { timeAccuracy: 'unknown' as const } : { time }),
       ...(chosenPlaceId ? { placeId: chosenPlaceId } : { placeQuery: place.trim() }),
-      lang,
+      lang: 'en',
     }),
-    [date, time, unknownTime, place, lang],
+    [date, time, unknownTime, place],
   );
 
   const generate = async (chosenPlaceId?: string | null) => {
     setError(null);
     setCandidates(null);
-    if (!date) return setError('Please enter your date of birth.');
-    if (!unknownTime && !time) return setError('Please enter your birth time, or tick "I don\'t know my birth time".');
-    if (!chosenPlaceId && place.trim().length < 2) return setError('Please enter your place of birth.');
+    if (!date) return setError(L('Please enter your date of birth.', 'कृपया अपनी जन्म तिथि दर्ज करें।'));
+    if (!unknownTime && !time) return setError(L('Please enter your birth time, or tick "I don\'t know my birth time".', 'कृपया अपना जन्म समय दर्ज करें, या "मुझे जन्म समय ज्ञात नहीं" चुनें।'));
+    if (!chosenPlaceId && place.trim().length < 2) return setError(L('Please enter your place of birth.', 'कृपया अपना जन्म स्थान दर्ज करें।'));
 
     const payload = buildPayload(chosenPlaceId);
     setLoading(true);
@@ -262,10 +230,6 @@ export default function KundliPage() {
       const data = await apiFetch<KundliResult>('/kundli/generate', { method: 'POST', body: JSON.stringify(payload) });
       setShownName(name.trim());
       setSubmitted(payload);
-      setChartUrl((old) => {
-        if (old) URL.revokeObjectURL(old);
-        return null;
-      });
       setResult(data);
       setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
     } catch (e: any) {
@@ -276,7 +240,7 @@ export default function KundliPage() {
         setCandidates(e.body.candidates);
         setError(e.message);
       } else {
-        setError(e?.message || 'Something went wrong. Please try again.');
+        setError(e?.message || L('Something went wrong. Please try again.', 'कुछ गड़बड़ हो गई। कृपया पुनः प्रयास करें।'));
       }
     } finally {
       setLoading(false);
@@ -284,15 +248,10 @@ export default function KundliPage() {
   };
 
   const reset = () => {
-    chartSeq.current++;
     setResult(null);
     setSubmitted(null);
     setCandidates(null);
     setError(null);
-    setChartUrl((old) => {
-      if (old) URL.revokeObjectURL(old);
-      return null;
-    });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -305,13 +264,13 @@ export default function KundliPage() {
     const effIdA = overrideIdA !== undefined ? overrideIdA : placeIdA;
     const effIdB = overrideIdB !== undefined ? overrideIdB : placeIdB;
 
-    if (!dateA) return setMatchError('Please enter Date of Birth for Partner 1.');
-    if (!unknownTimeA && !timeA) return setMatchError('Please enter Birth Time for Partner 1, or tick unknown.');
-    if (!effIdA && placeA.trim().length < 2) return setMatchError('Please enter Birth Place for Partner 1.');
+    if (!dateA) return setMatchError(L('Please enter Date of Birth for Partner 1.', 'कृपया प्रथम व्यक्ति की जन्म तिथि दर्ज करें।'));
+    if (!unknownTimeA && !timeA) return setMatchError(L('Please enter Birth Time for Partner 1, or tick unknown.', 'कृपया प्रथम व्यक्ति का जन्म समय दर्ज करें, या "समय ज्ञात नहीं" चुनें।'));
+    if (!effIdA && placeA.trim().length < 2) return setMatchError(L('Please enter Birth Place for Partner 1.', 'कृपया प्रथम व्यक्ति का जन्म स्थान दर्ज करें।'));
 
-    if (!dateB) return setMatchError('Please enter Date of Birth for Partner 2.');
-    if (!unknownTimeB && !timeB) return setMatchError('Please enter Birth Time for Partner 2, or tick unknown.');
-    if (!effIdB && placeB.trim().length < 2) return setMatchError('Please enter Birth Place for Partner 2.');
+    if (!dateB) return setMatchError(L('Please enter Date of Birth for Partner 2.', 'कृपया द्वितीय व्यक्ति की जन्म तिथि दर्ज करें।'));
+    if (!unknownTimeB && !timeB) return setMatchError(L('Please enter Birth Time for Partner 2, or tick unknown.', 'कृपया द्वितीय व्यक्ति का जन्म समय दर्ज करें, या "समय ज्ञात नहीं" चुनें।'));
+    if (!effIdB && placeB.trim().length < 2) return setMatchError(L('Please enter Birth Place for Partner 2.', 'कृपया द्वितीय व्यक्ति का जन्म स्थान दर्ज करें।'));
 
     const payload = {
       personA: {
@@ -326,7 +285,7 @@ export default function KundliPage() {
         ...(unknownTimeB ? {} : { time: timeB }),
         ...(effIdB ? { placeId: effIdB } : { placeQuery: placeB.trim() }),
       },
-      lang,
+      lang: 'en',
     };
 
     setMatchLoading(true);
@@ -337,8 +296,8 @@ export default function KundliPage() {
       });
       setMatchResult(data);
       setMatchSubmitted({
-        nameA: nameA.trim() || 'Partner 1',
-        nameB: nameB.trim() || 'Partner 2',
+        nameA: nameA.trim(),
+        nameB: nameB.trim(),
         ...payload,
       });
       setTimeout(() => matchResultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
@@ -371,9 +330,9 @@ export default function KundliPage() {
           setCandidatesA(e.body.candidates);
           setCandidatesB(null);
         }
-        setMatchError(e.message || `Please choose the location from the options below.`);
+        setMatchError(e.message || L('Please choose the location from the options below.', 'कृपया नीचे दिए विकल्पों में से स्थान चुनें।'));
       } else {
-        setMatchError(e?.message || 'Failed to calculate Kundli matching. Please check the birth details.');
+        setMatchError(e?.message || L('Failed to calculate Kundli matching. Please check the birth details.', 'कुंडली मिलान की गणना नहीं हो सकी। कृपया जन्म विवरण जाँचें।'));
       }
     } finally {
       setMatchLoading(false);
@@ -389,8 +348,24 @@ export default function KundliPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const hindi = (activeTab === 'janam' ? submitted?.lang : matchSubmitted?.lang) === 'hi';
   const maha = result?.dasha?.mahadasha;
+  const chartModel = useMemo(
+    () =>
+      result
+        ? buildChart(
+            {
+              lagnaSign: result.lagna?.sign,
+              lagnaDegree: result.lagna?.degree,
+              moonSign: result.moon?.sign,
+              planets: result.planets,
+              d9LagnaSign: result.divisionalLagnas?.D9,
+            },
+            varga,
+            lang,
+          )
+        : null,
+    [result, varga, lang],
+  );
 
   return (
     <div className="min-h-screen bg-obsidian text-foreground py-10 relative overflow-hidden">
@@ -579,25 +554,6 @@ export default function KundliPage() {
                 />
               </div>
 
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="text-xs font-semibold text-stone-300">Language</span>
-                {(['en', 'hi'] as const).map((l) => (
-                  <button
-                    key={l}
-                    type="button"
-                    onClick={() => setLang(l)}
-                    aria-pressed={lang === l}
-                    className={`px-3.5 py-1 rounded-full text-xs font-bold border transition ${
-                      lang === l
-                        ? 'bg-gold text-obsidian border-gold'
-                        : 'bg-obsidian-soft text-stone-300 border-stone-700 hover:border-gold/50'
-                    }`}
-                  >
-                    {l === 'en' ? 'English' : 'हिन्दी'}
-                  </button>
-                ))}
-              </div>
-
               {error && (
                 <div
                   role="alert"
@@ -671,59 +627,71 @@ export default function KundliPage() {
               <div ref={resultRef} className="mt-10 space-y-6 scroll-mt-24">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white break-words">
-                      {shownName ? `${shownName}'s Kundli` : 'Your Kundli'}
+                    <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white break-words" data-no-translate>
+                      {shownName ? t.f('kundliOf', { name: shownName }) : t.yourKundli}
                     </h2>
-                    <p className="text-xs text-stone-400 mt-1">
-                      Born {formatDate(`${submitted.date}T00:00:00Z`)}
-                      {submitted.time ? ` at ${submitted.time}` : ' (birth time not known)'}
+                    <p className="text-xs text-stone-400 mt-1" data-no-translate>
+                      {t.f('bornLine', {
+                        date: formatDateL(`${submitted.date}T00:00:00Z`, lang),
+                        time: submitted.time ? t.f('bornAt', { time: submitted.time }) : t.bornNoTime,
+                      })}
                       {result.meta.timezone ? ` · ${result.meta.timezone} (UTC${result.meta.utcOffset ?? ''})` : ''}
-                      {result.meta.ayanamsa ? ` · ${pretty(result.meta.ayanamsa)} ayanamsa` : ''}
+                      {result.meta.ayanamsa ? ` · ${hindi && /lahiri/i.test(result.meta.ayanamsa) ? t.lahiri : prettySlug(result.meta.ayanamsa)} ${t.ayanamsa}` : ''}
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={reset}
-                    className="flex items-center gap-1.5 px-4 py-2 border border-stone-700 hover:border-gold rounded-full text-xs font-semibold text-stone-300 hover:text-white transition"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" /> Another chart
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <DownloadPdfButton
+                      kind="kundli"
+                      lang={lang}
+                      label={t.downloadPdf}
+                      busyLabel={t.preparingPdf}
+                      failLabel={t.pdfFailed}
+                      getData={() => ({ result, submitted, name: shownName, style, varga: 'both' as const })}
+                    />
+                    <button
+                      type="button"
+                      onClick={reset}
+                      className="flex items-center gap-1.5 px-4 py-2 border border-stone-700 hover:border-gold rounded-full text-xs font-semibold text-stone-300 hover:text-white transition"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" /> {L('Another chart', 'दूसरी कुंडली')}
+                    </button>
+                  </div>
                 </div>
 
                 {(result.warnings.length > 0 || result.unavailable.length > 0 || !result.lagna) && (
-                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-200 space-y-1">
-                    {!result.lagna && (
-                      <p>Without a birth time the ascendant (lagna) and houses cannot be calculated. Sign-based details are shown.</p>
-                    )}
-                    {result.unavailable.includes('dasha') && <p>The dasha could not be loaded right now. Please try again later.</p>}
-                    {result.unavailable.includes('avakhada') && <p>The avakhada could not be loaded right now. Please try again later.</p>}
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-200 space-y-1" data-no-translate>
+                    {!result.lagna && <p>{t.warnNoTime}</p>}
+                    {result.unavailable.includes('dasha') && <p>{t.warnDasha}</p>}
+                    {result.unavailable.includes('avakhada') && <p>{t.warnAvakhada}</p>}
+                    {result.warnings.length > 0 && hindi && <p className="font-semibold">{t.warnEngine}</p>}
                     {result.warnings.map((w) => (
                       <p key={w}>{w}</p>
                     ))}
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                  <Stat label="Lagna (Ascendant)" value={result.lagna ? signName(result.lagna.sign, hindi) : 'Needs birth time'} sub={result.lagna ? `${formatDegree(result.lagna.degree)} · ${pretty(result.lagna.nakshatra)} pada ${result.lagna.pada ?? '-'}` : undefined} />
-                  <Stat label="Moon sign (Rashi)" value={result.moon ? signName(result.moon.sign, hindi) : '-'} sub={result.moon ? `${pretty(result.moon.nakshatra)} pada ${result.moon.pada ?? '-'}` : undefined} />
-                  <Stat label="Birth Nakshatra" value={result.moon ? pretty(result.moon.nakshatra) : '-'} sub={result.moon?.pada ? `Pada ${result.moon.pada}` : undefined} />
-                  <Stat label="Running mahadasha" value={maha?.planet ? pretty(maha.planet) : '-'} sub={maha ? `${formatDate(maha.start)} to ${formatDate(maha.end)}` : undefined} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" data-no-translate>
+                  <Stat label={t.lagna} value={result.lagna ? signLabel(result.lagna.sign, lang) : t.needsTime} sub={result.lagna ? `${formatDegree(result.lagna.degree)} · ${nakshatraName(result.lagna.nakshatra, lang)} ${t.padaWord} ${result.lagna.pada ?? '-'}` : undefined} />
+                  <Stat label={t.moonSign} value={result.moon ? signLabel(result.moon.sign, lang) : '-'} sub={result.moon ? `${nakshatraName(result.moon.nakshatra, lang)} ${t.padaWord} ${result.moon.pada ?? '-'}` : undefined} />
+                  <Stat label={t.birthNakshatra} value={result.moon ? nakshatraName(result.moon.nakshatra, lang) : '-'} sub={result.moon?.pada ? t.f('padaCap', { n: result.moon.pada }) : undefined} />
+                  <Stat label={t.runningMaha} value={maha?.planet ? planetName(maha.planet, lang) : '-'} sub={maha ? `${formatDateL(maha.start, lang)} ${t.to} ${formatDateL(maha.end, lang)}` : undefined} />
                 </div>
 
-                {/* Chart SVG */}
+                {/* Chart drawing (local, language-aware) */}
                 <div className={cardClass}>
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                    <h3 className="font-serif text-lg font-bold text-gold-pale">Chart drawing</h3>
+                    <h3 className="font-serif text-lg font-bold text-gold-pale">{t.chartDrawing}</h3>
                     <div className="flex flex-wrap items-center gap-2">
                       <div className="inline-flex rounded-full border border-stone-700 bg-stone-900 p-0.5 text-xs">
                         {(['north', 'south'] as const).map((s) => (
                           <button
                             key={s}
                             type="button"
+                            aria-pressed={style === s}
                             onClick={() => setStyle(s)}
-                            className={`px-3 py-1 rounded-full font-bold transition capitalize ${style === s ? 'bg-gold text-obsidian' : 'text-stone-300 hover:text-white'}`}
+                            className={`px-3 py-1 rounded-full font-bold transition ${style === s ? 'bg-gold text-obsidian' : 'text-stone-300 hover:text-white'}`}
                           >
-                            {s} Indian
+                            {s === 'north' ? t.northIndian : t.southIndian}
                           </button>
                         ))}
                       </div>
@@ -732,51 +700,57 @@ export default function KundliPage() {
                           <button
                             key={v}
                             type="button"
+                            aria-pressed={varga === v}
                             onClick={() => setVarga(v)}
                             className={`px-3 py-1 rounded-full font-bold transition ${varga === v ? 'bg-gold text-obsidian' : 'text-stone-300 hover:text-white'}`}
                           >
-                            {v === 'D1' ? 'Lagna (D1)' : 'Navamsa (D9)'}
+                            {v === 'D1' ? t.lagnaD1 : t.navamsaD9}
                           </button>
                         ))}
                       </div>
                     </div>
                   </div>
                   <div className="relative aspect-square max-w-md mx-auto flex items-center justify-center rounded-xl bg-stone-900/60 border border-stone-800 p-2">
-                    {chartUrl && !chartError && (
-                      <img src={chartUrl} alt="Vedic Kundli chart drawing" className="w-full h-full object-contain pointer-events-none" />
-                    )}
-                    {chartLoading && <RefreshCw className="absolute w-6 h-6 text-gold animate-spin" aria-label="Drawing chart" />}
-                    {chartError && !chartLoading && (
-                      <p className="text-xs text-stone-400 px-6 text-center">The chart drawing could not be loaded. The tables below are complete.</p>
+                    {chartModel ? (
+                      <KundliChart
+                        model={chartModel}
+                        style={style}
+                        lang={lang}
+                        title={chartModel.fromMoon ? t.chartMoonTitle : varga === 'D1' ? t.chartTitleD1 : t.chartTitleD9}
+                        label={`${t.chartAlt} — ${varga === 'D1' ? t.lagnaD1 : t.navamsaD9}`}
+                      />
+                    ) : (
+                      <p className="text-xs text-stone-400 px-6 text-center">{L('The chart drawing could not be prepared. The tables below are complete.', 'कुंडली चित्र तैयार नहीं हो सका। नीचे की तालिकाएँ पूर्ण हैं।')}</p>
                     )}
                   </div>
+                  {chartModel?.fromMoon && <p className="text-[11px] text-stone-500 mt-2 text-center">{t.chartMoonNote}</p>}
                 </div>
 
                 {/* Planetary Positions */}
-                <div className={cardClass}>
-                  <h3 className="font-serif text-lg font-bold text-gold-pale mb-3">Planetary positions</h3>
+                <div className={cardClass} data-no-translate>
+                  <h3 className="font-serif text-lg font-bold text-gold-pale mb-3">{t.planetaryPositions}</h3>
                   <div className="overflow-x-auto -mx-1">
                     <table className="w-full min-w-[34rem] text-xs text-left">
                       <thead>
                         <tr className="text-stone-400 border-b border-gold/15">
-                          <th className="py-2 px-1 font-semibold">Planet</th>
-                          <th className="py-2 px-1 font-semibold">Sign</th>
-                          <th className="py-2 px-1 font-semibold">Degree</th>
-                          <th className="py-2 px-1 font-semibold">Nakshatra</th>
-                          <th className="py-2 px-1 font-semibold">House</th>
+                          <th className="py-2 px-1 font-semibold">{t.planet}</th>
+                          <th className="py-2 px-1 font-semibold">{t.sign}</th>
+                          <th className="py-2 px-1 font-semibold">{t.degree}</th>
+                          <th className="py-2 px-1 font-semibold">{t.nakshatra}</th>
+                          <th className="py-2 px-1 font-semibold">{t.house}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {result.planets.map((p) => (
                           <tr key={p.id} className="border-b border-gold/10 last:border-0 text-stone-200">
                             <td className="py-2 px-1 font-semibold text-white whitespace-nowrap">
-                              {p.label || pretty(p.id)}
-                              {p.retrograde && <span title="Retrograde" className="ml-1.5 text-[10px] font-bold text-amber-400">R</span>}
+                              {planetName(p.id, lang, p.label)}
+                              {p.retrograde && <span title={t.retroTitle} className="ml-1.5 text-[10px] font-bold text-amber-400">{t.retroMark}</span>}
                             </td>
-                            <td className="py-2 px-1 whitespace-nowrap">{signName(p.sign, hindi)}</td>
+                            <td className="py-2 px-1 whitespace-nowrap">{signLabel(p.sign, lang)}</td>
                             <td className="py-2 px-1 whitespace-nowrap">{formatDegree(p.degree)}</td>
                             <td className="py-2 px-1 whitespace-nowrap">
-                              {pretty(p.nakshatra)} <span className="text-stone-500">({p.pada ?? '-'})</span>
+                              {nakshatraName(p.nakshatra, lang)} <span className="text-stone-500">({p.pada ?? '-'})</span>
                             </td>
                             <td className="py-2 px-1">{p.house ?? '-'}</td>
                           </tr>
@@ -784,19 +758,19 @@ export default function KundliPage() {
                       </tbody>
                     </table>
                   </div>
-                  <p className="text-[11px] text-stone-500 mt-2">R = retrograde. Nakshatra pada in brackets.</p>
+                  <p className="text-[11px] text-stone-500 mt-2">{t.retroNote}</p>
                 </div>
 
                 {/* Avakhada & Dasha */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-no-translate>
                   {result.avakhada && (
                     <div className={cardClass}>
-                      <h3 className="font-serif text-lg font-bold text-gold-pale mb-3">Avakhada Chakra</h3>
+                      <h3 className="font-serif text-lg font-bold text-gold-pale mb-3">{t.avakhadaChakra}</h3>
                       <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
                         {Object.entries(result.avakhada).map(([k, v]) => (
                           <div key={k} className="min-w-0">
-                            <dt className="text-stone-400 capitalize">{k}</dt>
-                            <dd className="font-semibold text-white break-words">{k === 'nakshatra' ? pretty(v) : v}</dd>
+                            <dt className="text-stone-400">{avakhadaKeyLabel(k, lang)}</dt>
+                            <dd className="font-semibold text-white break-words">{traitValue(k, v, lang)}</dd>
                           </div>
                         ))}
                       </dl>
@@ -804,16 +778,16 @@ export default function KundliPage() {
                   )}
                   {result.dasha && (
                     <div className={cardClass}>
-                      <h3 className="font-serif text-lg font-bold text-gold-pale mb-3">Vimshottari Dasha Today</h3>
+                      <h3 className="font-serif text-lg font-bold text-gold-pale mb-3">{t.dashaToday}</h3>
                       <ul className="space-y-2 text-xs">
-                        {([['Mahadasha', result.dasha.mahadasha], ['Antardasha', result.dasha.antardasha], ['Pratyantardasha', result.dasha.pratyantardasha]] as const).map(
+                        {([[t.mahadasha, result.dasha.mahadasha], [t.antardasha, result.dasha.antardasha], [t.pratyantardasha, result.dasha.pratyantardasha]] as const).map(
                           ([label, lvl]) =>
                             lvl?.planet ? (
                               <li key={label} className="flex items-baseline justify-between gap-3">
                                 <span className="text-stone-400">{label}</span>
                                 <span className="text-right min-w-0">
-                                  <span className="font-semibold text-white">{pretty(lvl.planet)}</span>
-                                  <span className="block text-[11px] text-stone-500">{formatDate(lvl.start)} to {formatDate(lvl.end)}</span>
+                                  <span className="font-semibold text-white">{planetName(lvl.planet, lang)}</span>
+                                  <span className="block text-[11px] text-stone-500">{formatDateL(lvl.start, lang)} {t.to} {formatDateL(lvl.end, lang)}</span>
                                 </span>
                               </li>
                             ) : null,
@@ -824,12 +798,12 @@ export default function KundliPage() {
                 </div>
 
                 {Object.keys(result.divisionalLagnas).length > 0 && (
-                  <div className={cardClass}>
-                    <h3 className="font-serif text-lg font-bold text-gold-pale mb-3">Divisional charts (ascendant sign)</h3>
+                  <div className={cardClass} data-no-translate>
+                    <h3 className="font-serif text-lg font-bold text-gold-pale mb-3">{t.divisional}</h3>
                     <div className="flex flex-wrap gap-2 text-xs">
                       {Object.entries(result.divisionalLagnas).map(([k, v]) => (
                         <span key={k} className="px-3 py-1.5 rounded-full border border-gold/25 bg-gold/5 text-stone-200">
-                          <span className="font-bold text-gold-pale">{k}</span> {signName(v, hindi)}
+                          <span className="font-bold text-gold-pale">{k}</span> {signLabel(v, lang)}
                         </span>
                       ))}
                     </div>
@@ -837,24 +811,22 @@ export default function KundliPage() {
                 )}
 
                 {/* Consult verified pandit CTA */}
-                <div className="rounded-2xl border border-gold/25 bg-gradient-to-br from-gold/10 to-transparent p-6 text-center">
-                  <h3 className="font-serif text-xl font-bold text-white">Want your Kundli analyzed by an Acharya?</h3>
-                  <p className="text-xs sm:text-sm text-stone-400 mt-1 mb-4">
-                    Book a live 1-on-1 consultation session with our KYC-verified Vedic Pandits for personalized guidance.
-                  </p>
+                <div className="rounded-2xl border border-gold/25 bg-gradient-to-br from-gold/10 to-transparent p-6 text-center" data-no-translate>
+                  <h3 className="font-serif text-xl font-bold text-white">{t.ctaTitle}</h3>
+                  <p className="text-xs sm:text-sm text-stone-400 mt-1 mb-4">{t.ctaText}</p>
                   <div className="flex flex-wrap items-center justify-center gap-3">
                     <Link href="/pooja" className="px-6 py-2.5 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs shadow-lg shadow-gold/20 transition">
-                      Book an Astrologer
+                      {t.ctaBook}
                     </Link>
                     <Link href="/#pandits" className="px-6 py-2.5 border border-gold/40 bg-obsidian-soft hover:bg-gold/10 text-gold-pale font-bold rounded-full text-xs transition">
-                      Verified Pandits Directory
+                      {t.ctaDirectory}
                     </Link>
                   </div>
                 </div>
 
-                <p className="text-[11px] text-stone-500 text-center leading-relaxed">
-                  Calculated with the {result.meta.ayanamsa ? pretty(result.meta.ayanamsa) : 'Lahiri'} ayanamsa using whole-sign houses.
-                  Astrology is offered for spiritual guidance and personal reflection, not as a substitute for medical, legal or financial advice.
+                <p className="text-[11px] text-stone-500 text-center leading-relaxed" data-no-translate>
+                  {t.f('methodNote', { ayanamsa: hindi && /lahiri/i.test(result.meta.ayanamsa || 'lahiri') ? t.lahiri : result.meta.ayanamsa ? prettySlug(result.meta.ayanamsa) : t.lahiri })}{' '}
+                  {t.disclaimer}
                 </p>
               </div>
             )}
@@ -1077,23 +1049,7 @@ export default function KundliPage() {
               )}
 
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-semibold text-stone-300">Language:</span>
-                  {(['en', 'hi'] as const).map((l) => (
-                    <button
-                      key={l}
-                      type="button"
-                      onClick={() => setLang(l)}
-                      className={`px-3 py-1 rounded-full text-xs font-bold border transition ${
-                        lang === l
-                          ? 'bg-gold text-obsidian border-gold'
-                          : 'bg-obsidian-soft text-stone-300 border-stone-700 hover:border-gold/50'
-                      }`}
-                    >
-                      {l === 'en' ? 'English' : 'हिन्दी'}
-                    </button>
-                  ))}
-                </div>
+                <span className="hidden sm:block" aria-hidden="true" />
 
                 <button
                   type="submit"
@@ -1132,20 +1088,24 @@ export default function KundliPage() {
             )}
 
             {/* Match Results View */}
-            {matchResult && matchSubmitted && (
-              <div ref={matchResultRef} className="mt-8 space-y-6 scroll-mt-24">
+            {matchResult && matchSubmitted && (() => {
+              const nm1 = matchSubmitted.nameA || t.partner1;
+              const nm2 = matchSubmitted.nameB || t.partner2;
+              const band = matchBand(matchResult.total);
+              return (
+              <div ref={matchResultRef} className="mt-8 space-y-6 scroll-mt-24" data-no-translate>
                 {/* Result Top Summary Card */}
                 <div className="bg-obsidian-soft border border-gold/30 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
                   <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                     <div className="text-center md:text-left space-y-2">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gold/15 text-gold border border-gold/30">
-                        <Sparkles className="w-3.5 h-3.5" /> Ashtakoot Guna Milan Result
+                        <Sparkles className="w-3.5 h-3.5" /> {t.resultBadge}
                       </span>
                       <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white">
-                        {matchSubmitted.nameA} &amp; {matchSubmitted.nameB}
+                        {nm1} &amp; {nm2}
                       </h2>
                       <p className="text-xs sm:text-sm text-stone-300">
-                        Compatibility Score: <strong className="text-gold-pale">{matchResult.total}</strong> out of <strong className="text-white">{matchResult.max} Gunas</strong> ({matchResult.percentage}%)
+                        {t.scoreWord} <strong className="text-gold-pale">{matchResult.total}</strong> {hindi ? '/' : 'out of'} <strong className="text-white">{matchResult.max} {t.gunasWord}</strong> ({matchResult.percentage}%)
                       </p>
                       <div className="pt-2">
                         <span
@@ -1157,16 +1117,17 @@ export default function KundliPage() {
                               : 'bg-red-950/50 border-red-500/50 text-red-300'
                           }`}
                         >
-                          {matchResult.conclusion || (matchResult.total >= 18 ? 'Acceptable Vedic Match' : 'Consultation Recommended')}
+                          {conclusionText(matchResult.total, matchResult.conclusion, lang)}
                         </span>
                       </div>
+                      <p className="text-[11px] sm:text-xs text-stone-400 max-w-md leading-relaxed pt-1">{bandSummary(matchResult.total, lang)}</p>
                     </div>
 
                     {/* Circular Score Badge */}
                     <div className="shrink-0 flex flex-col items-center justify-center w-36 h-36 rounded-full border-4 border-gold/40 bg-gradient-to-b from-[#2a1e12] to-obsidian shadow-[0_0_25px_rgba(245,158,11,0.25)] text-center p-2">
                       <span className="font-serif text-3xl font-black text-gold">{matchResult.total}</span>
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400">out of 36</span>
-                      <span className="text-[10px] text-gold-soft font-semibold mt-0.5">{matchResult.percentage}% Score</span>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400">{t.outOf36}</span>
+                      <span className="text-[10px] text-gold-soft font-semibold mt-0.5">{t.f('percentScore', { p: matchResult.percentage })}</span>
                     </div>
                   </div>
 
@@ -1185,14 +1146,8 @@ export default function KundliPage() {
                         <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                       )}
                       <div>
-                        <div className="font-bold">
-                          {matchResult.doshas.nadi ? 'Nadi Dosha Detected (नाड़ी दोष)' : 'Nadi Dosha Free (नाड़ी दोष मुक्त)'}
-                        </div>
-                        <div className="text-[10px] opacity-80">
-                          {matchResult.doshas.nadi
-                            ? 'Same Nadi observed. Astrological consultation & remedies recommended.'
-                            : 'Complementary physiological and genetic energies.'}
-                        </div>
+                        <div className="font-bold">{matchResult.doshas.nadi ? t.nadiYes : t.nadiNo}</div>
+                        <div className="text-[10px] opacity-80">{matchResult.doshas.nadi ? t.nadiYesNote : t.nadiNoNote}</div>
                       </div>
                     </div>
 
@@ -1209,133 +1164,84 @@ export default function KundliPage() {
                         <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                       )}
                       <div>
-                        <div className="font-bold">
-                          {matchResult.doshas.bhakoot ? 'Bhakoot Dosha Detected (भकूट दोष)' : 'Bhakoot Dosha Free (भकूट दोष मुक्त)'}
-                        </div>
-                        <div className="text-[10px] opacity-80">
-                          {matchResult.doshas.bhakoot
-                            ? 'Planetary angle warrants deeper chart inspection.'
-                            : 'Auspicious mutual Moon signs ensuring family happiness.'}
-                        </div>
+                        <div className="font-bold">{matchResult.doshas.bhakoot ? t.bhakootYes : t.bhakootNo}</div>
+                        <div className="text-[10px] opacity-80">{matchResult.doshas.bhakoot ? t.bhakootYesNote : t.bhakootNoNote}</div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Side-by-side Astral Traits (Rashi, Nakshatra, Gana, Nadi, Yoni) */}
+                {/* Side-by-side Astral Traits */}
                 <div className={cardClass}>
-                  <h3 className="font-serif text-lg font-bold text-gold-pale mb-4">Astral Traits Comparison</h3>
+                  <h3 className="font-serif text-lg font-bold text-gold-pale mb-4">{t.traits}</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                    <div className="p-4 rounded-xl border border-gold/15 bg-stone-900/40 space-y-2">
-                      <div className="font-bold text-gold border-b border-gold/15 pb-1 mb-2">
-                        {matchSubmitted.nameA} (Partner 1)
+                    {([[nm1, t.partnerTag1, matchResult.personA], [nm2, t.partnerTag2, matchResult.personB]] as const).map(([nm, tag, person]) => (
+                      <div key={tag} className="p-4 rounded-xl border border-gold/15 bg-stone-900/40 space-y-2">
+                        <div className="font-bold text-gold border-b border-gold/15 pb-1 mb-2">
+                          {nm} {tag}
+                        </div>
+                        {([
+                          ['rashi', t.moonRashi],
+                          ['nakshatra', t.birthNakshatra],
+                          ['gana', t.gana],
+                          ['nadi', t.nadi],
+                          ['yoni', t.yoni],
+                        ] as const).map(([key, lbl], i, arr) => (
+                          <div key={key} className={`flex justify-between py-1 ${i < arr.length - 1 ? 'border-b border-stone-800' : ''}`}>
+                            <span className="text-stone-400">{lbl}</span>
+                            <span className="font-semibold text-white">{traitValue(key, person?.[key], lang)}</span>
+                          </div>
+                        ))}
                       </div>
-                      <div className="flex justify-between py-1 border-b border-stone-800">
-                        <span className="text-stone-400">Moon Sign (Rashi)</span>
-                        <span className="font-semibold text-white capitalize">{pretty(matchResult.personA?.rashi)}</span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-stone-800">
-                        <span className="text-stone-400">Birth Nakshatra</span>
-                        <span className="font-semibold text-white capitalize">{pretty(matchResult.personA?.nakshatra)}</span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-stone-800">
-                        <span className="text-stone-400">Gana</span>
-                        <span className="font-semibold text-white capitalize">{pretty(matchResult.personA?.gana)}</span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-stone-800">
-                        <span className="text-stone-400">Nadi</span>
-                        <span className="font-semibold text-white capitalize">{pretty(matchResult.personA?.nadi)}</span>
-                      </div>
-                      <div className="flex justify-between py-1">
-                        <span className="text-stone-400">Yoni</span>
-                        <span className="font-semibold text-white capitalize">{pretty(matchResult.personA?.yoni)}</span>
-                      </div>
-                    </div>
-
-                    <div className="p-4 rounded-xl border border-gold/15 bg-stone-900/40 space-y-2">
-                      <div className="font-bold text-gold border-b border-gold/15 pb-1 mb-2">
-                        {matchSubmitted.nameB} (Partner 2)
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-stone-800">
-                        <span className="text-stone-400">Moon Sign (Rashi)</span>
-                        <span className="font-semibold text-white capitalize">{pretty(matchResult.personB?.rashi)}</span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-stone-800">
-                        <span className="text-stone-400">Birth Nakshatra</span>
-                        <span className="font-semibold text-white capitalize">{pretty(matchResult.personB?.nakshatra)}</span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-stone-800">
-                        <span className="text-stone-400">Gana</span>
-                        <span className="font-semibold text-white capitalize">{pretty(matchResult.personB?.gana)}</span>
-                      </div>
-                      <div className="flex justify-between py-1 border-b border-stone-800">
-                        <span className="text-stone-400">Nadi</span>
-                        <span className="font-semibold text-white capitalize">{pretty(matchResult.personB?.nadi)}</span>
-                      </div>
-                      <div className="flex justify-between py-1">
-                        <span className="text-stone-400">Yoni</span>
-                        <span className="font-semibold text-white capitalize">{pretty(matchResult.personB?.yoni)}</span>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
 
                 {/* Complete 8 Kootas Detailed Table */}
                 <div className={cardClass}>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-serif text-lg font-bold text-gold-pale">Ashtakoot (8 Kootas) Breakdown</h3>
-                    <span className="text-xs font-semibold text-stone-400">Maximum: 36 Points</span>
+                    <h3 className="font-serif text-lg font-bold text-gold-pale">{t.breakdown}</h3>
+                    <span className="text-xs font-semibold text-stone-400">{t.maxLabel}</span>
                   </div>
                   <div className="overflow-x-auto -mx-1">
                     <table className="w-full sm:min-w-[34rem] text-xs text-left">
                       <thead>
                         <tr className="text-stone-400 border-b border-gold/15">
-                          <th className="py-2.5 px-2 font-semibold">Koota</th>
-                          <th className="hidden md:table-cell py-2.5 px-2 font-semibold">Significance</th>
-                          <th className="py-2.5 px-2 font-semibold text-center">Score</th>
-                          <th className="py-2.5 px-2 font-semibold text-center">Max</th>
-                          <th className="hidden sm:table-cell py-2.5 px-2 font-semibold">Alignment Notes</th>
+                          <th className="py-2.5 px-2 font-semibold">{t.koota}</th>
+                          <th className="hidden md:table-cell py-2.5 px-2 font-semibold">{t.significance}</th>
+                          <th className="py-2.5 px-2 font-semibold text-center">{t.score}</th>
+                          <th className="py-2.5 px-2 font-semibold text-center">{t.max}</th>
+                          <th className="hidden sm:table-cell py-2.5 px-2 font-semibold">{t.notes}</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {matchResult.kootas.map((k) => (
-                          <tr key={k.name} className="border-b border-gold/10 last:border-0 text-stone-200">
-                            <td className="py-2.5 px-2 font-semibold text-white md:whitespace-nowrap">
-                              {k.label || pretty(k.name)}
-                              <span className="md:hidden block text-[10px] text-stone-400 font-normal leading-tight mt-0.5">
-                                {KOOTA_EXPLANATIONS[k.name]}
-                              </span>
-                              {k.note && <span className="sm:hidden block text-[10px] text-stone-300 font-normal leading-tight mt-0.5">{k.note}</span>}
-                            </td>
-                            <td className="hidden md:table-cell py-2.5 px-2 text-stone-400 max-w-[14rem]">
-                              {KOOTA_EXPLANATIONS[k.name] || 'Vedic marital compatibility dimension'}
-                            </td>
-                            <td className="py-2.5 px-2 text-center font-bold text-gold">
-                              {k.score}
-                            </td>
-                            <td className="py-2.5 px-2 text-center text-stone-400">
-                              {k.max}
-                            </td>
-                            <td className="hidden sm:table-cell py-2.5 px-2 text-stone-300">
-                              {k.note || 'Calculated'}
-                            </td>
-                          </tr>
-                        ))}
+                        {matchResult.kootas.map((k) => {
+                          const note = kootaNote(k.score, k.max, k.note, lang);
+                          return (
+                            <tr key={k.name} className="border-b border-gold/10 last:border-0 text-stone-200">
+                              <td className="py-2.5 px-2 font-semibold text-white md:whitespace-nowrap">
+                                {kootaLabel(k.name, k.label, lang) || prettySlug(k.name)}
+                                <span className="md:hidden block text-[10px] text-stone-400 font-normal leading-tight mt-0.5">
+                                  {kootaExplanation(k.name, lang)}
+                                </span>
+                                {note && <span className="sm:hidden block text-[10px] text-stone-300 font-normal leading-tight mt-0.5">{note}</span>}
+                              </td>
+                              <td className="hidden md:table-cell py-2.5 px-2 text-stone-400 max-w-[14rem]">{kootaExplanation(k.name, lang)}</td>
+                              <td className="py-2.5 px-2 text-center font-bold text-gold">{k.score}</td>
+                              <td className="py-2.5 px-2 text-center text-stone-400">{k.max}</td>
+                              <td className="hidden sm:table-cell py-2.5 px-2 text-stone-300">{note || t.calculated}</td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                       <tfoot>
                         <tr className="border-t-2 border-gold/30 font-bold text-white">
-                          <td className="py-3 px-2 text-gold-pale font-serif text-sm">
-                            Total Ashtakoot Guna Milan Score
-                          </td>
+                          <td className="py-3 px-2 text-gold-pale font-serif text-sm">{t.total}</td>
                           <td className="hidden md:table-cell" />
-                          <td className="py-3 px-2 text-center text-gold font-serif text-base">
-                            {matchResult.total}
-                          </td>
-                          <td className="py-3 px-2 text-center text-stone-300">
-                            36
-                          </td>
+                          <td className="py-3 px-2 text-center text-gold font-serif text-base">{matchResult.total}</td>
+                          <td className="py-3 px-2 text-center text-stone-300">36</td>
                           <td className="hidden sm:table-cell py-3 px-2 text-xs text-gold-soft">
-                            {matchResult.total >= 18 ? 'Acceptable Vedic Alliance' : 'Caution / Remedies Advised'}
+                            {matchResult.total >= 18 ? t.alignOk : t.alignLow}
                           </td>
                         </tr>
                       </tfoot>
@@ -1343,33 +1249,38 @@ export default function KundliPage() {
                   </div>
                 </div>
 
-                {/* Consult Pandit CTA and Reset */}
+                {/* Consult Pandit CTA, download and reset */}
                 <div className="rounded-3xl border border-gold/30 bg-gradient-to-br from-gold/15 via-obsidian-soft to-obsidian p-6 sm:p-8 text-center space-y-4">
                   <DiyaIcon size={32} className="mx-auto" />
-                  <h3 className="font-serif text-2xl font-bold text-white">
-                    Need Personalized Astrological Guidance on this Match?
-                  </h3>
-                  <p className="text-xs sm:text-sm text-stone-300 max-w-lg mx-auto leading-relaxed">
-                    While automated Guna Milan provides a solid foundation, deep horoscope compatibility (Kundli Milan) requires analyzing D9 Navamsa, Mars placement (Mangal Dosha), and Dasha timing. Connect directly with our verified Vedic Astrologers.
-                  </p>
+                  <h3 className="font-serif text-2xl font-bold text-white">{t.matchCtaTitle}</h3>
+                  <p className="text-xs sm:text-sm text-stone-300 max-w-lg mx-auto leading-relaxed">{t.matchCtaText}</p>
                   <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                     <Link
                       href="/pooja"
                       className="px-6 py-2.5 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs shadow-lg shadow-gold/20 transition flex items-center gap-2"
                     >
-                      <Sparkles className="w-3.5 h-3.5" /> Book Astrologer Consultation
+                      <Sparkles className="w-3.5 h-3.5" /> {t.matchCtaBook}
                     </Link>
+                    <DownloadPdfButton
+                      kind="match"
+                      lang={lang}
+                      label={t.downloadPdf}
+                      busyLabel={t.preparingPdf}
+                      failLabel={t.pdfFailed}
+                      getData={() => ({ result: matchResult, nameA: nm1, nameB: nm2 })}
+                    />
                     <button
                       type="button"
                       onClick={resetMatch}
                       className="flex items-center gap-1.5 px-5 py-2.5 border border-stone-700 hover:border-gold rounded-full text-xs font-semibold text-stone-300 hover:text-white transition"
                     >
-                      <RotateCcw className="w-3.5 h-3.5" /> Match Another Kundli
+                      <RotateCcw className="w-3.5 h-3.5" /> {t.matchAnother}
                     </button>
                   </div>
                 </div>
               </div>
-            )}
+              );
+            })()}
           </div>
         )}
       </div>

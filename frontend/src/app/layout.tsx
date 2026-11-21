@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Cormorant_Garamond, Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
+import { Cormorant_Garamond, Plus_Jakarta_Sans, JetBrains_Mono, Noto_Sans_Devanagari } from 'next/font/google';
 import './globals.css';
 import './theme.css';
 import '@livekit/components-styles';
@@ -7,6 +7,7 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { FestivalBanner } from '@/components/FestivalBanner';
 import { ToastProvider } from '@/components/Toast';
+import { LanguageProvider } from '@/lib/i18n/context';
 
 // R-07: Self-hosted fonts via next/font/google — fonts are bundled into the static
 // output at build time. No external request to fonts.googleapis.com at runtime,
@@ -30,6 +31,14 @@ const jetbrains = JetBrains_Mono({
   subsets: ['latin'],
   weight: ['400', '600'],
   variable: '--font-jetbrains',
+  display: 'swap',
+});
+
+// Hindi: Devanagari glyphs (applied only under html[lang="hi"], see globals.css). Latin text is untouched.
+const devanagari = Noto_Sans_Devanagari({
+  subsets: ['devanagari'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-devanagari',
   display: 'swap',
 });
 
@@ -222,7 +231,7 @@ export default function RootLayout({
 
   return (
     // R-07: className injects next/font CSS vars so Tailwind font-serif/sans/mono work with self-hosted fonts
-    <html lang="en" className={`${cormorant.variable} ${jakarta.variable} ${jetbrains.variable}`}>
+    <html lang="en" className={`${cormorant.variable} ${jakarta.variable} ${jetbrains.variable} ${devanagari.variable}`}>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -238,12 +247,14 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen flex flex-col bg-stone-950 text-stone-100 antialiased selection:bg-orange-500 selection:text-white w-full max-w-full overflow-x-clip">
+        <LanguageProvider>
         <ToastProvider>
           <FestivalBanner />
           <Navbar />
           <main className="flex-1 w-full max-w-full overflow-x-clip">{children}</main>
           <Footer />
         </ToastProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

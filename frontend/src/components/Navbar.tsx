@@ -23,6 +23,7 @@ import {
 import { CoinTopupModal } from './CoinTopupModal';
 import { SearchPalette } from './SearchPalette';
 import { ThemeToggle } from './ThemeToggle';
+import { LanguageToggle } from './LanguageToggle';
 import { OmIcon, CoinIcon, PranamIcon, DiyaIcon } from '@/components/icons/SpiritualIcons';
 import { decodeJwtClaims, purgeClientSession } from '@/lib/auth-session';
 
@@ -339,13 +340,13 @@ export function Navbar() {
             </div>
             <Link
               href="/#upcoming"
-              className="whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5"
+              className="hidden xl:inline-flex whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5"
             >
               Schedule
             </Link>
             <Link
               href="/#pandits"
-              className="whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5"
+              className="hidden xl:inline-flex whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5"
             >
               <span className="hidden xl:inline">Verified </span>Pandits
             </Link>
@@ -365,6 +366,20 @@ export function Navbar() {
 
               {moreDropdownOpen && (
                 <div className="navbar-more-dropdown absolute left-0 top-full mt-2 w-52 rounded-2xl p-2 z-[9999] text-xs bg-obsidian-soft border border-gold/25 shadow-2xl backdrop-blur-xl">
+                  <Link
+                    href="/#upcoming"
+                    onClick={() => setMoreDropdownOpen(false)}
+                    className="xl:hidden flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
+                  >
+                    <span>Schedule</span>
+                  </Link>
+                  <Link
+                    href="/#pandits"
+                    onClick={() => setMoreDropdownOpen(false)}
+                    className="xl:hidden flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
+                  >
+                    <span>Verified Pandits</span>
+                  </Link>
                   <Link
                     href="/about"
                     onClick={() => setMoreDropdownOpen(false)}
@@ -411,6 +426,7 @@ export function Navbar() {
 
             {/* Theme Toggle Button (Surya Day / Sacred Night) */}
             <ThemeToggle className="h-8 w-8" />
+            <LanguageToggle className="h-8 w-8" />
 
             {/* Quick Broadcaster Studio (Streamers only) */}
             {user?.role === 'STREAMER' && (
@@ -596,6 +612,7 @@ export function Navbar() {
               <Search className="w-4 h-4 text-gold-soft" />
             </button>
             <ThemeToggle className="h-7 w-7 sm:h-8 sm:w-8" />
+            <LanguageToggle className="hidden sm:inline-flex h-8 w-8" />
             {user && (
               <button
                 onClick={() => setTopupModalOpen(true)}
@@ -622,6 +639,7 @@ export function Navbar() {
         {/* Mobile Dropdown Panel */}
         {mobileMenuOpen && (
           <div className="lg:hidden border-t border-stone-200 dark:border-gold/15 bg-white/98 dark:bg-obsidian-deep/95 backdrop-blur-xl px-5 py-6 space-y-4 shadow-xl">
+            <LanguageToggle variant="segmented" className="sm:hidden w-full" />
             <nav className="flex flex-col space-y-3 text-sm">
               <Link
                 href="/"

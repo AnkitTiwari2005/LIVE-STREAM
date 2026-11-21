@@ -156,3 +156,18 @@ p {
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.18), 0 6px 14px -8px rgba(0, 0, 0, 0.35) !important;
 }
 
+
+/* Hindi mode: Devanagari glyph font first, Latin falls back to the normal stack. */
+html[lang="hi"] body,
+html[lang="hi"] .font-serif,
+html[lang="hi"] .font-sans {
+  font-family: var(--font-devanagari), "Noto Sans Devanagari", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+html[lang="hi"] h1,
+html[lang="hi"] h2,
+html[lang="hi"] h3 {
+  line-height: 1.35;
+}
+html[lang="hi"] .uppercase {
+  text-transform: none;
+}
