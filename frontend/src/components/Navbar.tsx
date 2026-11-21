@@ -346,9 +346,9 @@ export function Navbar() {
             </Link>
             <Link
               href="/#pandits"
-              className="hidden xl:inline-flex whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5"
+              className="hidden xl:inline-flex items-center gap-1 whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5"
             >
-              <span className="hidden xl:inline">Verified </span>Pandits
+              <span className="hidden xl:inline">Verified</span>Pandits
             </Link>
 
             {/* More Dropdown (About, FAQ, Ethics, Support) */}

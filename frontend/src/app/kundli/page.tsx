@@ -1178,7 +1178,7 @@ export default function KundliPage() {
                     {([[nm1, t.partnerTag1, matchResult.personA], [nm2, t.partnerTag2, matchResult.personB]] as const).map(([nm, tag, person]) => (
                       <div key={tag} className="p-4 rounded-xl border border-gold/15 bg-stone-900/40 space-y-2">
                         <div className="font-bold text-gold border-b border-gold/15 pb-1 mb-2">
-                          {nm} {tag}
+                          {nm === t.partner1 || nm === t.partner2 ? tag.replace(/[()]/g, '') : `${nm} ${tag}`}
                         </div>
                         {([
                           ['rashi', t.moonRashi],
