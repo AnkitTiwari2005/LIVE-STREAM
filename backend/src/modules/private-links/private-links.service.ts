@@ -293,8 +293,11 @@ export class PrivateLinksService {
     });
 
     const participantId = verifiedUser ? verifiedUser.id : `priv_guest_${session.id}`;
-    // B-03: Viewers must never receive publish permissions by default
-    const canPublish = false;
+    // Private pooja consultations are two-way: the invited devotee may send camera + microphone.
+    // Publishing is limited to those two sources (no screen share / screen-share audio) and the token
+    // is only issued after the link, block-list and capacity checks above. The pandit can mute a
+    // participant or remove them at any time.
+    const canPublish = true;
 
     // Generate LiveKit token for private pooja consultation (60 minutes TTL)
     const token = await this.videoProvider.generateToken({
@@ -303,6 +306,7 @@ export class PrivateLinksService {
       participantName,
       isPublisher: false,
       canPublish,
+      publishSources: ['camera', 'microphone'],
       canSubscribe: true,
       ttlMinutes: 60,
       metadata: { role: 'private_viewer', sessionId: session.id, linkId: link.id },

@@ -343,6 +343,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         if (isViewerRemoved) {
           this.presenceService.broadcastCount(streamId, count);
           this.server.to(`stream:${streamId}`).emit('stream:viewer_left', { streamId, identity });
+          this.clearVideoRequest(streamId, identity);
         }
       }
     }
@@ -841,6 +842,71 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     if (this.server && streamerId) {
       this.server.to(`user:${streamerId}`).emit('stream:earnings_updated', payload);
     }
+  }
+
+  // ── Video-guest (public stream) helpers ────────────────────────────────────
+  /** Pending "please let me show my video" requests: streamId -> identity -> info. */
+  private videoRequests = new Map<string, Map<string, { identity: string; name: string; at: number }>>();
+  private static readonly MAX_VIDEO_REQUESTS = 50;
+
+  emitToIdentity(streamId: string, identity: string, event: string, payload: unknown) {
+    this.server?.to(`identity:${streamId}:${identity}`).emit(event, payload);
+  }
+
+  emitVideoGuestChanged(streamId: string, payload: { identity: string; name?: string; active: boolean }) {
+    this.server?.to(`stream:${streamId}`).emit('video:guest_changed', { streamId, ...payload });
+  }
+
+  clearVideoRequest(streamId: string, identity: string) {
+    const m = this.videoRequests.get(streamId);
+    if (m?.delete(identity)) this.emitRequestList(streamId);
+    if (m && m.size === 0) this.videoRequests.delete(streamId);
+  }
+
+  private emitRequestList(streamId: string) {
+    this.prisma.stream
+      .findUnique({ where: { id: streamId }, select: { streamerId: true } })
+      .then((st) => {
+        if (st) this.server?.to(`user:${st.streamerId}`).emit('video:requests', { streamId, requests: this.listVideoRequests(streamId) });
+      })
+      .catch(() => {});
+  }
+
+  private listVideoRequests(streamId: string) {
+    return [...(this.videoRequests.get(streamId)?.values() ?? [])].sort((a, b) => a.at - b.at);
+  }
+
+  @SubscribeMessage('video:request')
+  async handleVideoRequest(@ConnectedSocket() client: Socket, @MessageBody() data: { streamId: string; cancel?: boolean }) {
+    const userId = client.data.user?.sub;
+    const streamId = data?.streamId;
+    if (!userId || typeof streamId !== 'string' || !client.data.joinedStreams?.has(streamId)) return;
+    if (data.cancel) {
+      this.clearVideoRequest(streamId, userId);
+      return;
+    }
+    if (!this.memoryCache.checkRateLimit(`rate:vreq:${streamId}:${userId}`, 5000)) return;
+    const stream = await this.prisma.stream.findUnique({
+      where: { id: streamId },
+      select: { streamerId: true, visibility: true, status: true },
+    });
+    if (!stream || stream.streamerId === userId) return;
+    if (stream.visibility !== 'PUBLIC' || stream.status !== 'LIVE') return;
+    let m = this.videoRequests.get(streamId);
+    if (!m) this.videoRequests.set(streamId, (m = new Map()));
+    if (!m.has(userId) && m.size >= ChatGateway.MAX_VIDEO_REQUESTS) return;
+    const name = ChatGateway.safeName(client.data.displayName ?? client.data.user?.name, 'Devotee');
+    m.set(userId, { identity: userId, name, at: Date.now() });
+    this.emitRequestList(streamId);
+  }
+
+  @SubscribeMessage('video:requests:list')
+  async handleVideoRequestsList(@ConnectedSocket() client: Socket, @MessageBody() data: { streamId: string }) {
+    const user = client.data.user;
+    if (!user || typeof data?.streamId !== 'string') return;
+    const st = await this.prisma.stream.findUnique({ where: { id: data.streamId }, select: { streamerId: true } });
+    if (!st || (st.streamerId !== user.sub && user.role !== UserRole.ADMIN)) return;
+    client.emit('video:requests', { streamId: data.streamId, requests: this.listVideoRequests(data.streamId) });
   }
 
   /**

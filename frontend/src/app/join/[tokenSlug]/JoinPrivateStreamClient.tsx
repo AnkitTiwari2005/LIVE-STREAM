@@ -9,10 +9,19 @@ import {
   useTracks,
   useLocalParticipant,
   useRoomContext,
-  VideoTrack,
-  AudioTrack,
+  useParticipants,
 } from '@livekit/components-react';
-import { Track } from 'livekit-client';
+import { Track, RoomEvent } from 'livekit-client';
+import {
+  MediaLobby,
+  ParticipantTile,
+  ConnectionBanner,
+  ROOM_OPTIONS,
+  LobbyChoice,
+  friendlyMediaError,
+  isStreamerParticipant,
+  trackFor,
+} from '@/components/video/MediaPieces';
 import { io, Socket } from 'socket.io-client';
 import { ChatWidget } from '@/components/ChatWidget';
 import { DevotionalEmojiBar, FloatingReactionsOverlay } from '@/components/SpiritualReactions';
@@ -33,6 +42,7 @@ import {
   PhoneOff,
   Volume2,
   Eye,
+  SwitchCamera,
 } from 'lucide-react';
 import { KickedScreen } from '@/components/KickedScreen';
 import {
@@ -62,6 +72,8 @@ export default function JoinPrivateStreamClient() {
   const [guestName, setGuestName] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [token, setToken] = useState<string | null>(null);
+  // Device choices from the pre-join lobby. null = lobby still showing.
+  const [choice, setChoice] = useState<LobbyChoice | null>(null);
   const [serverUrl, setServerUrl] = useState<string>('');
   const [streamId, setStreamId] = useState<string>('');
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -175,6 +187,11 @@ export default function JoinPrivateStreamClient() {
     };
   }, [streamId, sessionId]);
 
+  // Leaving / being removed / disconnecting always returns to the start, so the next join re-checks devices.
+  useEffect(() => {
+    if (!token) setChoice(null);
+  }, [token]);
+
   const handleClaim = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -240,9 +257,23 @@ export default function JoinPrivateStreamClient() {
     );
   }
 
+  if (token && !choice) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <MediaLobby
+          title={metadata?.streamTitle ? `Join: ${metadata.streamTitle}` : 'Join private session'}
+          subtitle="This is a two-way session. The pandit can see and hear you if you turn your camera and microphone on."
+          joinLabel="Join session"
+          onJoin={setChoice}
+          onCancel={() => setToken(null)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      {token ? (
+      {token && choice ? (
         // Connected to Private Stream Video Room with Full Two-Column Devotee Interface
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Video Viewport (Col span 2) */}
@@ -253,8 +284,10 @@ export default function JoinPrivateStreamClient() {
                 serverUrl={serverUrl}
                 token={token}
                 connect={true}
-                video={false}
-                audio={false}
+                options={ROOM_OPTIONS}
+                video={choice.video ? (choice.videoDeviceId ? { deviceId: choice.videoDeviceId } : true) : false}
+                audio={choice.audio ? (choice.audioDeviceId ? { deviceId: choice.audioDeviceId } : true) : false}
+                onMediaDeviceFailure={(_f, kind) => toast.error(kind === 'videoinput' ? 'Could not start your camera.' : 'Could not start your microphone.')}
                 onDisconnected={() => {
                   if (kickedRef.current) return;
                   setToken(null);
@@ -263,7 +296,13 @@ export default function JoinPrivateStreamClient() {
               >
                 {/* RoomAudioRenderer ensures remote audio tracks are played via HTMLAudioElement */}
                 <RoomAudioRenderer />
-                <PrivateTwoWayConsultationRenderer onLeave={() => setToken(null)} socket={socket} streamId={streamId} />
+                <PrivateTwoWayConsultationRenderer
+                  onLeave={() => setToken(null)}
+                  socket={socket}
+                  streamId={streamId}
+                  streamerName={metadata?.streamerName}
+                  selfName={guestName}
+                />
               </LiveKitRoom>
 
               {/* Floating Auspicious Dakshina Alert */}
@@ -493,82 +532,130 @@ export default function JoinPrivateStreamClient() {
   );
 }
 
-function PrivateTwoWayConsultationRenderer({ onLeave, socket, streamId }: { onLeave: () => void; socket: Socket | null; streamId: string }) {
-  const cameraTracks = useTracks([Track.Source.Camera]);
-  const audioTracks = useTracks([Track.Source.Microphone]);
-  const { localParticipant, isMicrophoneEnabled, isCameraEnabled, cameraTrack } = useLocalParticipant();
+function PrivateTwoWayConsultationRenderer({
+  onLeave,
+  socket,
+  streamId,
+  streamerId,
+  streamerName,
+  selfName,
+}: {
+  onLeave: () => void;
+  socket: Socket | null;
+  streamId: string;
+  streamerId?: string;
+  streamerName?: string;
+  selfName?: string;
+}) {
+  const toast = useToast();
   const room = useRoomContext();
+  const participants = useParticipants();
+  const tracks = useTracks([Track.Source.Camera, Track.Source.Microphone], { onlySubscribed: false });
+  const { localParticipant, isMicrophoneEnabled, isCameraEnabled } = useLocalParticipant();
 
   const [isAudioPlaybackAllowed, setIsAudioPlaybackAllowed] = useState(true);
+  const [busy, setBusy] = useState<'mic' | 'cam' | 'flip' | null>(null);
+  const [canFlip, setCanFlip] = useState(false);
+  const facingRef = useRef<'user' | 'environment'>('user');
 
   useEffect(() => {
     if (!room) return;
     setIsAudioPlaybackAllowed(room.canPlaybackAudio);
-    const handleAudioPlaybackChange = () => {
-      setIsAudioPlaybackAllowed(room.canPlaybackAudio);
-    };
-    room.on('audioPlaybackChanged', handleAudioPlaybackChange);
+    const onChange = () => setIsAudioPlaybackAllowed(room.canPlaybackAudio);
+    room.on(RoomEvent.AudioPlaybackStatusChanged, onChange);
     return () => {
-      room.off('audioPlaybackChanged', handleAudioPlaybackChange);
+      room.off(RoomEvent.AudioPlaybackStatusChanged, onChange);
     };
   }, [room]);
 
+  // Device problems after joining (unplugged mic, permission pulled, camera taken by another app).
+  useEffect(() => {
+    if (!room) return;
+    const onErr = (err: Error) => toast.error(friendlyMediaError(err));
+    room.on(RoomEvent.MediaDevicesError, onErr);
+    return () => {
+      room.off(RoomEvent.MediaDevicesError, onErr);
+    };
+  }, [room, toast]);
+
+  // The pandit can mute a participant; tell them instead of leaving them confused.
+  useEffect(() => {
+    if (!socket) return;
+    const onMuted = (d: { streamId?: string; source?: string }) => {
+      if (d?.streamId && d.streamId !== streamId) return;
+      toast.info(d?.source === 'camera' ? 'The pandit turned your camera off.' : 'The pandit muted your microphone.');
+    };
+    socket.on('video:muted_by_host', onMuted);
+    return () => {
+      socket.off('video:muted_by_host', onMuted);
+    };
+  }, [socket, streamId, toast]);
+
+  // Offer "flip camera" only where there is more than one camera (phones).
+  useEffect(() => {
+    let cancelled = false;
+    navigator.mediaDevices
+      ?.enumerateDevices()
+      .then((d) => !cancelled && setCanFlip(d.filter((x) => x.kind === 'videoinput').length > 1))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isCameraEnabled]);
+
   const unlockAudio = async () => {
-    if (room) {
-      try {
-        await room.startAudio();
-        setIsAudioPlaybackAllowed(true);
-      } catch (e) {
-        console.warn('LiveKit startAudio notice:', e);
-      }
-    }
-  };
-
-  const toggleMic = async () => {
-    if (!localParticipant) return;
+    if (!room) return;
     try {
-      await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
-    } catch (err: any) {
-      // Browser permission not yet granted — request it explicitly
-      try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-        await localParticipant.setMicrophoneEnabled(true);
-      } catch {
-        console.warn('Mic permission denied', err);
-      }
+      await room.startAudio();
+      setIsAudioPlaybackAllowed(true);
+    } catch (e) {
+      console.warn('LiveKit startAudio notice:', e);
     }
   };
 
-  const toggleCamera = async () => {
-    if (!localParticipant) return;
+  const toggle = async (kind: 'mic' | 'cam') => {
+    if (!localParticipant || busy) return;
+    setBusy(kind);
     try {
-      await localParticipant.setCameraEnabled(!isCameraEnabled);
+      if (kind === 'mic') await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
+      else await localParticipant.setCameraEnabled(!isCameraEnabled);
     } catch (err: any) {
-      // Browser permission not yet granted — request it explicitly
-      try {
-        await navigator.mediaDevices.getUserMedia({ video: true });
-        await localParticipant.setCameraEnabled(true);
-      } catch {
-        console.warn('Camera permission denied', err);
-      }
+      toast.error(friendlyMediaError(err));
+    } finally {
+      setBusy(null);
     }
   };
 
-  // Find remote tracks (Pandit) vs local tracks (Devotee)
-  const remoteCameraTrack = cameraTracks.find((t) => t.participant.identity !== localParticipant?.identity);
-  const remoteAudioTrack = audioTracks.find((t) => t.participant.identity !== localParticipant?.identity);
+  const flipCamera = async () => {
+    if (!localParticipant || busy) return;
+    setBusy('flip');
+    try {
+      const next = facingRef.current === 'user' ? 'environment' : 'user';
+      const pub = localParticipant.getTrackPublication(Track.Source.Camera);
+      await (pub?.videoTrack as any)?.restartTrack({ facingMode: next });
+      facingRef.current = next;
+    } catch (err: any) {
+      toast.error(friendlyMediaError(err));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const remotes = participants.filter((p) => !p.isLocal);
+  const pandit = remotes.find((p) => isStreamerParticipant(p, streamerId));
+  const otherDevotees = remotes.filter((p) => p !== pandit);
+  const camOf = (id: string) => trackFor(tracks, id, Track.Source.Camera);
+  const micMutedOf = (id: string) => {
+    const m = trackFor(tracks, id, Track.Source.Microphone);
+    return !m || !m.publication || m.publication.isMuted;
+  };
+  const nameOf = (p: { name?: string; identity: string }, fb: string) => (p.name || '').trim() || fb;
 
   return (
-    // Full video area — no floating control bar here, controls live outside this component
     <div className="relative w-full h-full bg-black cursor-pointer" onClick={unlockAudio}>
-      {/* Floating emoji reactions overlay — inside video so emojis float up over the stream */}
       <FloatingReactionsOverlay socket={socket} streamId={streamId} />
-      {/* Remote Audio Track Renderer */}
-      {remoteAudioTrack && (
-        <AudioTrack trackRef={remoteAudioTrack} />
-      )}
+      <ConnectionBanner />
 
-      {/* Audio Unlock Banner — only shown when browser blocks autoplay */}
       {!isAudioPlaybackAllowed && (
         <button
           onClick={(e) => {
@@ -582,65 +669,94 @@ function PrivateTwoWayConsultationRenderer({ onLeave, socket, streamId }: { onLe
         </button>
       )}
 
-      {/* Remote Pandit Video (Main Screen) */}
-      {remoteCameraTrack ? (
-        <VideoTrack trackRef={remoteCameraTrack} className="w-full h-full object-contain bg-black" />
+      {/* Pandit - main screen */}
+      {pandit ? (
+        <ParticipantTile
+          participant={pandit}
+          cameraRef={camOf(pandit.identity)}
+          micMuted={micMutedOf(pandit.identity)}
+          label={nameOf(pandit, streamerName || 'Pandit')}
+          badge="Pandit"
+          fit="contain"
+          className="!rounded-none !border-0 w-full h-full"
+        />
       ) : (
         <div className="video-overlay w-full h-full flex flex-col items-center justify-center text-stone-200 bg-stone-950">
           <DiyaIcon size={44} className="mb-2" />
-          <span className="text-sm font-medium text-stone-200">Awaiting Pandit video transmission...</span>
+          <span className="text-sm font-medium text-stone-200">Waiting for the Pandit to join…</span>
         </div>
       )}
 
-      {/* Devotee Self Camera Preview — PiP top-right, only when cam is on */}
-      {isCameraEnabled && cameraTrack && (
-        <div className="absolute top-4 right-4 w-28 sm:w-36 aspect-video rounded-xl overflow-hidden border-2 border-orange-500/80 shadow-2xl z-20 bg-stone-950">
-          <VideoTrack
-            trackRef={{
-              participant: localParticipant,
-              publication: cameraTrack,
-              source: Track.Source.Camera,
-            }}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute bottom-1 left-1 bg-black/70 px-1.5 py-0.5 rounded text-[9px] font-bold text-white">
-            You
-          </div>
+      {/* Other devotees in the room (small, left) */}
+      {otherDevotees.length > 0 && (
+        <div className="absolute top-3 left-3 z-20 flex flex-col gap-2 max-h-[70%] overflow-hidden">
+          {otherDevotees.slice(0, 3).map((p) => (
+            <ParticipantTile
+              key={p.identity}
+              participant={p}
+              cameraRef={camOf(p.identity)}
+              micMuted={micMutedOf(p.identity)}
+              label={nameOf(p, 'Devotee')}
+              className="w-24 sm:w-32 aspect-video"
+            />
+          ))}
+          {otherDevotees.length > 3 && (
+            <span className="text-[10px] font-bold text-white bg-black/70 rounded px-2 py-0.5 self-start">+{otherDevotees.length - 3} more</span>
+          )}
         </div>
       )}
 
-      {/* Controls bar — compact icon-only row at bottom of video, doesn't block content */}
+      {/* Self view (top-right). Shows an avatar when the camera is off so you can see your own state. */}
+      {localParticipant && (
+        <ParticipantTile
+          participant={localParticipant}
+          cameraRef={camOf(localParticipant.identity)}
+          micMuted={!isMicrophoneEnabled}
+          label="You"
+          mirror={facingRef.current === 'user'}
+          className="absolute top-3 right-3 w-28 sm:w-36 aspect-video z-20 !border-orange-500/70 shadow-2xl"
+        />
+      )}
+
       <div
         className="absolute bottom-0 left-0 right-0 z-30 flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-t from-black/80 to-transparent"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Mic toggle — icon only, labelled via title tooltip */}
         <button
-          onClick={toggleMic}
+          onClick={() => toggle('mic')}
+          disabled={busy !== null}
+          aria-pressed={isMicrophoneEnabled}
           title={isMicrophoneEnabled ? 'Mute mic' : 'Unmute mic (speak to Pandit)'}
-          className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg ${
-            isMicrophoneEnabled
-              ? 'bg-emerald-700 hover:bg-emerald-600 text-white'
-              : 'bg-stone-800/90 hover:bg-stone-700 text-stone-200'
+          className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg disabled:opacity-60 ${
+            isMicrophoneEnabled ? 'bg-emerald-700 hover:bg-emerald-600 text-white' : 'bg-stone-800/90 hover:bg-stone-700 text-stone-200'
           }`}
         >
           {isMicrophoneEnabled ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
         </button>
 
-        {/* Camera toggle — icon only */}
         <button
-          onClick={toggleCamera}
+          onClick={() => toggle('cam')}
+          disabled={busy !== null}
+          aria-pressed={isCameraEnabled}
           title={isCameraEnabled ? 'Turn off camera' : 'Turn on camera'}
-          className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg ${
-            isCameraEnabled
-              ? 'bg-stone-700 hover:bg-stone-600 text-white'
-              : 'bg-stone-800/90 hover:bg-stone-700 text-stone-200'
+          className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg disabled:opacity-60 ${
+            isCameraEnabled ? 'bg-emerald-700 hover:bg-emerald-600 text-white' : 'bg-stone-800/90 hover:bg-stone-700 text-stone-200'
           }`}
         >
           {isCameraEnabled ? <VideoIcon className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
         </button>
 
-        {/* Sound unlock — only shown when audio is blocked */}
+        {canFlip && isCameraEnabled && (
+          <button
+            onClick={flipCamera}
+            disabled={busy !== null}
+            title="Switch camera"
+            className="w-9 h-9 rounded-full flex items-center justify-center bg-stone-800/90 hover:bg-stone-700 text-stone-200 shadow-lg disabled:opacity-60"
+          >
+            <SwitchCamera className="w-4 h-4" />
+          </button>
+        )}
+
         {!isAudioPlaybackAllowed && (
           <button
             onClick={unlockAudio}
@@ -651,10 +767,8 @@ function PrivateTwoWayConsultationRenderer({ onLeave, socket, streamId }: { onLe
           </button>
         )}
 
-        {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Leave — text label since it's a destructive action */}
         <button
           onClick={onLeave}
           title="Leave session"

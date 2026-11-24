@@ -6,6 +6,7 @@ import {
   ForbiddenException,
   UnauthorizedException,
   ServiceUnavailableException,
+  ConflictException,
   Inject,
   Logger,
 } from '@nestjs/common';
@@ -14,6 +15,7 @@ import { PrismaService } from '../../database/prisma.service';
 import { CreateStreamDto } from './dto/create-stream.dto';
 import { UpdateStreamDto } from './dto/update-stream.dto';
 import { KickViewerDto } from './dto/kick-viewer.dto';
+import { MuteParticipantDto } from './dto/video-guest.dto';
 import { StreamStatus, StreamVisibility, UserRole, UserStatus, ViewingSessionStatus } from '@prisma/client';
 import { validateStateTransition } from './state/stream-state-machine';
 import {
@@ -681,6 +683,10 @@ export class StreamsService {
       });
     }
 
+    // 7b. If they held the video slot it is free now (the participant is gone from LiveKit)
+    this.chatGateway?.emitVideoGuestChanged?.(streamId, { identity, active: false });
+    this.chatGateway?.clearVideoRequest?.(streamId, identity);
+
     // 8. Update viewer count
     if (this.presenceService) {
       await this.presenceService.removeViewer(streamId, identity);
@@ -693,6 +699,160 @@ export class StreamsService {
       kicked: true,
       blocked: !!dto.block,
     };
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Public-stream "video guest": the pandit lets ONE devotee turn on camera + mic
+  // for the current session only. LiveKit is the source of truth: the grant is a live
+  // permission + a server-set attribute (videoGuest='1') on that participant, so it
+  // disappears automatically when they leave/reconnect, the stream ends, or the pandit
+  // revokes it. Nothing is persisted that could outlive the session.
+  // ─────────────────────────────────────────────────────────────────────────────
+  private readonly streamLocks = new Map<string, Promise<unknown>>();
+
+  /** Serialises slot changes per stream so two quick clicks can never create two guests. */
+  private withStreamLock<T>(streamId: string, fn: () => Promise<T>): Promise<T> {
+    const prev = this.streamLocks.get(streamId) ?? Promise.resolve();
+    const run = prev.catch(() => undefined).then(fn);
+    const tail = run.catch(() => undefined);
+    this.streamLocks.set(streamId, tail);
+    tail.then(() => {
+      if (this.streamLocks.get(streamId) === tail) this.streamLocks.delete(streamId);
+    });
+    return run;
+  }
+
+  private static readonly UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  private async loadModeratedStream(streamId: string, actorId: string, actorRole: string) {
+    const stream = await this.prisma.stream.findUnique({ where: { id: streamId } });
+    if (!stream) throw new NotFoundException('Stream not found');
+    if (stream.streamerId !== actorId && actorRole !== UserRole.ADMIN) {
+      throw new ForbiddenException('Not authorized');
+    }
+    return stream;
+  }
+
+  private async auditVideo(streamId: string, actorId: string, identity: string, type: 'VIDEO_GRANT' | 'VIDEO_REVOKE') {
+    try {
+      await this.prisma.moderationAction.create({
+        data: {
+          actorId,
+          ...(StreamsService.UUID_RE.test(identity) ? { targetUserId: identity } : {}),
+          streamId,
+          actionType: type as any,
+        },
+      });
+    } catch (err: any) {
+      this.logger.warn(`Audit ${type} failed for ${identity}: ${err.message}`);
+    }
+  }
+
+  /** Current video guest (if any), read from LiveKit. */
+  async getVideoGuest(streamId: string, actorId: string, actorRole: string) {
+    await this.loadModeratedStream(streamId, actorId, actorRole);
+    const list = await this.videoProvider.listParticipants(streamId);
+    if (list === null) throw new ServiceUnavailableException('Video service is unavailable right now.');
+    const g = list.find((p) => p.attributes?.videoGuest === '1' && p.canPublish);
+    return { guest: g ? { identity: g.identity, name: g.name } : null };
+  }
+
+  async grantVideoGuest(
+    streamId: string,
+    actorId: string,
+    actorRole: string,
+    identity: string,
+    opts: { replace?: boolean } = {},
+  ) {
+    return this.withStreamLock(streamId, async () => {
+      const stream = await this.loadModeratedStream(streamId, actorId, actorRole);
+      if (stream.visibility !== StreamVisibility.PUBLIC) {
+        throw new BadRequestException('Video guests are for public streams. Private rooms are already two-way.');
+      }
+      if (stream.status !== StreamStatus.LIVE) throw new BadRequestException('The stream is not live.');
+      if (identity === stream.streamerId) throw new BadRequestException('You are already broadcasting.');
+      if (!StreamsService.UUID_RE.test(identity)) {
+        throw new BadRequestException('Only signed-in devotees can be given the video slot.');
+      }
+      const blocked = await this.prisma.blockedViewer.findFirst({ where: { streamId, userId: identity } });
+      if (blocked) throw new ForbiddenException('This devotee is blocked from the stream.');
+
+      const list = await this.videoProvider.listParticipants(streamId);
+      if (list === null) throw new ServiceUnavailableException('Video service is unavailable right now.');
+      const target = list.find((p) => p.identity === identity);
+      if (!target) throw new BadRequestException('This devotee is not in the stream right now.');
+
+      const current = list.find((p) => p.attributes?.videoGuest === '1' && p.canPublish);
+      if (current && current.identity === identity) {
+        return { success: true, guest: { identity, name: target.name }, alreadyActive: true };
+      }
+      if (current) {
+        if (!opts.replace) {
+          throw new ConflictException({
+            message: 'Another devotee already has the video slot. Revoke them first or replace them.',
+            code: 'VIDEO_SLOT_TAKEN',
+            currentIdentity: current.identity,
+            currentName: current.name,
+          });
+        }
+        await this.revokeVideoGuestInternal(streamId, actorId, current.identity, true);
+      }
+
+      const ok = await this.videoProvider.updateParticipantPermissions(streamId, identity, {
+        canPublish: true,
+        sources: ['camera', 'microphone'],
+        attributes: { videoGuest: '1' },
+      });
+      if (!ok) throw new ServiceUnavailableException('Could not grant video access. Please try again.');
+
+      await this.auditVideo(streamId, actorId, identity, 'VIDEO_GRANT');
+      this.chatGateway?.emitVideoGuestChanged?.(streamId, { identity, name: target.name, active: true });
+      this.chatGateway?.emitToIdentity?.(streamId, identity, 'video:granted', { streamId });
+      this.chatGateway?.clearVideoRequest?.(streamId, identity);
+      this.logger.log(`Video guest granted [${identity}] on stream [${streamId}]`);
+      return { success: true, guest: { identity, name: target.name } };
+    });
+  }
+
+  private async revokeVideoGuestInternal(streamId: string, actorId: string, identity: string, replaced = false) {
+    await this.videoProvider.updateParticipantPermissions(streamId, identity, {
+      canPublish: false,
+      attributes: { videoGuest: '' },
+    });
+    await this.auditVideo(streamId, actorId, identity, 'VIDEO_REVOKE');
+    this.chatGateway?.emitVideoGuestChanged?.(streamId, { identity, active: false });
+    this.chatGateway?.emitToIdentity?.(streamId, identity, 'video:revoked', { streamId, replaced });
+  }
+
+  async revokeVideoGuest(streamId: string, actorId: string, actorRole: string, identity: string) {
+    return this.withStreamLock(streamId, async () => {
+      await this.loadModeratedStream(streamId, actorId, actorRole);
+      await this.revokeVideoGuestInternal(streamId, actorId, identity);
+      return { success: true };
+    });
+  }
+
+  /** Pandit/admin mutes a participant's camera or microphone (they can switch it back on themselves). */
+  async muteParticipantMedia(
+    streamId: string,
+    actorId: string,
+    actorRole: string,
+    identity: string,
+    dto: MuteParticipantDto,
+  ) {
+    const stream = await this.loadModeratedStream(streamId, actorId, actorRole);
+    if (identity === stream.streamerId) throw new BadRequestException('Cannot mute the broadcaster.');
+    const done = await this.videoProvider.muteParticipantSource(streamId, identity, dto.source, true);
+    this.chatGateway?.emitToIdentity?.(streamId, identity, 'video:muted_by_host', { streamId, source: dto.source });
+    return { success: true, muted: done };
+  }
+
+  /** Called when a devotee asks the pandit for the video slot (via socket). */
+  async getStreamForVideoRequest(streamId: string) {
+    return this.prisma.stream.findUnique({
+      where: { id: streamId },
+      select: { id: true, streamerId: true, visibility: true, status: true },
+    });
   }
 
   async getViewerListForStream(streamId: string, actorId: string, actorRole: string) {

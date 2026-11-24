@@ -9,8 +9,23 @@ import {
   StartAudio,
   useTracks,
   VideoTrack,
+  useParticipants,
+  useRoomContext,
+  useLocalParticipant,
+  useLocalParticipantPermissions,
+  useConnectionState,
 } from '@livekit/components-react';
-import { Track } from 'livekit-client';
+import { Track, ConnectionState } from 'livekit-client';
+import {
+  ParticipantTile,
+  ConnectionBanner,
+  ROOM_OPTIONS,
+  trackFor,
+  useRoomTick,
+  isVideoGuest,
+  isStreamerParticipant,
+  friendlyMediaError,
+} from '@/components/video/MediaPieces';
 import { io, Socket } from 'socket.io-client';
 import { ChatWidget } from '@/components/ChatWidget';
 import { FloatingReactionsOverlay, DevotionalEmojiBar } from '@/components/SpiritualReactions';
@@ -749,6 +764,7 @@ export default function StreamPlayerClient() {
                   serverUrl={serverUrl}
                   token={token}
                   connect={true}
+                  options={ROOM_OPTIONS}
                   video={false}
                   audio={false}
                   onConnected={() => {
@@ -782,7 +798,12 @@ export default function StreamPlayerClient() {
                   className="w-full h-full"
                 >
                   <RoomAudioRenderer />
-                  <VideoRenderer />
+                  <VideoRenderer
+                    streamerId={stream?.streamerId}
+                    streamId={id}
+                    socket={socket}
+                    canAsk={!!currentUser?.id && currentUser.id !== stream?.streamerId && stream?.visibility !== 'PRIVATE'}
+                  />
                   <div className="absolute top-4 left-4 z-30">
                     <StartAudio label="Click to Unmute Live Chanting & Aarti" />
                   </div>
@@ -1118,16 +1139,168 @@ export default function StreamPlayerClient() {
   );
 }
 
-function VideoRenderer() {
-  const tracks = useTracks([Track.Source.Camera]);
-  if (tracks.length === 0) {
-    return (
-      <div className="video-overlay w-full h-full flex flex-col items-center justify-center text-stone-200 bg-stone-950">
-        <DiyaIcon size={44} className="mb-2" />
-        <span className="text-sm font-medium text-stone-200">Awaiting Pandit video transmission...</span>
-      </div>
-    );
-  }
+function VideoRenderer({
+  streamerId,
+  streamId,
+  socket,
+  canAsk,
+}: {
+  streamerId?: string;
+  streamId: string;
+  socket: Socket | null;
+  canAsk: boolean;
+}) {
+  const toast = useToast();
+  const room = useRoomContext();
+  useRoomTick(room);
+  const participants = useParticipants();
+  const tracks = useTracks([Track.Source.Camera, Track.Source.Microphone], { onlySubscribed: false });
+  const { localParticipant, isCameraEnabled, isMicrophoneEnabled } = useLocalParticipant();
+  const perms = useLocalParticipantPermissions();
+  const canPublish = !!perms?.canPublish;
+  const connected = useConnectionState() === ConnectionState.Connected;
 
-  return <VideoTrack trackRef={tracks[0]} className="w-full h-full object-cover" />;
+  const [requested, setRequested] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const wasPublisher = useRef(false);
+
+  const pandit = participants.find((p) => isStreamerParticipant(p, streamerId));
+  const guest = participants.find((p) => !isStreamerParticipant(p, streamerId) && isVideoGuest(p));
+  const camOf = (id: string) => trackFor(tracks, id, Track.Source.Camera);
+  const micMutedOf = (id: string) => {
+    const m = trackFor(tracks, id, Track.Source.Microphone);
+    return !m || !m.publication || m.publication.isMuted;
+  };
+
+  const stopLocalMedia = async () => {
+    try {
+      await room?.localParticipant?.setCameraEnabled(false);
+      await room?.localParticipant?.setMicrophoneEnabled(false);
+    } catch {}
+  };
+
+  // Permission taken away (pandit revoked, replaced someone, or the guest left): release camera + mic.
+  useEffect(() => {
+    if (wasPublisher.current && !canPublish) {
+      stopLocalMedia();
+      setRequested(false);
+    }
+    if (canPublish) setRequested(false);
+    wasPublisher.current = canPublish;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canPublish]);
+
+  useEffect(() => {
+    if (!socket) return;
+    const onGranted = () => toast.success('The pandit allowed you to show your video. Tap "Turn on camera".');
+    const onRevoked = (d: { replaced?: boolean }) => {
+      toast.info(d?.replaced ? 'The pandit gave the video slot to another devotee.' : 'The pandit ended your video.');
+      stopLocalMedia();
+      setRequested(false);
+    };
+    const onMuted = (d: { source?: string }) =>
+      toast.info(d?.source === 'camera' ? 'The pandit turned your camera off.' : 'The pandit muted your microphone.');
+    socket.on('video:granted', onGranted);
+    socket.on('video:revoked', onRevoked);
+    socket.on('video:muted_by_host', onMuted);
+    return () => {
+      socket.off('video:granted', onGranted);
+      socket.off('video:revoked', onRevoked);
+      socket.off('video:muted_by_host', onMuted);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socket, localParticipant]);
+
+  // Leaving the page must never leave a camera running.
+  useEffect(() => () => { stopLocalMedia(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const toggleRequest = () => {
+    if (!socket) return;
+    socket.emit('video:request', { streamId, cancel: requested });
+    setRequested(!requested);
+    toast.info(requested ? 'Request cancelled.' : 'Request sent. The pandit will see it.');
+  };
+
+  const toggle = async (kind: 'cam' | 'mic') => {
+    if (!localParticipant || busy) return;
+    setBusy(true);
+    try {
+      if (kind === 'cam') await localParticipant.setCameraEnabled(!isCameraEnabled);
+      else await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
+    } catch (err: any) {
+      toast.error(friendlyMediaError(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const panditCam = pandit ? camOf(pandit.identity) : undefined;
+  const panditHasVideo = !!panditCam && !!panditCam.publication && !panditCam.publication.isMuted;
+
+  return (
+    <div className="relative w-full h-full">
+      <ConnectionBanner />
+      {panditHasVideo ? (
+        <VideoTrack trackRef={panditCam as any} className="w-full h-full object-cover" />
+      ) : (
+        <div className="video-overlay w-full h-full flex flex-col items-center justify-center text-stone-200 bg-stone-950">
+          <DiyaIcon size={44} className="mb-2" />
+          <span className="text-sm font-medium text-stone-200">Awaiting Pandit video transmission...</span>
+        </div>
+      )}
+
+      {guest && (
+        <div className="video-overlay absolute bottom-14 right-3 z-30" data-testid="video-guest-tile">
+          <ParticipantTile
+            participant={guest}
+            cameraRef={camOf(guest.identity)}
+            micMuted={guest.isLocal ? !isMicrophoneEnabled : micMutedOf(guest.identity)}
+            label={guest.isLocal ? 'You' : (guest.name || 'Devotee')}
+            badge="Video guest"
+            mirror={guest.isLocal}
+            className="w-32 sm:w-48 aspect-video shadow-2xl !border-orange-500/80"
+          />
+        </div>
+      )}
+
+      {/* Devotee controls: ask / turn on camera. Only registered devotees on a live public stream. */}
+      {canAsk && connected && (
+        <div className="video-overlay absolute bottom-3 left-3 z-30 flex items-center gap-2 max-w-[75%] flex-wrap">
+          {canPublish ? (
+            <>
+              <button
+                onClick={() => toggle('cam')}
+                disabled={busy}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold shadow-lg disabled:opacity-60 ${isCameraEnabled ? 'bg-emerald-700 text-white' : 'bg-amber-500 text-stone-950 animate-pulse'}`}
+              >
+                {isCameraEnabled ? 'Camera on' : 'Turn on camera'}
+              </button>
+              <button
+                onClick={() => toggle('mic')}
+                disabled={busy}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold shadow-lg disabled:opacity-60 ${isMicrophoneEnabled ? 'bg-emerald-700 text-white' : 'bg-stone-800/90 text-stone-100'}`}
+              >
+                {isMicrophoneEnabled ? 'Mic on' : 'Mic off'}
+              </button>
+              <button
+                onClick={stopLocalMedia}
+                className="px-3 py-1.5 rounded-full text-xs font-bold bg-red-700/90 text-white shadow-lg"
+              >
+                Stop video
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={toggleRequest}
+              disabled={!socket}
+              className="px-3 py-1.5 rounded-full text-xs font-bold bg-black/75 hover:bg-black/90 border border-amber-400/50 text-amber-200 shadow-lg disabled:opacity-60"
+              style={{ color: '#fde68a' }}
+            >
+              {requested ? 'Cancel video request' : 'Ask to show my video'}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }

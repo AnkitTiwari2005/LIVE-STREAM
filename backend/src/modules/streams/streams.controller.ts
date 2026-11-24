@@ -16,6 +16,7 @@ import { StreamsService } from './streams.service';
 import { CreateStreamDto } from './dto/create-stream.dto';
 import { UpdateStreamDto } from './dto/update-stream.dto';
 import { KickViewerDto } from './dto/kick-viewer.dto';
+import { GrantVideoGuestDto, MuteParticipantDto } from './dto/video-guest.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Public } from '../../common/decorators/public.decorator';
@@ -122,6 +123,53 @@ export class StreamsController {
   @ApiOperation({ summary: 'Get live viewer list for a stream (streamer/admin only)' })
   async getViewers(@Param('id') streamId: string, @CurrentUser() user: any) {
     return this.streamsService.getViewerListForStream(streamId, user.id, user.role);
+  }
+
+  @Roles(UserRole.STREAMER, UserRole.ADMIN)
+  @Get(':id/video-guest')
+  @ApiOperation({ summary: 'Who currently holds the public-stream video slot' })
+  async getVideoGuest(@Param('id') streamId: string, @CurrentUser() user: any) {
+    return this.streamsService.getVideoGuest(streamId, user.id, user.role);
+  }
+
+  @Roles(UserRole.STREAMER, UserRole.ADMIN)
+  @Post(':id/video-guest/:identity/grant')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Let one devotee turn on camera+mic for this session (one at a time)' })
+  async grantVideoGuest(
+    @Param('id') streamId: string,
+    @Param('identity') identity: string,
+    @CurrentUser() user: any,
+    @Body() dto: GrantVideoGuestDto,
+  ) {
+    return this.streamsService.grantVideoGuest(streamId, user.id, user.role, decodeURIComponent(identity), {
+      replace: dto?.replace === true,
+    });
+  }
+
+  @Roles(UserRole.STREAMER, UserRole.ADMIN)
+  @Post(':id/video-guest/:identity/revoke')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Take the video slot back' })
+  async revokeVideoGuest(
+    @Param('id') streamId: string,
+    @Param('identity') identity: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.streamsService.revokeVideoGuest(streamId, user.id, user.role, decodeURIComponent(identity));
+  }
+
+  @Roles(UserRole.STREAMER, UserRole.ADMIN)
+  @Post(':id/participants/:identity/mute')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Mute a participant camera or microphone' })
+  async muteParticipant(
+    @Param('id') streamId: string,
+    @Param('identity') identity: string,
+    @CurrentUser() user: any,
+    @Body() dto: MuteParticipantDto,
+  ) {
+    return this.streamsService.muteParticipantMedia(streamId, user.id, user.role, decodeURIComponent(identity), dto);
   }
 
   @Roles(UserRole.STREAMER, UserRole.ADMIN)

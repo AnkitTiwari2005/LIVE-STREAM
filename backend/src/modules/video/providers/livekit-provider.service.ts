@@ -1,5 +1,5 @@
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
-import { RoomServiceClient, AccessToken } from 'livekit-server-sdk';
+import { RoomServiceClient, AccessToken, TrackSource, ParticipantPermission } from 'livekit-server-sdk';
 import {
   IVideoProviderService,
   CreateRoomOptions,
@@ -64,13 +64,18 @@ export class LiveKitProviderService implements IVideoProviderService {
 
     const canPublish = options.isPublisher || options.canPublish || false;
 
-    at.addGrant({
+    const grant: any = {
       roomJoin: true,
       room: options.roomName,
       canPublish,
       canPublishData: true,
       canSubscribe: options.canSubscribe ?? true,
-    });
+    };
+    // Non-streamer publishers (private-room devotee) may only send camera + mic - never screen share.
+    if (!options.isPublisher && canPublish && options.publishSources?.length) {
+      grant.canPublishSources = options.publishSources.map(toTrackSource);
+    }
+    at.addGrant(grant);
 
     return at.toJwt();
   }
@@ -150,6 +155,8 @@ export class LiveKitProviderService implements IVideoProviderService {
         joinedAtMs: Number(p.joinedAt) * 1000,
         isPublisher: p.isPublisher,
         hidden: p.permission?.hidden ?? false,
+        attributes: (p.attributes as Record<string, string>) || {},
+        canPublish: p.permission?.canPublish ?? false,
       }));
     } catch (err: any) {
       // null = "could not ask LiveKit" (never the same as "nobody is in the room")
@@ -157,4 +164,53 @@ export class LiveKitProviderService implements IVideoProviderService {
       return null;
     }
   }
+
+  async updateParticipantPermissions(
+    roomName: string,
+    identity: string,
+    opts: { canPublish: boolean; sources?: Array<'camera' | 'microphone'>; attributes?: Record<string, string> },
+  ): Promise<boolean> {
+    try {
+      // Permission is replaced as a whole - always send every field.
+      const permission = new ParticipantPermission({
+        canSubscribe: true,
+        canPublish: opts.canPublish,
+        canPublishData: true,
+        canPublishSources: opts.canPublish ? (opts.sources ?? ['camera', 'microphone']).map(toTrackSource) : [],
+        hidden: false,
+        recorder: false,
+      });
+      await this.roomService.updateParticipant(roomName, identity, {
+        permission,
+        ...(opts.attributes ? { attributes: opts.attributes } : {}),
+      });
+      return true;
+    } catch (err: any) {
+      this.logger.warn(`updateParticipant [${identity}] in [${roomName}] failed: ${err.message}`);
+      return false;
+    }
+  }
+
+  async muteParticipantSource(
+    roomName: string,
+    identity: string,
+    source: 'camera' | 'microphone',
+    muted: boolean,
+  ): Promise<boolean> {
+    try {
+      const p = await this.roomService.getParticipant(roomName, identity);
+      const want = toTrackSource(source);
+      const tracks = (p.tracks || []).filter((t) => t.source === want);
+      if (!tracks.length) return false;
+      for (const t of tracks) await this.roomService.mutePublishedTrack(roomName, identity, t.sid, muted);
+      return true;
+    } catch (err: any) {
+      this.logger.warn(`mute ${source} [${identity}] in [${roomName}] failed: ${err.message}`);
+      return false;
+    }
+  }
+}
+
+function toTrackSource(s: 'camera' | 'microphone'): TrackSource {
+  return s === 'camera' ? TrackSource.CAMERA : TrackSource.MICROPHONE;
 }

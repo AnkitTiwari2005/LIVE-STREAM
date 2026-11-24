@@ -20,6 +20,8 @@ import {
   VideoTrack,
   AudioTrack,
   useLocalParticipant,
+  useParticipants,
+  useRoomContext,
 } from '@livekit/components-react';
 import { io, Socket } from 'socket.io-client';
 import { ChatWidget } from '@/components/ChatWidget';
@@ -41,8 +43,21 @@ import {
   Sparkles,
   Eye,
   UserX,
+  Video as VideoGuestIcon,
+  VideoOff,
+  MicOff,
+  Hand,
 } from 'lucide-react';
 import { KickViewerModal } from '@/components/KickViewerModal';
+import {
+  ParticipantTile,
+  ConnectionBanner,
+  ROOM_OPTIONS,
+  trackFor,
+  useRoomTick,
+  isVideoGuest,
+  friendlyMediaError,
+} from '@/components/video/MediaPieces';
 
 export interface ViewerEntry {
   identity: string;
@@ -101,6 +116,11 @@ export default function StudioClient() {
   const [viewers, setViewers] = useState<ViewerEntry[]>([]);
   const [showViewersPanel, setShowViewersPanel] = useState<boolean>(false);
   const [kickTarget, setKickTarget] = useState<{ identity: string; displayName: string } | null>(null);
+  // Public-stream video guest (one devotee at a time, this session only)
+  const [videoGuest, setVideoGuest] = useState<{ identity: string; name?: string } | null>(null);
+  const [videoRequests, setVideoRequests] = useState<Array<{ identity: string; name: string; at: number }>>([]);
+  const [dismissedReqs, setDismissedReqs] = useState<Set<string>>(new Set());
+  const [guestBusy, setGuestBusy] = useState<string | null>(null);
 
   // Ensure streamId updates if URL changes
   useEffect(() => {
@@ -268,9 +288,27 @@ export default function StudioClient() {
       }
     };
 
+    const handleGuestChanged = (d: { identity: string; name?: string; active: boolean }) => {
+      if (!d?.identity) return;
+      if (d.active) setVideoGuest({ identity: d.identity, name: d.name });
+      else setVideoGuest((cur) => (cur && cur.identity === d.identity ? null : cur));
+    };
+
+    const handleVideoRequests = (d: { streamId: string; requests: Array<{ identity: string; name: string; at: number }> }) => {
+      if (!d || d.streamId !== streamId || !Array.isArray(d.requests)) return;
+      setVideoRequests(d.requests);
+      // A devotee who cancelled and asks again should show up again.
+      setDismissedReqs((prev) => {
+        const live = new Set(d.requests.map((r) => r.identity));
+        const next = new Set(Array.from(prev).filter((id) => live.has(id)));
+        return next.size === prev.size ? prev : next;
+      });
+    };
+
     const onConnect = () => {
       fetchStreamEarnings();
       socketInstance.emit('stream:viewer_list:request', { streamId });
+      socketInstance.emit('video:requests:list', { streamId });
     };
 
     socketInstance.on('connect', onConnect);
@@ -279,6 +317,8 @@ export default function StudioClient() {
     socketInstance.on('stream:viewer_list', handleViewerList);
     socketInstance.on('stream:viewer_joined', handleViewerJoined);
     socketInstance.on('stream:viewer_left', handleViewerLeft);
+    socketInstance.on('video:guest_changed', handleGuestChanged);
+    socketInstance.on('video:requests', handleVideoRequests);
 
     return () => {
       isDisposed = true;
@@ -292,9 +332,83 @@ export default function StudioClient() {
       socketInstance.off('stream:viewer_list', handleViewerList);
       socketInstance.off('stream:viewer_joined', handleViewerJoined);
       socketInstance.off('stream:viewer_left', handleViewerLeft);
+      socketInstance.off('video:guest_changed', handleGuestChanged);
+      socketInstance.off('video:requests', handleVideoRequests);
       socketInstance.disconnect();
     };
   }, [streamId, router]);
+
+  // ── Video guest / per-participant media controls ───────────────────────────
+  const isPublicStream = stream?.visibility !== 'PRIVATE';
+
+  // Who holds the slot right now (survives a studio page refresh).
+  useEffect(() => {
+    if (!isLive || !isPublicStream || !streamId || streamId === 'demo') return;
+    apiFetch(`/streams/${streamId}/video-guest`)
+      .then((r: any) => setVideoGuest(r?.guest ? { identity: r.guest.identity, name: r.guest.name } : null))
+      .catch(() => {});
+  }, [isLive, isPublicStream, streamId]);
+
+  // Tell the pandit when someone asks, even if the panel is closed.
+  const seenReqsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    for (const r of videoRequests) {
+      if (!seenReqsRef.current.has(r.identity)) {
+        seenReqsRef.current.add(r.identity);
+        toast.info(`${r.name} would like to show their video. Open Viewers to allow.`);
+      }
+    }
+    const live = new Set(videoRequests.map((r) => r.identity));
+    Array.from(seenReqsRef.current).forEach((id) => {
+      if (!live.has(id)) seenReqsRef.current.delete(id);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoRequests]);
+
+  const grantVideo = async (identity: string, name: string) => {
+    if (guestBusy) return;
+    setGuestBusy(identity);
+    try {
+      const replace = !!videoGuest && videoGuest.identity !== identity;
+      const r: any = await apiFetch(`/streams/${streamId}/video-guest/${encodeURIComponent(identity)}/grant`, {
+        method: 'POST',
+        body: JSON.stringify({ replace }),
+      });
+      setVideoGuest({ identity, name: r?.guest?.name || name });
+      toast.success(`${name} can now turn on their video.`);
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not give video access.');
+    } finally {
+      setGuestBusy(null);
+    }
+  };
+
+  const stopVideoGuest = async (identity: string) => {
+    if (guestBusy) return;
+    setGuestBusy(identity);
+    try {
+      await apiFetch(`/streams/${streamId}/video-guest/${encodeURIComponent(identity)}/revoke`, { method: 'POST' });
+      setVideoGuest((cur) => (cur && cur.identity === identity ? null : cur));
+      toast.success('Video access taken back.');
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not take back video access.');
+    } finally {
+      setGuestBusy(null);
+    }
+  };
+
+  const muteParticipant = async (identity: string, source: 'camera' | 'microphone') => {
+    try {
+      await apiFetch(`/streams/${streamId}/participants/${encodeURIComponent(identity)}/mute`, {
+        method: 'POST',
+        body: JSON.stringify({ source }),
+      });
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not change their audio/video.');
+    }
+  };
+
+  const pendingRequests = videoRequests.filter((r) => !dismissedReqs.has(r.identity));
 
   // Stage 1: Hardware preview using local tracks with robust fallback
   useEffect(() => {
@@ -508,6 +622,11 @@ export default function StudioClient() {
               }`}
             >
               <Users className="w-4 h-4 text-amber-700 dark:text-amber-400" /> Viewers ({viewerCount})
+              {isPublicStream && pendingRequests.length > 0 && (
+                <span className="ml-1 inline-flex items-center gap-0.5 rounded-full bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 animate-pulse" title="Video requests">
+                  <Hand className="w-3 h-3" />{pendingRequests.length}
+                </span>
+              )}
             </button>
           )}
 
@@ -626,7 +745,9 @@ export default function StudioClient() {
                 video={true}
                 audio={true}
                 options={{
+                  ...ROOM_OPTIONS,
                   publishDefaults: {
+                    ...ROOM_OPTIONS.publishDefaults,
                     simulcast: true, // Multi-layer publishing for viewers on weak 4G
                     videoCodec: 'vp8',
                   },
@@ -634,7 +755,12 @@ export default function StudioClient() {
                 className="w-full h-full"
               >
                 <RoomAudioRenderer />
-                <PublisherTrackRenderer />
+                <PublisherTrackRenderer
+                  isPrivate={stream?.visibility === 'PRIVATE'}
+                  onMute={muteParticipant}
+                  onStopGuest={stopVideoGuest}
+                  onRemove={(identity, displayName) => setKickTarget({ identity, displayName })}
+                />
                 <div className="absolute top-4 right-4 z-30">
                   <StartAudio label="Unmute Remote Devotee Audio" />
                 </div>
@@ -737,6 +863,36 @@ export default function StudioClient() {
                 <span className="text-stone-500 dark:text-stone-400 font-mono">Simulcast Active</span>
               </div>
 
+
+              {/* Video guest slot - public streams only */}
+              {isPublicStream && (
+                <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl text-xs text-stone-800 dark:text-stone-300 shadow-sm" data-testid="video-guest-card">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <VideoGuestIcon className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="font-bold text-stone-900 dark:text-white">Video guest (one devotee at a time)</p>
+                        <p className="text-stone-500 dark:text-stone-400 truncate">
+                          {videoGuest
+                            ? `${videoGuest.name || 'A devotee'} can show video and speak. Ends when they leave or this stream ends.`
+                            : 'No one has the video slot. Open Viewers and tap "Give video" next to a devotee.'}
+                        </p>
+                      </div>
+                    </div>
+                    {videoGuest && (
+                      <button
+                        type="button"
+                        disabled={guestBusy !== null}
+                        onClick={() => stopVideoGuest(videoGuest.identity)}
+                        className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-60 text-white font-bold"
+                      >
+                        <VideoOff className="w-3.5 h-3.5" /> Stop video
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Live Viewers Panel */}
               {showViewersPanel && (
                 <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-gold/30 p-4 rounded-2xl space-y-3 shadow-xl text-stone-900 dark:text-white">
@@ -756,6 +912,34 @@ export default function StudioClient() {
                     </button>
                   </div>
 
+                  {isPublicStream && pendingRequests.length > 0 && (
+                    <div className="rounded-xl border border-amber-300 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-950/30 p-2.5 space-y-2" data-testid="video-requests">
+                      <p className="text-[11px] font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1"><Hand className="w-3.5 h-3.5" /> Asking to show video</p>
+                      {pendingRequests.map((r) => (
+                        <div key={r.identity} className="flex items-center justify-between gap-2 text-xs">
+                          <span className="font-semibold truncate">{r.name}</span>
+                          <span className="flex gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              disabled={guestBusy !== null || !viewers.some((v) => v.identity === r.identity)}
+                              onClick={() => grantVideo(r.identity, r.name)}
+                              className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold"
+                            >
+                              {videoGuest && videoGuest.identity !== r.identity ? 'Replace current' : 'Allow'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDismissedReqs((prev) => new Set(prev).add(r.identity))}
+                              className="px-2.5 py-1 rounded-lg border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300 font-semibold"
+                            >
+                              Dismiss
+                            </button>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   {viewers.length === 0 ? (
                     <p className="text-xs text-stone-500 dark:text-stone-400 py-3 text-center">No other devotees currently connected in video room.</p>
                   ) : (
@@ -773,6 +957,28 @@ export default function StudioClient() {
                               </span>
                             )}
                           </div>
+                          <div className="flex items-center gap-1.5">
+                          {isPublicStream && !v.isGuest && (
+                            videoGuest?.identity === v.identity ? (
+                              <button
+                                type="button"
+                                disabled={guestBusy !== null}
+                                onClick={() => stopVideoGuest(v.identity)}
+                                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-60 text-white text-xs font-semibold"
+                              >
+                                <VideoOff className="w-3.5 h-3.5" /> Stop video
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                disabled={guestBusy !== null}
+                                onClick={() => grantVideo(v.identity, v.displayName)}
+                                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900 disabled:opacity-60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 text-xs font-semibold"
+                              >
+                                <VideoGuestIcon className="w-3.5 h-3.5" /> {videoGuest ? 'Replace with this' : 'Give video'}
+                              </button>
+                            )
+                          )}
                           <button
                             type="button"
                             onClick={() => setKickTarget({ identity: v.identity, displayName: v.displayName })}
@@ -780,6 +986,7 @@ export default function StudioClient() {
                           >
                             <UserX className="w-3.5 h-3.5" /> Remove
                           </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -840,26 +1047,61 @@ export default function StudioClient() {
   );
 }
 
-function PublisherTrackRenderer() {
-  const tracks = useTracks([Track.Source.Camera]);
+function PublisherTrackRenderer({
+  isPrivate,
+  onMute,
+  onStopGuest,
+  onRemove,
+}: {
+  isPrivate: boolean;
+  onMute: (identity: string, source: 'camera' | 'microphone') => void;
+  onStopGuest: (identity: string) => void;
+  onRemove: (identity: string, displayName: string) => void;
+}) {
+  const room = useRoomContext();
+  useRoomTick(room);
+  const participants = useParticipants();
+  const tracks = useTracks([Track.Source.Camera, Track.Source.Microphone], { onlySubscribed: false });
   const { cameraTrack, localParticipant, isMicrophoneEnabled, isCameraEnabled } = useLocalParticipant();
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
 
   const toggleMic = async () => {
-    if (localParticipant) {
+    if (!localParticipant || busy) return;
+    setBusy(true);
+    try {
       await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
+    } catch (err: any) {
+      toast.error(friendlyMediaError(err));
+    } finally {
+      setBusy(false);
     }
   };
 
   const toggleCamera = async () => {
-    if (localParticipant) {
+    if (!localParticipant || busy) return;
+    setBusy(true);
+    try {
       await localParticipant.setCameraEnabled(!isCameraEnabled);
+    } catch (err: any) {
+      toast.error(friendlyMediaError(err));
+    } finally {
+      setBusy(false);
     }
   };
 
-  const remoteDevoteeTrack = tracks.find((t) => t.participant.identity !== localParticipant?.identity);
+  // Private: every devotee in the room. Public: only the (single) video guest.
+  const remotes = participants.filter((p) => !p.isLocal);
+  const shown = isPrivate ? remotes : remotes.filter((p) => isVideoGuest(p));
+  const camOf = (id: string) => trackFor(tracks, id, Track.Source.Camera);
+  const micMutedOf = (id: string) => {
+    const m = trackFor(tracks, id, Track.Source.Microphone);
+    return !m || !m.publication || m.publication.isMuted;
+  };
 
   return (
     <div className="relative w-full h-full">
+      <ConnectionBanner />
       {cameraTrack && cameraTrack.track ? (
         <VideoTrack
           trackRef={{
@@ -871,18 +1113,76 @@ function PublisherTrackRenderer() {
         />
       ) : (
         <div className="video-overlay w-full h-full flex flex-col items-center justify-center text-stone-200 bg-stone-950">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-orange-500 mb-3" />
-          <span className="text-xs font-semibold text-stone-200">Broadcasting Live Video &amp; Audio...</span>
+          {isCameraEnabled ? (
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-orange-500 mb-3" />
+          ) : (
+            <VideoOff className="w-8 h-8 mb-3 text-stone-400" />
+          )}
+          <span className="text-xs font-semibold text-stone-200">
+            {isCameraEnabled ? 'Starting camera…' : 'Your camera is off. Devotees hear you but cannot see you.'}
+          </span>
         </div>
       )}
 
-      {/* Devotee Remote Video (PIP in Top Right for 2-Way Private Consultation) */}
-      {remoteDevoteeTrack && (
-        <div className="video-overlay absolute top-4 right-4 w-40 sm:w-56 aspect-video rounded-2xl overflow-hidden border-2 border-orange-500 shadow-2xl z-30 bg-stone-950">
-          <VideoTrack trackRef={remoteDevoteeTrack} className="w-full h-full object-cover" />
-          <div className="absolute bottom-1 left-2 bg-black/85 px-2 py-0.5 rounded text-[10px] font-bold text-orange-300">
-            Devotee Video
-          </div>
+      {/* Devotee tiles - private: everyone in the room; public: the video guest */}
+      {shown.length > 0 && (
+        <div className="video-overlay absolute top-14 right-3 z-30 flex flex-col gap-2 max-h-[75%] overflow-y-auto">
+          {shown.slice(0, 4).map((p) => {
+            const guest = isVideoGuest(p);
+            const name = (p.name || '').trim() || 'Devotee';
+            return (
+              <ParticipantTile
+                key={p.identity}
+                participant={p}
+                cameraRef={camOf(p.identity)}
+                micMuted={micMutedOf(p.identity)}
+                label={name}
+                badge={guest ? 'Video guest' : undefined}
+                className="w-40 sm:w-56 aspect-video shadow-2xl !border-orange-500/70"
+              >
+                <div className="absolute top-1 right-1 flex gap-1">
+                  <button
+                    type="button"
+                    title="Mute their microphone"
+                    onClick={() => onMute(p.identity, 'microphone')}
+                    className="w-6 h-6 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center"
+                  >
+                    <MicOff className="w-3 h-3" />
+                  </button>
+                  <button
+                    type="button"
+                    title="Turn off their camera"
+                    onClick={() => onMute(p.identity, 'camera')}
+                    className="w-6 h-6 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center"
+                  >
+                    <VideoOff className="w-3 h-3" />
+                  </button>
+                  {guest ? (
+                    <button
+                      type="button"
+                      title="Take back video access"
+                      onClick={() => onStopGuest(p.identity)}
+                      className="px-1.5 h-6 rounded-full bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold"
+                    >
+                      Stop
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      title="Remove from session"
+                      onClick={() => onRemove(p.identity, name)}
+                      className="w-6 h-6 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center"
+                    >
+                      <UserX className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              </ParticipantTile>
+            );
+          })}
+          {shown.length > 4 && (
+            <span className="text-[10px] font-bold text-white bg-black/70 rounded px-2 py-0.5 self-end">+{shown.length - 4} more</span>
+          )}
         </div>
       )}
 
@@ -894,6 +1194,7 @@ function PublisherTrackRenderer() {
         </span>
         <button
           onClick={toggleMic}
+          disabled={busy}
           className={`text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-lg transition-colors backdrop-blur-md ${
             isMicrophoneEnabled
               ? 'bg-emerald-700/95 hover:bg-emerald-600 text-white'
@@ -903,6 +1204,17 @@ function PublisherTrackRenderer() {
         >
           <Mic className="w-3 h-3" />
           {isMicrophoneEnabled ? 'Mic: ON (Broadcasting)' : 'Mic: MUTED'}
+        </button>
+        <button
+          onClick={toggleCamera}
+          disabled={busy}
+          className={`text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-lg transition-colors backdrop-blur-md ${
+            isCameraEnabled ? 'bg-stone-800/90 hover:bg-stone-700 text-white' : 'bg-red-700/95 hover:bg-red-600 text-white'
+          }`}
+          title="Click to toggle camera"
+        >
+          {isCameraEnabled ? <VideoGuestIcon className="w-3 h-3" /> : <VideoOff className="w-3 h-3" />}
+          {isCameraEnabled ? 'Camera: ON' : 'Camera: OFF'}
         </button>
       </div>
     </div>

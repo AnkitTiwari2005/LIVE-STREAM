@@ -61,6 +61,8 @@ enum ModerationActionType {
   KICK
   BLOCK
   BAN
+  VIDEO_GRANT
+  VIDEO_REVOKE
 }
 
 
