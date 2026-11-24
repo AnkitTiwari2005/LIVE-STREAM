@@ -97,7 +97,7 @@ export default function RefundPage() {
               For any payment or billing discrepancies, please reach out to our Devotee Support Desk with your Order ID:
             </p>
             <div className="mt-2 text-xs text-stone-400 bg-stone-950 p-3 rounded-xl border border-stone-800">
-              <strong>Billing Helpdesk:</strong> support@shubhdarshan.com • Average Response Time: Under 2 hours.
+              <strong>Billing Helpdesk:</strong> paramdarshan.com@gmail.com • Average Response Time: Under 2 hours.
             </div>
           </section>
         </div>

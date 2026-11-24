@@ -95,7 +95,7 @@ export default function WebMcpTools() {
               'Verified Vedic Acharyas consultation',
             ],
             compliance: 'DPDP Act 2023 compliant (18+ age verification, zero birth data persistence)',
-            support: 'support@shubhdarshan.com',
+            support: 'paramdarshan.com@gmail.com',
             phone: '+91-92122-83098',
             whatsapp: '+91-96708-42038',
           };

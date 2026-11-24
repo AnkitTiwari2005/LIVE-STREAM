@@ -97,7 +97,7 @@ export class RemindersService {
         `,
       });
       // B-19: Also forward notification to platform staff inbox
-      const staffInbox = process.env.STAFF_INBOX_EMAIL || 'support@shubhdarshan.com';
+      const staffInbox = process.env.STAFF_INBOX_EMAIL || 'paramdarshan.com@gmail.com';
       await this.mailer.sendEmail({
         to: staffInbox,
         toName: 'Shubhdarshan Staff Desk',
@@ -162,7 +162,7 @@ export class RemindersService {
         `,
       });
       // B-19: Also forward statutory grievance alert to Resident Grievance Officer inbox
-      const staffInbox = process.env.STAFF_INBOX_EMAIL || 'support@shubhdarshan.com';
+      const staffInbox = process.env.STAFF_INBOX_EMAIL || 'paramdarshan.com@gmail.com';
       await this.mailer.sendEmail({
         to: staffInbox,
         toName: 'Resident Grievance Officer',

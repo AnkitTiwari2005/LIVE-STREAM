@@ -132,7 +132,7 @@ Sitemap: ${siteOrigin}/sitemap.xml
 - [Sacred Poojas & Schedule](${siteOrigin}/schedule): Daily live aarti, havan yagya, and Vedic anushthan schedule.
 - [Verified Vedic Pandits](${siteOrigin}/schedule): Verified Acharyas and priests with authentic credentials and lineage.
 - [Devotee Help & FAQ](${siteOrigin}/faq): Frequently asked questions on sacred coins, pooja bookings, and technical support.
-- [Contact Support](${siteOrigin}/contact): Customer care (+91-92122-83098, WhatsApp +91-96708-42038), Acharya onboarding, and platform inquiries.
+- [Contact Support](${siteOrigin}/contact): Customer care (+91-92122-83098, WhatsApp +91-96708-42038, Email paramdarshan.com@gmail.com), Acharya onboarding, and platform inquiries.
 - [Terms & DPDP Act 2023 Compliance](${siteOrigin}/terms): Legal terms, 18+ age verification, and personal data protection policy.
 - [Privacy Policy](${siteOrigin}/privacy): Digital personal data handling, encryption standards, and retention schedules.
 
@@ -297,7 +297,7 @@ Sacred Live Pooja, Aarti Darshan & Vedic Astrology Streaming Platform
 - [Verified Acharyas](${siteOrigin}/schedule)
 - [Devotee Support & FAQ](${siteOrigin}/faq)
 - [Terms & DPDP Compliance](${siteOrigin}/terms)
-- [Support Helpline](tel:+919212283098): +91 9212283098 (Call), +91 9670842038 (WhatsApp)
+- [Support Helpline](tel:+919212283098): +91 9212283098 (Call), +91 9670842038 (WhatsApp), paramdarshan.com@gmail.com (Email)
 `);
         }
 

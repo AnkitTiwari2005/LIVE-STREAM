@@ -163,7 +163,7 @@ export default function RootLayout({
             '@type': 'ContactPoint',
             telephone: '+91-92122-83098',
             contactType: 'customer support',
-            email: 'support@shubhdarshan.com',
+            email: 'paramdarshan.com@gmail.com',
             areaServed: 'IN',
             availableLanguage: ['Hindi', 'English', 'Sanskrit'],
           },
@@ -175,7 +175,7 @@ export default function RootLayout({
           },
           {
             '@type': 'ContactPoint',
-            email: 'grievance@shubhdarshan.com',
+            email: 'paramdarshan.com@gmail.com',
             contactType: 'Grievance Officer',
             areaServed: 'IN',
           },

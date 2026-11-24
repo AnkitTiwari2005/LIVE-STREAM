@@ -65,8 +65,8 @@ export default function ContactPage() {
             </div>
             <h3 className="text-sm font-bold text-stone-900 dark:text-white mb-1">Email Support</h3>
             <p className="text-xs text-stone-400 mb-2">For devotee queries, refunds, and general assistance:</p>
-            <a href="mailto:support@shubhdarshan.com" className="text-xs font-semibold text-gold-pale hover:underline">
-              support@shubhdarshan.com
+            <a href="mailto:paramdarshan.com@gmail.com" className="text-xs font-semibold text-gold-pale hover:underline">
+              paramdarshan.com@gmail.com
             </a>
           </div>
 

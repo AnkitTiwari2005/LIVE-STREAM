@@ -59,8 +59,8 @@ export default function GrievancePage() {
                   <Mail className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
                   <div>
                     <span className="text-stone-400 block font-medium">Official Grievance Email</span>
-                    <a href="mailto:grievance@shubhdarshan.com" className="text-orange-400 hover:underline font-semibold">
-                      grievance@shubhdarshan.com
+                    <a href="mailto:paramdarshan.com@gmail.com" className="text-orange-400 hover:underline font-semibold">
+                      paramdarshan.com@gmail.com
                     </a>
                   </div>
                 </div>

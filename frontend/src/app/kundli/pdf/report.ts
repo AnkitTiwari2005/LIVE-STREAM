@@ -23,8 +23,8 @@ function brand(lang: Lang, kind: string, assets: PdfAssets): Brand {
     reportKind: kind,
     website: 'www.shubhdarshan.com',
     addressLine: lang === 'hi'
-      ? 'शुभदर्शन डिवोशनल मीडिया प्रा. लि. • रोहिणी सेक्टर 15, दिल्ली 110089 • support@shubhdarshan.com'
-      : 'Shubhdarshan Devotional Media Pvt. Ltd. • Rohini Sector 15, Delhi 110089 • support@shubhdarshan.com',
+      ? 'शुभदर्शन डिवोशनल मीडिया प्रा. लि. • रोहिणी सेक्टर 15, दिल्ली 110089 • paramdarshan.com@gmail.com'
+      : 'Shubhdarshan Devotional Media Pvt. Ltd. • Rohini Sector 15, Delhi 110089 • paramdarshan.com@gmail.com',
     disclaimer: `${t.disclaimer} ${t.pdfFooterNote}`,
   };
 }
