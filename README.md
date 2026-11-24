@@ -1,82 +1,97 @@
 <div align="center">
 
-<img src="frontend/public/images/logo.png" alt="Shubhdarshan Sacred Emblem" width="118" />
+<img src="frontend/public/images/logo.png" alt="Shubhdarshan Sacred Emblem" width="128" />
 
-# Shubhdarshan
+# Shubhdarshan (शुभदर्शन)
 
-**Sacred Pooja, Live Darshan & Vedic Astrology Streaming Platform**
+### Sacred Live Pooja, Aarti Darshan & Vedic Astrology Platform
 
-*Self-hosted WebRTC media infrastructure paired with a Sacred Coin economy (`150 coins = ₹100`), atomic coin-only Dakshina, live 85% streamer Studio telemetry, encrypted private pooja rooms, Razorpay coin top-ups, and DPDP Act 2023 controls.*
+*Next-generation devotional broadcast infrastructure engineered for real-time WebRTC live streams, interactive two-way private pooja rituals, public devotee video guest participation, an atomic Sacred Coin economy (`150 coins = ₹100`), comprehensive Vedic Kundli calculations with client-side PDF export, sitewide Hindi/English bilingual support, and strict DPDP Act 2023 compliance.*
+
+---
 
 <p>
-  <img src="https://img.shields.io/badge/NestJS-10-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NestJS 10" />
+  <img src="https://img.shields.io/badge/NestJS-10.4-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NestJS 10.4" />
   <img src="https://img.shields.io/badge/Next.js-14-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js 14" />
   <img src="https://img.shields.io/badge/LiveKit-WebRTC_SFU-F59E0B?style=for-the-badge&logo=webrtc&logoColor=white" alt="LiveKit WebRTC" />
-  <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL 16" />
-  <img src="https://img.shields.io/badge/Prisma-5-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma 5" />
+  <img src="https://img.shields.io/badge/PostgreSQL-16_(Neon)-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL 16" />
+  <img src="https://img.shields.io/badge/Prisma-5.22-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma 5.22" />
   <img src="https://img.shields.io/badge/Redis-7.2-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Redis 7.2" />
-  <img src="https://img.shields.io/badge/AstroLogics-Vedic_Kundli-8B5CF6?style=for-the-badge&logoColor=white" alt="AstroLogics Vedic Kundli" />
   <img src="https://img.shields.io/badge/Razorpay-Top--Ups-0C2451?style=for-the-badge&logo=razorpay&logoColor=white" alt="Razorpay Top-Ups" />
-  <img src="https://img.shields.io/badge/Brevo-REST_%26_SMTP-0092FF?style=for-the-badge&logo=brevo&logoColor=white" alt="Brevo REST & SMTP" />
-  <img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+  <img src="https://img.shields.io/badge/Brevo-REST_%26_SMTP-0092FF?style=for-the-badge&logo=brevo&logoColor=white" alt="Brevo Email" />
+  <img src="https://img.shields.io/badge/AstroLogics-Vedic_Kundli-8B5CF6?style=for-the-badge&logoColor=white" alt="AstroLogics Kundli" />
+  <img src="https://img.shields.io/badge/DPDP_Act_2023-Compliant-10B981?style=for-the-badge&logo=shield&logoColor=white" alt="DPDP Act 2023" />
 </p>
 
 <p>
-  <a href="#architecture"><strong>Architecture</strong></a> &nbsp;&bull;&nbsp;
-  <a href="#sacred-coin-economy--earnings"><strong>Coin Economy</strong></a> &nbsp;&bull;&nbsp;
-  <a href="#free-vedic-kundli-astrology"><strong>Vedic Kundli</strong></a> &nbsp;&bull;&nbsp;
-  <a href="#security--billing-design"><strong>Security &amp; Billing</strong></a> &nbsp;&bull;&nbsp;
-  <a href="#local-development--testing"><strong>Quick Start</strong></a> &nbsp;&bull;&nbsp;
-  <a href="#production-deployment"><strong>Production</strong></a> &nbsp;&bull;&nbsp;
-  <a href="#operations--maintenance"><strong>Operations</strong></a>
+  <a href="#core-platform-capabilities"><strong>Key Features</strong></a> &nbsp;&bull;&nbsp;
+  <a href="#system-architecture"><strong>Architecture</strong></a> &nbsp;&bull;&nbsp;
+  <a href="#two-way-video--interactive-broadcasting"><strong>Interactive Video</strong></a> &nbsp;&bull;&nbsp;
+  <a href="#sacred-coin-economy--studio-earnings"><strong>Coin Economy</strong></a> &nbsp;&bull;&nbsp;
+  <a href="#vedic-kundli--ashtakoota-milan"><strong>Vedic Astrology</strong></a> &nbsp;&bull;&nbsp;
+  <a href="#security-billing--compliance"><strong>Security &amp; DPDP</strong></a> &nbsp;&bull;&nbsp;
+  <a href="#local-development--testing"><strong>Getting Started</strong></a> &nbsp;&bull;&nbsp;
+  <a href="#production-deployment"><strong>Deployment</strong></a>
 </p>
 
 </div>
 
 ---
 
-## Highlights at a Glance
+## Executive Overview
+
+**Shubhdarshan** bridges ancient Vedic traditions with modern ultra-low-latency streaming technology. The platform connects devotees worldwide with authentic Vedic temples and verified Acharyas for:
+1. **Ultra-Low Latency Public Broadcasts**: Sacred temple aartis, havan yagyas, and spiritual discourses powered by self-hosted LiveKit SFU (sub-500ms WebRTC).
+2. **Interactive Video Guest Slot**: Devotees can request to appear on live video/audio inside a public stream with the Acharya, backed by atomic stream locks, queue moderation, and instant disconnect safety.
+3. **Encrypted 1-on-1 Private Pooja Rooms**: High-definition, two-way audio/video consultations for personalized sankalp, matrimonial advice, and remedial rituals with pre-join hardware testing lobby.
+4. **Sacred Coin Economy**: Devotee top-ups via Razorpay (`150 coins = ₹100`), per-minute darshan metering (`5 coins/min`), instant coin Dakshina offerings, and live real-time 85% revenue telemetry delivered to the Acharya's studio screen.
+5. **Vedic Kundli & Ashtakoota Milan Engine**: High-precision Janam Kundali generation, D1/D9 SVG charts in North & South Indian styles, Vimshottari Dasha periods, and browser-side PDF generation with embedded Devanagari typography.
+6. **Bilingual Sitewide Localization**: Seamless real-time Hindi (हिंदी) and English language toggle with zero layout shift, backed by self-hosted Noto Sans Devanagari font bundling.
+
+---
+
+## Core Platform Capabilities
 
 <table>
   <tr>
     <td width="50%" valign="top">
-      <h3>Real-Time Sacred Streaming</h3>
+      <h3>🎥 Two-Way WebRTC &amp; Video Guest</h3>
       <p>
-        Self-hosted <strong>LiveKit v1.7.2</strong> SFU in single-UDP port mode (<code>7882/udp</code>) with TCP fallback and built-in TURN/STUN relays — zero transcoding overhead, instant participant eviction, and automated room reconciliation.
+        Full <strong>two-way video/audio</strong> for private poojas and a regulated <strong>Public Video Guest</strong> slot. Streamers can review incoming devotee video requests, allow, dismiss, replace, or revoke access on the fly with LiveKit participant attribute tracking (<code>videoGuest: '1'</code>) and DB moderation audit logging.
       </p>
     </td>
     <td width="50%" valign="top">
-      <h3>Coin-Only Economy &amp; Live Studio Earnings</h3>
+      <h3>🪙 Sacred Coin Economy &amp; Live Studio Pill</h3>
       <p>
-        Unified <code>150 coins = ₹100</code> rate across metered darshan (<code>5 coins/min</code>) and coin Dakshina (<code>10–50,000 coins</code>). Every debit writes an atomic <code>StreamerEarning</code> row in one SQL transaction and streams live <code>+N</code> updates to the Acharya's private Studio pill.
-      </p>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
-      <h3>Private Interactive Pooja Rooms</h3>
-      <p>
-        128-bit secret links indexed by SHA-256 digest, AES-256-GCM encrypted metadata, <code>bcryptjs</code>-hashed room passwords, capacity gates, and active-user JWT checks across HTTP join and Socket.IO chat.
-      </p>
-    </td>
-    <td width="50%" valign="top">
-      <h3>Zero-Trust Ops &amp; DPDP 2023</h3>
-      <p>
-        Boot-time secret checks (<code>validate-env.ts</code>), TOTP 2FA gate on <code>/admin</code>, 18+ DPDP consent records, KYC review workflow, Indic NFKC chat filtering, and daily encrypted Cloudflare R2 backups.
+        Unified <code>150 coins = ₹100</code> rate with an <strong>85% Acharya / 15% Platform</strong> split. Every watch-minute debit and Dakshina offering executes an atomic transaction writing both the devotee wallet debit and the <code>StreamerEarning</code> ledger, pushing instant <code>+N</code> coin pills to the broadcaster's studio via private WebSockets.
       </p>
     </td>
   </tr>
   <tr>
     <td width="50%" valign="top">
-      <h3>Free Vedic Kundli &amp; Astrology Engine</h3>
+      <h3>🕉️ Vedic Kundli &amp; Client-Side PDF</h3>
       <p>
-        Powered by the <strong>AstroLogics API</strong> with interactive D1 (Lagna) and D9 (Navamsa) SVG charts in North &amp; South Indian styles. Calculates precise planetary degrees, Moon sign, Nakshatra, pada, Avakhada chakra, and multi-level Vimshottari Dasha with seamless Pandit consultation booking.
+        Accurate planetary degrees, nakshatra padas, Avakhada chakra, and multi-level Vimshottari Dasha powered by AstroLogics. Includes North &amp; South Indian SVG charts dynamically adapted for Light (warm ivory &amp; amber) and Dark (obsidian &amp; gold) modes, plus instant client-side PDF report downloads.
       </p>
     </td>
     <td width="50%" valign="top">
-      <h3>Hardened Dual-Delivery Email &amp; Auth (main25)</h3>
+      <h3>🌐 Bilingual Sitewide Localization</h3>
       <p>
-        Production-hardened transactional email with Brevo REST primary and SMTP relay fallback (<code>587</code> with 10s timeouts). Production zero-leakage guarantee (verification &amp; reset links never written to logs), per-recipient reminder loop resilience, HTML-escaped metadata, and Google-only account deletion.
+        Real-time <strong>Hindi &amp; English</strong> switching across all navigation, modals, pooja descriptions, and charts with localStorage persistence. Embedded <code>Noto Sans Devanagari</code> font eliminates external Google Font dependencies and ensures crisp glyphs across all devices.
+      </p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>🔒 Private Rooms &amp; Pre-Join Lobby</h3>
+      <p>
+        128-bit cryptographically secure invite links indexed by SHA-256 digests, AES-256-GCM encrypted tokens, and hashed passwords. Includes an interactive <strong>MediaLobby</strong> for devotee camera/microphone testing, mic level metering, camera flipping, and permission diagnostics before joining.
+      </p>
+    </td>
+    <td width="50%" valign="top">
+      <h3>🛡️ DPDP Act 2023 &amp; Zero-Trust Ops</h3>
+      <p>
+        Strict compliance with Indian data privacy law: verifiable 18+ age consent, zero birth-data persistence in DB/logs, 30-day chat message retention, Indic profanity filtration (NFKC normalization), TOTP 2FA admin gates, and boot-time secret validation (<code>validate-env.ts</code>).
       </p>
     </td>
   </tr>
@@ -84,538 +99,411 @@
 
 ---
 
-## Architecture
+## System Architecture
 
-Shubhdarshan runs from a single codebase across **two production deployment topologies**: a full Docker Compose Linux VPS stack behind Nginx, or a unified Node.js single-origin host (such as Hostinger + Neon PostgreSQL) where Express serves both `/api/v1` and the verified Next.js static export in `backend/public/client`.
+Shubhdarshan is designed to run flexibly under **two production topologies**:
+* **Topology A (Unified Node.js Host)**: Express directly hosts both the NestJS REST/WebSocket backend and the pre-built Next.js static client export from `backend/public/client` on a single origin (ideal for Hostinger VPS, cPanel, or PaaS with Neon PostgreSQL).
+* **Topology B (Docker Compose VPS Stack)**: Dedicated multi-container Linux deployment behind Nginx with isolated LiveKit SFU, Redis, PostgreSQL, and background worker containers.
 
 ```mermaid
-flowchart LR
-    user["Devotee and Pandit Browser"] --> proxy["Cloudflare or Hostinger Proxy"]
-    proxy -->|"Unified Host"| unified["NestJS API and Static Client"]
+flowchart TD
+    devotee["Devotee / Viewer Client"] -->|"HTTPS / WSS"| cf["Cloudflare / Edge Proxy"]
+    acharya["Verified Pandit / Studio"] -->|"HTTPS / WSS"| cf
 
-    subgraph vps ["Mode A: Docker Compose VPS"]
-        nginx["Nginx Reverse Proxy and CSP"] -->|"Web UI"| web["Next.js Web Container"]
-        nginx -->|"API and WS"| api["NestJS API Container"]
-        nginx -->|"Media WS"| lk["LiveKit SFU and TURN"]
-        api --> worker["Cron Worker"]
-        lk -->|"Webhook"| api
+    subgraph edge ["Reverse Proxy & Ingress"]
+        cf -->|"Web & REST API"| nginx["Nginx / Express Host"]
+        cf -->|"Direct Media WebRTC"| lk["LiveKit SFU (7882/udp)"]
     end
 
-    proxy -->|"VPS Stack"| nginx
-    api --> pg["PostgreSQL 16 or Neon"]
-    unified --> pg
-    api --> redis["Redis 7.2"]
-    unified --> redis
-    api --> pay["Razorpay, Brevo & AstroLogics"]
-    unified --> pay
+    subgraph app_core ["Shubhdarshan Application Core"]
+        nginx --> api["NestJS API & Gateway (:4000)"]
+        nginx --> static_ui["Static Client Bundle (/public/client)"]
+        api --> socket["Socket.IO Redis Adapter (Chat & Telemetry)"]
+        api --> worker["Headless Background Worker (cron-tasks)"]
+        lk -->|"Webhooks (HMAC SHA-256)"| api
+    end
+
+    subgraph data_stores ["Data & Storage Layer"]
+        api --> db[("Neon PostgreSQL 16")]
+        api --> redis[("Redis 7.2 (Presence & Queue)")]
+        api --> r2[("Cloudflare R2 (Encrypted Backups)")]
+    end
+
+    subgraph integrations ["External Cloud Integrations"]
+        api --> rzp["Razorpay (Coin Pack Top-Ups)"]
+        api --> brevo["Brevo (REST API & SMTP Relay)"]
+        api --> astro["AstroLogics (Vedic Kundli Engine)"]
+    end
 ```
 
-| Layer | Technology | Responsibility |
+### Core Tech Stack
+
+| Layer | Technologies | Responsibilities |
 | :--- | :--- | :--- |
-| **Frontend Web** | Next.js 14 (App Router), React 18, Tailwind CSS | Static export (`backend/public/client`) via `scripts/sync-client.sh` or standalone SSR container (`BUILD_STANDALONE=true`), with devotee Kundli UI (`/kundli`) |
-| **Video SFU & TURN** | LiveKit Server `v1.7.2` + `@livekit/components-react` | `7882/udp` media, `7881/tcp` fallback, `3478/udp` + `5349/tcp` TURN, rendered from `livekit/livekit.yaml.template` |
-| **Backend API & WS** | NestJS 10, Prisma 5, Socket.IO (`@socket.io/redis-adapter`) | REST `/api/v1/*`, Helmet CSP, global `@Throttle()`, raw-body webhooks, live chat, Dakshina & private Studio telemetry, Kundli API (`KundliModule`) |
-| **Background Worker** | NestJS Application Context (`worker.main.ts`) | 30s coin-meter eviction, disconnect watchdog, LiveKit room reconciler, 15m stream reminders (isolated try/catch), DPDP purge |
-| **Database & Cache** | PostgreSQL 16 (or Neon Pooled/Unpooled) + Redis 7.2 | Least-privilege `pooja_app` runtime DB role (`backend/docker/initdb/01-app-role.sh`) + `noeviction` Redis + 6h in-memory Kundli cache |
+| **Frontend Web** | Next.js 14 (App Router), React 18, Tailwind CSS, Lucide Icons | Responsive devotee portal, Kundli UI, Live Player, Studio broadcaster panel, and static export mode (`output: 'export'`) |
+| **Media SFU** | LiveKit Server v1.7.2 + LiveKit Client SDK | Low-latency WebRTC SFU, single-port UDP media (`7882/udp`), TCP fallback (`7881/tcp`), and embedded STUN/TURN |
+| **Backend API** | NestJS 10, Express, Socket.IO, TypeScript | REST endpoints (`/api/v1`), WebSocket chat & studio telemetry, capacity gates, rate limiting, and webhook verification |
+| **ORM & Database** | Prisma ORM 5.22, PostgreSQL 16 (Neon Serverless) | Strict relational schemas, ledger tables, migration versioning, and advisory locking |
+| **Cache & Real-time** | Redis 7.2 + `@socket.io/redis-adapter` | Token blacklisting, presence tracking, chat message broadcast, and cluster sync |
+| **Astrology Engine** | AstroLogics REST API + Custom In-Memory Cache | Planetary ephemeris, D1/D9 SVG rendering, Vimshottari dasha, and Ashtakoota compatibility calculations |
+| **Transactional Mail** | Brevo (Sendinblue) REST API + NodeMailer SMTP | Dual-delivery email delivery: primary HTTPS REST with fallback to TLS SMTP (`587`) and 15m broadcast reminders |
+| **Payments** | Razorpay Node SDK | Secure order creation and HMAC-SHA256 signature-verified webhooks for coin purchases |
 
 ---
 
-## Sacred Coin Economy & Earnings
+## Two-Way Video & Interactive Broadcasting
 
-All monetary flows follow a strict **INR-in / Coin-inside** model defined identically in [`economy.constants.ts`](backend/src/common/config/economy.constants.ts) and [`economy.ts`](frontend/src/lib/economy.ts):
+The platform offers two distinct interactive video experiences tailored for sacred ceremonies:
 
-- **Fixed Conversion Rate:** `COINS_PER_100_INR = 150` (**1 coin = ₹0.6667**), computed in integer paise (`grossPaise`, `netPaise`, `feePaise`) and rounded to 2 decimals only at the API/display layer so `netInr + platformFeeInr === grossInr` always holds without float drift.
-- **Revenue Split:** `STREAMER_SHARE_PERCENT = 85` (**85% Acharya payout / 15% platform fee**) across both metered watch-time and coin Dakshina.
-- **Strict Separation of INR & Coins:** Razorpay checkout is used **only** for Sacred Coin pack purchases (`POST /api/v1/wallet/topup/*` + `/api/v1/payments/webhook`). Direct INR Dakshina endpoints and webhook branches are retired; legacy INR `DakshinaOffering` records remain preserved and reported separately in streamer analytics.
-- **Welcome Bonus:** Every newly registered devotee wallet receives **100 Sacred Coins** (`JOINING_BONUS`).
-
-```mermaid
-flowchart LR
-    rzp["Razorpay INR Top-Up"] -->|"Credits wallet"| wallet["Devotee UserWallet"]
-    wallet -->|"5 coins per min darshan"| watch["WATCH_TIME Debit"]
-    wallet -->|"10 to 50000 coins"| dak["DAKSHINA Offering"]
-    watch -->|"Same SQL tx"| earn["StreamerEarning Ledger"]
-    dak -->|"Same SQL tx"| earn
-    earn -->|"Private user room"| studio["Studio Live Pill"]
-    dak -->|"Public stream room"| chat["Chat Blessing Card"]
-    earn -->|"85 percent paise split"| dash["Earnings Dashboard"]
-```
-
-### Sacred Coin Packages & Economy Endpoints
-
-<table>
-  <tr>
-    <td width="50%" valign="top">
-      <strong>Seeded Coin Packs (<code>150 coins = ₹100</code>)</strong>
-      <table>
-        <thead>
-          <tr>
-            <th>SKU</th>
-            <th>Pack</th>
-            <th>Base + Bonus</th>
-            <th>Price</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>shubh_150</code></td>
-            <td>Shubh Starter</td>
-            <td>150 coins</td>
-            <td>₹100</td>
-          </tr>
-          <tr>
-            <td><code>bhakti_330</code></td>
-            <td>Bhakti Pack</td>
-            <td>300 + 30 (+10%)</td>
-            <td>₹200</td>
-          </tr>
-          <tr>
-            <td><code>siddhi_900</code></td>
-            <td>Siddhi Pack</td>
-            <td>750 + 150 (+20%)</td>
-            <td>₹500</td>
-          </tr>
-          <tr>
-            <td><code>mahodadhi_1875</code></td>
-            <td>Mahodadhi Pack</td>
-            <td>1,500 + 375 (+25%)</td>
-            <td>₹1,000</td>
-          </tr>
-        </tbody>
-      </table>
-    </td>
-    <td width="50%" valign="top">
-      <strong>Core Economy API &amp; Socket Events</strong>
-      <table>
-        <thead>
-          <tr>
-            <th>Surface</th>
-            <th>Contract</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>POST /api/v1/payments/dakshina</code></td>
-            <td>Atomic coin Dakshina; returns <code>402 INSUFFICIENT_COINS</code> if low, <code>403</code> on self-tip</td>
-          </tr>
-          <tr>
-            <td><code>GET /api/v1/payments/dakshina/stream/:streamId</code></td>
-            <td>Recent coin offerings leaderboard/feed for a broadcast</td>
-          </tr>
-          <tr>
-            <td><code>GET /api/v1/streamers/earnings</code></td>
-            <td>Total coins, <code>DAKSHINA</code> vs <code>WATCH_TIME</code> split, 85% net INR, per-stream &amp; legacy INR totals</td>
-          </tr>
-          <tr>
-            <td><code>GET /api/v1/streamers/streams/:id/earnings</code></td>
-            <td>Per-stream coin &amp; INR summary (streamer or admin only, <code>no-store</code>)</td>
-          </tr>
-          <tr>
-            <td><code>stream:earnings_updated</code></td>
-            <td>Emitted privately to <code>user:&lt;streamerId&gt;</code>; drives the Studio coin pill &amp; <code>+N</code> delta badge</td>
-          </tr>
-        </tbody>
-      </table>
-    </td>
-  </tr>
-</table>
-
----
-
-## Free Vedic Kundli & Astrology Engine
-
-Shubhdarshan integrates a full Vedic astrology computation engine powered by the **AstroLogics API**, providing devotees with complimentary, authentic Janam Kundali calculations, planetary dignities, Avakhada chakra, and multi-level Vimshottari Dasha, bridged directly to verified Pandit consultations.
-
-```mermaid
-flowchart LR
-    devotee["Devotee Input (/kundli)"] -->|"Birth Details & Place"| api["KundliController (/api/v1/kundli)"]
-    api -->|"Cache Check (6h TTL)"| cache[("In-Memory SHA-256 Cache")]
-    cache -->|"Cache Miss"| client["AstroLogicsClient (Queue & RPS Gate)"]
-    client -->|"HTTPS Bearer Auth"| astro["AstroLogics Vedic Engine"]
-    astro -->|"JSON Kundli & SVG Charts"| client
-    client -->|"assertSafeSvg & Sanitization"| svc["KundliService"]
-    svc -->|"Blob URL in <img>"| ui["Interactive Kundli Dashboard"]
-```
-
-### Core Astrological Capabilities & Endpoints
-
-<table>
-  <tr>
-    <td width="50%" valign="top">
-      <strong>Vedic Planetary &amp; Dasha Models</strong>
-      <ul>
-        <li><strong>Lagna &amp; Planetary Positions:</strong> Precise zodiac sign, degrees (formatted as <code>26°18′</code>), Nakshatra, pada (1–4), Nakshatra lord, and retrograde indicators across 9 Vedic grahas (Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn, Rahu, Ketu).</li>
-        <li><strong>D1 &amp; D9 Charts:</strong> Interactive high-res SVG chart renderings for Lagna (D1) and Navamsa (D9) in both <strong>North Indian</strong> (diamond) and <strong>South Indian</strong> (square) traditional formats.</li>
-        <li><strong>Vimshottari Dasha:</strong> Current Mahadasha, Antardasha, and Pratyantardasha periods with exact start and end dates.</li>
-        <li><strong>Avakhada Chakra:</strong> Varna, Vashya, Yoni, Gana, Nadi, and Nakshatra lord for Vedic matchmaking and spiritual guidance.</li>
-        <li><strong>Theme Synchronization:</strong> Chart SVGs automatically track the user's active dark or light theme via <code>MutationObserver</code>.</li>
-      </ul>
-    </td>
-    <td width="50%" valign="top">
-      <strong>API Endpoints &amp; Protection Contracts</strong>
-      <table>
-        <thead>
-          <tr>
-            <th>Endpoint</th>
-            <th>Type &amp; Rate Limit</th>
-            <th>Description</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>GET /api/v1/kundli/status</code></td>
-            <td>Public, unmetered</td>
-            <td>Reports whether AstroLogics API integration is active (<code>enabled: true/false</code>)</td>
-          </tr>
-          <tr>
-            <td><code>POST /api/v1/kundli/generate</code></td>
-            <td>Signed-in, 8 req/min (10 per 10m user window)</td>
-            <td>Computes Lagna, Grahas, Avakhada, and Dasha with graceful degradation (<code>Promise.allSettled</code>)</td>
-          </tr>
-          <tr>
-            <td><code>POST /api/v1/kundli/chart</code></td>
-            <td>Signed-in, 20 req/min (30 per 10m user window)</td>
-            <td>Renders D1/D9 SVG charts in North/South Indian styles with strict CSP headers</td>
-          </tr>
-        </tbody>
-      </table>
-    </td>
-  </tr>
-</table>
-
-### Astrological Security & Reliability Architecture
-
-- **Defense-in-Depth SVG Sanitization:** Chart SVGs generated upstream undergo strict server-side validation (`assertSafeSvg`) in `kundli.service.ts`, immediately rejecting payloads with `<script>`, `<foreignObject>`, `<iframe|object|embed>`, `on*` event handlers, `javascript:`, or sizes exceeding 400KB. On the client, SVGs render exclusively via `URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }))` within an `<img>` tag, permanently disallowing browser script execution.
-- **Upstream Rate Limiting & Concurrency Queue:** `AstroLogicsClient` enforces a strict 2 requests/second limiter, a concurrency semaphore (max 2 active requests in flight), a waiter queue, and automatic retry on HTTP 429 (`rate_limited`) with `Retry-After` backing.
-- **Credit Quota Management:** Configurable daily credit cap (`KUNDLI_DAILY_CREDIT_CAP`, default 100 credits/day) prevents runaway API charges while reserving credits atomically and refunding them upon upstream failures.
-- **Zero Ephemeral Data Persistence (DPDP Act 2023):** Devotee birth date, time, and coordinates are processed in-memory for calculation and caching only; they are never stored in the database or written to server logs.
-
----
-
-## Security & Billing Design
-
-### Metered Sacred Coins Lifecycle
+### 1. Private Pooja Two-Way Video Consultations
+* **Devotee Audio/Video Publishing**: Devotees claiming private pooja links receive LiveKit publishing permissions specifically restricted to camera and microphone (`publishSources: ['camera', 'microphone']`, screen-sharing explicitly denied).
+* **MediaLobby Pre-Join Experience**: Devotees entering `/join/[tokenSlug]` access a pre-join diagnostic screen where they can test hardware, select microphones/cameras, preview audio levels, switch front/back mobile cameras, and verify connection health before entering the sanctum.
+* **Streamer-Devotee Video Layout**: Both participants are rendered cleanly in dual tiles with dynamic aspect ratios and status overlays.
 
 ```mermaid
 sequenceDiagram
-    participant Viewer as Viewer Browser
-    participant API as NestJS Wallet API
-    participant Cron as Watchdog Cron 30s
+    autonumber
+    actor Devotee
+    participant Lobby as MediaLobby (/join)
+    participant API as Shubhdarshan API
     participant SFU as LiveKit SFU
+    actor Pandit as Studio Acharya
 
-    Viewer->>API: POST /api/v1/wallet/meter-tick every 60s
-    API-->>Viewer: Debit 5 coins and credit StreamerEarning
-    alt Status 401 Unauthorized
-        Viewer->>Viewer: Redirect to login
-    else Status 402 or ZERO_BALANCE
-        Viewer->>Viewer: Open CoinTopupModal
-    else Reason SESSION_EXPIRED
-        Viewer->>API: Re-run join flow up to 3 tries
-    else Heartbeat missing over 90s
-        Cron->>SFU: Kick participant from room
-        Cron->>API: Mark session DISCONNECTED_TIMEOUT
-    end
+    Devotee->>Lobby: Open invite link with token
+    Lobby->>Lobby: Check Camera/Mic, level meter & mobile flip
+    Devotee->>API: POST /private-links/claim (slug + password)
+    API-->>Devotee: Room token with canPublish: true
+    Devotee->>SFU: Connect WebRTC & publish camera/mic
+    SFU->>Pandit: Stream devotee video track
+    Pandit->>Devotee: Stream Acharya broadcast video track
 ```
 
-### Guardrails Built Into Code
-
-| Control Area | Implementation | Source |
-| :--- | :--- | :--- |
-| **Atomic Dual-Ledger Billing** | Every watch-minute (`startViewingSession` + `processMeterTick`) and Dakshina (`sendCoinDakshina`) executes an atomic conditional `UPDATE ... WHERE balanceCoins >= X` + `WalletTransaction` (`DEBIT`) + `StreamerEarning` (`WATCH_TIME` / `DAKSHINA`) inside one `$transaction` with unique idempotency keys | [`wallet.service.ts`](backend/src/modules/wallet/wallet.service.ts), [`payments.service.ts`](backend/src/modules/payments/payments.service.ts) |
-| **Shared Economy Constants** | Single source of truth for `COINS_PER_100_INR = 150`, `STREAMER_SHARE_PERCENT = 85`, `COINS_PER_MINUTE = 5`, integer-paise math, and pack SKUs across backend and frontend | [`economy.constants.ts`](backend/src/common/config/economy.constants.ts), [`economy.ts`](frontend/src/lib/economy.ts) |
-| **Private Studio Telemetry** | Authenticated WebSockets join `user:<userId>`; `emitEarningsUpdated` targets only `user:<streamerId>` and never broadcasts streamer revenue into viewer `stream:<streamId>` rooms | [`chat.gateway.ts`](backend/src/modules/chat/chat.gateway.ts) |
-| **Boot Secret Validation** | Hard fails in `NODE_ENV=production` on placeholder strings, duplicate access/refresh JWT secrets, missing `ENCRYPTION_MASTER_KEY`, or invalid `FRONTEND_ORIGIN` | [`validate-env.ts`](backend/src/common/config/validate-env.ts) |
-| **Admin 2FA Gate** | Passwords hashed with `bcryptjs` (cost 12); TOTP 2FA (`otplib`) with 5-attempt challenge lock; `/admin` verifies live `/api/v1/auth/me` role & 2FA state | [`auth.service.ts`](backend/src/modules/auth/auth.service.ts) |
-| **Private Pooja Rooms** | 128-bit link secret (SHA-256 hash lookup), AES-256-GCM token encryption, `bcryptjs` password check, blocklist & active-user validation | [`private-links.service.ts`](backend/src/modules/private-links/private-links.service.ts) |
-| **Rate Limiting & CSP** | Global `ThrottlerModule` (`300` req/min default, `@SkipThrottle()` on health probes, webhooks, and `meter-tick`) + Helmet / Nginx CSP headers | [`app.module.ts`](backend/src/app.module.ts), [`main.ts`](backend/src/main.ts) |
-| **Moderation & Chat Safety** | 60-second synced `IndicWordFilter` with Devanagari/NFKC normalization on both chat and Dakshina names/prayers, kick/ban socket sync, verified socket JWT lookup | [`chat.service.ts`](backend/src/modules/chat/chat.service.ts) |
-| **Wallet & Earnings No-Cache** | `Cache-Control: no-store, no-cache, must-revalidate, private` on wallet balance, ledger, and streamer earnings endpoints + Razorpay HMAC signature verification | [`wallet.controller.ts`](backend/src/modules/wallet/wallet.controller.ts), [`streamers.controller.ts`](backend/src/modules/streamers/streamers.controller.ts) |
-| **Email Privacy & Hardening (main25)** | Mock verification/reset links strictly suppressed in production/staging (preventing credential leakage into logs); Brevo REST primary with SMTP relay fallback (`587` with 10s connection & greeting timeouts); 15m reminder loops wrapped in per-item try/catch so a single failure never aborts other reminders; HTML sanitization on streamer titles and usernames; Google-only account deletion supported (`hasPassword: false` bypasses password requirement) | [`mailer.service.ts`](backend/src/modules/notifications/mailer.service.ts), [`reminders.service.ts`](backend/src/modules/notifications/reminders.service.ts) |
-| **Kundli SVG & Cache Security** | Birth data processed ephemerally with DPDP 2023 compliance; upstream AstroLogics calls restricted by queue semaphore (2 in-flight) and rate limiter (2 RPS); in-memory 6h cache (max 300 entries); per-user sliding window limit (10 gen / 30 chart per 10m); SVG sanitization rejects scripts, foreignObjects, iframes, and inline event handlers | [`kundli.service.ts`](backend/src/modules/kundli/kundli.service.ts), [`astrologics.client.ts`](backend/src/modules/kundli/astrologics.client.ts) |
+### 2. Public Stream "Video Guest" Slot
+* **Regulated Guest Experience**: Exactly one devotee at a time can be granted video guest privileges in a public live broadcast.
+* **Request & Moderation Queue**: Signed-in viewers click **"Request Video"** (`video:request`). The Acharya views pending requests inside the Studio Viewers drawer and can **Allow**, **Dismiss**, or **Replace**.
+* **Stream Lock Guard**: Concurrency is managed atomically via in-memory stream locks and LiveKit participant attributes (`videoGuest: '1'`).
+* **Instant Ejection & Mute**: The Acharya can revoke video privileges or mute the guest instantly (`POST /streams/:id/video-guest/revoke`), automatically resetting LiveKit permissions and recording `VIDEO_REVOKE` in the database audit log.
+* **Layout Isolation**: Devotee players render the guest as a dedicated secondary thumbnail or Picture-in-Picture window, ensuring the primary stream player always retains the Pandit's broadcast.
 
 ---
 
-## Repository Reference
+## Sacred Coin Economy & Studio Earnings
 
-<details>
-<summary><strong>Explore Full Directory Tree &amp; Module Map</strong></summary>
+All financial activity operates on a strict **INR-in / Coin-inside** model defined identically in [`economy.constants.ts`](backend/src/common/config/economy.constants.ts) and [`economy.ts`](frontend/src/lib/economy.ts).
 
-```text
-├── backend/                              # NestJS API, WebSockets, Static Host & Worker
-│   ├── docker/initdb/                    # 01-app-role.sh (creates least-privilege pooja_app DB role)
-│   ├── prisma/
-│   │   ├── migrations/
-│   │   │   ├── 20261107000000_init/      # Core schema (Users, Streams, Wallets, Chat, KYC)
-│   │   │   ├── 20261109000001_add_password_changed_at/
-│   │   │   └── 20261112000001_coin_only_economy/  # StreamerEarning ledger, DakshinaOffering.coins, 150-coin packs
-│   │   ├── schema.prisma                 # Data model + StreamerEarningSource & DAKSHINA_OFFERING ledger
-│   │   ├── seed.ts                       # Admin, categories, word filter, CMS pages & coin packs
-│   │   ├── seed-wallet.ts                # Idempotent standalone coin-package & welcome-wallet sync
-│   │   └── reseed-accounts.ts            # Demo account/profile seed utility
-│   ├── public/
-│   │   ├── client/                       # Verified Next.js static export served by Express
-│   │   └── uploads/                      # Public uploaded thumbnails/assets
-│   ├── scripts/
-│   │   ├── test-kundli.ts                # AstroLogics API client, SVG security, rate limit & cache tests
-│   │   ├── n25.test.ts                   # main25 email hardening, reminder resilience & auth tests
-│   │   ├── n23.test.ts                   # N23 throttler bucket isolation & token-aware rate limiting
-│   │   ├── n23-service.test.ts           # N23 refund accounting, coin clawback & streamer ledger tests
-│   │   ├── failopen.test.ts              # Runtime mode (fail-closed) & email normalization tests
-│   │   ├── storage.test.ts               # Storage security, MIME validation & path traversal guards
-│   │   ├── test-wallet-system.ts         # Coin-only economy, meter-tick, Dakshina & earnings E2E tests
-│   │   ├── test-neon-e2e.ts              # Live Neon DB schema & ledger verification script
-│   │   └── test-full-api-suite.ts        # Full HTTP API regression suite
-│   ├── src/
-│   │   ├── common/
-│   │   │   ├── config/
-│   │   │   │   ├── economy.constants.ts  # COINS_PER_100_INR=150, 85% split, SKUs & integer-paise math
-│   │   │   │   └── validate-env.ts       # Production boot secret & origin enforcement
-│   │   │   ├── decorators/               # @Public, @Roles, @CurrentUser
-│   │   │   ├── filters/                  # GlobalExceptionFilter
-│   │   │   ├── guards/                   # JwtAuthGuard, RolesGuard, InternalKeyGuard, TokenAwareThrottlerGuard
-│   │   │   └── *.util.ts                 # crypto.util.ts, livekit-url.util.ts, payments.util.ts
-│   │   ├── database/                     # PrismaModule & PrismaService
-│   │   ├── jobs/                         # cron-tasks.service.ts (watchdogs, reconciler, retention)
-│   │   ├── modules/
-│   │   │   ├── admin/                    # KPIs, KYC approval queue, stream kill switch, CMS, filters
-│   │   │   ├── auth/                     # JWT, bcryptjs, Google OAuth, 18+ DPDP gate, TOTP 2FA, hasPassword
-│   │   │   ├── chat/                     # Socket.IO chat gateway, user:<id> telemetry, Indic NFKC filter
-│   │   │   ├── health/                   # GET /api/v1/health/live & /api/v1/health/ready
-│   │   │   ├── internal/                 # Internal live-stream count check (X-Internal-Key)
-│   │   │   ├── kundli/                   # AstroLogics client, D1/D9 SVG charts, Lagna, Dasha & Avakhada
-│   │   │   ├── notifications/            # Brevo transactional REST & SMTP mailer, 15m reminder loops
-│   │   │   ├── payments/                 # POST /payments/dakshina (coin-only), /payments/webhook (top-up)
-│   │   │   ├── private-links/            # 128-bit SHA-256 invite links & AES-256-GCM room access
-│   │   │   ├── reports/                  # Viewer safety report queue
-│   │   │   ├── storage/                  # MIME/extension & 10 MB upload guard (local + private KYC)
-│   │   │   ├── streamers/                # KYC onboarding, public profiles, /earnings & /streams/:id/earnings
-│   │   │   ├── streams/                  # Scheduled/live stream lifecycle & capacity controls
-│   │   │   ├── video/                    # LiveKit SFU provider & raw-body webhook controller
-│   │   │   └── wallet/                   # Sacred Coins balance, packages, Razorpay top-up, meter-tick
-│   │   ├── main.ts                       # HTTP API, Helmet CSP, robots/sitemap/llms, static client host
-│   │   └── worker.main.ts                # Headless cron scheduler entry point
-│   └── Dockerfile                        # Multi-stage build (migrate & runtime targets)
-├── frontend/                             # Next.js 14 Web Application
-│   ├── public/images/                    # Platform emblem & verified Pandit WebP portraits
-│   ├── src/
-│   │   ├── app/                          # /, /kundli, /stream/[id], /studio/[id], /streamer/earnings, /join/[tokenSlug], /admin, /wallet/*
-│   │   │   └── kundli/                   # Devotee Vedic Kundli UI, D1/D9 SVG switcher, North/South styles
-│   │   ├── components/                   # ChatWidget, DakshinaModal, CoinTopupModal, ConfirmDialog, etc.
-│   │   └── lib/
-│   │       ├── api.ts                    # Typed REST client (JSON & SVG text support, safe redirects)
-│   │       ├── economy.ts                # Frontend rate constants, paise breakdown & sd-wallet-updated sync
-│   │       └── meter-tick.ts             # 60s meter-tick response classifier
-│   ├── next.config.js                    # Dual mode: 'export' (default) or 'standalone'
-│   └── Dockerfile                        # Standalone Next.js Docker build
-├── livekit/
-│   ├── livekit.yaml.template             # Source config template (__DOMAIN__, __LIVEKIT_API_KEY__)
-│   └── livekit.yaml                      # Rendered config mounted into pooja_livekit
-├── nginx/conf.d/
-│   └── app.conf                    # Reverse proxy for web, api, socket.io, uploads, and live.*
-├── nginx/cloudflare/               # Generated by refresh-cloudflare.sh (NOT inside conf.d, which nginx auto-includes)
-│   ├── peers.conf                  # geo allow-list on the TCP peer (Cloudflare + private ranges)
-│   └── realip.conf                 # CF-Connecting-IP restoration rules
-├── scripts/
-│   ├── backup-db.sh                      # Daily compressed + age-encrypted pg_dump to Cloudflare R2
-│   ├── refresh-cloudflare.sh             # Monthly Cloudflare IPv4/IPv6 Nginx rule updater
-│   ├── render-livekit-config.sh          # Validates env & atomically renders livekit/livekit.yaml
-│   ├── renew-hook.sh                     # Safe Nginx reload & stream-aware LiveKit cert restart
-│   ├── restore-db.sh                     # Decrypts .sql.gz.age archive & restores PostgreSQL
-│   ├── sync-client.sh                    # Builds Next.js export, validates assets/fonts, updates client
-│   └── sysctl-webrtc.conf                # Linux UDP buffer & file-descriptor tuning
-├── .env.example                          # Complete documented environment template
-└── docker-compose.yml                    # 8-service production Compose stack
+### Financial Rules & Rates
+* **Conversion Rate**: `150 coins = ₹100` (**1 coin = ₹0.6667**), computed using integer paise (`grossPaise`, `netPaise`, `feePaise`) to guarantee `netInr + platformFeeInr === grossInr` with zero floating-point discrepancies.
+* **Acharya Revenue Split**: **85% net payout to the Streamer**, 15% platform maintenance fee.
+* **Metered Darshan**: Deducted automatically every 60 seconds (`5 coins/min`). Viewers with depleted balances are gracefully prompted to top up without disrupting the stream.
+* **Coin Dakshina**: One-click spiritual offerings (10 to 50,000 coins) sent during live broadcasts with personalized prayer messages.
+* **Welcome Bonus**: All new devotees receive **100 bonus Sacred Coins** upon registration.
+
+```mermaid
+flowchart LR
+    rzp["Razorpay Top-Up (INR)"] -->|"Credits Wallet"| wallet["Devotee Coin Balance"]
+    wallet -->|"5 coins/min"| watch["Metered Darshan"]
+    wallet -->|"10-50,000 coins"| tip["Spiritual Dakshina"]
+    
+    watch -->|"Atomic SQL Tx"| tx["Wallet Transaction Ledger"]
+    tip -->|"Atomic SQL Tx"| tx
+    
+    tx -->|"85% Net Calculation"| earn["StreamerEarning Record"]
+    earn -->|"Private user:<id> room"| studio["Studio Live Pill (+N coins)"]
+    tip -->|"Public stream room"| chat["Live Chat Blessing Card"]
 ```
 
-</details>
+### Coin Packages
 
-<details>
-<summary><strong>Background Worker Cron Schedule (<code>cron-tasks.service.ts</code>)</strong></summary>
+| SKU | Package Name | Base Coins | Bonus Coins | Total Coins | Price (INR) | Effective Rate |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `shubh_150` | Shubh Starter | 150 | 0 | **150** | ₹100 | ₹0.67 / coin |
+| `bhakti_330` | Bhakti Pack | 300 | 30 (+10%) | **330** | ₹200 | ₹0.61 / coin |
+| `siddhi_900` | Siddhi Pack | 750 | 150 (+20%) | **900** | ₹500 | ₹0.56 / coin |
+| `mahodadhi_1875` | Mahodadhi Pack | 1,500 | 375 (+25%) | **1,875** | ₹1,000 | ₹0.53 / coin |
 
-| Schedule | Job | Action |
-| :--- | :--- | :--- |
-| Every `30s` | **Disconnect Watchdog** | Auto-ends streams stuck in `RECONNECTING_GRACE_PERIOD` past `120s` and closes active sessions |
-| Every `30s` | **Coin Meter Watchdog** | Evicts viewers from LiveKit when `meter-tick` heartbeat lags `>90s` (including `lastTickAt IS NULL`) |
-| Every `1m` | **LiveKit Room Reconciler** | Closes orphaned `LIVE` DB streams missing in LiveKit and cancels stale `SCHEDULED` streams `>48h` |
-| Every `1m` | **Reminder Dispatcher** | Sends email alerts via Brevo 15 minutes before scheduled broadcasts |
-| Daily `03:00 UTC` | **DPDP Retention Purge** | Deletes chat messages `>30 days` on ended streams and clears `ViewerSession.ipAddress` `>90 days` |
+---
 
-</details>
+## Vedic Kundli & Ashtakoota Milan
 
-<details>
-<summary><strong>Production Secret &amp; Boot Validation Rules (<code>validate-env.ts</code>)</strong></summary>
+Shubhdarshan provides authentic, client-side and cloud-computed astrological services:
 
-When `NODE_ENV=production`, startup aborts immediately if any rule below is violated:
-- **JWT Secrets:** `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` must each be non-placeholder, `>= 32` chars, and **strictly distinct**.
-- **2FA Challenge Secret:** `JWT_2FA_SECRET` (recommended `>= 32` chars and distinct from access/refresh); if omitted, an independent key is derived via `HMAC-SHA256(JWT_ACCESS_SECRET)`.
-- **Data Encryption Key:** `ENCRYPTION_MASTER_KEY` must be a valid non-placeholder 32-byte key (`openssl rand -base64 32`).
-- **LiveKit Credentials:** `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` reject default/placeholder values (`pooja`, `devkey`, `replace_with_*`), require `>= 32` chars on the secret, and reject `:`, `#`, quotes, or spaces.
-- **Canonical Origin:** `FRONTEND_ORIGIN` must be a clean `https://` origin with no path, query, hash, loopback host, or placeholder domain (normalized to `origin` for CORS, `robots.txt`, `sitemap.xml`, `llms.txt`, and transactional emails).
-- **Feature Safety Flags:** Keep `ALLOW_MOCK_PAYMENTS=false` and `NEXT_PUBLIC_BOOKINGS_ENABLED=false` in production unless backend booking APIs are enabled.
+### 1. Janam Kundali Engine
+* **Precision Ephemeris**: Calculates Lagna (Ascendant), planetary degrees (e.g., `14°28′`), Nakshatras, padas (1–4), Nakshatra lords, and retrograde states for all 9 Vedic Grahas.
+* **North & South Indian Chart Styles**: Interactive SVG charts selectable in North Indian (diamond) or South Indian (square box) formats.
+* **Lagna (D1) & Navamsa (D9) Vargas**: Switch between main birth chart and D9 spiritual destiny chart seamlessly.
+* **Theme-Adaptive Visuals**:
+  * **Light UI**: Rendered on a warm ivory canvas (`#FFFDF7`) with terracotta/amber lines (`#B45309`) and deep ink typography (`#1C1917`).
+  * **Dark UI**: Rendered on obsidian charcoal (`dark:bg-stone-900/60`) with sacred gold lines (`#C9A24B`) and pale cream typography (`#F5E7C4`).
+* **Vimshottari Dasha**: Comprehensive Mahadasha, Antardasha, and Pratyantardasha timeline analysis.
 
-</details>
+### 2. Client-Side PDF Report Generation
+* **Zero Server Overhead**: Complete multi-page Kundli and Ashtakoota Milan reports compiled directly inside the devotee's browser using `pdfkit` and `blob-stream`.
+* **Embedded Typography**: Bundles real Devanagari font glyphs to ensure Sanskrit mantras and Hindi planetary names render accurately in generated PDF documents.
+* **Watermarked & Formatted**: Features official platform watermarks, auspicious Sanskrit shlokas, Avakhada chakras, planetary positions, and consultation callouts.
 
-<details>
-<summary><strong>Docker Compose Resource Allocation (<code>docker-compose.yml</code>)</strong></summary>
+### 3. Ashtakoota Milan (36-Guna Matchmaking)
+* Calculates compatibility across all 8 Vedic Kootas: **Varna** (1), **Vashya** (2), **Tara** (3), **Yoni** (4), **Graha Maitri** (5), **Gana** (6), **Bhakoot** (7), and **Nadi** (8).
+* Identifies Nadi Dosha, Bhakoot Dosha, and auspicious remedies.
 
-- `postgres` (`1536m`) &bull; `livekit` (`1536m`) &bull; `api` (`1024m`) &bull; `web` (`768m`) &bull; `worker` (`512m`) &bull; `redis` (`384m`) &bull; `nginx` (`128m`)
+---
 
-</details>
+## Security, Billing & Compliance
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                   Zero-Trust & DPDP Compliance Matrix                  │
+├────────────────────────────┬───────────────────────────────────────────┤
+│ Control                    │ Technical Enforcement                     │
+├────────────────────────────┼───────────────────────────────────────────┤
+│ Age Verification           │ 18+ DPDP consent recorded on registration │
+│ Ephemeral Birth Data       │ Zero database storage of devotee DOB/time │
+│ Chat Data Retention        │ Auto-purged 30 days after broadcast ends  │
+│ IP Address Retention       │ ViewerSession IP addresses purged at 90d  │
+│ Indic Word Filtering       │ NFKC Devanagari profanity normalization   │
+│ Admin Access Gate          │ Mandatory TOTP 2FA (RFC 6238)             │
+│ Secret Validation          │ Fail-closed startup if secrets < 32 chars │
+│ Dual Transactional Mail    │ Brevo HTTPS REST primary + SMTP fallback  │
+│ Idempotent Billing         │ Conditional SQL balance checks in 1 tx    │
+│ SVG Sanitization           │ Strict AST rejection of script/foreignObj │
+└────────────────────────────┴───────────────────────────────────────────┘
+```
+
+* **Boot-Time Secret Validation ([`validate-env.ts`](backend/src/common/config/validate-env.ts))**: The server halts immediately on boot if production environment variables contain insecure defaults, placeholders (`replace_with_*`), duplicate JWT access/refresh keys, or invalid origins.
+* **Indic Word Filter ([`chat.service.ts`](backend/src/modules/chat/chat.service.ts))**: Profanity and abusive language in Sanskrit, Hindi, and English are stripped in real-time across live chat messages, Dakshina prayers, and devotee names.
+* **Dual-Delivery Email Infrastructure ([`mailer.service.ts`](backend/src/modules/notifications/mailer.service.ts))**: Transactional emails prioritize Brevo REST API with instantaneous failover to authenticated TLS SMTP (`port 587`). All verification and password-reset links are suppressed from server logs to prevent credential leakage.
+
+---
+
+## Project Structure
+
+```text
+LIVE-STREAM/
+├── backend/                              # NestJS API, WebSockets, Static Host & Worker
+│   ├── prisma/
+│   │   ├── migrations/                   # PostgreSQL schema version history
+│   │   │   ├── 20261107000000_init/
+│   │   │   ├── 20261112000001_coin_only_economy/
+│   │   │   └── 20261124000001_add_video_guest_actions/ # VIDEO_GRANT/REVOKE enums
+│   │   ├── schema.prisma                 # Core Prisma data model
+│   │   ├── seed.ts                       # Categories, coin packs, CMS pages, admin
+│   │   └── seed-verified-pandits.ts      # 7 authentic Vedic Pandits seed data
+│   ├── public/
+│   │   ├── client/                       # Next.js static export served by Express
+│   │   └── uploads/                      # Uploaded thumbnails & assets
+│   ├── scripts/
+│   │   ├── video-guest.test.ts           # 29/29 tests: guest locks, tokens, kick guards
+│   │   ├── test-kundli.ts                # AstroLogics API client & SVG security suite
+│   │   ├── n25.test.ts                   # Email hardening & reminder loop tests
+│   │   └── test-wallet-system.ts         # Coin economy & meter-tick tests
+│   ├── src/
+│   │   ├── common/                       # Guards, decorators, economy constants
+│   │   ├── modules/
+│   │   │   ├── auth/                     # JWT, bcrypt, TOTP 2FA, DPDP age gate
+│   │   │   ├── chat/                     # Socket.IO gateway, presence, word filter
+│   │   │   ├── kundli/                   # AstroLogics client, D1/D9 SVG calculations
+│   │   │   ├── notifications/            # Brevo REST + SMTP transactional mailer
+│   │   │   ├── payments/                 # Razorpay webhooks & coin Dakshina
+│   │   │   ├── private-links/            # 128-bit private pooja invite & claim tokens
+│   │   │   ├── streamers/                # KYC verification, public profiles, earnings
+│   │   │   ├── streams/                  # Broadcast state machine & video guest logic
+│   │   │   ├── video/                    # LiveKit SFU provider & room manager
+│   │   │   └── wallet/                   # Sacred Coin ledger, packages, meter-tick
+│   │   ├── main.ts                       # Express bootstrap, Helmet CSP, client host
+│   │   └── worker.main.ts                # Background cron worker entry point
+│   └── package.json
+├── frontend/                             # Next.js 14 Devotee & Studio Portal
+│   ├── public/images/                    # Sacred icons, logo, and Pandit WebP avatars
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── kundli/                   # Kundli dashboard, KundliChart, PDF button
+│   │   │   ├── join/[tokenSlug]/         # Private pooja claim & MediaLobby screen
+│   │   │   ├── stream/[id]/              # Devotee player, chat & video guest slot
+│   │   │   ├── studio/[id]/              # Broadcaster studio, hardware preview, guests
+│   │   │   ├── studio/streams/           # Broadcaster schedule & stream manager
+│   │   │   ├── wallet/                   # Coin balance, top-up modal, ledger
+│   │   │   └── layout.tsx                # Sitewide language & theme provider
+│   │   ├── components/
+│   │   │   ├── video/MediaPieces.tsx     # Video guest tiles, lobby, connection banner
+│   │   │   ├── LanguageToggle.tsx        # Real-time Hindi/English language toggle
+│   │   │   ├── ChatWidget.tsx            # Live chat with spiritual reactions
+│   │   │   └── DakshinaModal.tsx         # Atomic coin donation modal
+│   │   └── lib/
+│   │       ├── economy.ts                # Shared financial math & coin conversions
+│   │       ├── auth-session.ts           # Zero-leakage client session management
+│   │       └── i18n/hi-dict.ts           # Devanagari translation dictionary
+│   └── package.json
+├── docker-compose.yml                    # Multi-container production deployment stack
+└── .env.example                          # Documented environment template
+```
 
 ---
 
 ## Local Development & Testing
 
 ### Prerequisites
-- **Node.js** `20+`, **PostgreSQL** `16+` (or Neon), **Redis** `7.2+`, and a **LiveKit** server instance.
+* **Node.js** `v20.x` or higher
+* **PostgreSQL** `16+` (or a free [Neon](https://neon.tech) serverless branch)
+* **Redis** `7.2+` (or in-memory fallback enabled automatically in local dev)
+* **LiveKit Server** (Cloud URL or self-hosted instance)
 
-### 1. Configure Environment
+### 1. Environment Setup
+Copy the environment template and populate your local credentials:
 ```bash
-cp .env.example .env
-# Populate DATABASE_URL, DATABASE_URL_UNPOOLED, REDIS_URL, JWT secrets, ENCRYPTION_MASTER_KEY, LIVEKIT_*
-# Optional: ASTROLOGICS_API_KEY (Free Vedic Kundli; page reports "setting up" when unset), BREVO_API_KEY / BREVO_SMTP_*
+cp .env.example backend/.env
+```
+Key variables to supply:
+```dotenv
+DATABASE_URL="postgresql://user:pass@ep-xyz.neon.tech/neondb?sslmode=require"
+LIVEKIT_URL="wss://your-project.livekit.cloud"
+LIVEKIT_API_KEY="devkey"
+LIVEKIT_API_SECRET="secret32charsminlengthstringkey"
+ENCRYPTION_MASTER_KEY="32-byte-base64-encryption-key"
+JWT_ACCESS_SECRET="access-secret-32-chars-minimum-length"
+JWT_REFRESH_SECRET="refresh-secret-32-chars-minimum-length"
 ```
 
-### 2. Start Backend API & Worker
+### 2. Backend & Database Initialization
 ```bash
 cd backend
 npm install
 npx prisma generate
 npx prisma migrate deploy
 npm run prisma:seed
-npx ts-node prisma/seed-wallet.ts   # Optional: standalone idempotent coin-package sync
-npm run start:dev
+npx ts-node prisma/seed-verified-pandits.ts
 ```
-- API listens on `http://localhost:4000/api/v1` (Swagger docs at `/api/docs` when `NODE_ENV !== 'production'` or `ENABLE_SWAGGER=true`).
-- Run the headless cron worker separately when testing watchdogs locally: `npm run start:worker`.
 
-### 3. Start Frontend Dev Server
+### 3. Run the Unified Local Server
+The backend serves both the REST API and the pre-built static client on **port 4000**:
+```bash
+# In backend/
+npm run build
+node dist/main.js
+```
+Open your browser at:
+* **Devotee Portal**: [http://localhost:4000/](http://localhost:4000/)
+* **Vedic Kundli Page**: [http://localhost:4000/kundli](http://localhost:4000/kundli)
+* **API Health Status**: [http://localhost:4000/api/v1/health/live](http://localhost:4000/api/v1/health/live)
+* **OpenAPI Documentation**: [http://localhost:4000/api/docs](http://localhost:4000/api/docs)
+
+### 4. Run Frontend in Development Mode (Optional)
+If you are developing React UI components with hot-reloading:
 ```bash
 cd frontend
 npm install
 npm run dev
+# Next.js will run on http://localhost:3000 proxying to http://localhost:4000/api/v1
 ```
 
-### 4. Verification & Testing Suites
+### 5. Automated Testing Suites
+Execute all automated test suites from the `backend/` directory:
 ```bash
-# Typecheck backend & frontend
-cd backend && npx tsc --noEmit
-cd ../frontend && npx tsc --noEmit
+cd backend
 
-# Run full automated test suites (from backend/)
-cd ../backend
-npm run test:audit      # N1/N6 fail-closed runtime checks, email normalization & N3 storage hardening
-npm run test:n23        # N23 refund accounting, partial clawbacks & throttler bucket isolation
-npm run test:n25        # main25 email hardening, 15m reminder loops & Google-only account deletion
-npm run test:kundli     # AstroLogics API client, SVG security, date/place validation, cache & rate limits
-npx ts-node scripts/test-wallet-system.ts   # Coin Dakshina, 5-coin meter-tick, StreamerEarning & RBAC checks
-npx ts-node scripts/test-neon-e2e.ts        # Database & migration sanity suite
-npm run test:e2e:all                        # Full HTTP regression suite
-```
+# Two-Way Video & Video Guest Regression Suite (29 tests)
+npx ts-node --transpile-only scripts/video-guest.test.ts
 
-### 5. Sync Unified Static Client Before Release
-Whenever anything inside `frontend/` changes and you deploy Express as the unified host:
-```bash
-bash scripts/sync-client.sh
+# Vedic Kundli Engine, SVG security & Rate Limiting (7 tests)
+npm run test:kundli
+
+# Email Hardening, 15m Reminders & Google Account Deletion (10 tests)
+npm run test:n25
+
+# Runtime Mode, Storage Hardening & Fail-Closed Checks
+npm run test:audit
+
+# Frontend Unit & Bilingual i18n Translation Checks (307 checks)
+cd ../frontend && node tests/i18n-and-chart.test.js
 ```
-This runs a clean `npm ci` + `npm run build` (`output: 'export'`, with `NEXT_PUBLIC_BOOKINGS_ENABLED=false` for static hosting), verifies every HTML entry point, `/_next/static/*` bundle reference, and self-hosted `.woff2` font file, and swaps `backend/public/client` atomically. Commit the refreshed `backend/public/client` output before pushing.
 
 ---
 
 ## Production Deployment
 
-Choose the deployment playbook that matches your infrastructure:
+### Option A — Unified Single-Host Deployment (Hostinger / Node.js Host)
 
-### Track A — Full Self-Hosted Linux VPS (Docker Compose + LiveKit + Nginx)
+1. **Build and Sync Frontend Assets**:
+   ```bash
+   cd frontend
+   npm run build
+   # Copies the static export into backend/public/client
+   robocopy out ../backend/public/client /E /IS /IT
+   ```
+2. **Commit and Deploy Backend**:
+   * Set root directory to `backend`.
+   * Set build command to: `npm run build` (`npx prisma generate && nest build`).
+   * Set run command to: `npm run start:prod` (`node dist/main`).
+3. **Configure Environment Variables**:
+   Provide production values for `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `LIVEKIT_*`, `JWT_*`, `ENCRYPTION_MASTER_KEY`, `RAZORPAY_*`, and `BREVO_*`.
+4. **Deploy Database Migrations**:
+   Run `npx prisma migrate deploy` to apply all schema updates to your production PostgreSQL database.
 
-#### Network & DNS Checklist
+---
 
-**UFW Firewall Ports**
+### Option B — Multi-Container Docker Compose Stack (Linux VPS)
 
-| Port / Protocol | Service |
-| :--- | :--- |
-| `22/tcp` | SSH (key auth only) |
-| `80/tcp`, `443/tcp` | Nginx HTTP/2 &amp; TLS termination |
-| `7881/tcp` | LiveKit WebRTC TCP fallback |
-| `7882/udp` | LiveKit single-UDP media port |
-| `3478/udp`, `5349/tcp` | LiveKit embedded TURN / STUN |
-| `30000-30050/udp` | LiveKit TURN relay port range |
+Shubhdarshan includes a production-ready `docker-compose.yml` deploying 8 isolated services:
+* `pooja_nginx`: TLS termination, reverse proxy, and Cloudflare real-IP restoration.
+* `pooja_api`: Clustered NestJS API serving REST and Socket.IO.
+* `pooja_worker`: Headless background cron task scheduler.
+* `pooja_livekit`: Self-hosted LiveKit WebRTC SFU with single-port UDP media (`7882/udp`).
+* `pooja_postgres`: PostgreSQL 16 database with least-privilege `pooja_app` role.
+* `pooja_redis`: In-memory Redis 7.2 instance with `noeviction` data safety.
 
-**Cloudflare DNS Routing**
-
-| Hostname | Proxy Mode | Purpose |
-| :--- | :--- | :--- |
-| `your-domain.com`, `www.your-domain.com` | **Proxied** (Orange Cloud) | Web UI, REST API &amp; Socket.IO via Nginx |
-| `live.your-domain.com`, `turn.your-domain.com` | **DNS Only** (Grey Cloud) | Direct WebRTC signaling &amp; TURN media paths |
-
-#### Server Provisioning Steps
-
+#### Deployment Steps:
 ```bash
-# 1. Clone into /opt/pooja and prepare secrets
-sudo mkdir -p /opt/pooja && sudo chown "$USER:$USER" /opt/pooja
-git clone https://github.com/AnkitTiwari2005/LIVE-STREAM.git /opt/pooja
-cd /opt/pooja
+# 1. Clone repository on your production VPS
+git clone https://github.com/AnkitTiwari2005/LIVE-STREAM.git /opt/shubhdarshan
+cd /opt/shubhdarshan
 
+# 2. Configure production environment
 cp .env.example .env.production
 chmod 600 .env.production
-# Fill real domain, DB, Redis, JWT, LiveKit, Razorpay, Brevo, and ADMIN_* variables
 
-# 2. Validate credentials & render livekit/livekit.yaml atomically
+# 3. Generate LiveKit configuration
 bash scripts/render-livekit-config.sh .env.production
 
-# 3. Update domain in nginx/conf.d/app.conf & fetch Cloudflare IP ranges
-bash scripts/refresh-cloudflare.sh
-
-# 4. Tune Linux UDP buffers for WebRTC
+# 4. Tune Linux kernel UDP buffers for high-concurrency WebRTC
 sudo cp scripts/sysctl-webrtc.conf /etc/sysctl.d/99-webrtc.conf
 sudo sysctl --system
 
-# 5. Issue Let's Encrypt certificates
-sudo certbot certonly --standalone \
-  -d your-domain.com -d www.your-domain.com \
-  -d live.your-domain.com -d turn.your-domain.com
-
-# 6. Build & start containers (runs migrate -> api, worker, web, livekit, nginx)
+# 5. Build and launch services
 docker compose --env-file .env.production up -d --build
 
-# 7. Seed initial categories, word filter, coin packs, CMS pages & admin account
+# 6. Apply database migrations & seed initial data
+docker exec -it pooja_api npx prisma migrate deploy
 docker exec -it pooja_api npm run prisma:seed
 ```
 
 ---
 
-### Track B — Unified Node.js Host (Hostinger + Neon PostgreSQL + Redis)
+## Verified Pandit Seed Accounts
 
-1. **Sync Client Assets:** Run `bash scripts/sync-client.sh` locally (or build `frontend/` with `NEXT_PUBLIC_BOOKINGS_ENABLED=false` and copy `frontend/out` → `backend/public/client`) and commit `backend/public/client` so Express serves updated hashed bundles.
-2. **Configure Host Settings:**
-   - **Application Root:** `backend`
-   - **Build Command:** `npm run build` (`npx prisma generate && nest build`)
-   - **Start Command:** `npm run start:prod` (`node dist/main`)
-3. **Set Production Environment Variables:** Supply `NODE_ENV=production`, `FRONTEND_ORIGIN`, `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `REDIS_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `JWT_2FA_SECRET`, `ENCRYPTION_MASTER_KEY`, `LIVEKIT_*`, `RAZORPAY_*`, `BREVO_API_KEY`, `BREVO_SMTP_*`, `ASTROLOGICS_API_KEY` (along with `ASTROLOGICS_MAX_RPS=2`, `ASTROLOGICS_MAX_CONCURRENCY=2`, `KUNDLI_DAILY_CREDIT_CAP=100`), and set `RUN_CRONS=true` if no dedicated worker container is running.
-4. **Migrate & Seed:** Run `npx prisma migrate deploy` and `npm run prisma:seed` (and `npx ts-node prisma/seed-wallet.ts` if refreshing packages on an existing DB) against your Neon PostgreSQL database, then purge CDN/edge cache after deployment.
+For staging and local demonstration, the platform includes 7 pre-seeded verified Acharyas:
 
----
-
-## Admin Onboarding
-
-> [!IMPORTANT]
-> **No hardcoded production admin password ships in the repository.**
-> `backend/prisma/seed.ts` reads `ADMIN_EMAIL` and `ADMIN_BOOTSTRAP_PASSWORD` (minimum 16 characters required in `NODE_ENV=production`). Enroll TOTP 2FA at `/account#2fa` immediately after signing in — `/admin` enforces both `role === 'ADMIN'` and `isTwoFactorEnabled === true` directly via `/api/v1/auth/me`.
+| Pandit Name | Role / Specialty | Seed Email | Default Password |
+| :--- | :--- | :--- | :--- |
+| **पंडित रोहित तिवारी** | Founder & Matrimonial Astrologer | `rohit.tiwari@shubhdarshan.com` | `SanatanDharma@2026` |
+| **पंडित संतोष कुमार शास्त्री** | Co-Founder & Vastu Shastra Expert | `skjyotish@gmail.com` | `SanatanDharma@2026` |
+| **पंडित रवि पाठक** | Karmakand & Ganesh Aradhana | `ravi.pathak@shubhdarshan.com` | `SanatanDharma@2026` |
+| **पंडित नितिन शर्मा** | Shukla Yajurveda & Sundarkand Path | `nitin.sharma@shubhdarshan.com` | `SanatanDharma@2026` |
+| **पंडित उमेश शास्त्री** | Maha Rudrabhishek & Chandi Path | `umesh.shastri@shubhdarshan.com` | `SanatanDharma@2026` |
+| **आचार्य कुबेर दत्त त्रिपाठी** | Astrological Sankalp & Navgrah Shanti | `kuber.tripathi@shubhdarshan.com` | `SanatanDharma@2026` |
+| **पंडित सुभाष शास्त्री** | Satyanarayan Katha & Vedic Chanting | `subhash.shastri@shubhdarshan.com` | `SanatanDharma@2026` |
 
 ---
 
-## Operations & Maintenance
+## Operations & Monitoring
 
-| Task | Command / Endpoint | Notes |
-| :--- | :--- | :--- |
-| **Liveness Probe** | `GET /api/v1/health/live` | Exempted from throttling (`@SkipThrottle()`); returns uptime & timestamp |
-| **Readiness Probe** | `GET /api/v1/health/ready` | Executes `SELECT 1` against PostgreSQL; returns `503` if disconnected |
-| **Daily Encrypted Backup** | `0 2 * * * /opt/pooja/scripts/backup-db.sh >> /var/log/pooja-backup.log 2>&1` | Runs `pg_dump`, compresses with gzip, encrypts via `age`, uploads to Cloudflare R2 |
-| **Disaster Recovery** | `sudo /opt/pooja/scripts/restore-db.sh /opt/pooja/backups/db_YYYYMMDD_HHMMSS.sql.gz.age` | Decrypts archive with host `age` private key and restores into `pooja_postgres` |
-| **TLS Renew Hook** | `bash /opt/pooja/scripts/renew-hook.sh` | Reloads Nginx immediately; restarts LiveKit only when `/api/v1/internal/live-count` equals `0` |
-| **Cloudflare IP Refresh** | `bash /opt/pooja/scripts/refresh-cloudflare.sh` | Regenerates `nginx/cloudflare/realip.conf` and `peers.conf`, validates with `nginx -t`, reloads (rolls back on failure) |
+* **Liveness Probe**: `GET /api/v1/health/live` (Unmetered, returns server uptime and UTC timestamp)
+* **Readiness Probe**: `GET /api/v1/health/ready` (Executes database `SELECT 1` ping and Redis connection check)
+* **Encrypted Database Backups**: Automatic daily `pg_dump` compressed with gzip and encrypted via `age` key pairs, uploaded to Cloudflare R2 bucket.
+* **Stream Watchdog Crons**: Runs every 30 seconds to automatically terminate abandoned streams, disconnect unresponsive viewers, and reconcile LiveKit room states.
+
+---
 
 <div align="center">
   <br />
-  <sub>Built for uninterrupted sacred darshan, fair Acharya coin earnings, resilient WebRTC streaming, and clean operator reliability.</sub>
+  <strong>Built with devotion for authentic Vedic darshan, uninterrupted sacred ceremonies, and fair compensation for spiritual leaders.</strong>
+  <br /><br />
+  <sub>© 2026 Shubhdarshan Devotional Media Private Limited. All rights reserved.</sub>
 </div>

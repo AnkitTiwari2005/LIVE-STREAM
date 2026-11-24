@@ -88,6 +88,7 @@ async function bootstrap() {
     // R-08: Use siteOrigin (from FRONTEND_ORIGIN env var) so search engines get the correct domain.
     // Also disallow private/admin/api paths from indexing.
     res.send(`User-agent: *
+Content-Signal: search=yes, ai-train=no
 Allow: /
 Disallow: /account
 Disallow: /admin
@@ -120,29 +121,47 @@ Sitemap: ${siteOrigin}/sitemap.xml
 
   expressApp.get('/llms.txt', (_req: any, res: any) => {
     res.type('text/plain; charset=utf-8');
-    // R-08: All URLs built from siteOrigin — no hardcoded staging domain.
-    // Also removed /api/docs from the public endpoints list (disabled in production).
+    // R-08: All URLs built from siteOrigin — follow official llmstxt.org specification
     res.send(`# Shubhdarshan - Sacred Pooja & Astrology Live Streaming Platform
 
-> Shubhdarshan is a real-time devotional live-streaming and spiritual consultation platform in India, connecting devotees worldwide with verified Vedic priests, temples, and astrologers for live sacred rituals, aarti, sankalp, and Vedic astrological consultations.
+> Shubhdarshan is India's real-time devotional live-streaming and spiritual consultation platform, connecting devotees worldwide with verified Vedic priests, temples, and astrologers for live sacred rituals, aarti, sankalp, and Vedic astrological consultations.
 
-## Core Services
-- **Public Temple Live Broadcasts**: Real-time WebRTC and HLS live streams from registered temples and spiritual sanctuaries across India.
-- **Private Interactive Pooja Sessions**: Password-protected, 128-bit encrypted sankalp rituals for families and individuals worldwide with interactive video and real-time spiritual reactions (Pranam, Aarti, Shankha).
-- **Vedic Astrology Consultations**: Direct live consultations with certified astrologers and Jyotish acharyas.
-- **Temple Prasad & Community**: Devotee donations, community live chat with Sanskrit profanity filtering, and temple prasad delivery tracking.
+## Core Services & Pages
+- [Live Darshan Broadcasts](${siteOrigin}/): Real-time WebRTC and HLS live streams from registered temples and spiritual sanctuaries.
+- [Free Vedic Kundli & Charts](${siteOrigin}/kundli): Free instant Janam Kundli, Lagna (D1) and Navamsa (D9) SVG charts, and client-side PDF export.
+- [Sacred Poojas & Schedule](${siteOrigin}/schedule): Daily live aarti, havan yagya, and Vedic anushthan schedule.
+- [Verified Vedic Pandits](${siteOrigin}/schedule): Verified Acharyas and priests with authentic credentials and lineage.
+- [Devotee Help & FAQ](${siteOrigin}/faq): Frequently asked questions on sacred coins, pooja bookings, and technical support.
+- [Contact Support](${siteOrigin}/contact): Customer care (+91-92122-83098, WhatsApp +91-96708-42038), Acharya onboarding, and platform inquiries.
+- [Terms & DPDP Act 2023 Compliance](${siteOrigin}/terms): Legal terms, 18+ age verification, and personal data protection policy.
+- [Privacy Policy](${siteOrigin}/privacy): Digital personal data handling, encryption standards, and retention schedules.
 
-## Compliance & Trust
-- **DPDP Act 2023 Compliant**: 18+ age verification, explicit verifiable consent for digital personal data processing, and 30-day chat message retention policy.
-- **Verified Streamers**: Strict government-ID and priesthood credential KYC verification by platform administrators before broadcast privileges are granted.
-
-## Key Public Endpoints
-- Portal: ${siteOrigin}/
-- Live Health Status: ${siteOrigin}/api/v1/health/live
-- Database Ready Status: ${siteOrigin}/api/v1/health/ready
-- Categories API: ${siteOrigin}/api/v1/admin/categories
-- Sitemap: ${siteOrigin}/sitemap.xml
+## Machine-Readable Resources & APIs
+- [Sitemap XML](${siteOrigin}/sitemap.xml): Machine-readable index of all public canonical routes.
+- [MCP Server Card](${siteOrigin}/.well-known/mcp/server-card.json): Model Context Protocol (SEP-1649) discovery manifest.
+- [Live System Health](${siteOrigin}/api/v1/health/live): Public server uptime and liveness probe.
+- [Database Ready Probe](${siteOrigin}/api/v1/health/ready): Public database connectivity probe.
 `);
+  });
+
+  expressApp.get('/.well-known/mcp/server-card.json', (_req: any, res: any) => {
+    res.type('application/json; charset=utf-8');
+    res.send(JSON.stringify({
+      $schema: 'https://modelcontextprotocol.io/schemas/server-card/v1.json',
+      name: 'Shubhdarshan MCP Server',
+      version: '1.0.0',
+      description: 'Vedic Astrology, Live Temple Darshan, and Sacred Pooja Rituals Model Context Protocol (MCP) Server',
+      endpoint: `${siteOrigin}/api/v1`,
+      homepage: siteOrigin,
+      capabilities: {
+        tools: true,
+        resources: true,
+        prompts: false,
+      },
+      authentication: {
+        type: 'none',
+      },
+    }, null, 2));
   });
 
   expressApp.get('/sitemap.xml', (_req: any, res: any) => {
@@ -250,8 +269,38 @@ Sitemap: ${siteOrigin}/sitemap.xml
         return next();
       }
 
-      // Root path -> index.html (Next.js Homepage)
+      // Root path -> index.html (Next.js Homepage) or Markdown representation if requested
       if (req.path === '/' || req.path === '') {
+        // Emit RFC 8288 Link header for discovery (Goal 8)
+        res.setHeader('Link', `</llms.txt>; rel="alternate"; type="text/markdown", </sitemap.xml>; rel="sitemap"; type="application/xml"`);
+
+        // Content negotiation: Serve Markdown if client explicitly requests it (Goal 7)
+        const accept = req.headers['accept'] || '';
+        if (accept.includes('text/markdown') && !accept.includes('text/html')) {
+          res.type('text/markdown; charset=utf-8');
+          return res.send(`# Shubhdarshan (शुभदर्शन)
+Sacred Live Pooja, Aarti Darshan & Vedic Astrology Streaming Platform
+
+> Connecting devotees worldwide with verified Vedic priests, temples, and certified astrologers for live sacred rituals, aarti, sankalp, and personalized horoscope consultations.
+
+## Core Platform Services
+- **Live Temple Darshan**: Real-time WebRTC broadcasts from registered temples across India.
+- **Two-Way Private Pooja Sessions**: 1-on-1 encrypted video rituals with verified Acharyas.
+- **Public Video Guest Slot**: Devotee live video participation during open broadcasts.
+- **Free Vedic Kundli & Charts**: Instant Lagna (D1) and Navamsa (D9) SVG charts with client-side PDF export.
+- **Sacred Coin Economy**: 150 coins = ₹100, 5 coins/min metered darshan, and atomic Dakshina offerings.
+
+## Key Links
+- [Live Darshan & Home](${siteOrigin}/)
+- [Free Janam Kundli](${siteOrigin}/kundli)
+- [Upcoming Pooja Schedule](${siteOrigin}/schedule)
+- [Verified Acharyas](${siteOrigin}/schedule)
+- [Devotee Support & FAQ](${siteOrigin}/faq)
+- [Terms & DPDP Compliance](${siteOrigin}/terms)
+- [Support Helpline](tel:+919212283098): +91 9212283098 (Call), +91 9670842038 (WhatsApp)
+`);
+        }
+
         const indexPath = path.join(clientDir, 'index.html');
         if (fs.existsSync(indexPath)) return res.sendFile(indexPath);
       }
@@ -322,13 +371,12 @@ Sitemap: ${siteOrigin}/sitemap.xml
         if (fs.existsSync(termsIndex)) return res.sendFile(termsIndex);
       }
 
-      // Final fallback to homepage
-      const fallbackIndex = path.join(clientDir, 'index.html');
-      if (fs.existsSync(fallbackIndex)) {
-        return res.sendFile(fallbackIndex);
+      // Clean 404 for truly missing pages (eliminates soft-404) (Goal 3)
+      const notFoundPage = path.join(clientDir, '404.html');
+      if (fs.existsSync(notFoundPage)) {
+        return res.status(404).sendFile(notFoundPage);
       }
-
-      return next();
+      return res.status(404).send('Not Found');
     });
   }
 

@@ -8,6 +8,7 @@ import { Footer } from '@/components/Footer';
 import { FestivalBanner } from '@/components/FestivalBanner';
 import { ToastProvider } from '@/components/Toast';
 import { LanguageProvider } from '@/lib/i18n/context';
+import WebMcpTools from '@/components/WebMcpTools';
 
 // R-07: Self-hosted fonts via next/font/google — fonts are bundled into the static
 // output at build time. No external request to fonts.googleapis.com at runtime,
@@ -156,14 +157,21 @@ export default function RootLayout({
           postalCode: '110089',
           addressCountry: 'IN',
         },
+        telephone: '+91-92122-83098',
         contactPoint: [
           {
             '@type': 'ContactPoint',
-            telephone: '+91-11-4019-7800',
+            telephone: '+91-92122-83098',
             contactType: 'customer support',
             email: 'support@shubhdarshan.com',
             areaServed: 'IN',
             availableLanguage: ['Hindi', 'English', 'Sanskrit'],
+          },
+          {
+            '@type': 'ContactPoint',
+            telephone: '+91-96708-42038',
+            contactType: 'WhatsApp support',
+            availableLanguage: ['Hindi', 'English'],
           },
           {
             '@type': 'ContactPoint',
@@ -172,7 +180,12 @@ export default function RootLayout({
             areaServed: 'IN',
           },
         ],
-        sameAs: [],
+        sameAs: [
+          'https://twitter.com/shubhdarshan',
+          'https://www.facebook.com/shubhdarshan',
+          'https://www.instagram.com/shubhdarshan',
+          'https://www.youtube.com/@shubhdarshan',
+        ],
       },
       {
         '@type': 'WebSite',
@@ -249,6 +262,7 @@ export default function RootLayout({
       <body className="min-h-screen flex flex-col bg-stone-950 text-stone-100 antialiased selection:bg-orange-500 selection:text-white w-full max-w-full overflow-x-clip">
         <LanguageProvider>
         <ToastProvider>
+          <WebMcpTools />
           <FestivalBanner />
           <Navbar />
           <main className="flex-1 w-full max-w-full overflow-x-clip">{children}</main>
