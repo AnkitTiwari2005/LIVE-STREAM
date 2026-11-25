@@ -310,7 +310,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
             <Pin className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5 fill-amber-600 dark:fill-amber-400" />
             <div>
               <span className="font-bold text-amber-800 dark:text-amber-300 block text-[10px] uppercase tracking-wider">
-                Pinned by Pandit
+                Pinned by Pandit Ji
               </span>
               <p className="line-clamp-2 text-stone-800 dark:text-stone-200">{pinnedMessage.message}</p>
             </div>

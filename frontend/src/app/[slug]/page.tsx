@@ -24,7 +24,7 @@ const CMS_METADATA: Record<string, { title: string; description: string }> = {
   'pandit-guidelines': {
     title: 'Vedic Pandit Verification & Code of Ethics',
     description:
-      'Accreditation standards and anti-superstition code of conduct for verified Pandits.',
+      'Accreditation standards and anti-superstition code of conduct for verified Pandit Jis.',
   },
   about: {
     title: 'About Us - Sacred Devotion Meets Modern Technology',

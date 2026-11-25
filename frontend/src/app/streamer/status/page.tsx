@@ -84,7 +84,7 @@ export default function StreamerStatusPage() {
                 className="inline-flex items-center gap-2 px-6 py-3 bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold rounded-full shadow-lg transition"
               >
                 <Sparkles className="w-4 h-4" />
-                <span>Apply to Become a Verified Pandit</span>
+                <span>Apply to Become a Verified Pandit Ji</span>
               </Link>
             </div>
           ) : profile.kycStatus === 'APPROVED' ? (

@@ -121,7 +121,7 @@ export default function SchedulePage() {
             Upcoming Vedic Broadcasts &amp; Darshans
           </h1>
           <p className="text-xs sm:text-base text-stone-300 max-w-2xl mx-auto leading-relaxed">
-            KYC-verified Vedic Pandits schedule sacred poojas, havans, and spiritual counseling in real time. Set email reminders for upcoming broadcasts.
+            KYC-verified Vedic Pandit Jis schedule sacred poojas, havans, and spiritual counseling in real time. Set email reminders for upcoming broadcasts.
           </p>
 
           <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
@@ -136,7 +136,7 @@ export default function SchedulePage() {
               href="/#pandits"
               className="px-5 py-2.5 rounded-full bg-obsidian-soft border border-gold/25 hover:border-gold/50 text-gold-pale font-semibold text-xs transition"
             >
-              View Verified Pandits
+              View Verified Pandit Jis
             </Link>
           </div>
         </div>
@@ -171,7 +171,7 @@ export default function SchedulePage() {
               </div>
               <h3 className="font-serif text-2xl font-bold text-white">No Broadcasts Scheduled Yet</h3>
               <p className="text-stone-400 text-sm max-w-sm leading-relaxed">
-                Our KYC-verified Pandits are preparing upcoming live poojas and darshans.
+                Our KYC-verified Pandit Jis are preparing upcoming live poojas and darshans.
                 Check back soon for new scheduled broadcasts.
               </p>
               <button
@@ -249,7 +249,7 @@ export default function SchedulePage() {
                     <div className="flex items-center justify-between text-xs text-stone-600 dark:text-stone-300">
                       <div className="flex items-center gap-1.5 font-medium">
                         <PranamIcon size={16} />
-                        <span className="text-stone-800 dark:text-stone-200 font-semibold">{stream.streamer?.name || 'Vedic Pandit'}</span>
+                        <span className="text-stone-800 dark:text-stone-200 font-semibold">{stream.streamer?.name || 'Vedic Pandit Ji'}</span>
                         <VerifiedPanditBadge size={14} />
                       </div>
                     </div>

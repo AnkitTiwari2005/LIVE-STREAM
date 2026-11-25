@@ -145,7 +145,7 @@ export default function StreamerEarningsPage() {
               <VerifiedPanditBadge size={14} /> Acharya Coin Revenue &amp; Dakshina Portal
             </div>
             <h1 className="font-serif text-3xl sm:text-4xl font-bold text-white flex items-center gap-2.5">
-              <OmIcon size={28} /> Pandit Earnings Dashboard
+              <OmIcon size={28} /> Pandit Ji Earnings Dashboard
             </h1>
             <p className="text-stone-400 text-xs sm:text-sm mt-1">
               Coin-based Dakshina &amp; live chanting watch-time ledger ({coinsPer100} coins = ₹100 • {sharePercent}% Acharya share).

@@ -256,6 +256,26 @@ const CURATED_PANDITS = [
     hasSpecialBadge: true,
     specialBadgeTitle: 'वैदिक विद्वान रत्न',
   },
+  {
+    slug: 'sumit-shastri',
+    name: 'पंडित सुमित शास्त्री (कर्मकांड,ज्योतिष)',
+    title: 'कर्मकांड एवं ज्योतिष विशेषज्ञ',
+    experience: '11 Years Seva',
+    specialties: ['Karmakand', 'Vedic Astrology', 'Pooja Vidhi', 'Kundli Milan'],
+    image: '/images/pandits/pandit-sumit-shastri.webp',
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'कर्मकांड एवं ज्योतिष विशेषज्ञ',
+  },
+  {
+    slug: 'nandkishor-tripathi',
+    name: 'पंडित नंदकिशोर त्रिपाठी (कर्मकांड,ज्योतिष)',
+    title: 'कर्मकांड एवं ज्योतिष विशेषज्ञ',
+    experience: '13 Years Seva',
+    specialties: ['Karmakand', 'Vedic Astrology', 'Graha Shanti', 'Anushthan'],
+    image: '/images/pandits/pandit-nandkishor-tripathi.webp',
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'कर्मकांड एवं ज्योतिष विशेषज्ञ',
+  },
 ];
 
 const DEVOTEE_TESTIMONIALS = [
@@ -444,12 +464,12 @@ export default function HomePage() {
               {liveStreams.length > 0 ? (
                 <p className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3.5 sm:px-4 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider sm:tracking-[0.24em] text-gold-pale shadow-[0_0_20px_rgba(245,158,11,0.15)] max-w-full truncate">
                   <span className="live-dot shrink-0" />
-                  <span className="truncate">Live Vedic Broadcasts • KYC-Verified Pandits</span>
+                  <span className="truncate">Live Vedic Broadcasts • KYC-Verified Pandit Jis</span>
                 </p>
               ) : (
                 <p className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3.5 sm:px-4 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider sm:tracking-[0.24em] text-gold-pale shadow-[0_0_20px_rgba(245,158,11,0.15)] max-w-full truncate">
                   <DiyaIcon size={14} className="shrink-0" />
-                  <span className="truncate">Live Vedic Broadcasts &bull; KYC-Verified Pandits</span>
+                  <span className="truncate">Live Vedic Broadcasts &bull; KYC-Verified Pandit Jis</span>
                 </p>
               )}
             </div>
@@ -460,7 +480,7 @@ export default function HomePage() {
             </h1>
 
             <p className="mt-4 sm:mt-6 w-full max-w-xl text-stone-300 text-sm sm:text-lg leading-relaxed">
-              Param Darshan connects you directly with KYC-verified Vedic Pandits for personalized poojas, havans, and spiritual counseling — in live interactive HD, directly to your screen.
+              Param Darshan connects you directly with KYC-verified Vedic Pandit Jis for personalized poojas, havans, and spiritual counseling — in live interactive HD, directly to your screen.
             </p>
 
             {/* Hero Action Buttons */}
@@ -587,7 +607,7 @@ export default function HomePage() {
                       <div className="flex items-center gap-2">
                         <PranamIcon size={16} />
                         <span className="text-xs font-semibold text-stone-200">
-                          {featuredStream.streamer?.name || 'Vedic Pandit'}
+                          {featuredStream.streamer?.name || 'Vedic Pandit Ji'}
                         </span>
                         <VerifiedPanditBadge size={14} />
                       </div>
@@ -638,7 +658,7 @@ export default function HomePage() {
                       Live Pooja Altar in Repose
                     </h3>
                     <p className="altar-repose-desc text-xs mt-1.5 w-full max-w-sm mx-auto leading-relaxed break-words">
-                      Verified Vedic Pandits stream live whenever they conduct sacred rituals, havan poojas, or astrological discourses. Active broadcasts will appear here in real time.
+                      Verified Vedic Pandit Jis stream live whenever they conduct sacred rituals, havan poojas, or astrological discourses. Active broadcasts will appear here in real time.
                     </p>
                     {nextUpcomingStream && (
                       <div className="mt-2.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white dark:bg-black/85 backdrop-blur-md border border-amber-300 dark:border-amber-400/40 text-[11px] shadow-sm dark:shadow-md max-w-full overflow-hidden">
@@ -653,7 +673,7 @@ export default function HomePage() {
                     <div className="flex items-center gap-1.5 sm:gap-2">
                       <PranamIcon size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
                       <span className="text-xs font-semibold text-stone-700 dark:text-stone-200 whitespace-nowrap">
-                        KYC-Verified Pandits
+                        KYC-Verified Pandit Jis
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 sm:gap-2 w-full xs:w-auto justify-end">
@@ -699,7 +719,7 @@ export default function HomePage() {
               Book Personalized Vedic Poojas &amp; Consultations
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-stone-400 max-w-xl">
-              Select a sacred ritual, choose your preferred KYC-verified Pandit, and book a live personal broadcast.
+              Select a sacred ritual, choose your preferred KYC-verified Pandit Ji, and book a live personal broadcast.
             </p>
           </div>
 
@@ -721,7 +741,7 @@ export default function HomePage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search pooja, pandit..."
+                placeholder="Search pooja, pandit ji..."
                 className="w-full pl-10 pr-4 py-2.5 rounded-full bg-obsidian-soft border border-gold/20 text-xs sm:text-sm text-white placeholder-stone-400 focus:outline-none focus:border-gold transition"
               />
             </div>
@@ -853,7 +873,7 @@ export default function HomePage() {
           <span className="text-xs text-gold-soft/90 font-medium hidden sm:inline">
             {liveStreams.length > 0
               ? '5 Coins / min metered darshan • Live HD'
-              : 'Upcoming live broadcasts scheduled by KYC-verified Pandits'}
+              : 'Upcoming live broadcasts scheduled by KYC-verified Pandit Jis'}
           </span>
         </div>
 
@@ -922,7 +942,7 @@ export default function HomePage() {
                   <div className="mt-5 pt-3.5 border-t border-stone-800/80 flex items-center justify-between text-xs text-stone-300">
                     <div className="flex items-center gap-1.5 font-medium">
                       <PranamIcon size={16} />
-                      <span className="text-stone-200">{stream.streamer?.name || 'Vedic Pandit'}</span>
+                      <span className="text-stone-200">{stream.streamer?.name || 'Vedic Pandit Ji'}</span>
                       {stream.streamer?.streamerProfile?.isVerifiedBadge && (
                         <VerifiedPanditBadge size={14} />
                       )}
@@ -949,7 +969,7 @@ export default function HomePage() {
                   minute: '2-digit',
                 })
               : (item.scheduledText || 'Today Evening');
-            const streamerName = item.streamer?.name || item.streamer || 'Vedic Pandit';
+            const streamerName = item.streamer?.name || item.streamer || 'Vedic Pandit Ji';
             const categoryName = item.category?.name || item.category || 'Vedic Pooja';
             const thumbUrl = item.thumbnailUrl || item.thumbnail || fallbackImg;
 
@@ -1121,7 +1141,7 @@ export default function HomePage() {
             Meet the custodians of tradition
           </h2>
           <p className="mt-3 text-stone-400 text-xs sm:text-sm leading-relaxed">
-            Every pandit on Param Darshan undergoes government identity KYC review and profile verification before being authorized to broadcast.
+            Every Pandit Ji on Param Darshan undergoes government identity KYC review and profile verification before being authorized to broadcast.
           </p>
         </div>
 
@@ -1207,10 +1227,10 @@ export default function HomePage() {
           <div className="rounded-2xl bg-obsidian-soft border border-gold/15 p-6 shadow-xl relative">
             <span className="font-serif text-5xl font-black text-amber-700/80 dark:text-amber-500/70 block mb-2 step-num">01</span>
             <h3 className="font-serif text-xl font-bold text-white mb-2">
-              Select Ritual &amp; Verified Pandit
+              Select Ritual &amp; Verified Pandit Ji
             </h3>
             <p className="text-xs sm:text-sm text-stone-400 leading-relaxed">
-              Choose from authentic Vedic rituals — Rudrabhishek, Navgrah Shanti, Kundli guidance, or Family Sankalp. Select your preferred KYC-verified Pandit.
+              Choose from authentic Vedic rituals — Rudrabhishek, Navgrah Shanti, Kundli guidance, or Family Sankalp. Select your preferred KYC-verified Pandit Ji.
             </p>
           </div>
 
@@ -1348,7 +1368,7 @@ export default function HomePage() {
                 </h2>
 
                 <p className="text-stone-300 text-xs sm:text-base leading-relaxed">
-                  Connect with Bharat’s holy sanctums, receive blessings from verified Vedic Pandits, and book personalized sanctum poojas.
+                  Connect with Bharat’s holy sanctums, receive blessings from verified Vedic Pandit Jis, and book personalized sanctum poojas.
                 </p>
 
                 <div className="pt-2 flex flex-wrap items-center justify-center gap-4">
@@ -1380,7 +1400,7 @@ export default function HomePage() {
                 </h2>
 
                 <p className="text-stone-300 text-xs sm:text-base leading-relaxed">
-                  Experience authentic Vedic rituals and personalized poojas today. Join devotees across the globe receiving live blessings from KYC-verified Pandits.
+                  Experience authentic Vedic rituals and personalized poojas today. Join devotees across the globe receiving live blessings from KYC-verified Pandit Jis.
                 </p>
 
                 <div className="pt-2 flex flex-wrap items-center justify-center gap-4">

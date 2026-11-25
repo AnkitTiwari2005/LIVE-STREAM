@@ -92,7 +92,7 @@ export default function PoojaCatalogPage() {
               Book Personalized Vedic Poojas &amp; Kathas
             </h1>
             <p className="mt-3 text-xs sm:text-sm text-stone-300 leading-relaxed">
-              Explore 24+ sacred rituals, Vedic kathas, and astrological remedies conducted by KYC-verified Pandits. Select your preferred Acharya and review ritual traditions in real-time interactive HD.
+              Explore 24+ sacred rituals, Vedic kathas, and astrological remedies conducted by KYC-verified Pandit Jis. Select your preferred Acharya and review ritual traditions in real-time interactive HD.
             </p>
           </div>
 
@@ -151,7 +151,7 @@ export default function PoojaCatalogPage() {
             </p>
             <span className="text-xs text-gold-soft flex items-center gap-1">
               <ShieldCheck className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
-              100% KYC-Verified Pandits
+              100% KYC-Verified Pandit Jis
             </span>
           </div>
 

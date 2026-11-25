@@ -45,7 +45,7 @@ export function Footer() {
             </Link>
 
             <p className="text-stone-300 text-xs sm:text-sm leading-relaxed max-w-sm">
-              Connecting devotees worldwide with verified Vedic pandits and sanctums for live Aarti, Darshan, personalized poojas, and authentic spiritual counseling in real time.
+              Connecting devotees worldwide with verified Vedic Pandit Jis and sanctums for live Aarti, Darshan, personalized poojas, and authentic spiritual counseling in real time.
             </p>
 
             <div className="flex items-center gap-2 pt-2 text-xs text-stone-400">
@@ -72,7 +72,7 @@ export function Footer() {
               </li>
               <li>
                 <Link href="/#pandits" className="text-stone-400 hover:text-gold-pale transition">
-                  Verified Pandits Directory
+                  Verified Pandit Jis Directory
                 </Link>
               </li>
               <li>
@@ -120,7 +120,7 @@ export function Footer() {
                   </Link>
                 ) : (
                   <Link href="/streamer/apply" className="text-stone-400 hover:text-gold-pale transition flex items-center gap-1.5">
-                    <DiyaIcon size={14} /> Apply as Pandit
+                    <DiyaIcon size={14} /> Apply as Pandit Ji
                   </Link>
                 )}
               </li>
@@ -175,7 +175,7 @@ export function Footer() {
         {/* Astrological & Spiritual Disclaimer */}
         <div className="pt-8 border-t border-stone-800/80 text-[11px] text-stone-400 leading-relaxed space-y-2">
           <p>
-            <strong className="text-gold-pale">Spiritual &amp; Astrological Disclaimer:</strong> All live temple darshans, aartis, pooja ceremonies, planetary remedies, astrology kundli counseling, and Vedic discourses on Param Darshan are conducted for cultural, religious, and spiritual counseling purposes. Pandits and astrologers broadcast as independent verified practitioners. Param Darshan makes no guarantees or warranties of material, financial, medical, or life outcomes.
+            <strong className="text-gold-pale">Spiritual &amp; Astrological Disclaimer:</strong> All live temple darshans, aartis, pooja ceremonies, planetary remedies, astrology kundli counseling, and Vedic discourses on Param Darshan are conducted for cultural, religious, and spiritual counseling purposes. Pandit Jis and astrologers broadcast as independent verified practitioners. Param Darshan makes no guarantees or warranties of material, financial, medical, or life outcomes.
           </p>
         </div>
 

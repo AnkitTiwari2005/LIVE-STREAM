@@ -37,6 +37,16 @@ const CURATED_PANDIT_METADATA: Record<string, { title: string; description: stri
     description:
       'Profile and Vedic rituals by Pandit Subhash Shastri, specializing in Satyanarayan Pooja, Durga Saptashati, Navgrah Poojan, and Rudrabhishek.',
   },
+  'sumit-shastri': {
+    title: 'पंडित सुमित शास्त्री (कर्मकांड,ज्योतिष) — कर्मकांड एवं ज्योतिष विशेषज्ञ',
+    description:
+      'Profile and Vedic rituals by Pandit Sumit Shastri, specializing in Karmakand, Vedic Astrology, Pooja Vidhi, and Kundli Milan.',
+  },
+  'nandkishor-tripathi': {
+    title: 'पंडित नंदकिशोर त्रिपाठी (कर्मकांड,ज्योतिष) — कर्मकांड एवं ज्योतिष विशेषज्ञ',
+    description:
+      'Profile and Vedic rituals by Pandit Nandkishor Tripathi, specializing in Karmakand, Vedic Astrology, Graha Shanti, and Anushthan.',
+  },
   'aarav-sharma': {
     title: 'Pandit Aarav Sharma — Head Archak, Kashi Vishwanath Parampara',
     description:
@@ -89,6 +99,8 @@ export async function generateStaticParams() {
     { id: 'umesh-shastri' },
     { id: 'kuber-tripathi' },
     { id: 'subhash-shastri' },
+    { id: 'sumit-shastri' },
+    { id: 'nandkishor-tripathi' },
     { id: 'aarav-sharma' },
     { id: 'hariram-vyas' },
     { id: 'vishwanath-bhatt' },

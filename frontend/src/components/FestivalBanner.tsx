@@ -85,7 +85,7 @@ export function FestivalBanner() {
       : 'bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 dark:from-[#2a0707] dark:via-[#5b1210] dark:to-[#7c2d12]';
 
   const occasion = banner.occasion || 'Special Occasion';
-  const fullMessage = banner.message || 'Join sacred rituals and live poojas with verified Vedic Pandits';
+  const fullMessage = banner.message || 'Join sacred rituals and live poojas with verified Vedic Pandit Jis';
   const shortMessage = banner.mobileMessage || fullMessage;
   const ctaText = banner.ctaText || 'Watch Live';
   const ctaLink = banner.ctaLink || '/#live-section';

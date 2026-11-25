@@ -520,7 +520,7 @@ export default function StreamerApplyPage() {
                     Apply as Verified Pandit
                   </h1>
                   <p className="text-xs text-stone-400">
-                    Join our sacred circle of certified pandits and Vedic scholars
+                    Join our sacred circle of certified Pandit Jis and Vedic scholars
                   </p>
                 </div>
               </div>

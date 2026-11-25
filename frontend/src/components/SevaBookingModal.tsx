@@ -110,7 +110,7 @@ export default function SevaBookingModal(props: SevaBookingModalProps) {
         </div>
 
         <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 leading-relaxed">
-          Private 1-on-1 pandit booking and custom sankalp scheduling is not yet live. Browse our upcoming live broadcasts and join a ceremony from the daily schedule.
+          Private 1-on-1 Pandit Ji booking and custom sankalp scheduling is not yet live. Browse our upcoming live broadcasts and join a ceremony from the daily schedule.
         </p>
 
         <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -306,7 +306,7 @@ function SevaBookingFlow({
 
     setCreatedBooking(newBooking);
     setStep(4);
-    toast.success('Booking request saved. We will notify you once a pandit confirms availability.');
+    toast.success('Booking request saved. We will notify you once Pandit Ji confirms availability.');
   };
 
   const handleResetAndClose = () => {
@@ -348,7 +348,7 @@ function SevaBookingFlow({
           </span>
           <ChevronRight className="w-3.5 h-3.5 text-stone-500 dark:text-stone-400 shrink-0" />
           <span className={`font-semibold shrink-0 ${step >= 2 ? 'text-gold' : 'text-stone-600 dark:text-stone-400'}`}>
-            2. Choose Pandit &amp; Dakshina
+            2. Choose Pandit Ji &amp; Dakshina
           </span>
           <ChevronRight className="w-3.5 h-3.5 text-stone-500 dark:text-stone-400 shrink-0" />
           <span className={`font-semibold shrink-0 ${step >= 3 ? 'text-gold' : 'text-stone-600 dark:text-stone-400'}`}>
@@ -356,7 +356,7 @@ function SevaBookingFlow({
           </span>
           <ChevronRight className="w-3.5 h-3.5 text-stone-500 dark:text-stone-400 shrink-0" />
           <span className={`font-semibold shrink-0 ${step >= 4 ? 'text-gold' : 'text-stone-600 dark:text-stone-400'}`}>
-            4. Pandit Status
+            4. Pandit Ji Status
           </span>
         </div>
 
@@ -446,7 +446,7 @@ function SevaBookingFlow({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-gold/10">
                 <div>
                   <h3 className="font-serif text-base font-bold text-white">
-                    Step 2: Choose Your Verified Vedic Pandit
+                    Step 2: Choose Your Verified Vedic Pandit Ji
                   </h3>
                   <div className="flex flex-wrap items-center gap-2 mt-0.5">
                     <p className="text-xs text-stone-400">
@@ -522,7 +522,7 @@ function SevaBookingFlow({
 
                       {/* Pandit's Specific Price for this Pooja */}
                       <div className="mt-4 pt-2.5 border-t border-stone-800 flex items-center justify-between text-xs">
-                        <span className="text-stone-400 text-[11px]">Pandit Dakshina:</span>
+                        <span className="text-stone-400 text-[11px]">Pandit Ji Dakshina:</span>
                         <div className="text-right">
                           <span className="font-bold text-gold-pale flex items-center gap-1">
                             <CoinIcon size={13} /> {panditDakshina} Coins
@@ -729,7 +729,7 @@ function SevaBookingFlow({
               <div className="space-y-1.5">
                 <span className="modal-status-pill inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm">
                   <Clock className="w-3.5 h-3.5 animate-spin shrink-0" />
-                  <span>Awaiting Panditji&apos;s Schedule Confirmation</span>
+                  <span>Awaiting Pandit Ji&apos;s Schedule Confirmation</span>
                 </span>
                 <h3 className="modal-value font-serif text-2xl font-bold mt-2">
                   Booking Request Saved
@@ -738,7 +738,7 @@ function SevaBookingFlow({
 
               <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 max-w-md mx-auto leading-relaxed">
                 Your request for <strong className="modal-value font-bold">{createdBooking.poojaName}</strong> has been sent to{' '}
-                <strong className="modal-gold-value font-bold">{createdBooking.panditName}</strong>. Panditji will verify his sanctum schedule and confirm your broadcast within 2 hours.
+                <strong className="modal-gold-value font-bold">{createdBooking.panditName}</strong>. Pandit Ji will verify his sanctum schedule and confirm your broadcast within 2 hours.
               </p>
 
               {/* Booking Reference Details */}
@@ -752,7 +752,7 @@ function SevaBookingFlow({
                   <span className="modal-value font-semibold">{createdBooking.poojaName}</span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-stone-200 dark:border-stone-800">
-                  <span className="modal-label font-medium">Requested Pandit:</span>
+                  <span className="modal-label font-medium">Requested Pandit Ji:</span>
                   <span className="modal-value font-semibold">{createdBooking.panditName}</span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-stone-200 dark:border-stone-800">
@@ -827,7 +827,7 @@ function SevaBookingFlow({
                 }`}
               >
                 <DiyaIcon size={14} />
-                <span>Send Booking Request to Panditji</span>
+                <span>Send Booking Request to Pandit Ji</span>
               </button>
             ) : (
               <div className="flex items-center gap-2">

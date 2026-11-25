@@ -37,7 +37,7 @@ async function main() {
     {
       slug: 'santosh-shastri',
       name: 'पंडित संतोष कुमार शास्त्री',
-      email: 'skjyotish@gmail.com', // Matching his registered email
+      email: 's.k.jyotish@gmail.com', // Matching his registered email
       avatarUrl: '/images/pandits/pandit-santosh-shastri.webp',
       bio: 'Co-Founder of Param Darshan and master of spatial cosmic alignment (Vastu Shastra) and classical Vedic Jyotish. Expert in balancing residential and commercial energies and conducting sacred peace yagyas.',
       specialties: ['Vedic Astrology', 'Vastu Shastra', 'Kundli Milan', 'Grah Shanti'],
@@ -53,7 +53,7 @@ async function main() {
     {
       slug: 'ravi-pathak',
       name: 'पंडित रवि पाठक',
-      email: 'ravi.pathak@shubhdarshan.com',
+      email: 'ravipathak8877@gmail.com',
       avatarUrl: '/images/pandits/pandit-ravi-pathak.webp',
       bio: 'Dedicated Vedic Purohit specializing in classical Karmakand rituals, Ganesh Aradhana, solemn Vedic anushthans, and sacred havan sankalps.',
       specialties: ['Karmakand', 'Maha Yagya', 'Ganesh Pujan', 'Vedic Anushthan'],
@@ -69,7 +69,7 @@ async function main() {
     {
       slug: 'nitin-sharma',
       name: 'पंडित नितिन शर्मा',
-      email: 'nitin.sharma@shubhdarshan.com',
+      email: 'nitinsharma3797@gmail.com',
       avatarUrl: '/images/pandits/pandit-nitin-sharma.webp',
       bio: 'Accomplished practitioner of Shukla Yajurveda rituals, renowned for rhythmic Sundarkand path recitations, Hanuman chalisa anushthans, and family shanti pujas.',
       specialties: ['Karmakand', 'Sundarkand Path', 'Hanuman Aradhana', 'Vedic Path'],
@@ -85,7 +85,7 @@ async function main() {
     {
       slug: 'umesh-shastri',
       name: 'पंडित उमेश शास्त्री',
-      email: 'umesh.shastri@shubhdarshan.com',
+      email: 'umeshdubey867@gmail.com',
       avatarUrl: '/images/pandits/pandit-umesh-shastri.webp',
       bio: 'Venerated Acharya of Shiva-Shakti aradhana. Conducts powerful Maha Rudrabhishek with Shukla Yajurveda mantra uccharan, Navratri Durga Saptashati, and Chandi path.',
       specialties: ['Rudrabhishek', 'Devi Pooja', 'Durga Path', 'Maha Abhishek'],
@@ -101,7 +101,7 @@ async function main() {
     {
       slug: 'kuber-tripathi',
       name: 'आचार्य कुबेर दत्त त्रिपाठी',
-      email: 'kuber.tripathi@shubhdarshan.com',
+      email: 'Kdtripathi481@gmail.com',
       avatarUrl: '/images/pandits/acharya-kuber-tripathi.webp',
       bio: 'Scholar of Sanskrit scriptures and devotional ritual chanting. Consecrates astrological sankalp sevas, devotional bhajan aartis, and planetary remedy ceremonies.',
       specialties: ['Jyotish', 'Karmakand', 'Bhajan Sandhya', 'Sankalp Seva'],
@@ -129,6 +129,38 @@ async function main() {
       streamDesc: 'Sacred chapter-by-chapter recitation of Lord Satyanarayan katha with Panchamrit prasad consecration.',
       categoryId: kathaCat?.id || poojaCat?.id,
       scheduledHoursAhead: 14,
+    },
+    {
+      slug: 'sumit-shastri',
+      name: 'पंडित सुमित शास्त्री (कर्मकांड,ज्योतिष)',
+      email: 'sumitpachori8@gmail.com',
+      avatarUrl: '/images/pandits/pandit-sumit-shastri.webp',
+      bio: 'Vedic scholar and priest specializing in Karmakand, classical Vedic ritual poojas, and astrology consultations.',
+      specialties: ['Karmakand', 'Vedic Astrology', 'Pooja Vidhi', 'Kundli Milan'],
+      languages: ['Hindi', 'Sanskrit'],
+      followerCount: 950,
+      hasSpecialBadge: true,
+      specialBadgeTitle: 'कर्मकांड एवं ज्योतिष विशेषज्ञ',
+      streamTitle: 'Vedic Hawan & Graha Shanti Anushthan',
+      streamDesc: 'Sacred Karmakand hawan and Vedic mantra chanting for peace and planetary harmony.',
+      categoryId: poojaCat?.id,
+      scheduledHoursAhead: 16,
+    },
+    {
+      slug: 'nandkishor-tripathi',
+      name: 'पंडित नंदकिशोर त्रिपाठी (कर्मकांड,ज्योतिष)',
+      email: 'nandkishortripathi893@gmail.com',
+      avatarUrl: '/images/pandits/pandit-nandkishor-tripathi.webp',
+      bio: 'Vedic priest and Astrologer specialized in Shukla Yajurveda rituals, Shanti Hawan, and astrological guidance.',
+      specialties: ['Karmakand', 'Vedic Astrology', 'Graha Shanti', 'Anushthan'],
+      languages: ['Hindi', 'Sanskrit'],
+      followerCount: 920,
+      hasSpecialBadge: true,
+      specialBadgeTitle: 'कर्मकांड एवं ज्योतिष विशेषज्ञ',
+      streamTitle: 'Shukla Yajurveda Shanti Path & Mahapooja',
+      streamDesc: 'Traditional Shukla Yajurveda mantra chanting and sacred Vedic oblations.',
+      categoryId: astroCat?.id || poojaCat?.id,
+      scheduledHoursAhead: 18,
     },
   ];
 

@@ -852,12 +852,20 @@ export default function AdminConsolePage() {
                       const SLUG_MAP: Record<string, string> = {
                         'tripathiayush068@gmail.com': 'rohit-tiwari',
                         'rohit.tiwari@shubhdarshan.com': 'rohit-tiwari',
+                        's.k.jyotish@gmail.com': 'santosh-shastri',
                         'skjyotish@gmail.com': 'santosh-shastri',
+                        'ravipathak8877@gmail.com': 'ravi-pathak',
                         'ravi.pathak@shubhdarshan.com': 'ravi-pathak',
+                        'nitinsharma3797@gmail.com': 'nitin-sharma',
                         'nitin.sharma@shubhdarshan.com': 'nitin-sharma',
+                        'umeshdubey867@gmail.com': 'umesh-shastri',
                         'umesh.shastri@shubhdarshan.com': 'umesh-shastri',
+                        'Kdtripathi481@gmail.com': 'kuber-tripathi',
+                        'kdtripathi481@gmail.com': 'kuber-tripathi',
                         'kuber.tripathi@shubhdarshan.com': 'kuber-tripathi',
                         'subhash.shastri@shubhdarshan.com': 'subhash-shastri',
+                        'sumitpachori8@gmail.com': 'sumit-shastri',
+                        'nandkishortripathi893@gmail.com': 'nandkishor-tripathi',
                       };
                       const slug = SLUG_MAP[pandit.email] || pandit.id;
                       return (

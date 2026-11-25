@@ -332,7 +332,7 @@ export function Navbar() {
                     <Calendar className="w-3.5 h-3.5 text-gold shrink-0" />
                     <div>
                       <div className="font-semibold">Book a Personal Astrologer</div>
-                      <div className="text-[10px] text-stone-400">1-on-1 Vedic guidance with a verified pandit</div>
+                      <div className="text-[10px] text-stone-400">1-on-1 Vedic guidance with a verified Pandit Ji</div>
                     </div>
                   </Link>
                 </div>
@@ -348,7 +348,7 @@ export function Navbar() {
               href="/#pandits"
               className="hidden xl:inline-flex items-center gap-1 whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5"
             >
-              <span className="hidden xl:inline">Verified</span>Pandits
+              <span className="hidden xl:inline">Verified </span>Pandit Jis
             </Link>
 
             {/* More Dropdown (About, FAQ, Ethics, Support) */}
@@ -378,7 +378,7 @@ export function Navbar() {
                     onClick={() => setMoreDropdownOpen(false)}
                     className="xl:hidden flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
                   >
-                    <span>Verified Pandits</span>
+                    <span>Verified Pandit Jis</span>
                   </Link>
                   <Link
                     href="/about"
@@ -537,7 +537,7 @@ export function Navbar() {
                               className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
                             >
                               <DiyaIcon size={16} className="text-gold shrink-0" />
-                              <span>Become a Pandit</span>
+                              <span>Become a Pandit Ji</span>
                             </Link>
                             <Link
                               href="/streamer/status"
@@ -545,7 +545,7 @@ export function Navbar() {
                               className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
                             >
                               <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" />
-                              <span>Pandit KYC Status</span>
+                              <span>Pandit Ji KYC Status</span>
                             </Link>
                           </>
                         )}
@@ -669,7 +669,7 @@ export function Navbar() {
                 onClick={() => setMobileMenuOpen(false)}
                 className="mobile-nav-link font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
               >
-                Verified Pandits Directory
+                Verified Pandit Jis Directory
               </Link>
               <div className="border-b border-stone-200 dark:border-stone-800/60">
                 <div className="mobile-nav-link font-bold py-1.5 flex items-center gap-2 text-stone-800 dark:text-stone-200">
@@ -718,7 +718,7 @@ export function Navbar() {
                     onClick={() => setMobileMenuOpen(false)}
                     className="mobile-nav-link font-bold py-1.5 flex items-center gap-2"
                   >
-                    <CoinIcon size={16} /> Pandit Earnings &amp; Dakshina
+                    <CoinIcon size={16} /> Pandit Ji Earnings &amp; Dakshina
                   </Link>
                 </>
               )}
@@ -740,14 +740,14 @@ export function Navbar() {
                     onClick={() => setMobileMenuOpen(false)}
                     className="mobile-nav-link font-semibold py-1.5 flex items-center gap-2"
                   >
-                    <DiyaIcon size={16} /> Become a Pandit
+                    <DiyaIcon size={16} /> Become a Pandit Ji
                   </Link>
                   <Link
                     href="/streamer/status"
                     onClick={() => setMobileMenuOpen(false)}
                     className="mobile-nav-link font-semibold py-1.5 flex items-center gap-2"
                   >
-                    <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400" /> Pandit KYC Status
+                    <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400" /> Pandit Ji KYC Status
                   </Link>
                 </>
               )}

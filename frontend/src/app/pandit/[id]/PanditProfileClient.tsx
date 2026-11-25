@@ -269,6 +269,52 @@ const CURATED_SHOWCASE: Record<string, PanditData> = {
       },
     ],
   },
+  'sumit-shastri': {
+    name: 'पंडित सुमित शास्त्री (कर्मकांड,ज्योतिष)',
+    title: 'कर्मकांड एवं ज्योतिष विशेषज्ञ',
+    experience: '11 Years Seva',
+    specialties: ['Karmakand', 'Vedic Astrology', 'Pooja Vidhi', 'Kundli Milan'],
+    languages: ['Hindi', 'Sanskrit'],
+    image: '/images/pandits/pandit-sumit-shastri.webp',
+    bio: 'Vedic scholar and priest specializing in classical Karmakand rituals, solemn Vedic poojas, and astrology consultations.',
+    temple: 'Sanatan Karmakand Vidhi Peeth',
+    followerCount: 950,
+    isCurated: true,
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'कर्मकांड एवं ज्योतिष विशेषज्ञ',
+    upcoming: [
+      {
+        id: 'vedic-hawan-graha-shanti',
+        title: 'Vedic Hawan & Graha Shanti Anushthan',
+        category: 'Pooja & Hawan',
+        time: 'Daily • 08:30 AM IST',
+        isLive: false,
+      },
+    ],
+  },
+  'nandkishor-tripathi': {
+    name: 'पंडित नंदकिशोर त्रिपाठी (कर्मकांड,ज्योतिष)',
+    title: 'कर्मकांड एवं ज्योतिष विशेषज्ञ',
+    experience: '13 Years Seva',
+    specialties: ['Karmakand', 'Vedic Astrology', 'Graha Shanti', 'Anushthan'],
+    languages: ['Hindi', 'Sanskrit'],
+    image: '/images/pandits/pandit-nandkishor-tripathi.webp',
+    bio: 'Vedic priest and Astrologer specialized in Shukla Yajurveda rituals, Shanti Hawan, and auspicious astrological guidance.',
+    temple: 'Vedic Shukla Yajurveda Peeth',
+    followerCount: 920,
+    isCurated: true,
+    hasSpecialBadge: true,
+    specialBadgeTitle: 'कर्मकांड एवं ज्योतिष विशेषज्ञ',
+    upcoming: [
+      {
+        id: 'shukla-yajurveda-shanti-path',
+        title: 'Shukla Yajurveda Shanti Path & Mahapooja',
+        category: 'Vedic Chanting',
+        time: 'Daily • 07:00 AM IST',
+        isLive: false,
+      },
+    ],
+  },
   'aarav-sharma': {
     name: 'Pandit Aarav Sharma',
     title: 'Head Archak, Kashi Vishwanath Parampara',
@@ -508,7 +554,7 @@ export default function PanditProfileClient() {
       }).catch(() => {});
     } else {
       navigator.clipboard.writeText(window.location.href);
-      toast.success('Pandit profile link copied to clipboard!');
+      toast.success('Pandit Ji profile link copied to clipboard!');
     }
   };
 
@@ -525,9 +571,9 @@ export default function PanditProfileClient() {
     return (
       <div className="min-h-screen bg-obsidian text-foreground py-20 max-w-xl mx-auto px-4 text-center">
         <AlertCircle className="w-12 h-12 text-gold mx-auto mb-4" />
-        <h1 className="font-serif text-2xl font-bold text-white mb-2">Pandit Profile Not Found</h1>
+        <h1 className="font-serif text-2xl font-bold text-white mb-2">Pandit Ji Profile Not Found</h1>
         <p className="text-xs text-stone-400 mb-6">
-          The requested Pandit profile ID does not exist or has not yet completed verification.
+          The requested Pandit Ji profile ID does not exist or has not yet completed verification.
         </p>
         <Link
           href="/#pandits"
@@ -590,7 +636,7 @@ export default function PanditProfileClient() {
                   <SpecialPanditBadge title={pandit.specialBadgeTitle} size="md" />
                 )}
                 <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-gold/15 text-gold border border-gold/30">
-                  <VerifiedPanditBadge size={14} /> KYC Verified Pandit
+                  <VerifiedPanditBadge size={14} /> KYC Verified Pandit Ji
                 </span>
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-stone-900 border border-stone-800 text-stone-300">
                   <Sparkles className="w-3 h-3 text-gold" /> {pandit.experience}
@@ -620,7 +666,7 @@ export default function PanditProfileClient() {
                 >
                   <Users className="w-4 h-4" />
                   <span>
-                    {isFollowing ? 'Following' : 'Follow Pandit'} ({followerCount})
+                    {isFollowing ? 'Following' : 'Follow Pandit Ji'} ({followerCount})
                   </span>
                 </button>
 
@@ -680,7 +726,7 @@ export default function PanditProfileClient() {
 
           {pandit.upcoming.length === 0 ? (
             <div className="p-8 rounded-2xl bg-obsidian-soft border border-gold/15 text-center text-stone-400 text-xs">
-              No live ceremonies currently scheduled for today. Follow this Pandit to receive notifications when a live broadcast begins.
+              No live ceremonies currently scheduled for today. Follow this Pandit Ji to receive notifications when a live broadcast begins.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -730,7 +776,7 @@ export default function PanditProfileClient() {
               </div>
               <h2 className="font-serif text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
                 <Flame className="w-5 h-5 text-amber-500" />
-                <span>Book Personalized Pooja with this Pandit</span>
+                <span>Book Personalized Pooja with this Pandit Ji</span>
               </h2>
               <p className="text-xs text-stone-400 mt-1">
                 Conducted with authentic Gotra chanting and family Sankalp via private interactive darshan.
@@ -814,8 +860,8 @@ export default function PanditProfileClient() {
 
       <ConfirmDialog
         isOpen={loginPromptOpen}
-        title="Sign In to Follow Pandit"
-        description="Please sign in to follow verified Pandits and receive email notifications when their live darshans begin."
+        title="Sign In to Follow Pandit Ji"
+        description="Please sign in to follow verified Pandit Jis and receive email notifications when their live darshans begin."
         confirmLabel="Sign In"
         cancelLabel="Not Now"
         variant="default"

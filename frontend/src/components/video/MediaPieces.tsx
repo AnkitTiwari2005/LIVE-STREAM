@@ -275,7 +275,7 @@ export function MediaLobby({
         </div>
       )}
 
-      <p className="mt-3 text-[11px] text-stone-500">Use headphones if you can - it prevents echo for you and the pandit.</p>
+      <p className="mt-3 text-[11px] text-stone-500">Use headphones if you can - it prevents echo for you and Pandit Ji.</p>
 
       <div className="mt-4 flex gap-2">
         {onCancel && (

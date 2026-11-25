@@ -33,7 +33,7 @@ export default function CreateStreamPage() {
       const storedToken = localStorage.getItem('pooja_token');
 
       if (!storedToken) {
-        setError('Please sign in to your verified Pandit account to setup a live broadcast.');
+        setError('Please sign in to your verified Pandit Ji account to setup a live broadcast.');
         return;
       }
 
@@ -242,7 +242,7 @@ export default function CreateStreamPage() {
               <div>
                 <span className="font-bold text-amber-300 block mb-0.5">Devotee Account Detected</span>
                 <span>
-                  You are currently signed in as <strong>{currentUser?.name || 'Devotee'}</strong> (Devotee Account). Broadcasting is exclusively available for verified Pandits and Acharyas.
+                  You are currently signed in as <strong>{currentUser?.name || 'Devotee'}</strong> (Devotee Account). Broadcasting is exclusively available for verified Pandit Jis and Acharyas.
                 </span>
               </div>
             </div>
@@ -251,14 +251,14 @@ export default function CreateStreamPage() {
                 href="/streamer/apply"
                 className="px-3 py-1.5 bg-orange-700 hover:bg-orange-600 text-white font-semibold rounded-lg text-xs transition-colors inline-flex items-center gap-1"
               >
-                <Sparkles className="w-3.5 h-3.5" /> Apply as Pandit
+                <Sparkles className="w-3.5 h-3.5" /> Apply as Pandit Ji
               </Link>
               <button
                 type="button"
                 onClick={handleSwitchAccount}
                 className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 border border-stone-300 dark:border-stone-700 font-semibold rounded-lg text-xs transition-colors inline-flex items-center gap-1"
               >
-                <LogIn className="w-3.5 h-3.5" /> Sign in as Pandit
+                <LogIn className="w-3.5 h-3.5" /> Sign in as Pandit Ji
               </button>
             </div>
           </div>
@@ -276,7 +276,7 @@ export default function CreateStreamPage() {
                 onClick={handleSwitchAccount}
                 className="mt-1 self-start px-3 py-1.5 bg-orange-700 hover:bg-orange-600 text-white font-semibold rounded-lg text-xs transition-colors inline-flex items-center gap-1"
               >
-                <LogIn className="w-3.5 h-3.5" /> Sign In to Pandit Account
+                <LogIn className="w-3.5 h-3.5" /> Sign In to Pandit Ji Account
               </button>
             )}
           </div>

@@ -74,6 +74,22 @@ const STATIC_DIRECTORY: SearchItem[] = [
     keywords: 'pandit subhash shastri satyanarayan pooja durga saptashati navgrah poojan rudrabhishek',
   },
   {
+    title: 'पंडित सुमित शास्त्री (कर्मकांड,ज्योतिष)',
+    subtitle: 'कर्मकांड एवं ज्योतिष विशेषज्ञ',
+    category: 'Pandit',
+    url: '/pandit/sumit-shastri',
+    image: '/images/pandits/pandit-sumit-shastri.webp',
+    keywords: 'pandit sumit shastri karmakand jyotish astrology pooja vidhi',
+  },
+  {
+    title: 'पंडित नंदकिशोर त्रिपाठी (कर्मकांड,ज्योतिष)',
+    subtitle: 'कर्मकांड एवं ज्योतिष विशेषज्ञ',
+    category: 'Pandit',
+    url: '/pandit/nandkishor-tripathi',
+    image: '/images/pandits/pandit-nandkishor-tripathi.webp',
+    keywords: 'pandit nandkishor tripathi karmakand jyotish astrology graha shanti anushthan',
+  },
+  {
     title: 'Sacred Coin Wallet',
     subtitle: 'Top-up coin packages & review history',
     category: 'Wallet',
@@ -82,7 +98,7 @@ const STATIC_DIRECTORY: SearchItem[] = [
     keywords: 'coins wallet recharge payment balance topup pack upi',
   },
   {
-    title: 'Become a Verified Pandit',
+    title: 'Become a Verified Pandit Ji',
     subtitle: 'Apply for KYC & Pandit broadcast verification',
     category: 'Streamer',
     url: '/streamer/apply',
@@ -90,8 +106,8 @@ const STATIC_DIRECTORY: SearchItem[] = [
     keywords: 'apply pandit become acharya priest verification onboard kyc',
   },
   {
-    title: 'Pandit Broadcaster Studio',
-    subtitle: 'For verified Pandits to go live & stream pooja',
+    title: 'Pandit Ji Broadcaster Studio',
+    subtitle: 'For verified Pandit Jis to go live & stream pooja',
     category: 'Streamer',
     url: '/studio/create',
     image: '/images/photo-1791727868124-c6ba8c28449a.webp',

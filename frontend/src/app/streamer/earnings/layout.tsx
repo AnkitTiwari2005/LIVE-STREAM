@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Pandit Earnings & Payouts',
+  title: 'Pandit Ji Earnings & Payouts',
   description: 'Review your dakshina receipts, darshan minutes, and Sacred Coin settlement ledger.',
   robots: {
     index: false,

@@ -586,7 +586,7 @@ export default function StreamPlayerClient() {
           <div className="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
             <span className="live-dot shrink-0" />
             <span>
-              Pandit is live now: <strong className="text-stone-950 dark:text-white">&ldquo;{activeOtherLiveStream.title}&rdquo;</strong> with {activeOtherLiveStream.streamer?.name || 'Acharya'}
+              Pandit Ji is live now: <strong className="text-stone-950 dark:text-white">&ldquo;{activeOtherLiveStream.title}&rdquo;</strong> with {activeOtherLiveStream.streamer?.name || 'Acharya'}
             </span>
           </div>
           <Link
@@ -611,7 +611,7 @@ export default function StreamPlayerClient() {
           <PranamIcon size={56} className="mb-4 text-amber-700 dark:text-amber-500" />
           <h2 className="text-2xl font-bold text-stone-900 dark:text-white mb-2">Sacred Broadcast Concluded</h2>
           <p className="text-stone-600 dark:text-stone-400 text-sm max-w-md mb-4">
-            This live broadcast by {stream?.streamer?.name || 'the Pandit'} is not active or has concluded. May divine blessings be upon you.
+            This live broadcast by {stream?.streamer?.name || 'Pandit Ji'} is not active or has concluded. May divine blessings be upon you.
           </p>
 
           {activeOtherLiveStream ? (
@@ -620,7 +620,7 @@ export default function StreamPlayerClient() {
                 <span className="live-dot" /> Live Darshan Active Right Now
               </span>
               <p className="text-base font-bold text-stone-950 dark:text-white mb-4">
-                &ldquo;{activeOtherLiveStream.title}&rdquo; by {activeOtherLiveStream.streamer?.name || 'Vedic Pandit'}
+                &ldquo;{activeOtherLiveStream.title}&rdquo; by {activeOtherLiveStream.streamer?.name || 'Vedic Pandit Ji'}
               </p>
               <Link
                 href={`/stream/${activeOtherLiveStream.id}`}
@@ -671,7 +671,7 @@ export default function StreamPlayerClient() {
                     </p>
                   )}
                   <p className="!text-stone-300 text-xs max-w-sm mb-6 leading-relaxed">
-                    This live pooja broadcast has not commenced yet. Set an email reminder to receive sacred darshan as soon as the Pandit goes live.
+                    This live pooja broadcast has not commenced yet. Set an email reminder to receive sacred darshan as soon as Pandit Ji goes live.
                   </p>
                   <div className="flex flex-col sm:flex-row items-center gap-3">
                     <button
@@ -819,7 +819,7 @@ export default function StreamPlayerClient() {
                       href={`/stream/${activeOtherLiveStream.id}`}
                       className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold text-xs shadow-lg transition"
                     >
-                      <span>Watch {activeOtherLiveStream.streamer?.name || 'Live Pandit'} Now</span>
+                      <span>Watch {activeOtherLiveStream.streamer?.name || 'Live Pandit Ji'} Now</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                   ) : (
@@ -988,7 +988,7 @@ export default function StreamPlayerClient() {
                     }`}
                   >
                     <Info className="w-3.5 h-3.5" />
-                    <span>Pooja Details & Pandit</span>
+                    <span>Pooja Details & Pandit Ji</span>
                   </button>
                 </div>
 
@@ -1043,7 +1043,7 @@ export default function StreamPlayerClient() {
           isOpen={dakshinaModalOpen}
           onClose={() => setDakshinaModalOpen(false)}
           streamId={id}
-          streamerName={stream.streamer?.name || 'Vedic Pandit'}
+          streamerName={stream.streamer?.name || 'Vedic Pandit Ji'}
           currentUser={currentUser}
           walletBalance={remainingCoins}
           onOpenTopup={() => {
@@ -1192,14 +1192,14 @@ function VideoRenderer({
 
   useEffect(() => {
     if (!socket) return;
-    const onGranted = () => toast.success('The pandit allowed you to show your video. Tap "Turn on camera".');
+    const onGranted = () => toast.success('Pandit Ji allowed you to show your video. Tap "Turn on camera".');
     const onRevoked = (d: { replaced?: boolean }) => {
-      toast.info(d?.replaced ? 'The pandit gave the video slot to another devotee.' : 'The pandit ended your video.');
+      toast.info(d?.replaced ? 'Pandit Ji gave the video slot to another devotee.' : 'Pandit Ji ended your video.');
       stopLocalMedia();
       setRequested(false);
     };
     const onMuted = (d: { source?: string }) =>
-      toast.info(d?.source === 'camera' ? 'The pandit turned your camera off.' : 'The pandit muted your microphone.');
+      toast.info(d?.source === 'camera' ? 'Pandit Ji turned your camera off.' : 'Pandit Ji muted your microphone.');
     socket.on('video:granted', onGranted);
     socket.on('video:revoked', onRevoked);
     socket.on('video:muted_by_host', onMuted);
@@ -1218,7 +1218,7 @@ function VideoRenderer({
     if (!socket) return;
     socket.emit('video:request', { streamId, cancel: requested });
     setRequested(!requested);
-    toast.info(requested ? 'Request cancelled.' : 'Request sent. The pandit will see it.');
+    toast.info(requested ? 'Request cancelled.' : 'Request sent. Pandit Ji will see it.');
   };
 
   const toggle = async (kind: 'cam' | 'mic') => {
@@ -1245,7 +1245,7 @@ function VideoRenderer({
       ) : (
         <div className="video-overlay w-full h-full flex flex-col items-center justify-center text-stone-200 bg-stone-950">
           <DiyaIcon size={44} className="mb-2" />
-          <span className="text-sm font-medium text-stone-200">Awaiting Pandit video transmission...</span>
+          <span className="text-sm font-medium text-stone-200">Awaiting Pandit Ji video transmission...</span>
         </div>
       )}
 
