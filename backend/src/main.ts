@@ -443,15 +443,13 @@ Sacred Live Pooja, Aarti Darshan & Vedic Astrology Streaming Platform
   }
 
   const port = process.env.PORT || 4000;
-  logger.log(`Attempting to bind HTTP server to port/socket [${port}]...`);
+  logger.log(`Attempting to bind HTTP server to port/socket [${port}] (host omitted for Passenger compatibility)...`);
   try {
-    if (typeof port === 'string' && (port.includes('/') || port.includes('\\') || isNaN(Number(port)))) {
-      await app.listen(port);
-      logger.log(`API Server successfully running on socket [${port}] with prefix /api/v1 (OpenAPI docs at /api/docs)`);
-    } else {
-      await app.listen(Number(port), '0.0.0.0');
-      logger.log(`API Server successfully running on port ${port} (0.0.0.0) with prefix /api/v1 (OpenAPI docs at /api/docs)`);
-    }
+    // Note: Do NOT pass a hostname string like '0.0.0.0' or 'localhost' here.
+    // Phusion Passenger / LiteSpeed reverse port binding requires server.listen(port)
+    // without host arguments so Passenger's internal Unix socket interceptor can bind cleanly.
+    await app.listen(port);
+    logger.log(`API Server successfully running on port/socket [${port}] with prefix /api/v1 (OpenAPI docs at /api/docs)`);
   } catch (listenErr: any) {
     logger.error(`Failed to bind server to port/socket [${port}]: ${listenErr?.message || listenErr}`, listenErr?.stack);
     throw listenErr;
