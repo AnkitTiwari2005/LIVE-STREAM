@@ -3,7 +3,7 @@ import StudioClient from './StudioClient';
 
 export const metadata: Metadata = {
   title: 'Broadcaster Studio',
-  description: 'Live broadcaster studio controls for active Shubhdarshan devotional sessions.',
+  description: 'Live broadcaster studio controls for active Param Darshan devotional sessions.',
   robots: {
     index: false,
     follow: false,

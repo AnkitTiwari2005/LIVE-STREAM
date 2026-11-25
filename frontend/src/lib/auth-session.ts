@@ -1,5 +1,5 @@
 /**
- * Shubhdarshan Unified Client Auth & Session Security Utility (SD-SEC-2026-004)
+ * Param Darshan Unified Client Auth & Session Security Utility (SD-SEC-2026-004)
  * Guarantees zero cross-account data leakage, complete storage sanitization,
  * and synchronous JWT claim extraction to prevent stale session hydration.
  */

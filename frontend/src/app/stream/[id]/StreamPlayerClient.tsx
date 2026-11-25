@@ -131,7 +131,7 @@ export default function StreamPlayerClient() {
 
   useEffect(() => {
     if (stream?.title) {
-      document.title = `${stream.title} | Shubhdarshan`;
+      document.title = `${stream.title} | Param Darshan`;
     }
   }, [stream?.title]);
 
@@ -460,7 +460,7 @@ export default function StreamPlayerClient() {
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: stream?.title || 'Shubhdarshan Live Stream',
+        title: stream?.title || 'Param Darshan Live Stream',
         text: `Watch live darshan: ${stream?.title}`,
         url: window.location.href,
       });

@@ -256,13 +256,13 @@ export function Navbar() {
             <div className="relative flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-gold/40 bg-gradient-to-b from-[#2a1e12] to-obsidian shadow-[0_0_18px_rgba(245,158,11,0.3)] transition group-hover:border-gold/75 group-hover:shadow-[0_0_22px_rgba(245,158,11,0.5)] p-0.5 overflow-hidden shrink-0">
               <img
                 src="/logo.webp"
-                alt="Shubhdarshan Mandir Logo"
+                alt="Param Darshan Mandir Logo"
                 className="h-full w-full object-contain filter drop-shadow group-hover:scale-105 transition-transform duration-300"
               />
             </div>
             <span className="leading-tight min-w-0">
               <span className="block font-serif text-base sm:text-xl font-bold tracking-wide text-gold-pale group-hover:text-gold transition truncate">
-                Shubhdarshan
+                Param Darshan
               </span>
               <span className="hidden xs:block text-[7px] sm:text-[8.5px] font-bold uppercase tracking-[0.16em] sm:tracking-[0.24em] text-gold-soft/80 truncate">
                 Sacred Darshan Network

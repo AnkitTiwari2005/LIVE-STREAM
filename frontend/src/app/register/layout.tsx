@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Create Account',
-  description: 'Create your free Shubhdarshan devotee account and claim 100 Sacred Coins.',
+  description: 'Create your free Param Darshan devotee account and claim 100 Sacred Coins.',
   robots: {
     index: false,
     follow: false,

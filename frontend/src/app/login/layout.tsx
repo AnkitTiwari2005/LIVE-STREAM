@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Sign In',
-  description: 'Sign in to your Shubhdarshan devotee or broadcaster account.',
+  description: 'Sign in to your Param Darshan devotee or broadcaster account.',
   robots: {
     index: false,
     follow: false,

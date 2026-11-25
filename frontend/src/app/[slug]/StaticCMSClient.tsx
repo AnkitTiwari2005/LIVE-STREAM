@@ -85,7 +85,7 @@ export default function StaticCMSClient() {
       <div className="bg-obsidian-soft border border-gold/20 rounded-3xl p-8 sm:p-12 shadow-2xl">
         <div className="flex items-center gap-2 mb-4 text-orange-400 text-xs font-semibold uppercase tracking-wider">
           <FileText className="w-4 h-4" />
-          Official Shubhdarshan Document
+          Official Param Darshan Document
         </div>
         <h1 className="text-3xl font-extrabold text-white tracking-tight mb-4">{page.title}</h1>
         <div className="flex items-center gap-2 text-stone-400 text-xs mb-8 pb-4 border-b border-stone-800">

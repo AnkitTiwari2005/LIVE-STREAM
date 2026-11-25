@@ -8,7 +8,7 @@ import { OmIcon, CoinIcon, DiyaIcon } from '@/components/icons/SpiritualIcons';
 const FAQS = [
   {
     q: 'How does the Sacred Coin system and 100 free joining bonus work?',
-    a: 'Every new devotee who registers on Shubhdarshan automatically receives 100 Sacred Coins completely free as an auspicious welcome bonus. Public live darshan streams consume coins at a nominal rate of 5 coins per minute, and Sacred Dakshina offerings are also sent directly with Sacred Coins from your wallet. This means your initial 100 coins grant you 20 full minutes of complimentary live darshan. Once exhausted, you can top up your wallet starting at 150 coins for ₹100 (150 coins = ₹100).',
+    a: 'Every new devotee who registers on Param Darshan automatically receives 100 Sacred Coins completely free as an auspicious welcome bonus. Public live darshan streams consume coins at a nominal rate of 5 coins per minute, and Sacred Dakshina offerings are also sent directly with Sacred Coins from your wallet. This means your initial 100 coins grant you 20 full minutes of complimentary live darshan. Once exhausted, you can top up your wallet starting at 150 coins for ₹100 (150 coins = ₹100).',
     category: 'Coins & Wallet',
   },
   {
@@ -23,7 +23,7 @@ const FAQS = [
   },
   {
     q: 'How does real-time interactive video and audio chanting work?',
-    a: 'Unlike traditional buffered video feeds with long broadcast lag, Shubhdarshan uses WebRTC media transport powered by LiveKit SFU. Video and chanting audio stream in real time, allowing devotees to participate and send reactions alongside the ritual.',
+    a: 'Unlike traditional buffered video feeds with long broadcast lag, Param Darshan uses WebRTC media transport powered by LiveKit SFU. Video and chanting audio stream in real time, allowing devotees to participate and send reactions alongside the ritual.',
     category: 'Live Darshan',
   },
   {
@@ -38,7 +38,7 @@ const FAQS = [
   },
   {
     q: 'What does the Verified Pandit badge mean?',
-    a: 'The Verified Pandit badge signifies that the broadcaster submitted government identity KYC and Vedic background details that were reviewed and approved by a Shubhdarshan platform administrator.',
+    a: 'The Verified Pandit badge signifies that the broadcaster submitted government identity KYC and Vedic background details that were reviewed and approved by a Param Darshan platform administrator.',
     category: 'Pandits & Trust',
   },
   {
@@ -48,7 +48,7 @@ const FAQS = [
   },
   {
     q: 'Is my personal data and horoscope information secure under Indian law?',
-    a: 'Absolutely. Shubhdarshan is fully compliant with the Digital Personal Data Protection Act, 2023 (DPDP Act). We never sell your personal data or horoscope details. Live chat logs are automatically purged every 30 days, and our servers use AES-256 and SSL/TLS end-to-end encryption.',
+    a: 'Absolutely. Param Darshan is fully compliant with the Digital Personal Data Protection Act, 2023 (DPDP Act). We never sell your personal data or horoscope details. Live chat logs are automatically purged every 30 days, and our servers use AES-256 and SSL/TLS end-to-end encryption.',
     category: 'Privacy & Security',
   },
 ];
@@ -104,7 +104,7 @@ export default function FAQPage() {
               <span className="gold-text italic font-serif">clarity</span>
             </h1>
             <p className="mt-4 text-stone-300 text-xs sm:text-base max-w-lg mx-auto leading-relaxed">
-              Everything you need to know about Shubhdarshan live streams, coin wallet metering, verified Pandits, and privacy.
+              Everything you need to know about Param Darshan live streams, coin wallet metering, verified Pandits, and privacy.
             </p>
 
             {/* Search Box */}

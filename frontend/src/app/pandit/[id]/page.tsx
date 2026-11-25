@@ -76,7 +76,7 @@ export async function generateMetadata({
   return {
     title: 'Verified Vedic Pandit Profile',
     description:
-      'View verified Vedic Pandit credentials, ritual specialties, and upcoming live poojas on Shubhdarshan.',
+      'View verified Vedic Pandit credentials, ritual specialties, and upcoming live poojas on Param Darshan.',
   };
 }
 

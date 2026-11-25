@@ -263,7 +263,7 @@ const DEVOTEE_TESTIMONIALS = [
     name: 'Dr. Ramesh Sundaram',
     location: 'London, United Kingdom',
     quote:
-      'Living in London, participating in Kashi Vishwanath Mangala Aarti live at 4 AM IST with clear real-time audio felt like sitting right inside the temple sanctum. Shubhdarshan is a divine blessing.',
+      'Living in London, participating in Kashi Vishwanath Mangala Aarti live at 4 AM IST with clear real-time audio felt like sitting right inside the temple sanctum. Param Darshan is a divine blessing.',
     ritual: 'Kashi Mangala Aarti',
   },
   {
@@ -460,7 +460,7 @@ export default function HomePage() {
             </h1>
 
             <p className="mt-4 sm:mt-6 w-full max-w-xl text-stone-300 text-sm sm:text-lg leading-relaxed">
-              Shubhdarshan connects you directly with KYC-verified Vedic Pandits for personalized poojas, havans, and spiritual counseling — in live interactive HD, directly to your screen.
+              Param Darshan connects you directly with KYC-verified Vedic Pandits for personalized poojas, havans, and spiritual counseling — in live interactive HD, directly to your screen.
             </p>
 
             {/* Hero Action Buttons */}
@@ -632,7 +632,7 @@ export default function HomePage() {
                   {/* Center Sacred Diya & Message */}
                   <div className="relative z-10 text-center py-2 sm:py-3">
                     <div className="w-14 h-14 mx-auto mb-2 rounded-2xl bg-amber-100/70 dark:bg-gradient-to-b dark:from-amber-500/10 dark:to-transparent border border-amber-300 dark:border-gold/30 flex items-center justify-center shadow-sm dark:shadow-[0_0_24px_rgba(245,158,11,0.25)]">
-                      <img src="/logo.webp" alt="Shubhdarshan" className="w-10 h-10 object-contain drop-shadow" />
+                      <img src="/logo.webp" alt="Param Darshan" className="w-10 h-10 object-contain drop-shadow" />
                     </div>
                     <h3 className="altar-repose-title font-serif text-xl sm:text-2xl font-bold tracking-tight">
                       Live Pooja Altar in Repose
@@ -1121,7 +1121,7 @@ export default function HomePage() {
             Meet the custodians of tradition
           </h2>
           <p className="mt-3 text-stone-400 text-xs sm:text-sm leading-relaxed">
-            Every pandit on Shubhdarshan undergoes government identity KYC review and profile verification before being authorized to broadcast.
+            Every pandit on Param Darshan undergoes government identity KYC review and profile verification before being authorized to broadcast.
           </p>
         </div>
 

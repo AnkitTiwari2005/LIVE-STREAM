@@ -1,5 +1,5 @@
 # ==============================================================================
-# Shubhdarshan - Web Crawlers & AI Agent Visibility Rules
+# Param Darshan - Web Crawlers & AI Agent Visibility Rules
 # ==============================================================================
 
 User-agent: *

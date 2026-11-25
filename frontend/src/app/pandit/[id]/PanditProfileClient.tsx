@@ -66,8 +66,8 @@ const CURATED_SHOWCASE: Record<string, PanditData> = {
     specialties: ['Matrimonial Advisor', 'Kundli Milan', 'Vedic Astrology', 'Vivah Sanskar'],
     languages: ['Hindi', 'Sanskrit', 'English'],
     image: '/images/pandits/pandit-rohit-tiwari.webp',
-    bio: 'Founder of Shubhdarshan and revered Vedic astrologer based in Delhi. Specialized in Parashari Jyotish, authentic Kundli Milan, Vivah Sanskar vidhi, and auspicious matrimonial alignments.',
-    temple: 'Delhi Mandir Parampara & Shubhdarshan Foundation',
+    bio: 'Founder of Param Darshan and revered Vedic astrologer based in Delhi. Specialized in Parashari Jyotish, authentic Kundli Milan, Vivah Sanskar vidhi, and auspicious matrimonial alignments.',
+    temple: 'Delhi Mandir Parampara & Param Darshan Foundation',
     followerCount: 1420,
     isCurated: true,
     hasSpecialBadge: true,
@@ -96,7 +96,7 @@ const CURATED_SHOWCASE: Record<string, PanditData> = {
     specialties: ['Vedic Astrology', 'Vastu Shastra', 'Kundli Milan', 'Grah Shanti'],
     languages: ['Hindi', 'Sanskrit'],
     image: '/images/pandits/pandit-santosh-shastri.webp',
-    bio: 'Co-Founder of Shubhdarshan and master of spatial cosmic alignment (Vastu Shastra) and classical Vedic Jyotish. Expert in balancing residential and commercial energies and conducting sacred peace yagyas.',
+    bio: 'Co-Founder of Param Darshan and master of spatial cosmic alignment (Vastu Shastra) and classical Vedic Jyotish. Expert in balancing residential and commercial energies and conducting sacred peace yagyas.',
     temple: 'Delhi Sanatan Tradition Sanctuary',
     followerCount: 1280,
     isCurated: true,
@@ -362,7 +362,7 @@ export default function PanditProfileClient() {
 
   useEffect(() => {
     if (pandit?.name) {
-      document.title = `${pandit.name} | Shubhdarshan`;
+      document.title = `${pandit.name} | Param Darshan`;
     }
   }, [pandit?.name]);
 
@@ -503,7 +503,7 @@ export default function PanditProfileClient() {
     if (!pandit) return;
     if (navigator.share) {
       navigator.share({
-        title: `${pandit.name} - Verified Vedic Pandit on Shubhdarshan`,
+        title: `${pandit.name} - Verified Vedic Pandit on Param Darshan`,
         url: window.location.href,
       }).catch(() => {});
     } else {

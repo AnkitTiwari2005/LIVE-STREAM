@@ -134,9 +134,9 @@ Sitemap: ${siteOrigin}/sitemap.xml
   expressApp.get('/llms.txt', (_req: any, res: any) => {
     res.type('text/plain; charset=utf-8');
     // R-08: All URLs built from siteOrigin — follow official llmstxt.org specification
-    res.send(`# Shubhdarshan - Sacred Pooja & Astrology Live Streaming Platform
+    res.send(`# Param Darshan - Sacred Pooja & Astrology Live Streaming Platform
 
-> Shubhdarshan is India's real-time devotional live-streaming and spiritual consultation platform, connecting devotees worldwide with verified Vedic priests, temples, and astrologers for live sacred rituals, aarti, sankalp, and Vedic astrological consultations.
+> Param Darshan is India's real-time devotional live-streaming and spiritual consultation platform, connecting devotees worldwide with verified Vedic priests, temples, and astrologers for live sacred rituals, aarti, sankalp, and Vedic astrological consultations.
 
 ## Core Services & Pages
 - [Live Darshan Broadcasts](${siteOrigin}/): Real-time WebRTC and HLS live streams from registered temples and spiritual sanctuaries.
@@ -160,7 +160,7 @@ Sitemap: ${siteOrigin}/sitemap.xml
     res.type('application/json; charset=utf-8');
     res.send(JSON.stringify({
       $schema: 'https://modelcontextprotocol.io/schemas/server-card/v1.json',
-      name: 'Shubhdarshan MCP Server',
+      name: 'Param Darshan MCP Server',
       version: '1.0.0',
       description: 'Vedic Astrology, Live Temple Darshan, and Sacred Pooja Rituals Model Context Protocol (MCP) Server',
       endpoint: `${siteOrigin}/api/v1`,
@@ -290,7 +290,7 @@ Sitemap: ${siteOrigin}/sitemap.xml
         const accept = req.headers['accept'] || '';
         if (accept.includes('text/markdown') && !accept.includes('text/html')) {
           res.type('text/markdown; charset=utf-8');
-          return res.send(`# Shubhdarshan (शुभदर्शन)
+          return res.send(`# Param Darshan (परम दर्शन)
 Sacred Live Pooja, Aarti Darshan & Vedic Astrology Streaming Platform
 
 > Connecting devotees worldwide with verified Vedic priests, temples, and certified astrologers for live sacred rituals, aarti, sankalp, and personalized horoscope consultations.
@@ -406,7 +406,7 @@ Sacred Live Pooja, Aarti Darshan & Vedic Astrology Streaming Platform
   // Swagger OpenAPI Documentation (Secured in Production)
   if (isDevMode() || process.env.ENABLE_SWAGGER === 'true') {
     const config = new DocumentBuilder()
-      .setTitle('Shubhdarshan Live Streaming Platform API')
+      .setTitle('Param Darshan Live Streaming Platform API')
       .setDescription('Self-hosted WebRTC & Live Chat Platform API for Sacred Spiritual Broadcasts')
       .setVersion('1.0')
       .addBearerAuth()

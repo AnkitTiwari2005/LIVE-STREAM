@@ -6,7 +6,7 @@ import { OmIcon } from '@/components/icons/SpiritualIcons';
 export const metadata: Metadata = {
   title: 'Terms of Service',
   description:
-    'Terms and Conditions for using Shubhdarshan live devotional streaming, Vedic pooja sessions, and astrological consultations under the Information Technology Act, 2000.',
+    'Terms and Conditions for using Param Darshan live devotional streaming, Vedic pooja sessions, and astrological consultations under the Information Technology Act, 2000.',
   alternates: { canonical: '/terms/' },
 };
 
@@ -19,7 +19,7 @@ export default function TermsPage() {
 
         <div className="flex items-center gap-3 mb-6">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-b from-amber-500/10 to-transparent border border-gold/30 flex items-center justify-center shadow-md shrink-0">
-            <img src="/logo.webp" alt="Shubhdarshan" className="w-8 h-8 object-contain drop-shadow" />
+            <img src="/logo.webp" alt="Param Darshan" className="w-8 h-8 object-contain drop-shadow" />
           </div>
           <div>
             <span className="text-xs font-bold text-orange-400 uppercase tracking-widest block">
@@ -42,7 +42,7 @@ export default function TermsPage() {
               <span className="text-amber-400 font-mono">1.</span> Acceptance of Terms & Eligibility
             </h2>
             <p>
-              By accessing, browsing, or registering on <strong>Shubhdarshan</strong> (&ldquo;Platform&rdquo;, &ldquo;we&rdquo;, &ldquo;our&rdquo;), you (&ldquo;User&rdquo;, &ldquo;Devotee&rdquo;, or &ldquo;Streamer&rdquo;) agree to be legally bound by these Terms of Service. In compliance with the Digital Personal Data Protection Act, 2023 (DPDP Act), users must be at least 18 years of age or possess verified guardian consent to register.
+              By accessing, browsing, or registering on <strong>Param Darshan</strong> (&ldquo;Platform&rdquo;, &ldquo;we&rdquo;, &ldquo;our&rdquo;), you (&ldquo;User&rdquo;, &ldquo;Devotee&rdquo;, or &ldquo;Streamer&rdquo;) agree to be legally bound by these Terms of Service. In compliance with the Digital Personal Data Protection Act, 2023 (DPDP Act), users must be at least 18 years of age or possess verified guardian consent to register.
             </p>
           </section>
 
@@ -52,7 +52,7 @@ export default function TermsPage() {
               <span className="text-amber-400 font-mono">2.</span> Intermediary Status & Platform Role
             </h2>
             <p>
-              Shubhdarshan operates strictly as an <strong>intermediary</strong> as defined under Section 2(1)(w) and Section 79 of the Information Technology Act, 2000, and the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021. The platform provides real-time WebRTC digital transmission infrastructure for independent Vedic priests, temples, and astrologers to broadcast sacred poojas, aartis, and discourses.
+              Param Darshan operates strictly as an <strong>intermediary</strong> as defined under Section 2(1)(w) and Section 79 of the Information Technology Act, 2000, and the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021. The platform provides real-time WebRTC digital transmission infrastructure for independent Vedic priests, temples, and astrologers to broadcast sacred poojas, aartis, and discourses.
             </p>
           </section>
 
@@ -65,7 +65,7 @@ export default function TermsPage() {
               <div className="flex items-start gap-2.5">
                 <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <strong>Important Faith & Advisory Notice:</strong> All religious rituals, pooja sankalps, astrological analyses, Kundli matchmaking, and remedial measures conducted on Shubhdarshan are spiritual counseling practices rooted in Sanatana Dharma traditions. We make <strong>no warranties, guarantees, or claims</strong> regarding material wealth, physical cures, medical treatment, or guaranteed worldly outcomes. Astrology and pooja consultations must not substitute certified medical, psychiatric, or legal advice.
+                  <strong>Important Faith & Advisory Notice:</strong> All religious rituals, pooja sankalps, astrological analyses, Kundli matchmaking, and remedial measures conducted on Param Darshan are spiritual counseling practices rooted in Sanatana Dharma traditions. We make <strong>no warranties, guarantees, or claims</strong> regarding material wealth, physical cures, medical treatment, or guaranteed worldly outcomes. Astrology and pooja consultations must not substitute certified medical, psychiatric, or legal advice.
                 </div>
               </div>
             </div>
@@ -78,7 +78,7 @@ export default function TermsPage() {
             </h2>
             <ul className="list-disc pl-5 space-y-2">
               <li>
-                <strong>Closed-Loop Digital System:</strong> Shubhdarshan Coins are closed-loop prepaid digital tokens issued solely to access live darshan and pooja services on our platform under RBI Master Direction on Prepaid Payment Instruments.
+                <strong>Closed-Loop Digital System:</strong> Param Darshan Coins are closed-loop prepaid digital tokens issued solely to access live darshan and pooja services on our platform under RBI Master Direction on Prepaid Payment Instruments.
               </li>
               <li>
                 <strong>Consumption Rate:</strong> Public live streams consume coins at the published rate of <strong>5 coins per minute</strong>.

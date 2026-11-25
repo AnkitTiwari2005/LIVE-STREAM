@@ -394,7 +394,7 @@ export class AuthService {
     }
 
     const secret = authenticator.generateSecret();
-    const otpAuthUrl = authenticator.keyuri(user.email, 'ShubhdarshanAdmin', secret);
+    const otpAuthUrl = authenticator.keyuri(user.email, 'ParamDarshanAdmin', secret);
     const qrCodeDataUrl = await qrcode.toDataURL(otpAuthUrl);
 
     // Encrypt secret with AES-256-GCM before saving
@@ -735,7 +735,7 @@ export class AuthService {
       }).catch(() => {});
     }
 
-    const anonymizedEmail = `deleted_${Date.now()}_${user.id.slice(0, 8)}@shubhdarshan.privacy`;
+    const anonymizedEmail = `deleted_${Date.now()}_${user.id.slice(0, 8)}@paramdarshan.privacy`;
 
     await this.prisma.user.update({
       where: { id: userId },

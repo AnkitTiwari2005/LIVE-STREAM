@@ -50,7 +50,7 @@ export default function DownloadPdfButton({ kind, lang, label, busyLabel, failLa
       const a = document.createElement('a');
       const stamp = new Date().toISOString().slice(0, 10);
       a.href = url;
-      a.download = `Shubhdarshan-${kind === 'kundli' ? 'Kundli' : 'Kundli-Matching'}-${stamp}.pdf`;
+      a.download = `ParamDarshan-${kind === 'kundli' ? 'Kundli' : 'Kundli-Matching'}-${stamp}.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();

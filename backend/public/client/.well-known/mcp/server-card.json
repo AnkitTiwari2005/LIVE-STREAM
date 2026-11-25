@@ -1,6 +1,6 @@
 {
   "$schema": "https://modelcontextprotocol.io/schemas/server-card/v1.json",
-  "name": "Shubhdarshan MCP Server",
+  "name": "Param Darshan MCP Server",
   "version": "1.0.0",
   "description": "Vedic Astrology, Live Temple Darshan, and Sacred Pooja Rituals Model Context Protocol (MCP) Server",
   "endpoint": "https://paramdarshan.com/api/v1",

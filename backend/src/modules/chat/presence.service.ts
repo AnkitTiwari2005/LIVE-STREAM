@@ -1,5 +1,5 @@
 /**
- * PresenceService — live viewer count + viewer list for Shubhdarshan streams.
+ * PresenceService — live viewer count + viewer list for Param Darshan streams.
  *
  * Sources of truth (in order):
  *   1. Redis Set  `stream:viewers:{streamId}`  — identities of live viewers

@@ -6,7 +6,7 @@ import { OmIcon } from '@/components/icons/SpiritualIcons';
 export const metadata: Metadata = {
   title: 'Privacy Policy (DPDP Act 2023 Compliant)',
   description:
-    'Comprehensive Privacy Notice for Shubhdarshan under the Digital Personal Data Protection Act, 2023 (DPDP Act) and Indian IT Rules.',
+    'Comprehensive Privacy Notice for Param Darshan under the Digital Personal Data Protection Act, 2023 (DPDP Act) and Indian IT Rules.',
   alternates: { canonical: '/privacy/' },
 };
 
@@ -18,7 +18,7 @@ export default function PrivacyPage() {
 
         <div className="flex items-center gap-3 mb-6">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-b from-amber-500/10 to-transparent border border-gold/30 flex items-center justify-center shadow-md shrink-0">
-            <img src="/logo.webp" alt="Shubhdarshan" className="w-8 h-8 object-contain drop-shadow" />
+            <img src="/logo.webp" alt="Param Darshan" className="w-8 h-8 object-contain drop-shadow" />
           </div>
           <div>
             <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest block">
@@ -41,7 +41,7 @@ export default function PrivacyPage() {
               <span className="text-amber-400 font-mono">1.</span> Data Fiduciary Identification
             </h2>
             <p>
-              Under the DPDP Act 2023, <strong>Shubhdarshan Devotional Media Private Limited</strong> acts as the <strong>Data Fiduciary</strong> responsible for determining the purpose and means of processing your personal data.
+              Under the DPDP Act 2023, <strong>Param Darshan</strong> acts as the <strong>Data Fiduciary</strong> responsible for determining the purpose and means of processing your personal data.
             </p>
             <div className="mt-3 p-3 bg-stone-950 border border-stone-800 rounded-xl text-xs space-y-1">
               <div><strong>Registered Office:</strong> Rohini Sector 15, Rohini, Delhi 110089, India</div>
@@ -97,7 +97,7 @@ export default function PrivacyPage() {
                 <div className="flex items-center gap-2 font-bold text-white text-xs mb-1">
                   <Eye className="w-4 h-4 text-amber-400" /> Right to Access
                 </div>
-                <p className="text-[11px] text-stone-400">Request a summary of personal data held and processed by Shubhdarshan.</p>
+                <p className="text-[11px] text-stone-400">Request a summary of personal data held and processed by Param Darshan.</p>
               </div>
               <div className="p-3.5 bg-stone-950 border border-stone-800 rounded-xl">
                 <div className="flex items-center gap-2 font-bold text-white text-xs mb-1">

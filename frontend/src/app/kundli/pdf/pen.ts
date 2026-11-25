@@ -155,7 +155,7 @@ export class Pen {
 /* ------------------------------ page furniture ------------------------------ */
 export interface Brand {
   logo: ArrayBuffer | Uint8Array | null;
-  name: string; // शुभदर्शन / Shubhdarshan
+  name: string; // परम दर्शन / Param Darshan
   tagline: string;
   reportKind: string;
   website: string;

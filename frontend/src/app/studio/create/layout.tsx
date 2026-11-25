@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Go Live — Broadcast Setup',
-  description: 'Configure and launch a live devotional broadcast or private sankalp session on Shubhdarshan.',
+  description: 'Configure and launch a live devotional broadcast or private sankalp session on Param Darshan.',
   robots: {
     index: false,
     follow: false,

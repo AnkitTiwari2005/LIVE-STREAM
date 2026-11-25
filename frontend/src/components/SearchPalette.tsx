@@ -106,7 +106,7 @@ const STATIC_DIRECTORY: SearchItem[] = [
     keywords: 'faq help questions support refund meter verification',
   },
   {
-    title: 'About Shubhdarshan',
+    title: 'About Param Darshan',
     subtitle: 'Our sacred lineage & mission',
     category: 'About',
     url: '/about',
@@ -229,7 +229,7 @@ export function SearchPalette({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Search Shubhdarshan"
+      aria-label="Search Param Darshan"
       className="fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-20 px-4 bg-black/60 backdrop-blur-sm"
       onClick={onClose}
     >

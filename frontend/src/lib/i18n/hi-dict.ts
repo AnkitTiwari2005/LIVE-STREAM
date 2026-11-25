@@ -4,10 +4,12 @@
  * Long legal pages, admin and studio screens are deliberately not here: they stay in English
  * (legal text must not be machine-paraphrased). Unknown text is always left untouched.
  */
-export const HI_TITLE_SUFFIX = ' | शुभदर्शन';
+export const HI_TITLE_SUFFIX = ' | परम दर्शन';
 
 export const HI_EXACT: Record<string, string> = {
-  /* ---- navigation ---- */
+  /* ---- brand & navigation ---- */
+  'Param Darshan': 'परम दर्शन',
+  'Param Darshan Mandir Logo': 'परम दर्शन मंदिर लोगो',
   'Live Darshan': 'लाइव दर्शन',
   'Book Pooja': 'पूजा बुक करें',
   'Kundli & Astrology': 'कुंडली एवं ज्योतिष',
@@ -49,7 +51,7 @@ export const HI_EXACT: Record<string, string> = {
   'Pandit Earnings & Dakshina': 'पंडित कमाई एवं दक्षिणा',
   'Top Up Coins': 'कॉइन टॉप-अप',
   'Join Free (+100)': 'निःशुल्क जुड़ें (+100)',
-  'Search Shubhdarshan': 'शुभदर्शन में खोजें',
+  'Search Param Darshan': 'परम दर्शन में खोजें',
   'Search aarti, pooja, pandit, temple, or coins...': 'आरती, पूजा, पंडित, मंदिर या कॉइन खोजें…',
   Live: 'लाइव',
   navigate: 'चुनें',
@@ -154,17 +156,17 @@ export const HI_EXACT: Record<string, string> = {
   'Grievance Redressal': 'शिकायत निवारण',
   'Contact Grievance Officer': 'शिकायत अधिकारी से संपर्क',
   'Spiritual & Astrological Disclaimer:': 'आध्यात्मिक एवं ज्योतिषीय अस्वीकरण:',
-  'All live temple darshans, aartis, pooja ceremonies, planetary remedies, astrology kundli counseling, and Vedic discourses on Shubhdarshan are conducted for cultural, religious, and spiritual counseling purposes. Pandits and astrologers broadcast as independent verified practitioners. Shubhdarshan makes no guarantees or warranties of material, financial, medical, or life outcomes.':
-    'शुभदर्शन पर सभी लाइव मंदिर दर्शन, आरती, पूजा अनुष्ठान, ग्रह उपाय, कुंडली परामर्श और वैदिक प्रवचन सांस्कृतिक, धार्मिक और आध्यात्मिक परामर्श के उद्देश्य से किए जाते हैं। पंडित और ज्योतिषी स्वतंत्र सत्यापित साधक के रूप में प्रसारण करते हैं। शुभदर्शन भौतिक, वित्तीय, चिकित्सीय या जीवन-परिणामों की कोई गारंटी या वारंटी नहीं देता।',
-  'Shubhdarshan Devotional Media Private Limited. All rights reserved.': 'शुभदर्शन डिवोशनल मीडिया प्राइवेट लिमिटेड। सर्वाधिकार सुरक्षित।',
+  'All live temple darshans, aartis, pooja ceremonies, planetary remedies, astrology kundli counseling, and Vedic discourses on Param Darshan are conducted for cultural, religious, and spiritual counseling purposes. Pandits and astrologers broadcast as independent verified practitioners. Param Darshan makes no guarantees or warranties of material, financial, medical, or life outcomes.':
+    'परम दर्शन पर सभी लाइव मंदिर दर्शन, आरती, पूजा अनुष्ठान, ग्रह उपाय, कुंडली परामर्श और वैदिक प्रवचन सांस्कृतिक, धार्मिक और आध्यात्मिक परामर्श के उद्देश्य से किए जाते हैं। पंडित और ज्योतिषी स्वतंत्र सत्यापित साधक के रूप में प्रसारण करते हैं। परम दर्शन भौतिक, वित्तीय, चिकित्सीय या जीवन-परिणामों की कोई गारंटी या वारंटी नहीं देता।',
+  'Param Darshan. All rights reserved.': 'परम दर्शन। सर्वाधिकार सुरक्षित।',
   'Real-time interactive media powered by LiveKit SFU': 'LiveKit SFU द्वारा संचालित रियल-टाइम इंटरैक्टिव मीडिया',
 
   /* ---- home ---- */
   'Live Vedic Broadcasts • KYC-Verified Pandits': 'लाइव वैदिक प्रसारण • KYC-सत्यापित पंडित',
   'Sacred Vedic rituals,': 'पवित्र वैदिक अनुष्ठान,',
   'one tap away': 'बस एक टैप दूर',
-  'Shubhdarshan connects you directly with KYC-verified Vedic Pandits for personalized poojas, havans, and spiritual counseling — in live interactive HD, directly to your screen.':
-    'शुभदर्शन आपको व्यक्तिगत पूजा, हवन और आध्यात्मिक परामर्श के लिए KYC-सत्यापित वैदिक पंडितों से सीधे जोड़ता है — लाइव इंटरैक्टिव HD में, सीधे आपकी स्क्रीन पर।',
+  'Param Darshan connects you directly with KYC-verified Vedic Pandits for personalized poojas, havans, and spiritual counseling — in live interactive HD, directly to your screen.':
+    'परम दर्शन आपको व्यक्तिगत पूजा, हवन और आध्यात्मिक परामर्श के लिए KYC-सत्यापित वैदिक पंडितों से सीधे जोड़ता है — लाइव इंटरैक्टिव HD में, सीधे आपकी स्क्रीन पर।',
   'Watch Live Darshan': 'लाइव दर्शन देखें',
   'Pooja Schedule': 'पूजा कार्यक्रम',
   'Recharge Coins': 'कॉइन रिचार्ज करें',
@@ -208,8 +210,8 @@ export const HI_EXACT: Record<string, string> = {
     'इस सप्ताह के सभी मंदिर कार्यक्रम अभी मंदिर ट्रस्टों के साथ समन्वित किए जा रहे हैं। कृपया कुछ देर बाद देखें।',
   'Identity & KYC Verification': 'पहचान एवं KYC सत्यापन',
   'Meet the custodians of tradition': 'परंपरा के संरक्षकों से मिलें',
-  'Every pandit on Shubhdarshan undergoes government identity KYC review and profile verification before being authorized to broadcast.':
-    'शुभदर्शन के प्रत्येक पंडित का प्रसारण की अनुमति से पहले सरकारी पहचान KYC समीक्षा और प्रोफ़ाइल सत्यापन होता है।',
+  'Every pandit on Param Darshan undergoes government identity KYC review and profile verification before being authorized to broadcast.':
+    'परम दर्शन के प्रत्येक पंडित का प्रसारण की अनुमति से पहले सरकारी पहचान KYC समीक्षा और प्रोफ़ाइल सत्यापन होता है।',
   'View Profile & Sevas': 'प्रोफ़ाइल एवं सेवाएँ देखें',
   'Seamless Devotional Journey': 'सहज भक्ति यात्रा',
   'Three steps to your sacred live pooja': 'आपकी पवित्र लाइव पूजा के तीन चरण',
@@ -275,7 +277,7 @@ export const HI_EXACT: Record<string, string> = {
   'Return to Sign In': 'साइन इन पर लौटें',
   'Back to Sign In': 'साइन इन पर लौटें',
   'Set New Password': 'नया पासवर्ड सेट करें',
-  'Choose a strong, secure password for your Shubhdarshan account.': 'अपने शुभदर्शन खाते के लिए एक मज़बूत और सुरक्षित पासवर्ड चुनें।',
+  'Choose a strong, secure password for your Param Darshan account.': 'अपने परम दर्शन खाते के लिए एक मज़बूत और सुरक्षित पासवर्ड चुनें।',
   'Password Updated': 'पासवर्ड अपडेट हो गया',
   'Your password has been successfully reset. You may now sign in with your new credentials.': 'आपका पासवर्ड सफलतापूर्वक रीसेट हो गया है। अब आप नए पासवर्ड से साइन इन कर सकते हैं।',
   'Sign In Now': 'अभी साइन इन करें',
@@ -322,7 +324,7 @@ export const HI_EXACT: Record<string, string> = {
   'Devotee Knowledge Base': 'भक्त ज्ञान-कोष',
   'Questions, answered with': 'प्रश्न, उत्तर',
   clarity: 'स्पष्टता के साथ',
-  'Everything you need to know about Shubhdarshan live streams, coin wallet metering, verified Pandits, and privacy.': 'शुभदर्शन लाइव स्ट्रीम, कॉइन वॉलेट मीटरिंग, सत्यापित पंडितों और गोपनीयता के बारे में सब कुछ।',
+  'Everything you need to know about Param Darshan live streams, coin wallet metering, verified Pandits, and privacy.': 'परम दर्शन लाइव स्ट्रीम, कॉइन वॉलेट मीटरिंग, सत्यापित पंडितों और गोपनीयता के बारे में सब कुछ।',
   'Search questions or keywords...': 'प्रश्न या कीवर्ड खोजें…',
   'Still have a question?': 'अभी भी कोई प्रश्न है?',
   'Our devotee support and grievance desk is available daily from 6 AM to 10 PM IST to assist you.': 'हमारा भक्त सहायता एवं शिकायत केंद्र प्रतिदिन सुबह 6 से रात 10 बजे (IST) तक उपलब्ध है।',

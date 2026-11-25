@@ -1,6 +1,6 @@
-# Shubhdarshan - Sacred Pooja & Astrology Live Streaming Platform
+# Param Darshan - Sacred Pooja & Astrology Live Streaming Platform
 
-> Shubhdarshan is India's real-time devotional live-streaming and spiritual consultation platform, connecting devotees worldwide with verified Vedic priests, temples, and astrologers for live sacred rituals, aarti, sankalp, and Vedic astrological consultations.
+> Param Darshan is India's real-time devotional live-streaming and spiritual consultation platform, connecting devotees worldwide with verified Vedic priests, temples, and astrologers for live sacred rituals, aarti, sankalp, and Vedic astrological consultations.
 
 ## Core Services & Pages
 - [Live Darshan Broadcasts](https://paramdarshan.com/): Real-time WebRTC and HLS live streams from registered temples and spiritual sanctuaries.

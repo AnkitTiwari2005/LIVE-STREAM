@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Apply as Verified Pandit',
-  description: 'Submit your Vedic credentials and KYC documents to stream on Shubhdarshan.',
+  description: 'Submit your Vedic credentials and KYC documents to stream on Param Darshan.',
   robots: {
     index: false,
     follow: false,

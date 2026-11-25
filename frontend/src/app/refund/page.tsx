@@ -6,7 +6,7 @@ import { OmIcon, CoinIcon } from '@/components/icons/SpiritualIcons';
 export const metadata: Metadata = {
   title: 'Refund & Cancellation Policy',
   description:
-    'Clear guidelines on Shubhdarshan Sacred Coins, failed payment auto-reversals, and cancellation terms under the Consumer Protection (E-Commerce) Rules, 2020.',
+    'Clear guidelines on Param Darshan Sacred Coins, failed payment auto-reversals, and cancellation terms under the Consumer Protection (E-Commerce) Rules, 2020.',
   alternates: { canonical: '/refund/' },
 };
 
@@ -18,7 +18,7 @@ export default function RefundPage() {
 
         <div className="flex items-center gap-3 mb-6">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-b from-amber-500/10 to-transparent border border-gold/30 flex items-center justify-center shadow-md shrink-0">
-            <img src="/logo.webp" alt="Shubhdarshan" className="w-8 h-8 object-contain drop-shadow" />
+            <img src="/logo.webp" alt="Param Darshan" className="w-8 h-8 object-contain drop-shadow" />
           </div>
           <div>
             <span className="text-xs font-bold text-amber-400 uppercase tracking-widest block">
@@ -44,7 +44,7 @@ export default function RefundPage() {
               <CoinIcon size={28} className="mt-0.5" />
               <div>
                 <p className="text-xs sm:text-sm text-stone-300">
-                  Shubhdarshan Coins (such as the 150 Coins for ₹100 starter pack) represent closed-loop, non-monetary digital redemption credits used exclusively for public/private live video darshans and live Sacred Dakshina offerings. Once coins have been consumed for viewing time (at 5 coins per minute) or sent as live Dakshina, that portion of coins is non-refundable.
+                  Param Darshan Coins (such as the 150 Coins for ₹100 starter pack) represent closed-loop, non-monetary digital redemption credits used exclusively for public/private live video darshans and live Sacred Dakshina offerings. Once coins have been consumed for viewing time (at 5 coins per minute) or sent as live Dakshina, that portion of coins is non-refundable.
                 </p>
               </div>
             </div>

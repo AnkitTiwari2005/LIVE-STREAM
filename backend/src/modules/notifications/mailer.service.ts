@@ -37,7 +37,7 @@ export class MailerService {
     this.apiKey = process.env.BREVO_API_KEY || '';
     // No built-in default: a personal address as sender is rejected by Brevo and leaks into every mail.
     this.senderEmail = (process.env.EMAIL_FROM_ADDRESS || '').trim();
-    this.senderName = process.env.EMAIL_FROM_NAME || 'Shubhdarshan Live';
+    this.senderName = process.env.EMAIL_FROM_NAME || 'Param Darshan Live';
 
     this.smtpHost = process.env.SMTP_HOST || 'smtp-relay.brevo.com';
     this.smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
@@ -146,11 +146,11 @@ export class MailerService {
     return this.sendEmail({
       to,
       toName: name,
-      subject: 'Verify your email address - Shubhdarshan Live',
+      subject: 'Verify your email address - Param Darshan Live',
       htmlContent: `
         <div style="font-family: Arial, sans-serif; color: #222; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #f3e8e2; border-radius: 12px; background: #fffcf9;">
           <div style="text-align: center; margin-bottom: 20px;">
-            <h1 style="color: #b45309; font-size: 24px; margin: 0;">Shubhdarshan</h1>
+            <h1 style="color: #b45309; font-size: 24px; margin: 0;">Param Darshan</h1>
             <p style="color: #78716c; font-size: 12px; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.1em;">Sacred Darshan Network</p>
           </div>
           <h2 style="color: #9a3412;">Namaste ${escapeHtml(name)},</h2>
@@ -169,7 +169,7 @@ export class MailerService {
           </p>
           <hr style="border: none; border-top: 1px solid #f0e6dc; margin: 25px 0;" />
           <p style="color: #a8a29e; font-size: 11px; text-align: center; margin: 0;">
-            If you did not create an account on Shubhdarshan, you can safely disregard this email.<br/>
+            If you did not create an account on Param Darshan, you can safely disregard this email.<br/>
             Har Har Mahadev 🙏
           </p>
         </div>
@@ -183,16 +183,16 @@ export class MailerService {
     return this.sendEmail({
       to,
       toName: name,
-      subject: 'Reset your password - Shubhdarshan Live',
+      subject: 'Reset your password - Param Darshan Live',
       htmlContent: `
         <div style="font-family: Arial, sans-serif; color: #222; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #f3e8e2; border-radius: 12px; background: #fffcf9;">
           <div style="text-align: center; margin-bottom: 20px;">
-            <h1 style="color: #b45309; font-size: 24px; margin: 0;">Shubhdarshan</h1>
+            <h1 style="color: #b45309; font-size: 24px; margin: 0;">Param Darshan</h1>
             <p style="color: #78716c; font-size: 12px; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.1em;">Sacred Darshan Network</p>
           </div>
           <h2 style="color: #9a3412;">Namaste ${escapeHtml(name)},</h2>
           <p style="font-size: 14px; line-height: 1.6; color: #44403c;">
-            We received a request to reset your password on the Shubhdarshan Live platform.
+            We received a request to reset your password on the Param Darshan Live platform.
           </p>
           <p style="font-size: 14px; line-height: 1.6; color: #44403c;">
             Click the button below to choose a new password. This link is valid for 1 hour:

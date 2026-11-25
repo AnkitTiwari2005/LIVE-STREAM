@@ -91,7 +91,7 @@ export default function ContactPage() {
             </div>
             <h3 className="text-sm font-bold text-stone-900 dark:text-white mb-1">Registered Office</h3>
             <p className="text-xs text-stone-400">
-              Shubhdarshan Devotional Media Pvt. Ltd.<br />
+              Param Darshan<br />
               Rohini Sector 15, Rohini,<br />
               Delhi 110089, India
             </p>

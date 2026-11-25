@@ -112,7 +112,7 @@ export default function SchedulePage() {
         <div className="mandala-bg absolute inset-0 opacity-25 pointer-events-none" />
         <div className="relative z-10 max-w-5xl mx-auto text-center space-y-4">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-b from-amber-500/10 to-transparent border border-gold/30 flex items-center justify-center mx-auto mb-2 shadow-[0_0_30px_rgba(245,158,11,0.25)]">
-            <img src="/logo.webp" alt="Shubhdarshan" className="w-11 h-11 object-contain drop-shadow" />
+            <img src="/logo.webp" alt="Param Darshan" className="w-11 h-11 object-contain drop-shadow" />
           </div>
           <p className="text-xs font-bold uppercase tracking-[0.28em] text-gold-soft">
             Sacred Pooja Calendar

@@ -1,7 +1,7 @@
 {
-  "name": "shubhdarshan-backend",
+  "name": "paramdarshan-backend",
   "version": "1.0.0",
-  "description": "Backend API & Real-time Media Server for Shubhdarshan Live Streaming Platform",
+  "description": "Backend API & Real-time Media Server for Param Darshan Live Streaming Platform",
   "scripts": {
     "postinstall": "prisma generate",
     "build": "npx prisma generate && nest build && node -e \"const fs=require('fs'); fs.mkdirSync('dist/src', {recursive:true}); fs.copyFileSync('dist/main.js', 'dist/src/main.js');\"",

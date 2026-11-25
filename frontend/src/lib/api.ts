@@ -1,5 +1,5 @@
 /**
- * Shubhdarshan Standard Unified API fetch helper (B-18)
+ * Param Darshan Standard Unified API fetch helper (B-18)
  * Verifies res.ok and extracts backend error messages instead of silently continuing
  */
 export async function apiFetch<T = any>(

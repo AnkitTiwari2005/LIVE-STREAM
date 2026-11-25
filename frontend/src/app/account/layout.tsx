@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Account & Security Settings',
-  description: 'Manage your Shubhdarshan profile, two-factor authentication, and DPDP privacy controls.',
+  description: 'Manage your Param Darshan profile, two-factor authentication, and DPDP privacy controls.',
   robots: {
     index: false,
     follow: false,

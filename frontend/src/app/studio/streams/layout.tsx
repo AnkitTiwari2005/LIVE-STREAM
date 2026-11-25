@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'My Broadcasts & Sessions',
-  description: 'Manage your scheduled, live, and completed Shubhdarshan devotional broadcasts.',
+  description: 'Manage your scheduled, live, and completed Param Darshan devotional broadcasts.',
   robots: {
     index: false,
     follow: false,

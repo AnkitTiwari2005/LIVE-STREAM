@@ -84,15 +84,15 @@ export class RemindersService {
       await this.mailer.sendEmail({
         to: dto.email,
         toName: dto.name,
-        subject: `Inquiry Received: ${dto.subject} - Shubhdarshan Support`,
+        subject: `Inquiry Received: ${dto.subject} - Param Darshan Support`,
         htmlContent: `
           <div style="font-family: Arial, sans-serif; color: #222; max-width: 600px; margin: auto;">
             <h2 style="color: #c2410c;">Namaste ${safeName},</h2>
-            <p>Thank you for reaching out to Shubhdarshan Devotee Support.</p>
+            <p>Thank you for reaching out to Param Darshan Devotee Support.</p>
             <p>We have logged your query regarding: <strong>${safeSubject}</strong></p>
             <blockquote style="background: #f9f9f9; padding: 12px; border-left: 4px solid #ea580c; font-style: italic;">${safeMessage}</blockquote>
             <p>Our devotee assistance team will inspect and respond to your email within 2 to 4 hours.</p>
-            <p style="color: #666; font-size: 13px;">Shubhdarshan Devotional Media Private Limited</p>
+            <p style="color: #666; font-size: 13px;">Param Darshan</p>
           </div>
         `,
       });
@@ -100,7 +100,7 @@ export class RemindersService {
       const staffInbox = process.env.STAFF_INBOX_EMAIL || 'paramdarshan.com@gmail.com';
       await this.mailer.sendEmail({
         to: staffInbox,
-        toName: 'Shubhdarshan Staff Desk',
+        toName: 'Param Darshan Staff Desk',
         subject: `[INQUIRY DESK] New Devotee Inquiry: ${dto.subject}`,
         htmlContent: `
           <div style="font-family: Arial, sans-serif; color: #222;">
@@ -157,7 +157,7 @@ export class RemindersService {
             <p><strong>Complaint Type:</strong> ${safeType}</p>
             <blockquote style="background: #f9f9f9; padding: 12px; border-left: 4px solid #ea580c;">${safeDetails}</blockquote>
             <p>The designated Resident Grievance Officer will investigate the matter and provide a reasoned decision within statutory timelines (within 15 calendar days).</p>
-            <p style="color: #666; font-size: 13px;">Resident Grievance Officer, Shubhdarshan Devotional Media Private Limited</p>
+            <p style="color: #666; font-size: 13px;">Resident Grievance Officer, Param Darshan</p>
           </div>
         `,
       });

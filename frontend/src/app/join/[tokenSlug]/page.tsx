@@ -3,7 +3,7 @@ import JoinPrivateStreamClient from './JoinPrivateStreamClient';
 
 export const metadata: Metadata = {
   title: 'Private Sacred Pooja Session',
-  description: 'Join an invitation-only live sankalp pooja session on Shubhdarshan.',
+  description: 'Join an invitation-only live sankalp pooja session on Param Darshan.',
   robots: {
     index: false,
     follow: false,

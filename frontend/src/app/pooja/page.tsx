@@ -244,7 +244,7 @@ export default function PoojaCatalogPage() {
               Authentic Vedic Precision, Straight From Sacred Sanctums
             </h2>
             <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
-              Every Acharya on Shubhdarshan undergoes government identity KYC review and profile verification before receiving broadcasting privileges.
+              Every Acharya on Param Darshan undergoes government identity KYC review and profile verification before receiving broadcasting privileges.
             </p>
             <div className="pt-2 flex flex-wrap items-center justify-center gap-6 text-xs text-stone-300">
               <span className="flex items-center gap-1.5">

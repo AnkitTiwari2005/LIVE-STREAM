@@ -51,7 +51,7 @@ async function main() {
       title: 'Terms and Conditions of Service',
       contentHtml: `
         <h2>Terms of Service</h2>
-        <p>Welcome to Shubhdarshan - Sacred Pooja & Astrology Live Streaming Platform.</p>
+        <p>Welcome to Param Darshan - Sacred Pooja & Astrology Live Streaming Platform.</p>
         <h3>Spiritual and Astrological Disclaimer</h3>
         <p>All Pooja ceremonies, Aarti, Darshan, and astrological advice provided on this platform are for religious, spiritual, cultural, and counseling purposes only. Astrologers, pandits, and spiritual guides broadcast as independent practitioners. The platform does not warrant, verify, or guarantee any specific material, physical, health, financial, or future life outcomes.</p>
         <h3>User Conduct & Live Stream Etiquette</h3>
@@ -98,7 +98,7 @@ async function main() {
       contentHtml: `
         <h2>Contact Information</h2>
         <p>For technical support, stream inquiries, or streamer verification assistance:</p>
-        <p>Email: support@platform-domain.com</p>
+        <p>Email: paramdarshan.com@gmail.com</p>
       `,
     },
     {
@@ -108,8 +108,8 @@ async function main() {
         <h2>Grievance Redressal</h2>
         <p>In accordance with the Digital Personal Data Protection Act, 2023, the details of our designated Grievance Officer are:</p>
         <p><strong>Name:</strong> Grievance Redressal Officer</p>
-        <p><strong>Address:</strong> Platform Operations Headquarters, New Delhi, India</p>
-        <p><strong>Email:</strong> grievance@platform-domain.com</p>
+        <p><strong>Address:</strong> Rohini Sector 15, Rohini, Delhi 110089, India</p>
+        <p><strong>Email:</strong> paramdarshan.com@gmail.com</p>
         <p>Grievances will be acknowledged within 24 hours and resolved within 15 business days.</p>
       `,
     },

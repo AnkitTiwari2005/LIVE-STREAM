@@ -6,7 +6,7 @@ import { OmIcon, VerifiedPanditBadge } from '@/components/icons/SpiritualIcons';
 export const metadata: Metadata = {
   title: 'Vedic Pandit Verification & Code of Ethics',
   description:
-    'Stringent accreditation standards, priesthood credential verification, and strict anti-superstition guidelines for streamers on Shubhdarshan.',
+    'Stringent accreditation standards, priesthood credential verification, and strict anti-superstition guidelines for streamers on Param Darshan.',
   alternates: { canonical: '/pandit-guidelines/' },
 };
 
@@ -18,7 +18,7 @@ export default function PanditGuidelinesPage() {
 
         <div className="flex items-center gap-3 mb-6">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-b from-amber-500/10 to-transparent border border-gold/30 flex items-center justify-center shadow-md shrink-0">
-            <img src="/logo.webp" alt="Shubhdarshan" className="w-8 h-8 object-contain drop-shadow" />
+            <img src="/logo.webp" alt="Param Darshan" className="w-8 h-8 object-contain drop-shadow" />
           </div>
           <div>
             <span className="text-xs font-bold text-amber-400 uppercase tracking-widest block">
@@ -31,7 +31,7 @@ export default function PanditGuidelinesPage() {
         </div>
 
         <p className="text-xs text-stone-400 mb-8 pb-4 border-b border-stone-800">
-          Upholding Sanatana Dharma authenticity, Vedic scriptural accuracy, and zero exploitation on Shubhdarshan.
+          Upholding Sanatana Dharma authenticity, Vedic scriptural accuracy, and zero exploitation on Param Darshan.
         </p>
 
         <div className="space-y-8 text-stone-300 text-sm leading-relaxed">

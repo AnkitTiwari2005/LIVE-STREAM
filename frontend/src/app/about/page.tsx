@@ -27,9 +27,9 @@ import {
 import AboutCta from '@/components/AboutCta';
 
 export const metadata: Metadata = {
-  title: 'About Us - Founded by Pt. Rohit Tiwari & Pt. Santosh Kumar Shastri | Shubhdarshan',
+  title: 'About Us - Founded by Pt. Rohit Tiwari & Pt. Santosh Kumar Shastri | Param Darshan',
   description:
-    'Shubhdarshan is founded in Delhi by revered Vedic astrologers पंडित रोहित तिवारी (Pt. Rohit Tiwari - ज्योतिषाचार्य) and पंडित संतोष कुमार शास्त्री (Pt. Santosh Kumar Shastri - ज्योतिष एवं वास्तु विशेषज्ञ) to connect devotees worldwide with authentic live darshan and shastric wisdom.',
+    'Param Darshan is founded in Delhi by revered Vedic astrologers पंडित रोहित तिवारी (Pt. Rohit Tiwari - ज्योतिषाचार्य) and पंडित संतोष कुमार शास्त्री (Pt. Santosh Kumar Shastri - ज्योतिष एवं वास्तु विशेषज्ञ) to connect devotees worldwide with authentic live darshan and shastric wisdom.',
   alternates: { canonical: '/about/' },
 };
 
@@ -77,7 +77,7 @@ export default function AboutPage() {
             </div>
             <p className="mt-4 text-stone-600 dark:text-stone-300 text-xs sm:text-sm max-w-3xl mx-auto leading-relaxed">
               Based in the historic spiritual capital of <strong className="text-stone-900 dark:text-white font-semibold">Delhi (NCR)</strong>, 
-              Shubhdarshan was founded under the spiritual vision of two revered Vedic masters. Conceived as a sacred bridge between scriptural purity and 21st-century live streaming, our mission is to empower devotees globally with truthful astrological guidance, authentic live rituals, and direct sanctuary darshan.
+              Param Darshan was founded under the spiritual vision of two revered Vedic masters. Conceived as a sacred bridge between scriptural purity and 21st-century live streaming, our mission is to empower devotees globally with truthful astrological guidance, authentic live rituals, and direct sanctuary darshan.
             </p>
           </div>
 
@@ -91,7 +91,7 @@ export default function AboutPage() {
               <div className="on-photo video-overlay relative rounded-2xl overflow-hidden border border-stone-200 dark:border-gold/25 shadow-xl bg-black">
                 <img
                   src="/images/founders/founders-upper.webp"
-                  alt="Founders of Shubhdarshan: Pt. Rohit Tiwari & Pt. Santosh Kumar Shastri"
+                  alt="Founders of Param Darshan: Pt. Rohit Tiwari & Pt. Santosh Kumar Shastri"
                   className="w-full h-[380px] sm:h-[440px] lg:h-[430px] object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-transparent pointer-events-none" />
@@ -352,7 +352,7 @@ export default function AboutPage() {
               KYC &amp; platform verification before going live
             </h2>
             <p className="mt-2 text-stone-600 dark:text-stone-300 text-xs sm:text-sm leading-relaxed">
-              Every broadcaster passes administrator identity review before receiving streaming privileges on Shubhdarshan.
+              Every broadcaster passes administrator identity review before receiving streaming privileges on Param Darshan.
             </p>
           </div>
 

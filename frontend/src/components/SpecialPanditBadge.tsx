@@ -38,7 +38,7 @@ export function SpecialPanditBadge({
 
   return (
     <div
-      title="शुभदर्शन विशेष आचार्य सम्मान • सर्वोच्च वैदिक शास्त्र एवं सेवा मर्यादा"
+      title="परम दर्शन विशेष आचार्य सम्मान • सर्वोच्च वैदिक शास्त्र एवं सेवा मर्यादा"
       className={`inline-flex items-center rounded-full font-bold select-none transition-all duration-300 relative group overflow-hidden ${
         subtle
           ? 'bg-amber-950/40 text-amber-300 border border-amber-500/30'

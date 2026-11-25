@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Sacred Coin Transaction History',
-  description: 'Review your Shubhdarshan Sacred Coin ledger, recharges, and viewing history.',
+  description: 'Review your Param Darshan Sacred Coin ledger, recharges, and viewing history.',
   robots: {
     index: false,
     follow: false,

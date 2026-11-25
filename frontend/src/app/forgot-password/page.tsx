@@ -43,7 +43,7 @@ export default function ForgotPasswordPage() {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-3">
             <span className="p-3 bg-gradient-to-b from-amber-500/10 to-transparent border border-gold/30 rounded-2xl">
-              <img src="/logo.webp" alt="Shubhdarshan" className="w-10 h-10 object-contain drop-shadow" />
+              <img src="/logo.webp" alt="Param Darshan" className="w-10 h-10 object-contain drop-shadow" />
             </span>
           </div>
           <h1 className="text-2xl font-serif font-bold text-stone-100 flex items-center justify-center gap-2">

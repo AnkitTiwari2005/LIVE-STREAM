@@ -269,7 +269,7 @@ function SevaBookingFlow({
       return;
     }
 
-    const refCode = `SHUBH-${Math.floor(100000 + Math.random() * 900000)}`;
+    const refCode = `PD-${Math.floor(100000 + Math.random() * 900000)}`;
     const newBooking: BookingRecord = {
       id: `booking-${Date.now()}`,
       refCode,
@@ -294,8 +294,9 @@ function SevaBookingFlow({
     // Bug #1 fix: Save to per-user scoped bookings key so each account has its own booking list
     try {
       const userId = user?.id || 'guest';
-      const bookingKey = `shubhdarshan_bookings_${userId}`;
-      const existing = localStorage.getItem(bookingKey);
+      const bookingKey = `paramdarshan_bookings_${userId}`;
+      const legacyKey = `shubhdarshan_bookings_${userId}`;
+      const existing = localStorage.getItem(bookingKey) ?? localStorage.getItem(legacyKey);
       const list: BookingRecord[] = existing ? JSON.parse(existing) : [];
       list.unshift(newBooking);
       localStorage.setItem(bookingKey, JSON.stringify(list));
@@ -320,7 +321,7 @@ function SevaBookingFlow({
         <div className="p-6 pb-4 border-b border-gold/15 flex items-center justify-between bg-gradient-to-r from-obsidian via-obsidian-soft to-obsidian">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-gold/10 border border-gold/30 flex items-center justify-center shadow-inner">
-              <img src="/logo.webp" alt="Shubhdarshan" className="w-7 h-7 object-contain drop-shadow" />
+              <img src="/logo.webp" alt="Param Darshan" className="w-7 h-7 object-contain drop-shadow" />
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-soft">

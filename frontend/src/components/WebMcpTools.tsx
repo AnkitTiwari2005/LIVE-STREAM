@@ -20,7 +20,7 @@ export default function WebMcpTools() {
       // Tool 1: Live Darshan Streams Discovery
       nav.modelContext.registerTool({
         name: 'getLiveDarshanStreams',
-        description: 'Discover active sacred temple broadcasts, aartis, and upcoming Vedic poojas on Shubhdarshan',
+        description: 'Discover active sacred temple broadcasts, aartis, and upcoming Vedic poojas on Param Darshan',
         inputSchema: {
           type: 'object',
           properties: {
@@ -80,11 +80,11 @@ export default function WebMcpTools() {
       // Tool 3: Platform Overview
       nav.modelContext.registerTool({
         name: 'getPlatformOverview',
-        description: 'Get verified information about Shubhdarshan services, verified pandits, and DPDP Act 2023 compliance',
+        description: 'Get verified information about Param Darshan services, verified pandits, and DPDP Act 2023 compliance',
         inputSchema: { type: 'object', properties: {} },
         execute: async () => {
           return {
-            name: 'Shubhdarshan',
+            name: 'Param Darshan',
             tagline: 'Sacred Pooja, Live Darshan & Vedic Astrology Streaming Platform',
             currency: 'Sacred Coins (150 coins = ₹100)',
             services: [

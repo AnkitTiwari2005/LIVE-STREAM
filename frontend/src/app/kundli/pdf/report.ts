@@ -18,13 +18,13 @@ function brand(lang: Lang, kind: string, assets: PdfAssets): Brand {
   const t = texts(lang);
   return {
     logo: assets.logo,
-    name: lang === 'hi' ? 'शुभदर्शन' : 'Shubhdarshan',
+    name: lang === 'hi' ? 'परम दर्शन' : 'Param Darshan',
     tagline: t.brandTagline,
     reportKind: kind,
     website: 'paramdarshan.com',
     addressLine: lang === 'hi'
-      ? 'शुभदर्शन डिवोशनल मीडिया प्रा. लि. • रोहिणी सेक्टर 15, दिल्ली 110089 • paramdarshan.com@gmail.com'
-      : 'Shubhdarshan Devotional Media Pvt. Ltd. • Rohini Sector 15, Delhi 110089 • paramdarshan.com@gmail.com',
+      ? 'परम दर्शन • रोहिणी सेक्टर 15, दिल्ली 110089 • paramdarshan.com@gmail.com'
+      : 'Param Darshan • Rohini Sector 15, Delhi 110089 • paramdarshan.com@gmail.com',
     disclaimer: `${t.disclaimer} ${t.pdfFooterNote}`,
   };
 }
@@ -32,7 +32,7 @@ function brand(lang: Lang, kind: string, assets: PdfAssets): Brand {
 function open(PDF: PdfCtor, title: string, assets: PdfAssets, lang: Lang, kindLabel: string) {
   const doc = new PDF({
     size: 'A4', margin: 0, bufferPages: true, autoFirstPage: true,
-    info: { Title: title, Author: 'Shubhdarshan', Subject: kindLabel, Creator: 'Shubhdarshan', Producer: 'Shubhdarshan' },
+    info: { Title: title, Author: 'Param Darshan', Subject: kindLabel, Creator: 'Param Darshan', Producer: 'Param Darshan' },
   });
   const pen = new Pen(doc);
   Pen.register(doc, assets.fonts);
@@ -116,7 +116,7 @@ export async function buildKundliPdf(PDF: PdfCtor, assets: PdfAssets, data: Kund
   const t = texts(lang);
   const { result, submitted } = data;
   const title = data.name ? t.f('kundliOf', { name: data.name }) : t.yourKundli;
-  const { doc, pen, b, flow } = open(PDF, `${title} - Shubhdarshan`, assets, lang, `${t.kundliTitle} • ${t.kundliSubtitle}`);
+  const { doc, pen, b, flow } = open(PDF, `${title} - Param Darshan`, assets, lang, `${t.kundliTitle} • ${t.kundliSubtitle}`);
   const W = PAGE.w - MARGIN * 2;
 
   // title block
@@ -224,7 +224,7 @@ export interface MatchPdfData {
 export async function buildMatchPdf(PDF: PdfCtor, assets: PdfAssets, data: MatchPdfData, lang: Lang): Promise<Uint8Array> {
   const t = texts(lang);
   const { result: r } = data;
-  const { doc, pen, b, flow } = open(PDF, `${data.nameA} & ${data.nameB} - ${t.matchTitle} - Shubhdarshan`, assets, lang, `${t.matchTitle} • ${t.matchSubtitle}`);
+  const { doc, pen, b, flow } = open(PDF, `${data.nameA} & ${data.nameB} - ${t.matchTitle} - Param Darshan`, assets, lang, `${t.matchTitle} • ${t.matchSubtitle}`);
   const W = PAGE.w - MARGIN * 2;
   const band = matchBand(r.total);
   const bandColor = band === 'excellent' ? COLORS.green : band === 'low' ? COLORS.red : COLORS.amber;

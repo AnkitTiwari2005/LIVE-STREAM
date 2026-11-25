@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Verify Email Address',
-  description: 'Confirm your email address to activate your Shubhdarshan account.',
+  description: 'Confirm your email address to activate your Param Darshan account.',
   robots: {
     index: false,
     follow: false,

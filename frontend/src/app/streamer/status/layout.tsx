@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Broadcaster Verification Status',
-  description: 'Track your Shubhdarshan KYC review and broadcaster approval status.',
+  description: 'Track your Param Darshan KYC review and broadcaster approval status.',
   robots: {
     index: false,
     follow: false,

@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="frontend/public/images/logo.png" alt="Shubhdarshan Sacred Emblem" width="128" />
+<img src="frontend/public/images/logo.png" alt="Param Darshan Sacred Emblem" width="128" />
 
-# Shubhdarshan (शुभदर्शन)
+# Param Darshan (परम दर्शन)
 
 ### Sacred Live Pooja, Aarti Darshan & Vedic Astrology Platform
 
@@ -40,7 +40,7 @@
 
 ## Executive Overview
 
-**Shubhdarshan** bridges ancient Vedic traditions with modern ultra-low-latency streaming technology. The platform connects devotees worldwide with authentic Vedic temples and verified Acharyas for:
+**Param Darshan** bridges ancient Vedic traditions with modern ultra-low-latency streaming technology. The platform connects devotees worldwide with authentic Vedic temples and verified Acharyas for:
 1. **Ultra-Low Latency Public Broadcasts**: Sacred temple aartis, havan yagyas, and spiritual discourses powered by self-hosted LiveKit SFU (sub-500ms WebRTC).
 2. **Interactive Video Guest Slot**: Devotees can request to appear on live video/audio inside a public stream with the Acharya, backed by atomic stream locks, queue moderation, and instant disconnect safety.
 3. **Encrypted 1-on-1 Private Pooja Rooms**: High-definition, two-way audio/video consultations for personalized sankalp, matrimonial advice, and remedial rituals with pre-join hardware testing lobby.
@@ -101,7 +101,7 @@
 
 ## System Architecture
 
-Shubhdarshan is designed to run flexibly under **two production topologies**:
+Param Darshan is designed to run flexibly under **two production topologies**:
 * **Topology A (Unified Node.js Host)**: Express directly hosts both the NestJS REST/WebSocket backend and the pre-built Next.js static client export from `backend/public/client` on a single origin (ideal for Hostinger VPS, cPanel, or PaaS with Neon PostgreSQL).
 * **Topology B (Docker Compose VPS Stack)**: Dedicated multi-container Linux deployment behind Nginx with isolated LiveKit SFU, Redis, PostgreSQL, and background worker containers.
 
@@ -115,7 +115,7 @@ flowchart TD
         cf -->|"Direct Media WebRTC"| lk["LiveKit SFU (7882/udp)"]
     end
 
-    subgraph app_core ["Shubhdarshan Application Core"]
+    subgraph app_core ["Param Darshan Application Core"]
         nginx --> api["NestJS API & Gateway (:4000)"]
         nginx --> static_ui["Static Client Bundle (/public/client)"]
         api --> socket["Socket.IO Redis Adapter (Chat & Telemetry)"]
@@ -165,7 +165,7 @@ sequenceDiagram
     autonumber
     actor Devotee
     participant Lobby as MediaLobby (/join)
-    participant API as Shubhdarshan API
+    participant API as Param Darshan API
     participant SFU as LiveKit SFU
     actor Pandit as Studio Acharya
 
@@ -216,7 +216,7 @@ flowchart LR
 
 | SKU | Package Name | Base Coins | Bonus Coins | Total Coins | Price (INR) | Effective Rate |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `shubh_150` | Shubh Starter | 150 | 0 | **150** | ₹100 | ₹0.67 / coin |
+| `shubh_150` | Param Starter | 150 | 0 | **150** | ₹100 | ₹0.67 / coin |
 | `bhakti_330` | Bhakti Pack | 300 | 30 (+10%) | **330** | ₹200 | ₹0.61 / coin |
 | `siddhi_900` | Siddhi Pack | 750 | 150 (+20%) | **900** | ₹500 | ₹0.56 / coin |
 | `mahodadhi_1875` | Mahodadhi Pack | 1,500 | 375 (+25%) | **1,875** | ₹1,000 | ₹0.53 / coin |
@@ -225,7 +225,7 @@ flowchart LR
 
 ## Vedic Kundli & Ashtakoota Milan
 
-Shubhdarshan provides authentic, client-side and cloud-computed astrological services:
+Param Darshan provides authentic, client-side and cloud-computed astrological services:
 
 ### 1. Janam Kundali Engine
 * **Precision Ephemeris**: Calculates Lagna (Ascendant), planetary degrees (e.g., `14°28′`), Nakshatras, padas (1–4), Nakshatra lords, and retrograde states for all 9 Vedic Grahas.
@@ -441,7 +441,7 @@ cd ../frontend && node tests/i18n-and-chart.test.js
 
 ### Option B — Multi-Container Docker Compose Stack (Linux VPS)
 
-Shubhdarshan includes a production-ready `docker-compose.yml` deploying 8 isolated services:
+Param Darshan includes a production-ready `docker-compose.yml` deploying 8 isolated services:
 * `pooja_nginx`: TLS termination, reverse proxy, and Cloudflare real-IP restoration.
 * `pooja_api`: Clustered NestJS API serving REST and Socket.IO.
 * `pooja_worker`: Headless background cron task scheduler.
@@ -505,5 +505,5 @@ For staging and local demonstration, the platform includes 7 pre-seeded verified
   <br />
   <strong>Built with devotion for authentic Vedic darshan, uninterrupted sacred ceremonies, and fair compensation for spiritual leaders.</strong>
   <br /><br />
-  <sub>© 2026 Shubhdarshan Devotional Media Private Limited. All rights reserved.</sub>
+  <sub>© 2026 Param Darshan. All rights reserved.</sub>
 </div>

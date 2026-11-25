@@ -235,7 +235,7 @@ export function todayText(lang: Lang): string {
 const EN = {
   // shared
   brandTagline: 'Sacred Darshan Network',
-  poweredLine: 'Vedic calculations by Shubhdarshan',
+  poweredLine: 'Vedic calculations by Param Darshan',
   // kundli report
   kundliTitle: 'Janam Kundli',
   kundliSubtitle: 'Vedic Birth Chart',
@@ -354,7 +354,7 @@ export type UiKey = keyof typeof EN;
 
 const HI: Record<UiKey, string> = {
   brandTagline: 'पवित्र दर्शन नेटवर्क',
-  poweredLine: 'शुभदर्शन द्वारा वैदिक गणना',
+  poweredLine: 'परम दर्शन द्वारा वैदिक गणना',
   kundliTitle: 'जन्म कुंडली',
   kundliSubtitle: 'वैदिक जन्म पत्रिका',
   yourKundli: 'आपकी कुंडली',

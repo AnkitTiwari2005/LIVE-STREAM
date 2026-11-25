@@ -3,7 +3,7 @@ import StreamPlayerClient from './StreamPlayerClient';
 
 export const metadata: Metadata = {
   title: 'Live Darshan Stream',
-  description: 'Watch real-time sacred darshan, chant together, and offer dakshina on Shubhdarshan.',
+  description: 'Watch real-time sacred darshan, chant together, and offer dakshina on Param Darshan.',
   robots: {
     index: false,
     follow: false,

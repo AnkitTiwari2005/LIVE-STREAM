@@ -124,7 +124,7 @@ export function CoinTopupModal({ isOpen, onClose, onSuccess, initialSku }: CoinT
           key: orderData.keyId,
           amount: Math.round(orderData.amountInr * 100),
           currency: 'INR',
-          name: 'Shubhdarshan Coins',
+          name: 'Param Darshan Coins',
           description: `Sacred Coins: ${orderData.packageName}`,
           order_id: orderData.orderId,
           handler: async (response: any) => {

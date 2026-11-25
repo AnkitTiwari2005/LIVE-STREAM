@@ -5,16 +5,16 @@ const CMS_METADATA: Record<string, { title: string; description: string }> = {
   terms: {
     title: 'Terms of Service',
     description:
-      'Terms and Conditions for using Shubhdarshan live devotional streaming and consultation services.',
+      'Terms and Conditions for using Param Darshan live devotional streaming and consultation services.',
   },
   privacy: {
     title: 'Privacy Policy (DPDP Act 2023 Compliant)',
     description:
-      'Privacy Notice for Shubhdarshan under the Digital Personal Data Protection Act, 2023.',
+      'Privacy Notice for Param Darshan under the Digital Personal Data Protection Act, 2023.',
   },
   refund: {
     title: 'Refund & Cancellation Policy',
-    description: 'Guidelines on Shubhdarshan Sacred Coins, payment reversals, and cancellations.',
+    description: 'Guidelines on Param Darshan Sacred Coins, payment reversals, and cancellations.',
   },
   grievance: {
     title: 'Grievance Redressal Mechanism',
@@ -29,7 +29,7 @@ const CMS_METADATA: Record<string, { title: string; description: string }> = {
   about: {
     title: 'About Us - Sacred Devotion Meets Modern Technology',
     description:
-      'Learn about Shubhdarshan’s mission connecting devotees worldwide with authentic Vedic rituals.',
+      'Learn about Param Darshan’s mission connecting devotees worldwide with authentic Vedic rituals.',
   },
 };
 
@@ -49,7 +49,7 @@ export async function generateMetadata({
   }
   return {
     title: 'Policy & Platform Information',
-    description: 'Legal notices, policies, and official Shubhdarshan documentation.',
+    description: 'Legal notices, policies, and official Param Darshan documentation.',
   };
 }
 

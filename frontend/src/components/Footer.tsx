@@ -30,13 +30,13 @@ export function Footer() {
               <div className="relative flex h-11 w-11 items-center justify-center rounded-full border border-gold/40 bg-gradient-to-b from-[#2a1e12] to-obsidian shadow-[0_0_15px_rgba(245,158,11,0.3)] p-0.5 overflow-hidden">
                 <img
                   src="/logo.webp"
-                  alt="Shubhdarshan Mandir Logo"
+                  alt="Param Darshan Mandir Logo"
                   className="h-full w-full object-contain filter drop-shadow group-hover:scale-105 transition-transform"
                 />
               </div>
               <span className="leading-tight">
                 <span className="block font-serif text-2xl font-bold tracking-wide text-gold-pale">
-                  Shubhdarshan
+                  Param Darshan
                 </span>
                 <span className="block text-[9px] font-bold uppercase tracking-[0.28em] text-gold-soft">
                   Sacred Darshan Network
@@ -175,14 +175,14 @@ export function Footer() {
         {/* Astrological & Spiritual Disclaimer */}
         <div className="pt-8 border-t border-stone-800/80 text-[11px] text-stone-400 leading-relaxed space-y-2">
           <p>
-            <strong className="text-gold-pale">Spiritual &amp; Astrological Disclaimer:</strong> All live temple darshans, aartis, pooja ceremonies, planetary remedies, astrology kundli counseling, and Vedic discourses on Shubhdarshan are conducted for cultural, religious, and spiritual counseling purposes. Pandits and astrologers broadcast as independent verified practitioners. Shubhdarshan makes no guarantees or warranties of material, financial, medical, or life outcomes.
+            <strong className="text-gold-pale">Spiritual &amp; Astrological Disclaimer:</strong> All live temple darshans, aartis, pooja ceremonies, planetary remedies, astrology kundli counseling, and Vedic discourses on Param Darshan are conducted for cultural, religious, and spiritual counseling purposes. Pandits and astrologers broadcast as independent verified practitioners. Param Darshan makes no guarantees or warranties of material, financial, medical, or life outcomes.
           </p>
         </div>
 
         {/* Bottom Bar with Sanskrit Shloka */}
         <div className="mt-8 pt-6 border-t border-stone-800/60 flex flex-col sm:flex-row items-center justify-between text-xs text-stone-400 gap-4">
           {/* M-08: Dynamic year — was hardcoded as 2026 */}
-          <p>© {new Date().getFullYear()} Shubhdarshan Devotional Media Private Limited. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Param Darshan. All rights reserved.</p>
           <p className="font-serif text-sm italic text-gold-soft tracking-wide">
             ॐ असतो मा सद्गमय तमसो मा ज्योतिर्गमय
           </p>

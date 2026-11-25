@@ -23,7 +23,7 @@ export interface CoinPackageDisplay {
 export const DEFAULT_COIN_PACKAGES: readonly CoinPackageDisplay[] = [
   {
     sku: 'shubh_150',
-    name: 'Shubh Starter',
+    name: 'Param Starter',
     coins: 150,
     bonusCoins: 0,
     totalCoins: 150,

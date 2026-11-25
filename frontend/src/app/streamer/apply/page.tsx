@@ -429,7 +429,7 @@ export default function StreamerApplyPage() {
                 You are Already a Verified Vedic Pandit
               </h1>
               <p className="text-xs sm:text-sm text-stone-300 max-w-md mx-auto leading-relaxed">
-                Your account is already KYC verified and holds full live broadcasting privileges on Shubhdarshan.
+                Your account is already KYC verified and holds full live broadcasting privileges on Param Darshan.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
                 <Link

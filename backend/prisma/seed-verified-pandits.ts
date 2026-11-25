@@ -22,7 +22,7 @@ async function main() {
       name: 'पंडित रोहित तिवारी (ज्योतिषाचार्य)',
       email: 'rohit.tiwari@shubhdarshan.com',
       avatarUrl: '/images/pandits/pandit-rohit-tiwari.webp',
-      bio: 'Founder of Shubhdarshan and revered Vedic astrologer based in Delhi. Specialized in Parashari Jyotish, authentic Kundli Milan, Vivah Sanskar vidhi, and auspicious matrimonial alignments.',
+      bio: 'Founder of Param Darshan and revered Vedic astrologer based in Delhi. Specialized in Parashari Jyotish, authentic Kundli Milan, Vivah Sanskar vidhi, and auspicious matrimonial alignments.',
       specialties: ['Matrimonial Advisor', 'Kundli Milan', 'Vedic Astrology', 'Vivah Sanskar'],
       languages: ['Hindi', 'Sanskrit', 'English'],
       followerCount: 1420,
@@ -38,7 +38,7 @@ async function main() {
       name: 'पंडित संतोष कुमार शास्त्री',
       email: 'skjyotish@gmail.com', // Matching his registered email
       avatarUrl: '/images/pandits/pandit-santosh-shastri.webp',
-      bio: 'Co-Founder of Shubhdarshan and master of spatial cosmic alignment (Vastu Shastra) and classical Vedic Jyotish. Expert in balancing residential and commercial energies and conducting sacred peace yagyas.',
+      bio: 'Co-Founder of Param Darshan and master of spatial cosmic alignment (Vastu Shastra) and classical Vedic Jyotish. Expert in balancing residential and commercial energies and conducting sacred peace yagyas.',
       specialties: ['Vedic Astrology', 'Vastu Shastra', 'Kundli Milan', 'Grah Shanti'],
       languages: ['Hindi', 'Sanskrit'],
       followerCount: 1280,

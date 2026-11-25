@@ -62,13 +62,14 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Shubhdarshan - Sacred Live Pooja, Aarti & Vedic Astrology Worldwide',
-    template: '%s | Shubhdarshan',
+    default: 'Param Darshan - Sacred Live Pooja, Aarti & Vedic Astrology Worldwide',
+    template: '%s | Param Darshan',
   },
   description:
-    'Experience sacred live Hindu poojas, temple aartis, Vedic rituals, and 1-on-1 personalized astrology consultations with verified pandits on Shubhdarshan. Claim 100 free coins on signup.',
+    'Experience sacred live Hindu poojas, temple aartis, Vedic rituals, and 1-on-1 personalized astrology consultations with verified pandits on Param Darshan. Claim 100 free coins on signup.',
   keywords: [
-    'Shubhdarshan',
+    'Param Darshan',
+    'Paramdarshan',
     'live pooja streaming',
     'online mandir darshan',
     'vedic pandit live',
@@ -81,9 +82,9 @@ export const metadata: Metadata = {
     'ayodhya live darshan',
     'ujjain bhasma aarti live',
   ],
-  authors: [{ name: 'Shubhdarshan Platform Team' }],
-  creator: 'Shubhdarshan Devotional Media Private Limited',
-  publisher: 'Shubhdarshan Devotional Media',
+  authors: [{ name: 'Param Darshan Platform Team' }],
+  creator: 'Param Darshan',
+  publisher: 'Param Darshan',
   alternates: {
     canonical: '/',
   },
@@ -91,14 +92,14 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_IN',
     url: SITE_URL,
-    siteName: 'Shubhdarshan',
-    title: 'Shubhdarshan - Sacred Live Pooja, Aarti & Vedic Astrology Worldwide',
+    siteName: 'Param Darshan',
+    title: 'Param Darshan - Sacred Live Pooja, Aarti & Vedic Astrology Worldwide',
     description:
       'Connect with verified Vedic pandits and certified astrologers for live rituals, aarti, and spiritual consultations in real-time. 100 free coins for all new devotees.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Shubhdarshan - Sacred Live Pooja & Aarti Broadcast',
+    title: 'Param Darshan - Sacred Live Pooja & Aarti Broadcast',
     description:
       'Real-time live devotional broadcasts, online pooja sankalp, and Vedic astrological consultations with verified Acharyas.',
   },
@@ -131,8 +132,9 @@ export default function RootLayout({
       {
         '@type': 'Organization',
         '@id': `${SITE_URL}/#organization`,
-        name: 'Shubhdarshan',
-        legalName: 'Shubhdarshan Devotional Media Private Limited',
+        name: 'Param Darshan',
+        alternateName: ['Paramdarshan', 'परम दर्शन'],
+        legalName: 'Param Darshan',
         url: SITE_URL,
         logo: `${SITE_URL}/logo.webp`,
         founder: [
@@ -181,17 +183,17 @@ export default function RootLayout({
           },
         ],
         sameAs: [
-          'https://twitter.com/shubhdarshan',
-          'https://www.facebook.com/shubhdarshan',
-          'https://www.instagram.com/shubhdarshan',
-          'https://www.youtube.com/@shubhdarshan',
+          'https://twitter.com/paramdarshan',
+          'https://www.facebook.com/paramdarshan',
+          'https://www.instagram.com/paramdarshan',
+          'https://www.youtube.com/@paramdarshan',
         ],
       },
       {
         '@type': 'WebSite',
         '@id': `${SITE_URL}/#website`,
         url: SITE_URL,
-        name: 'Shubhdarshan',
+        name: 'Param Darshan',
         publisher: {
           '@id': `${SITE_URL}/#organization`,
         },
@@ -203,7 +205,7 @@ export default function RootLayout({
       },
       {
         '@type': 'BroadcastService',
-        name: 'Shubhdarshan Live Pooja & Aarti Broadcast',
+        name: 'Param Darshan Live Pooja & Aarti Broadcast',
         broadcaster: {
           '@id': `${SITE_URL}/#organization`,
         },
