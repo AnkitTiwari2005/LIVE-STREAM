@@ -27,6 +27,8 @@ export class AdminService {
       totalStreams,
       openReports,
       pendingKyc,
+      dakshinaOfferingsCount,
+      walletAgg,
     ] = await Promise.all([
       this.prisma.user.count(),
       this.prisma.streamerProfile.count({ where: { kycStatus: 'APPROVED' } }),
@@ -34,6 +36,8 @@ export class AdminService {
       this.prisma.stream.count(),
       this.prisma.report.count({ where: { status: 'OPEN' } }),
       this.prisma.streamerProfile.count({ where: { kycStatus: 'PENDING' } }),
+      this.prisma.dakshinaOffering.count().catch(() => 0),
+      this.prisma.userWallet.aggregate({ _sum: { balanceCoins: true } }).catch(() => ({ _sum: { balanceCoins: 0 } })),
     ]);
 
     return {
@@ -43,6 +47,8 @@ export class AdminService {
       totalStreams,
       openReports,
       pendingKyc,
+      totalDakshinaOfferings: dakshinaOfferingsCount,
+      totalCoinsInCirculation: walletAgg?._sum?.balanceCoins || 0,
     };
   }
 

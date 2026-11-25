@@ -205,6 +205,10 @@ export default function AdminConsolePage() {
       const auditRes = await fetch(`${apiUrl}/admin/audit-logs`, { headers });
       if (auditRes.ok) setAuditLogs(await auditRes.json());
 
+      // 6.5. Pre-load Users Directory
+      const usersRes = await fetch(`${apiUrl}/admin/users`, { headers });
+      if (usersRes.ok) setUsers(await usersRes.json());
+
       // 7. Occasion Announcement Banner
       const bannerRes = await fetch(`${apiUrl}/admin/banner`);
       if (bannerRes.ok) {
@@ -640,7 +644,7 @@ export default function AdminConsolePage() {
 
       {/* Tab 1: KPI Overview */}
       {activeTab === 'kpi' && stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4">
           <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
             <span className="text-[11px] text-stone-600 dark:text-stone-400 uppercase font-semibold block">Total Users</span>
             <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{stats.totalUsers}</span>
@@ -664,6 +668,14 @@ export default function AdminConsolePage() {
           <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
             <span className="text-[11px] text-rose-700 dark:text-rose-400 uppercase font-semibold block">Open Reports</span>
             <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{stats.openReports}</span>
+          </div>
+          <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
+            <span className="text-[11px] text-amber-500 uppercase font-semibold block">Dakshina Count</span>
+            <span className="text-2xl font-extrabold text-amber-400 mt-1 block">{stats.totalDakshinaOfferings ?? 0}</span>
+          </div>
+          <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
+            <span className="text-[11px] text-emerald-500 uppercase font-semibold block">Circulating Coins</span>
+            <span className="text-2xl font-extrabold text-emerald-400 mt-1 block">{stats.totalCoinsInCirculation ?? 0}</span>
           </div>
         </div>
       )}
@@ -1088,19 +1100,41 @@ export default function AdminConsolePage() {
               type="text"
               value={searchUser}
               onChange={(e) => setSearchUser(e.target.value)}
-              placeholder="Search user by name or email..."
-              className="flex-1 px-3 py-2 bg-stone-900 border border-stone-800 rounded-xl text-xs text-white"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSearchUsers();
+                }
+              }}
+              placeholder="Search user by name or email (press Enter)..."
+              className="flex-1 px-3 py-2 bg-stone-900 border border-stone-800 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold/40"
             />
             <button
               onClick={handleSearchUsers}
-              className="px-4 py-2 bg-orange-700 hover:bg-orange-600 text-white rounded-xl text-xs font-semibold"
+              className="px-4 py-2 bg-orange-700 hover:bg-orange-600 text-white rounded-xl text-xs font-semibold transition"
             >
               Search
             </button>
+            {searchUser && (
+              <button
+                onClick={() => {
+                  setSearchUser('');
+                  apiFetch('/admin/users').then((data: any) => setUsers(data)).catch(() => {});
+                }}
+                className="px-3 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-xl text-xs font-semibold transition"
+              >
+                Clear
+              </button>
+            )}
           </div>
 
           <div className="space-y-2 mt-4">
-            {users.map((u) => (
+            {users.length === 0 ? (
+              <div className="bg-stone-900 border border-stone-800 p-8 rounded-xl text-center text-stone-400 text-xs">
+                No users found matching your search.
+              </div>
+            ) : (
+              users.map((u) => (
               <div key={u.id} className="bg-stone-900 border border-stone-800 p-4 rounded-xl flex items-center justify-between text-xs">
                 <div>
                   <span className="font-bold text-white text-sm block">{u.name} ({u.email})</span>
@@ -1124,7 +1158,7 @@ export default function AdminConsolePage() {
                   )}
                 </div>
               </div>
-            ))}
+            )))}
           </div>
         </div>
       )}
