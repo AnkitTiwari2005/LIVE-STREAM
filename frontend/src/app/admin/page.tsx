@@ -24,6 +24,17 @@ import {
   Award,
   Crown,
   ExternalLink,
+  FolderPlus,
+  Layers,
+  Calendar,
+  Coins,
+  IndianRupee,
+  Download,
+  AlertCircle,
+  RefreshCw,
+  Edit2,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import { purgeClientSession } from '@/lib/auth-session';
@@ -35,7 +46,9 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 export default function AdminConsolePage() {
   const router = useRouter();
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<'kpi' | 'pandits' | 'kyc' | 'streams' | 'reports' | 'wordFilters' | 'users' | 'audit' | 'banner'>('kpi');
+  const [activeTab, setActiveTab] = useState<
+    'kpi' | 'pandits' | 'categories' | 'bookings' | 'dakshina' | 'kyc' | 'streams' | 'reports' | 'wordFilters' | 'users' | 'audit' | 'banner'
+  >('kpi');
   const [stats, setStats] = useState<any>(null);
   const [panditsList, setPanditsList] = useState<any[]>([]);
   const [searchPandit, setSearchPandit] = useState('');
@@ -59,10 +72,45 @@ export default function AdminConsolePage() {
   const [loading, setLoading] = useState(true);
   const [authToken, setAuthToken] = useState<string | null>(null);
 
+  // Categories State
+  const [categoriesList, setCategoriesList] = useState<any[]>([]);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategorySlug, setNewCategorySlug] = useState('');
+  const [newCategoryOrder, setNewCategoryOrder] = useState(0);
+  const [savingCategory, setSavingCategory] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editCategoryForm, setEditCategoryForm] = useState<{ name: string; displayOrder: number; isActive: boolean }>({
+    name: '',
+    displayOrder: 0,
+    isActive: true,
+  });
+
+  // Pooja Bookings Oversight State
+  const [bookingsList, setBookingsList] = useState<any[]>([]);
+  const [bookingsTotal, setBookingsTotal] = useState(0);
+  const [bookingStatusFilter, setBookingStatusFilter] = useState<'ALL' | 'SUCCESS' | 'PENDING' | 'FAILED'>('ALL');
+  const [searchBooking, setSearchBooking] = useState('');
+  const [loadingBookings, setLoadingBookings] = useState(false);
+
+  // Dakshina Ledger State
+  const [dakshinaData, setDakshinaData] = useState<{
+    ledger: any[];
+    platformTotalCoins: number;
+    platformTotalInr: number;
+    platformTotalTransactions: number;
+  }>({
+    ledger: [],
+    platformTotalCoins: 0,
+    platformTotalInr: 0,
+    platformTotalTransactions: 0,
+  });
+  const [searchLedger, setSearchLedger] = useState('');
+  const [payoutStatusMap, setPayoutStatusMap] = useState<Record<string, 'SETTLED' | 'PENDING'>>({});
+
   // M-01: Inline rejection modal — replaces window.prompt() which is blocked in some
   // browsers and leaks the admin URL in some CSP configurations.
   const [rejectModal, setRejectModal] = useState<{ profileId: string; reason: string } | null>(null);
-  const [confirmAction, setConfirmAction] = useState<{ type: 'endStream' | 'deleteWord'; id: string } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'endStream' | 'deleteWord' | 'deleteCategory'; id: string } | null>(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
 
   // Occasion Announcement Banner State
@@ -185,6 +233,22 @@ export default function AdminConsolePage() {
       const panditsRes = await fetch(`${apiUrl}/admin/pandits`, { headers });
       if (panditsRes.ok) setPanditsList(await panditsRes.json());
 
+      // 1.6. Stream Categories
+      const categoriesRes = await fetch(`${apiUrl}/admin/categories`);
+      if (categoriesRes.ok) setCategoriesList(await categoriesRes.json());
+
+      // 1.7. Pooja Bookings (Initial 50)
+      const bookingsRes = await fetch(`${apiUrl}/admin/bookings`, { headers });
+      if (bookingsRes.ok) {
+        const bData = await bookingsRes.json();
+        setBookingsList(bData.data || []);
+        setBookingsTotal(bData.total || 0);
+      }
+
+      // 1.8. Dakshina Ledger
+      const dakshinaRes = await fetch(`${apiUrl}/admin/dakshina-ledger`, { headers });
+      if (dakshinaRes.ok) setDakshinaData(await dakshinaRes.json());
+
       // 2. Pending KYC
       const kycRes = await fetch(`${apiUrl}/streamers/admin/applications`, { headers });
       if (kycRes.ok) setKycList(await kycRes.json());
@@ -205,7 +269,7 @@ export default function AdminConsolePage() {
       const auditRes = await fetch(`${apiUrl}/admin/audit-logs`, { headers });
       if (auditRes.ok) setAuditLogs(await auditRes.json());
 
-      // 6.5. Pre-load Users Directory
+      // 6.5. Pre-load Users Directory so tab is never blank
       const usersRes = await fetch(`${apiUrl}/admin/users`, { headers });
       if (usersRes.ok) setUsers(await usersRes.json());
 
@@ -228,6 +292,156 @@ export default function AdminConsolePage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Sync specific tabs on tab activation
+  useEffect(() => {
+    if (activeTab === 'users' && users.length === 0) {
+      handleSearchUsers();
+    } else if (activeTab === 'bookings') {
+      fetchBookings(bookingStatusFilter);
+    } else if (activeTab === 'dakshina') {
+      fetchDakshinaLedger();
+    } else if (activeTab === 'categories') {
+      fetchCategories();
+    }
+  }, [activeTab]);
+
+  const fetchCategories = async () => {
+    try {
+      const data = await apiFetch<any[]>('/admin/categories');
+      setCategoriesList(data || []);
+    } catch (err) {
+      console.error('Failed to load categories:', err);
+    }
+  };
+
+  const handleCreateCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCategoryName.trim()) return;
+    setSavingCategory(true);
+    try {
+      const slug =
+        newCategorySlug.trim() ||
+        newCategoryName
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
+
+      await apiFetch('/admin/categories', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: newCategoryName.trim(),
+          slug,
+          displayOrder: Number(newCategoryOrder) || 0,
+        }),
+      });
+      setNewCategoryName('');
+      setNewCategorySlug('');
+      setNewCategoryOrder(0);
+      toast.success('Category created successfully!');
+      fetchCategories();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to create category');
+    } finally {
+      setSavingCategory(false);
+    }
+  };
+
+  const handleUpdateCategory = async (id: string) => {
+    try {
+      await apiFetch(`/admin/categories/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(editCategoryForm),
+      });
+      toast.success('Category updated successfully!');
+      setEditingCategoryId(null);
+      fetchCategories();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update category');
+    }
+  };
+
+  const handleToggleCategoryActive = async (id: string, currentActive: boolean) => {
+    try {
+      await apiFetch(`/admin/categories/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ isActive: !currentActive }),
+      });
+      toast.success(`Category ${!currentActive ? 'activated' : 'deactivated'}!`);
+      setCategoriesList((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, isActive: !currentActive } : c))
+      );
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to toggle category');
+    }
+  };
+
+  const handleDeleteCategory = (id: string) => {
+    setConfirmAction({ type: 'deleteCategory', id });
+  };
+
+  const fetchBookings = async (status = bookingStatusFilter) => {
+    setLoadingBookings(true);
+    try {
+      const q = status && status !== 'ALL' ? `?status=${status}` : '';
+      const res = await apiFetch<any>(`/admin/bookings${q}`);
+      setBookingsList(res.data || []);
+      setBookingsTotal(res.total || 0);
+    } catch (err: any) {
+      console.error('Failed to load bookings:', err);
+    } finally {
+      setLoadingBookings(false);
+    }
+  };
+
+  const fetchDakshinaLedger = async () => {
+    try {
+      const res = await apiFetch<any>('/admin/dakshina-ledger');
+      setDakshinaData(res);
+    } catch (err: any) {
+      console.error('Failed to load dakshina ledger:', err);
+    }
+  };
+
+  const exportDakshinaCsv = () => {
+    if (!dakshinaData.ledger.length) {
+      toast.error('No dakshina records to export.');
+      return;
+    }
+    const headers = [
+      'Pandit Name',
+      'Email',
+      'Total Coins',
+      'Amount (INR)',
+      'Offerings Count',
+      'Last Offering At',
+      'Settlement Status',
+    ];
+    const rows = dakshinaData.ledger.map((p) => [
+      `"${(p.panditName || '').replace(/"/g, '""')}"`,
+      `"${p.panditEmail || ''}"`,
+      p.totalCoins || 0,
+      p.totalInr || 0,
+      p.transactionCount || 0,
+      p.lastDakshinaAt ? `"${new Date(p.lastDakshinaAt).toISOString()}"` : 'N/A',
+      `"${payoutStatusMap[p.panditId] || 'PENDING'}"`,
+    ]);
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute(
+      'download',
+      `paramdarshan_dakshina_ledger_${new Date().toISOString().split('T')[0]}.csv`,
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Dakshina Ledger CSV exported successfully!');
   };
 
   const handleSaveBanner = async (newEnabled?: boolean) => {
@@ -420,6 +634,11 @@ export default function AdminConsolePage() {
         setConfirmAction(null);
         loadAdminData();
         toast.success('Stream ended successfully.');
+      } else if (confirmAction.type === 'deleteCategory') {
+        await apiFetch(`/admin/categories/${confirmAction.id}`, { method: 'DELETE' });
+        setCategoriesList((prev) => prev.filter((c) => c.id !== confirmAction.id));
+        setConfirmAction(null);
+        toast.success('Category deleted successfully.');
       } else {
         const wordId = confirmAction.id;
         await apiFetch(`/admin/word-filters/${wordId}`, { method: 'DELETE' });
@@ -620,12 +839,15 @@ export default function AdminConsolePage() {
         {[
           { key: 'kpi', label: 'Overview Metrics' },
           { key: 'pandits', label: `Vedic Pandits (${panditsList.length})` },
+          { key: 'categories', label: `Stream Categories (${categoriesList.length})` },
+          { key: 'bookings', label: `Pooja Bookings (${bookingsTotal || bookingsList.length})` },
+          { key: 'dakshina', label: 'Dakshina Ledger' },
           { key: 'kyc', label: `Pending KYC (${kycList.length})` },
           { key: 'streams', label: `Live Monitor (${liveStreams.length})` },
           { key: 'reports', label: `Safety Reports (${reports.length})` },
           { key: 'wordFilters', label: `Prohibited Words (${wordFilters.length})` },
-          { key: 'users', label: 'User Directory' },
-          { key: 'audit', label: 'Audit Log' },
+          { key: 'users', label: `User Directory (${users.length})` },
+          { key: 'audit', label: `Audit Log (${auditLogs.length})` },
           { key: 'banner', label: `Occasion Banner ${bannerConfig.enabled ? '● Active' : ''}` },
         ].map((tab) => (
           <button
@@ -644,7 +866,7 @@ export default function AdminConsolePage() {
 
       {/* Tab 1: KPI Overview */}
       {activeTab === 'kpi' && stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
             <span className="text-[11px] text-stone-600 dark:text-stone-400 uppercase font-semibold block">Total Users</span>
             <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{stats.totalUsers}</span>
@@ -668,14 +890,6 @@ export default function AdminConsolePage() {
           <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
             <span className="text-[11px] text-rose-700 dark:text-rose-400 uppercase font-semibold block">Open Reports</span>
             <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{stats.openReports}</span>
-          </div>
-          <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
-            <span className="text-[11px] text-amber-500 uppercase font-semibold block">Dakshina Count</span>
-            <span className="text-2xl font-extrabold text-amber-400 mt-1 block">{stats.totalDakshinaOfferings ?? 0}</span>
-          </div>
-          <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
-            <span className="text-[11px] text-emerald-500 uppercase font-semibold block">Circulating Coins</span>
-            <span className="text-2xl font-extrabold text-emerald-400 mt-1 block">{stats.totalCoinsInCirculation ?? 0}</span>
           </div>
         </div>
       )}
@@ -899,7 +1113,547 @@ export default function AdminConsolePage() {
         </div>
       )}
 
-      {/* Tab 2: KYC Applications Queue */}
+      {/* Tab: Stream Categories UI */}
+      {activeTab === 'categories' && (
+        <div className="space-y-6">
+          {/* Summary KPI Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
+              <span className="text-[11px] text-stone-400 uppercase font-semibold block">Total Categories</span>
+              <span className="text-2xl font-extrabold text-white mt-1 block">{categoriesList.length}</span>
+            </div>
+            <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
+              <span className="text-[11px] text-emerald-400 uppercase font-semibold block">Active on Platform</span>
+              <span className="text-2xl font-extrabold text-emerald-400 mt-1 block">
+                {categoriesList.filter((c) => c.isActive !== false).length}
+              </span>
+            </div>
+            <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
+              <span className="text-[11px] text-amber-400 uppercase font-semibold block">Inactive / Hidden</span>
+              <span className="text-2xl font-extrabold text-amber-400 mt-1 block">
+                {categoriesList.filter((c) => c.isActive === false).length}
+              </span>
+            </div>
+          </div>
+
+          {/* Create Category Form */}
+          <div className="bg-stone-900 border border-stone-800 p-5 sm:p-6 rounded-2xl shadow-lg">
+            <h3 className="text-sm font-bold text-white mb-1.5 flex items-center gap-2">
+              <FolderPlus className="w-4 h-4 text-gold" /> Add New Stream Category
+            </h3>
+            <p className="text-xs text-stone-400 mb-4">
+              Create sacred stream categories (e.g. Maha Shivratri, Vedic Havan, Bhagavad Gita, Rudrabhishek) for devotees to discover live broadcasts.
+            </p>
+            <form onSubmit={handleCreateCategory} className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <div className="sm:col-span-2">
+                <input
+                  type="text"
+                  required
+                  value={newCategoryName}
+                  onChange={(e) => {
+                    setNewCategoryName(e.target.value);
+                    if (!newCategorySlug || newCategorySlug === newCategoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-')) {
+                      setNewCategorySlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+                    }
+                  }}
+                  placeholder="Category Name (e.g. Maha Shivratri)"
+                  className="w-full px-3.5 py-2.5 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold"
+                />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  value={newCategorySlug}
+                  onChange={(e) => setNewCategorySlug(e.target.value)}
+                  placeholder="Slug (e.g. maha-shivratri)"
+                  className="w-full px-3.5 py-2.5 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold"
+                />
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  value={newCategoryOrder}
+                  onChange={(e) => setNewCategoryOrder(Number(e.target.value))}
+                  placeholder="Order (0)"
+                  className="w-20 px-3 py-2.5 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold"
+                />
+                <button
+                  type="submit"
+                  disabled={savingCategory}
+                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-obsidian rounded-xl text-xs font-bold transition shadow inline-flex items-center justify-center gap-1.5 disabled:opacity-50"
+                >
+                  <Plus className="w-3.5 h-3.5" /> {savingCategory ? 'Creating...' : 'Create'}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Edit Category Modal */}
+          {editingCategoryId && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+              <div className="bg-stone-900 border border-gold/30 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+                <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+                  <h3 className="font-serif text-base font-bold text-white flex items-center gap-2">
+                    <Edit2 className="w-4 h-4 text-gold" /> Edit Category
+                  </h3>
+                  <button onClick={() => setEditingCategoryId(null)} className="text-stone-400 hover:text-white">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-stone-300 mb-1">Category Name</label>
+                    <input
+                      type="text"
+                      value={editCategoryForm.name}
+                      onChange={(e) => setEditCategoryForm((prev) => ({ ...prev, name: e.target.value }))}
+                      className="w-full px-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white focus:outline-none focus:border-gold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-stone-300 mb-1">Display Order</label>
+                    <input
+                      type="number"
+                      value={editCategoryForm.displayOrder}
+                      onChange={(e) => setEditCategoryForm((prev) => ({ ...prev, displayOrder: Number(e.target.value) }))}
+                      className="w-full px-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white focus:outline-none focus:border-gold"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 pt-2">
+                    <input
+                      type="checkbox"
+                      id="catIsActive"
+                      checked={editCategoryForm.isActive}
+                      onChange={(e) => setEditCategoryForm((prev) => ({ ...prev, isActive: e.target.checked }))}
+                      className="rounded border-stone-700 text-gold focus:ring-0"
+                    />
+                    <label htmlFor="catIsActive" className="text-xs text-stone-300 cursor-pointer">
+                      Category is Active and visible on the website
+                    </label>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 pt-3 border-t border-stone-800">
+                  <button
+                    type="button"
+                    onClick={() => setEditingCategoryId(null)}
+                    className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-xl text-xs font-semibold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateCategory(editingCategoryId)}
+                    className="px-4 py-2 bg-gold hover:bg-gold-deep text-obsidian rounded-xl text-xs font-bold transition shadow"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Categories Table */}
+          <div className="bg-stone-900 border border-stone-800 rounded-2xl overflow-hidden shadow-xl">
+            <div className="p-4 bg-stone-950/60 border-b border-stone-800 flex items-center justify-between">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Layers className="w-4 h-4 text-gold" /> Existing Categories ({categoriesList.length})
+              </h3>
+              <button
+                onClick={fetchCategories}
+                className="text-xs text-stone-400 hover:text-white flex items-center gap-1.5 transition"
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Refresh
+              </button>
+            </div>
+
+            {categoriesList.length === 0 ? (
+              <div className="p-10 text-center text-stone-400 text-xs">
+                No stream categories configured yet. Add your first category above!
+              </div>
+            ) : (
+              <div className="divide-y divide-stone-800">
+                {categoriesList.map((cat) => (
+                  <div key={cat.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-stone-950 border border-stone-800 flex items-center justify-center font-mono text-gold font-bold text-xs shrink-0">
+                        {cat.displayOrder || 0}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-white text-sm truncate">{cat.name}</span>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              cat.isActive !== false
+                                ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/30'
+                                : 'bg-stone-800 text-stone-400 border border-stone-700'
+                            }`}
+                          >
+                            {cat.isActive !== false ? 'Active' : 'Hidden'}
+                          </span>
+                        </div>
+                        <span className="font-mono text-[11px] text-stone-500 block">slug: {cat.slug}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                      <button
+                        onClick={() => handleToggleCategoryActive(cat.id, cat.isActive !== false)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition border ${
+                          cat.isActive !== false
+                            ? 'bg-stone-950 text-stone-300 border-stone-800 hover:bg-stone-800'
+                            : 'bg-emerald-950/60 text-emerald-300 border-emerald-600/40 hover:bg-emerald-900/40'
+                        }`}
+                      >
+                        {cat.isActive !== false ? 'Deactivate' : 'Activate'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingCategoryId(cat.id);
+                          setEditCategoryForm({
+                            name: cat.name,
+                            displayOrder: cat.displayOrder || 0,
+                            isActive: cat.isActive !== false,
+                          });
+                        }}
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-stone-950 hover:bg-stone-800 text-stone-300 border border-stone-800 transition"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCategory(cat.id)}
+                        className="p-1.5 text-stone-500 hover:text-red-400 hover:bg-stone-800 rounded-lg transition"
+                        title="Delete Category"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Private Pooja Bookings Oversight */}
+      {activeTab === 'bookings' && (
+        <div className="space-y-6">
+          {/* Summary KPI Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
+              <span className="text-[11px] text-stone-400 uppercase font-semibold block">Total Bookings</span>
+              <span className="text-2xl font-extrabold text-white mt-1 block">{bookingsTotal}</span>
+            </div>
+            <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
+              <span className="text-[11px] text-emerald-400 uppercase font-semibold block">Confirmed / Success</span>
+              <span className="text-2xl font-extrabold text-emerald-400 mt-1 block">
+                {bookingsList.filter((b) => b.status === 'SUCCESS').length}
+              </span>
+            </div>
+            <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
+              <span className="text-[11px] text-amber-400 uppercase font-semibold block">Pending / Unpaid</span>
+              <span className="text-2xl font-extrabold text-amber-400 mt-1 block">
+                {bookingsList.filter((b) => b.status === 'PENDING').length}
+              </span>
+            </div>
+            <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
+              <span className="text-[11px] text-gold uppercase font-semibold block">Total Dakshina Volume</span>
+              <span className="text-2xl font-extrabold text-gold mt-1 block">
+                {bookingsList.reduce((acc, b) => acc + (b.coins || 0), 0)} coins
+              </span>
+            </div>
+          </div>
+
+          {/* Filter & Search Bar */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-stone-900/60 p-4 rounded-2xl border border-stone-800">
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 absolute left-3 top-3 text-stone-400" />
+              <input
+                type="text"
+                placeholder="Search by devotee, gotra, pandit, or pooja..."
+                value={searchBooking}
+                onChange={(e) => setSearchBooking(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold"
+              />
+            </div>
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+              {(['ALL', 'SUCCESS', 'PENDING', 'FAILED'] as const).map((st) => (
+                <button
+                  key={st}
+                  onClick={() => {
+                    setBookingStatusFilter(st);
+                    fetchBookings(st);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition ${
+                    bookingStatusFilter === st
+                      ? 'bg-gold text-obsidian font-bold shadow'
+                      : 'bg-stone-950 text-stone-400 hover:text-white border border-stone-800'
+                  }`}
+                >
+                  {st === 'ALL' ? 'All Bookings' : st}
+                </button>
+              ))}
+              <button
+                onClick={() => fetchBookings(bookingStatusFilter)}
+                className="p-2 bg-stone-950 hover:bg-stone-800 text-stone-400 hover:text-white rounded-lg border border-stone-800 transition"
+                title="Refresh"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loadingBookings ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
+          </div>
+
+          {/* Bookings List */}
+          <div className="space-y-3">
+            {bookingsList
+              .filter((b) => {
+                if (!searchBooking) return true;
+                const q = searchBooking.toLowerCase();
+                return (
+                  (b.devoteeName || '').toLowerCase().includes(q) ||
+                  (b.devoteeEmail || '').toLowerCase().includes(q) ||
+                  (b.gotra || '').toLowerCase().includes(q) ||
+                  (b.panditName || '').toLowerCase().includes(q) ||
+                  (b.streamTitle || '').toLowerCase().includes(q) ||
+                  (b.prayerMessage || '').toLowerCase().includes(q)
+                );
+              })
+              .map((b) => (
+                <div
+                  key={b.id}
+                  className="bg-stone-900 border border-stone-800 p-4 sm:p-5 rounded-2xl shadow-md hover:border-gold/30 transition flex flex-col lg:flex-row justify-between gap-4"
+                >
+                  <div className="space-y-2 flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-bold text-white text-sm">{b.devoteeName}</span>
+                      {b.devoteeEmail && (
+                        <span className="text-xs text-stone-400">({b.devoteeEmail})</span>
+                      )}
+                      {b.gotra && (
+                        <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-950/60 text-amber-300 border border-amber-600/40">
+                          गोत्र: {b.gotra}
+                        </span>
+                      )}
+                      <span
+                        className={`ml-auto sm:ml-0 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                          b.status === 'SUCCESS'
+                            ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/40'
+                            : b.status === 'PENDING'
+                            ? 'bg-amber-950/60 text-amber-300 border border-amber-500/40'
+                            : 'bg-red-950/60 text-red-400 border border-red-500/40'
+                        }`}
+                      >
+                        {b.status}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-stone-300">
+                      <div>
+                        <span className="text-stone-500">Assigned Pandit:</span>{' '}
+                        <strong className="text-gold font-serif">{b.panditName || 'Temple Priest'}</strong>
+                      </div>
+                      {b.streamTitle && (
+                        <div>
+                          <span className="text-stone-500">Pooja Broadcast:</span>{' '}
+                          <span className="text-stone-200">{b.streamTitle}</span>
+                        </div>
+                      )}
+                      <div>
+                        <span className="text-stone-500">Dakshina:</span>{' '}
+                        <strong className="text-amber-400">{b.coins || 0} Coins</strong>
+                        {b.amount ? ` (₹${Number(b.amount).toFixed(2)})` : ''}
+                      </div>
+                    </div>
+
+                    {b.prayerMessage && (
+                      <div className="bg-stone-950 p-2.5 rounded-xl border border-stone-800 text-xs text-stone-300 italic">
+                        "{b.prayerMessage}"
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="text-right shrink-0 text-[11px] text-stone-500 font-mono flex lg:flex-col justify-between items-end">
+                    <span>{new Date(b.createdAt).toLocaleDateString()}</span>
+                    <span>{new Date(b.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                </div>
+              ))}
+
+            {bookingsList.length === 0 && (
+              <div className="bg-stone-900 border border-stone-800 p-12 text-center rounded-2xl text-stone-400 text-xs">
+                No pooja booking records found matching current criteria.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Pandit Dakshina Payout Ledger */}
+      {activeTab === 'dakshina' && (
+        <div className="space-y-6">
+          {/* Summary Financial KPI Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
+              <span className="text-[11px] text-stone-400 uppercase font-semibold block">Total Platform Dakshina</span>
+              <span className="text-2xl font-extrabold text-gold mt-1 block">
+                {dakshinaData.platformTotalCoins.toLocaleString()} Coins
+              </span>
+              <span className="text-[11px] text-stone-500 block mt-0.5">
+                ₹{dakshinaData.platformTotalInr.toLocaleString()} INR equivalent
+              </span>
+            </div>
+            <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
+              <span className="text-[11px] text-stone-400 uppercase font-semibold block">Total Offerings Received</span>
+              <span className="text-2xl font-extrabold text-white mt-1 block">
+                {dakshinaData.platformTotalTransactions}
+              </span>
+            </div>
+            <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
+              <span className="text-[11px] text-stone-400 uppercase font-semibold block">Active Earning Pandits</span>
+              <span className="text-2xl font-extrabold text-emerald-400 mt-1 block">
+                {dakshinaData.ledger.length}
+              </span>
+            </div>
+            <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm flex flex-col justify-between">
+              <span className="text-[11px] text-stone-400 uppercase font-semibold block">Settlement Export</span>
+              <button
+                onClick={exportDakshinaCsv}
+                className="mt-2 w-full py-2 bg-stone-950 hover:bg-stone-800 text-gold border border-gold/30 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow"
+              >
+                <Download className="w-3.5 h-3.5" /> Export Ledger CSV
+              </button>
+            </div>
+          </div>
+
+          {/* Search Bar */}
+          <div className="flex items-center justify-between gap-3 bg-stone-900/60 p-4 rounded-2xl border border-stone-800">
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 absolute left-3 top-3 text-stone-400" />
+              <input
+                type="text"
+                placeholder="Search pandit by name or email..."
+                value={searchLedger}
+                onChange={(e) => setSearchLedger(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold"
+              />
+            </div>
+            <button
+              onClick={fetchDakshinaLedger}
+              className="px-3.5 py-2 bg-stone-950 hover:bg-stone-800 text-stone-300 rounded-xl border border-stone-800 text-xs font-semibold flex items-center gap-1.5 transition"
+            >
+              <RefreshCw className="w-3.5 h-3.5" /> Refresh Ledger
+            </button>
+          </div>
+
+          {/* Ledger Table */}
+          <div className="bg-stone-900 border border-stone-800 rounded-2xl overflow-hidden shadow-xl">
+            <div className="p-4 bg-stone-950/60 border-b border-stone-800 flex items-center justify-between">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Coins className="w-4 h-4 text-gold" /> Pandit Dakshina Breakdown & Settlement Roster
+              </h3>
+              <span className="text-xs text-stone-400 font-mono">Rate: 10 Coins = ₹1 INR</span>
+            </div>
+
+            {dakshinaData.ledger.length === 0 ? (
+              <div className="p-10 text-center text-stone-400 text-xs">
+                No dakshina offerings recorded yet on the platform.
+              </div>
+            ) : (
+              <div className="divide-y divide-stone-800">
+                {dakshinaData.ledger
+                  .filter((p) => {
+                    if (!searchLedger) return true;
+                    const q = searchLedger.toLowerCase();
+                    return (
+                      (p.panditName || '').toLowerCase().includes(q) ||
+                      (p.panditEmail || '').toLowerCase().includes(q)
+                    );
+                  })
+                  .map((p) => {
+                    const isSettled = payoutStatusMap[p.panditId] === 'SETTLED';
+                    return (
+                      <div
+                        key={p.panditId}
+                        className="p-4 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 text-xs"
+                      >
+                        <div className="flex items-center gap-3.5">
+                          <div className="w-11 h-11 rounded-xl overflow-hidden bg-stone-950 border border-gold/30 shrink-0">
+                            <img
+                              src={p.panditAvatarUrl || '/images/pandits/pandit-rohit-tiwari.webp'}
+                              alt={p.panditName}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/images/pandits/pandit-rohit-tiwari.webp';
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <span className="font-bold text-white text-sm block font-serif">{p.panditName}</span>
+                            <span className="text-stone-400 text-[11px]">{p.panditEmail}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-6">
+                          <div>
+                            <span className="text-[10px] text-stone-400 uppercase font-semibold block">Total Coins</span>
+                            <span className="font-extrabold text-gold text-base flex items-center gap-1">
+                              <Coins className="w-3.5 h-3.5" /> {p.totalCoins.toLocaleString()}
+                            </span>
+                          </div>
+
+                          <div>
+                            <span className="text-[10px] text-stone-400 uppercase font-semibold block">Net Value (INR)</span>
+                            <span className="font-extrabold text-emerald-400 text-base">
+                              ₹{p.totalInr.toFixed(2)}
+                            </span>
+                          </div>
+
+                          <div>
+                            <span className="text-[10px] text-stone-400 uppercase font-semibold block">Offerings</span>
+                            <span className="font-bold text-white text-sm">
+                              {p.transactionCount} transactions
+                            </span>
+                          </div>
+
+                          <div>
+                            <span className="text-[10px] text-stone-400 uppercase font-semibold block">Last Offering</span>
+                            <span className="text-stone-300 font-mono text-[11px]">
+                              {p.lastDakshinaAt ? new Date(p.lastDakshinaAt).toLocaleDateString() : 'N/A'}
+                            </span>
+                          </div>
+
+                          {/* Payout Tracking Toggle */}
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                setPayoutStatusMap((prev) => ({
+                                  ...prev,
+                                  [p.panditId]: isSettled ? 'PENDING' : 'SETTLED',
+                                }));
+                                toast.success(
+                                  `Settlement status for ${p.panditName} marked as ${
+                                    isSettled ? 'PENDING' : 'SETTLED'
+                                  }`
+                                );
+                              }}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition border ${
+                                isSettled
+                                  ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40 hover:bg-emerald-900/60'
+                                  : 'bg-amber-950/40 text-amber-300 border-amber-500/40 hover:bg-amber-900/40'
+                              }`}
+                            >
+                              {isSettled ? '✓ Settled' : 'Pending Payout'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       {activeTab === 'kyc' && (
         <div className="space-y-4">
           {kycList.length === 0 ? (
@@ -1092,92 +1846,213 @@ export default function AdminConsolePage() {
         </div>
       )}
 
-      {/* Tab 6: User Management */}
+      {/* Tab: User Directory & Access Control */}
       {activeTab === 'users' && (
         <div className="space-y-4">
-          <div className="flex gap-2 max-w-md">
-            <input
-              type="text"
-              value={searchUser}
-              onChange={(e) => setSearchUser(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleSearchUsers();
-                }
-              }}
-              placeholder="Search user by name or email (press Enter)..."
-              className="flex-1 px-3 py-2 bg-stone-900 border border-stone-800 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold/40"
-            />
-            <button
-              onClick={handleSearchUsers}
-              className="px-4 py-2 bg-orange-700 hover:bg-orange-600 text-white rounded-xl text-xs font-semibold transition"
-            >
-              Search
-            </button>
-            {searchUser && (
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-stone-900/60 p-4 rounded-2xl border border-stone-800">
+            <div className="flex gap-2 flex-1 max-w-md">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 absolute left-3 top-3 text-stone-400" />
+                <input
+                  type="text"
+                  value={searchUser}
+                  onChange={(e) => setSearchUser(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSearchUsers();
+                  }}
+                  placeholder="Search user by name or email (Press Enter)..."
+                  className="w-full pl-9 pr-4 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold"
+                />
+              </div>
+              <button
+                onClick={handleSearchUsers}
+                className="px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-obsidian rounded-xl text-xs font-bold transition shadow"
+              >
+                Search
+              </button>
+              {searchUser && (
+                <button
+                  onClick={() => {
+                    setSearchUser('');
+                    apiFetch('/admin/users').then((data) => setUsers(data || []));
+                  }}
+                  className="px-3 py-2 bg-stone-950 hover:bg-stone-800 text-stone-400 rounded-xl text-xs transition border border-stone-800"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            <div className="text-xs text-stone-400 flex items-center gap-3">
+              <span>Total in directory: <strong className="text-white">{users.length}</strong></span>
               <button
                 onClick={() => {
                   setSearchUser('');
-                  apiFetch('/admin/users').then((data: any) => setUsers(data)).catch(() => {});
+                  apiFetch('/admin/users').then((data) => setUsers(data || []));
                 }}
-                className="px-3 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-xl text-xs font-semibold transition"
+                className="p-1.5 text-stone-400 hover:text-white rounded-lg transition"
+                title="Refresh user list"
               >
-                Clear
+                <RefreshCw className="w-3.5 h-3.5" />
               </button>
-            )}
+            </div>
           </div>
 
-          <div className="space-y-2 mt-4">
-            {users.length === 0 ? (
-              <div className="bg-stone-900 border border-stone-800 p-8 rounded-xl text-center text-stone-400 text-xs">
-                No users found matching your search.
-              </div>
-            ) : (
-              users.map((u) => (
-              <div key={u.id} className="bg-stone-900 border border-stone-800 p-4 rounded-xl flex items-center justify-between text-xs">
-                <div>
-                  <span className="font-bold text-white text-sm block">{u.name} ({u.email})</span>
-                  <span className="text-stone-400">Role: {u.role} • Status: {u.status}</span>
+          <div className="space-y-3">
+            {users.map((u) => (
+              <div
+                key={u.id}
+                className="bg-stone-900 border border-stone-800 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs shadow-md hover:border-gold/30 transition"
+              >
+                <div className="space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-bold text-white text-sm">{u.name}</span>
+                    <span className="text-stone-400 text-xs">({u.email})</span>
+
+                    {/* Role badge */}
+                    <span
+                      className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                        u.role === 'ADMIN'
+                          ? 'bg-rose-950/70 text-rose-300 border border-rose-500/40'
+                          : u.role === 'STREAMER'
+                          ? 'bg-amber-950/70 text-amber-300 border border-amber-500/40'
+                          : 'bg-stone-800 text-stone-300 border border-stone-700'
+                      }`}
+                    >
+                      {u.role}
+                    </span>
+
+                    {/* Status badge */}
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        u.status === 'ACTIVE'
+                          ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/40'
+                          : u.status === 'SUSPENDED'
+                          ? 'bg-amber-950/60 text-amber-400 border border-amber-500/40'
+                          : 'bg-red-950/60 text-red-400 border border-red-500/40'
+                      }`}
+                    >
+                      {u.status}
+                    </span>
+
+                    {/* 2FA badge */}
+                    {u.isTwoFactorEnabled ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-semibold" title="2FA Active">
+                        <ShieldCheck className="w-3 h-3" /> 2FA
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[10px] text-stone-500 font-semibold" title="2FA Disabled">
+                        <Lock className="w-3 h-3" /> No 2FA
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="text-[11px] text-stone-500 font-mono">
+                    ID: {u.id} • Joined: {new Date(u.createdAt).toLocaleDateString()}
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  {u.status === 'ACTIVE' ? (
-                    <button
-                      onClick={() => handleUserStatus(u.id, 'BANNED')}
-                      className="px-3 py-1 bg-red-700 hover:bg-red-600 text-white rounded-lg text-xs font-semibold"
-                    >
-                      Ban User
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => handleUserStatus(u.id, 'ACTIVE')}
-                      className="px-3 py-1 bg-green-700 hover:bg-green-600 text-white rounded-lg text-xs font-semibold"
-                    >
-                      Restore User
-                    </button>
+
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                  {u.role !== 'ADMIN' && (
+                    <>
+                      {u.status === 'ACTIVE' ? (
+                        <button
+                          onClick={() => handleUserStatus(u.id, 'BANNED')}
+                          className="px-3.5 py-1.5 bg-red-950/60 hover:bg-red-900/60 text-red-300 border border-red-800/50 rounded-xl text-xs font-semibold transition"
+                        >
+                          Ban User
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleUserStatus(u.id, 'ACTIVE')}
+                          className="px-3.5 py-1.5 bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-800/50 rounded-xl text-xs font-semibold transition"
+                        >
+                          Restore User
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
-            )))}
+            ))}
+
+            {users.length === 0 && (
+              <div className="bg-stone-900 border border-stone-800 p-12 text-center rounded-2xl text-stone-400 text-xs">
+                No users found matching current query.
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* Tab 6: Audit Log (Immutable) */}
+      {/* Tab: Audit Log (Immutable) */}
       {activeTab === 'audit' && (
-        <div className="space-y-2">
-          {auditLogs.map((log) => (
-            <div key={log.id} className="bg-stone-900 border border-stone-800 p-3 rounded-xl text-xs flex items-center justify-between">
-              <div>
-                <span className="font-semibold text-orange-700 dark:text-orange-400 mr-2">[{log.action}]</span>
-                <span className="text-white">{log.targetResource}</span>
-                <span className="text-stone-600 dark:text-stone-400 block text-[11px] mt-0.5">By: {log.actorEmail || 'System'}</span>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between bg-stone-900/60 p-4 rounded-2xl border border-stone-800 text-xs">
+            <span className="text-stone-300">
+              Showing immutable platform audit trail (<strong className="text-white">{auditLogs.length}</strong> events logged)
+            </span>
+            <button
+              onClick={() => {
+                const token = localStorage.getItem('pooja_token');
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+                fetch(`${apiUrl}/admin/audit-logs`, { headers: { Authorization: `Bearer ${token}` } })
+                  .then((r) => r.json())
+                  .then((data) => setAuditLogs(data || []));
+              }}
+              className="px-3 py-1.5 bg-stone-950 hover:bg-stone-800 text-stone-300 rounded-xl border border-stone-800 flex items-center gap-1.5 transition"
+            >
+              <RefreshCw className="w-3.5 h-3.5" /> Refresh Logs
+            </button>
+          </div>
+
+          <div className="space-y-2.5">
+            {auditLogs.map((log) => (
+              <div
+                key={log.id}
+                className="bg-stone-900 border border-stone-800 p-4 rounded-2xl text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md"
+              >
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-mono font-bold text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-500/30">
+                      [{log.action}]
+                    </span>
+                    <span className="text-white font-semibold">{log.targetResource}</span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 text-[11px] text-stone-400">
+                    <span>Actor: <strong className="text-stone-300">{log.actorEmail || 'System'}</strong></span>
+                    {log.ipAddress && <span>• IP: {log.ipAddress}</span>}
+                  </div>
+
+                  {log.details && typeof log.details === 'object' && Object.keys(log.details).length > 0 && (
+                    <div className="mt-1.5 flex flex-wrap gap-1.5 pt-1">
+                      {Object.entries(log.details).map(([k, v]) => (
+                        <span
+                          key={k}
+                          className="text-[10px] font-mono px-2 py-0.5 rounded bg-stone-950 text-stone-400 border border-stone-800"
+                        >
+                          {k}: {typeof v === 'object' ? JSON.stringify(v) : String(v)}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <span className="text-stone-400 font-mono text-[11px] shrink-0 self-end sm:self-center">
+                  {new Date(log.createdAt).toLocaleString()}
+                </span>
               </div>
-              <span className="text-stone-400 font-mono text-[11px]">
-                {new Date(log.createdAt).toLocaleString()}
-              </span>
-            </div>
-          ))}
+            ))}
+
+            {auditLogs.length === 0 && (
+              <div className="bg-stone-900 border border-stone-800 p-12 text-center rounded-2xl text-stone-400 text-xs space-y-1">
+                <AlertCircle className="w-6 h-6 text-stone-500 mx-auto mb-2" />
+                <p className="font-bold text-white text-sm">No audit logs recorded yet</p>
+                <p>Immutable moderation, verification, and kill switch events will automatically appear here.</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -1413,13 +2288,27 @@ export default function AdminConsolePage() {
       )}
       <ConfirmDialog
         isOpen={Boolean(confirmAction)}
-        title={confirmAction?.type === 'endStream' ? 'Emergency Force-End Stream' : 'Remove Chat Filter Word'}
+        title={
+          confirmAction?.type === 'endStream'
+            ? 'Emergency Force-End Stream'
+            : confirmAction?.type === 'deleteCategory'
+            ? 'Delete Stream Category'
+            : 'Remove Chat Filter Word'
+        }
         description={
           confirmAction?.type === 'endStream'
             ? 'Emergency Action: Force end this stream immediately on LiveKit SFU? Connected participants will be disconnected right away.'
+            : confirmAction?.type === 'deleteCategory'
+            ? 'Delete this category? If any streams are assigned to it, the action will be blocked to protect platform integrity.'
             : 'Remove this word from the prohibited chat filter list?'
         }
-        confirmLabel={confirmAction?.type === 'endStream' ? 'Force End Stream' : 'Remove Word'}
+        confirmLabel={
+          confirmAction?.type === 'endStream'
+            ? 'Force End Stream'
+            : confirmAction?.type === 'deleteCategory'
+            ? 'Delete Category'
+            : 'Remove Word'
+        }
         cancelLabel="Cancel"
         variant="danger"
         loading={confirmBusy}

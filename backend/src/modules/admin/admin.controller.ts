@@ -104,6 +104,12 @@ export class AdminController {
     return this.adminService.updateCategory(id, dto.name, dto.displayOrder, dto.isActive);
   }
 
+  @Delete('categories/:id')
+  @ApiOperation({ summary: 'Delete a stream category if no streams are linked' })
+  async deleteCategory(@Param('id') id: string) {
+    return this.adminService.deleteCategory(id);
+  }
+
   // --- Prohibited Words (FR-M6) ---
   @Get('word-filters')
   @ApiOperation({ summary: 'Get list of prohibited chat words' })
@@ -192,5 +198,27 @@ export class AdminController {
       adminId,
       adminEmail,
     );
+  }
+
+  // --- Pooja Booking Oversight ---
+  @Get('bookings')
+  @ApiOperation({ summary: 'List and search pooja booking records with devotee gotra and assigned pandit' })
+  async getPoojaBookings(
+    @Query('status') status?: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.adminService.getPoojaBookings(
+      status,
+      page ? Number(page) : 1,
+      limit ? Number(limit) : 50,
+    );
+  }
+
+  // --- Pandit Dakshina Payout Ledger ---
+  @Get('dakshina-ledger')
+  @ApiOperation({ summary: 'Financial settlement view of accumulated Dakshina per pandit' })
+  async getDakshinaLedger() {
+    return this.adminService.getDakshinaLedger();
   }
 }

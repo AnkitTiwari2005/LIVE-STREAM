@@ -27,17 +27,13 @@ export class AdminService {
       totalStreams,
       openReports,
       pendingKyc,
-      dakshinaOfferingsCount,
-      walletAgg,
     ] = await Promise.all([
-      this.prisma.user.count().catch(() => 0),
-      this.prisma.streamerProfile.count({ where: { kycStatus: 'APPROVED' } }).catch(() => 0),
-      this.prisma.stream.count({ where: { status: StreamStatus.LIVE } }).catch(() => 0),
-      this.prisma.stream.count().catch(() => 0),
-      this.prisma.report.count({ where: { status: 'OPEN' } }).catch(() => 0),
-      this.prisma.streamerProfile.count({ where: { kycStatus: 'PENDING' } }).catch(() => 0),
-      this.prisma.dakshinaOffering.count().catch(() => 0),
-      this.prisma.userWallet.aggregate({ _sum: { balanceCoins: true } }).catch(() => ({ _sum: { balanceCoins: 0 } })),
+      this.prisma.user.count(),
+      this.prisma.streamerProfile.count({ where: { kycStatus: 'APPROVED' } }),
+      this.prisma.stream.count({ where: { status: StreamStatus.LIVE } }),
+      this.prisma.stream.count(),
+      this.prisma.report.count({ where: { status: 'OPEN' } }),
+      this.prisma.streamerProfile.count({ where: { kycStatus: 'PENDING' } }),
     ]);
 
     return {
@@ -47,8 +43,6 @@ export class AdminService {
       totalStreams,
       openReports,
       pendingKyc,
-      totalDakshinaOfferings: dakshinaOfferingsCount,
-      totalCoinsInCirculation: walletAgg?._sum?.balanceCoins || 0,
     };
   }
 
@@ -317,6 +311,147 @@ export class AdminService {
       ...payload,
       updatedAt: row.updatedAt,
     };
+  }
+
+  // --- Pooja Booking Oversight (DakshinaOffering = booking record) ---
+  async getPoojaBookings(status?: string, page = 1, limit = 50) {
+    const where: any = { status: 'SUCCESS' };
+    if (status && status !== 'ALL') {
+      where.status = status;
+    } else {
+      // Show all statuses for admin overview
+      delete where.status;
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [offerings, total] = await Promise.all([
+      this.prisma.dakshinaOffering.findMany({
+        where,
+        include: {
+          stream: {
+            select: {
+              id: true,
+              title: true,
+              streamer: {
+                select: { id: true, name: true, email: true },
+              },
+            },
+          },
+          devotee: {
+            select: { id: true, name: true, email: true },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.dakshinaOffering.count({ where }),
+    ]);
+
+    return {
+      data: offerings.map((o) => ({
+        id: o.id,
+        devoteeName: o.devoteeName,
+        devoteeEmail: o.devotee?.email || null,
+        gotra: o.gotra || null,
+        panditName: o.stream?.streamer?.name || null,
+        panditEmail: o.stream?.streamer?.email || null,
+        streamTitle: o.stream?.title || null,
+        coins: o.coins || 0,
+        amount: o.amount ? Number(o.amount) : null,
+        prayerMessage: o.prayerMessage || null,
+        status: o.status,
+        provider: o.provider,
+        createdAt: o.createdAt,
+        updatedAt: o.updatedAt,
+      })),
+      total,
+      page,
+      limit,
+    };
+  }
+
+  // --- Dakshina Payout Ledger ---
+  async getDakshinaLedger() {
+    // Aggregate successful dakshina offerings grouped by pandit (stream.streamerId)
+    const offerings = await this.prisma.dakshinaOffering.findMany({
+      where: { status: 'SUCCESS' },
+      include: {
+        stream: {
+          select: {
+            streamerId: true,
+            streamer: {
+              select: { id: true, name: true, email: true, avatarUrl: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Group by pandit
+    const panditMap = new Map<string, {
+      panditId: string;
+      panditName: string;
+      panditEmail: string;
+      panditAvatarUrl: string | null;
+      totalCoins: number;
+      transactionCount: number;
+      lastDakshinaAt: Date | null;
+    }>();
+
+    for (const o of offerings) {
+      if (!o.stream?.streamer) continue;
+      const { id: panditId, name, email, avatarUrl } = o.stream.streamer;
+      const existing = panditMap.get(panditId);
+      if (existing) {
+        existing.totalCoins += o.coins || 0;
+        existing.transactionCount += 1;
+        if (!existing.lastDakshinaAt || o.createdAt > existing.lastDakshinaAt) {
+          existing.lastDakshinaAt = o.createdAt;
+        }
+      } else {
+        panditMap.set(panditId, {
+          panditId,
+          panditName: name,
+          panditEmail: email,
+          panditAvatarUrl: avatarUrl || null,
+          totalCoins: o.coins || 0,
+          transactionCount: 1,
+          lastDakshinaAt: o.createdAt,
+        });
+      }
+    }
+
+    const ledger = Array.from(panditMap.values())
+      .sort((a, b) => b.totalCoins - a.totalCoins)
+      .map((p) => ({
+        ...p,
+        totalInr: parseFloat((p.totalCoins / 10).toFixed(2)),
+      }));
+
+    const platformTotalCoins = ledger.reduce((acc, p) => acc + p.totalCoins, 0);
+    const platformTotalTransactions = ledger.reduce((acc, p) => acc + p.transactionCount, 0);
+
+    return {
+      ledger,
+      platformTotalCoins,
+      platformTotalInr: parseFloat((platformTotalCoins / 10).toFixed(2)),
+      platformTotalTransactions,
+    };
+  }
+
+  // --- Delete Category ---
+  async deleteCategory(id: string) {
+    // Verify no active streams use this category before deletion
+    const usageCount = await this.prisma.stream.count({ where: { categoryId: id } });
+    if (usageCount > 0) {
+      throw new BadRequestException(
+        `Cannot delete category: ${usageCount} stream(s) are assigned to it. Reassign or archive them first.`,
+      );
+    }
+    return this.prisma.streamCategory.delete({ where: { id } });
   }
 
   // --- Pandit Management & Special Badges ---
