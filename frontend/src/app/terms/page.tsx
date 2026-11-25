@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'Terms of Service',
   description:
     'Terms and Conditions for using Shubhdarshan live devotional streaming, Vedic pooja sessions, and astrological consultations under the Information Technology Act, 2000.',
-  alternates: { canonical: '/terms' },
+  alternates: { canonical: '/terms/' },
 };
 
 export default function TermsPage() {

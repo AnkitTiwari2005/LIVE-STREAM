@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: 'Grievance Redressal Mechanism',
   description:
     'Designated Resident Grievance Officer details and statutory dispute escalation procedures under Rule 3(2) of the Information Technology Rules, 2021.',
-  alternates: { canonical: '/grievance' },
+  alternates: { canonical: '/grievance/' },
 };
 
 export default function GrievancePage() {

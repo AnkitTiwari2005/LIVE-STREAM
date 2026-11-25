@@ -13,6 +13,7 @@ const compression = require('compression');
 import helmet from 'helmet';
 import { validateProductionSecrets } from './common/config/validate-env';
 import { isDevMode, isProductionLike } from './common/runtime-mode';
+import { isAllowedSocketOrigin } from './modules/chat/chat.gateway';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -22,7 +23,7 @@ async function bootstrap() {
 
   // R-08: Resolve the canonical site origin once at startup.
   // All sitemap, robots.txt, llms.txt and private-link URLs are built from this value.
-  // Set FRONTEND_ORIGIN in production (e.g. https://shubhdarshan.com).
+  // Set FRONTEND_ORIGIN in production (e.g. https://paramdarshan.com).
   // Falls back to http://localhost:3000 in non-production local dev only (validate-env requires FRONTEND_ORIGIN in prod).
   const siteOrigin = (process.env.FRONTEND_ORIGIN || 'http://localhost:3000').replace(/\/$/, '');
 
@@ -61,15 +62,26 @@ async function bootstrap() {
   );
 
   // H-09: Removed '*' wildcard fallback — FRONTEND_ORIGIN is now required at boot
-  // (validate-env.ts enforces this in production). In local dev, set FRONTEND_ORIGIN
-  // in .env.local to http://localhost:3000. The '*' fallback allowed any origin to
-  // send credentialed requests in dev builds that leaked to staging/prod.
+  // (validate-env.ts enforces this in production). Reuse the shared allowlist helper so
+  // both apex (https://paramdarshan.com) and www (https://www.paramdarshan.com) work cleanly.
   app.enableCors({
-    origin: siteOrigin,
+    origin: (origin, callback) => callback(null, isAllowedSocketOrigin(origin)),
     credentials: true,
   });
 
   const expressApp = app.getHttpAdapter().getInstance();
+
+  // Canonical www -> apex 301 redirect for browser GET/HEAD routes so SEO equity
+  // stays consolidated on the primary origin (when DOMAIN is configured without www).
+  const configuredDomain = (process.env.DOMAIN || '').trim().toLowerCase().replace(/^www\./, '');
+  if (configuredDomain && !siteOrigin.toLowerCase().includes(`//www.${configuredDomain}`)) {
+    expressApp.use((req: any, res: any, next: any) => {
+      if ((req.method === 'GET' || req.method === 'HEAD') && (req.hostname || '').toLowerCase() === `www.${configuredDomain}`) {
+        return res.redirect(301, `${siteOrigin}${req.originalUrl}`);
+      }
+      next();
+    });
+  }
 
   // SD-SEC-2026-004: Strict Anti-Cache Enforcement on all REST API endpoints.
   // Prevents Hostinger edge CDN (hcdn) and browser HTTP caches from injecting default
@@ -128,13 +140,13 @@ Sitemap: ${siteOrigin}/sitemap.xml
 
 ## Core Services & Pages
 - [Live Darshan Broadcasts](${siteOrigin}/): Real-time WebRTC and HLS live streams from registered temples and spiritual sanctuaries.
-- [Free Vedic Kundli & Charts](${siteOrigin}/kundli): Free instant Janam Kundli, Lagna (D1) and Navamsa (D9) SVG charts, and client-side PDF export.
-- [Sacred Poojas & Schedule](${siteOrigin}/schedule): Daily live aarti, havan yagya, and Vedic anushthan schedule.
-- [Verified Vedic Pandits](${siteOrigin}/schedule): Verified Acharyas and priests with authentic credentials and lineage.
-- [Devotee Help & FAQ](${siteOrigin}/faq): Frequently asked questions on sacred coins, pooja bookings, and technical support.
-- [Contact Support](${siteOrigin}/contact): Customer care (+91-92122-83098, WhatsApp +91-96708-42038, Email paramdarshan.com@gmail.com), Acharya onboarding, and platform inquiries.
-- [Terms & DPDP Act 2023 Compliance](${siteOrigin}/terms): Legal terms, 18+ age verification, and personal data protection policy.
-- [Privacy Policy](${siteOrigin}/privacy): Digital personal data handling, encryption standards, and retention schedules.
+- [Free Vedic Kundli & Charts](${siteOrigin}/kundli/): Free instant Janam Kundli, Lagna (D1) and Navamsa (D9) SVG charts, and client-side PDF export.
+- [Sacred Poojas & Schedule](${siteOrigin}/schedule/): Daily live aarti, havan yagya, and Vedic anushthan schedule.
+- [Verified Vedic Pandits](${siteOrigin}/schedule/): Verified Acharyas and priests with authentic credentials and lineage.
+- [Devotee Help & FAQ](${siteOrigin}/faq/): Frequently asked questions on sacred coins, pooja bookings, and technical support.
+- [Contact Support](${siteOrigin}/contact/): Customer care (+91-92122-83098, WhatsApp +91-96708-42038, Email paramdarshan.com@gmail.com), Acharya onboarding, and platform inquiries.
+- [Terms & DPDP Act 2023 Compliance](${siteOrigin}/terms/): Legal terms, 18+ age verification, and personal data protection policy.
+- [Privacy Policy](${siteOrigin}/privacy/): Digital personal data handling, encryption standards, and retention schedules.
 
 ## Machine-Readable Resources & APIs
 - [Sitemap XML](${siteOrigin}/sitemap.xml): Machine-readable index of all public canonical routes.
@@ -179,67 +191,67 @@ Sitemap: ${siteOrigin}/sitemap.xml
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>${siteOrigin}/pooja</loc>
+    <loc>${siteOrigin}/pooja/</loc>
     <lastmod>${today}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>${siteOrigin}/schedule</loc>
+    <loc>${siteOrigin}/schedule/</loc>
     <lastmod>${today}</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>${siteOrigin}/kundli</loc>
+    <loc>${siteOrigin}/kundli/</loc>
     <lastmod>${today}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>${siteOrigin}/about</loc>
+    <loc>${siteOrigin}/about/</loc>
     <lastmod>${today}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>${siteOrigin}/faq</loc>
+    <loc>${siteOrigin}/faq/</loc>
     <lastmod>${today}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>${siteOrigin}/contact</loc>
+    <loc>${siteOrigin}/contact/</loc>
     <lastmod>${today}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>${siteOrigin}/pandit-guidelines</loc>
+    <loc>${siteOrigin}/pandit-guidelines/</loc>
     <lastmod>${today}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>${siteOrigin}/terms</loc>
+    <loc>${siteOrigin}/terms/</loc>
     <lastmod>${today}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>${siteOrigin}/privacy</loc>
+    <loc>${siteOrigin}/privacy/</loc>
     <lastmod>${today}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>${siteOrigin}/refund</loc>
+    <loc>${siteOrigin}/refund/</loc>
     <lastmod>${today}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>${siteOrigin}/grievance</loc>
+    <loc>${siteOrigin}/grievance/</loc>
     <lastmod>${today}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>

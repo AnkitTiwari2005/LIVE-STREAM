@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'Refund & Cancellation Policy',
   description:
     'Clear guidelines on Shubhdarshan Sacred Coins, failed payment auto-reversals, and cancellation terms under the Consumer Protection (E-Commerce) Rules, 2020.',
-  alternates: { canonical: '/refund' },
+  alternates: { canonical: '/refund/' },
 };
 
 export default function RefundPage() {

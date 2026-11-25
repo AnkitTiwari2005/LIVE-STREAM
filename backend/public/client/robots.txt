@@ -50,5 +50,5 @@ Disallow: /studio/
 Disallow: /admin/
 
 # Sitemaps & Machine-Readable AI Knowledge Manifest
-Sitemap: https://darkturquoise-louse-359917.hostingersite.com/sitemap.xml
-Sitemap: https://darkturquoise-louse-359917.hostingersite.com/llms.txt
+Sitemap: https://paramdarshan.com/sitemap.xml
+Sitemap: https://paramdarshan.com/llms.txt

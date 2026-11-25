@@ -45,7 +45,7 @@ const devanagari = Noto_Sans_Devanagari({
 
 // R-08: Use env var so the production domain is set via NEXT_PUBLIC_SITE_URL
 // instead of the staging hostname being hardcoded in source.
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://darkturquoise-louse-359917.hostingersite.com';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://paramdarshan.com';
 
 export const viewport: Viewport = {
   // M-11: Use media-based themeColor so mobile browser chrome matches the active theme.

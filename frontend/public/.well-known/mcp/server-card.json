@@ -3,8 +3,8 @@
   "name": "Shubhdarshan MCP Server",
   "version": "1.0.0",
   "description": "Vedic Astrology, Live Temple Darshan, and Sacred Pooja Rituals Model Context Protocol (MCP) Server",
-  "endpoint": "https://darkturquoise-louse-359917.hostingersite.com/api/v1",
-  "homepage": "https://darkturquoise-louse-359917.hostingersite.com",
+  "endpoint": "https://paramdarshan.com/api/v1",
+  "homepage": "https://paramdarshan.com",
   "capabilities": {
     "tools": true,
     "resources": true,

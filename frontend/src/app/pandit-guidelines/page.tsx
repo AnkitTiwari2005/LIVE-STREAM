@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'Vedic Pandit Verification & Code of Ethics',
   description:
     'Stringent accreditation standards, priesthood credential verification, and strict anti-superstition guidelines for streamers on Shubhdarshan.',
-  alternates: { canonical: '/pandit-guidelines' },
+  alternates: { canonical: '/pandit-guidelines/' },
 };
 
 export default function PanditGuidelinesPage() {

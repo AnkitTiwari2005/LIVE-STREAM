@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'Privacy Policy (DPDP Act 2023 Compliant)',
   description:
     'Comprehensive Privacy Notice for Shubhdarshan under the Digital Personal Data Protection Act, 2023 (DPDP Act) and Indian IT Rules.',
-  alternates: { canonical: '/privacy' },
+  alternates: { canonical: '/privacy/' },
 };
 
 export default function PrivacyPage() {

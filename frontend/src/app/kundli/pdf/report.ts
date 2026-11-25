@@ -21,7 +21,7 @@ function brand(lang: Lang, kind: string, assets: PdfAssets): Brand {
     name: lang === 'hi' ? 'शुभदर्शन' : 'Shubhdarshan',
     tagline: t.brandTagline,
     reportKind: kind,
-    website: 'www.shubhdarshan.com',
+    website: 'paramdarshan.com',
     addressLine: lang === 'hi'
       ? 'शुभदर्शन डिवोशनल मीडिया प्रा. लि. • रोहिणी सेक्टर 15, दिल्ली 110089 • paramdarshan.com@gmail.com'
       : 'Shubhdarshan Devotional Media Pvt. Ltd. • Rohini Sector 15, Delhi 110089 • paramdarshan.com@gmail.com',
