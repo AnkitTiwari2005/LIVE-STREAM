@@ -27,9 +27,18 @@ async function bootstrap() {
   // Falls back to http://localhost:3000 in non-production local dev only (validate-env requires FRONTEND_ORIGIN in prod).
   const siteOrigin = (process.env.FRONTEND_ORIGIN || 'http://localhost:3000').replace(/\/$/, '');
 
-  const app = await NestFactory.create(AppModule, {
-    rawBody: true, // Required for cryptographic SHA-256 HMAC LiveKit Webhook verification
-  });
+  logger.log(`Configured siteOrigin: ${siteOrigin}. Creating Nest application...`);
+
+  let app: any;
+  try {
+    app = await NestFactory.create(AppModule, {
+      rawBody: true, // Required for cryptographic SHA-256 HMAC LiveKit Webhook verification
+    });
+    logger.log('Nest application instance created successfully.');
+  } catch (err: any) {
+    logger.error(`Failed to create Nest application instance: ${err?.message || err}`, err?.stack);
+    throw err;
+  }
 
   // Trust first proxy hop (Hostinger hcdn / Cloudflare reverse proxy)
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
@@ -417,11 +426,19 @@ Sacred Live Pooja, Aarti Darshan & Vedic Astrology Streaming Platform
   }
 
   const port = process.env.PORT || 4000;
-  await app.listen(port, '0.0.0.0');
-  logger.log(`API Server running on port ${port} (0.0.0.0) with prefix /api/v1 (OpenAPI docs at /api/docs)`);
+  logger.log(`Attempting to bind HTTP server to port ${port} (0.0.0.0)...`);
+  try {
+    await app.listen(port, '0.0.0.0');
+    logger.log(`API Server successfully running on port ${port} (0.0.0.0) with prefix /api/v1 (OpenAPI docs at /api/docs)`);
+  } catch (listenErr: any) {
+    logger.error(`Failed to bind server to port ${port}: ${listenErr?.message || listenErr}`, listenErr?.stack);
+    throw listenErr;
+  }
 }
 
-bootstrap().catch((err) => {
+bootstrap().catch((err: any) => {
+  const fatalLogger = new Logger('FatalBootstrap');
+  fatalLogger.error(`Fatal Bootstrap Error: ${err?.message || err}`, err?.stack);
   console.error('Fatal Bootstrap Error:', err);
   process.exit(1);
 });
