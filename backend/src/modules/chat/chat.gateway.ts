@@ -16,6 +16,7 @@ import { PresenceAccessor } from './presence.accessor';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../database/prisma.service';
 import Redis from 'ioredis';
+import { createOptionalRedisClient } from '../../common/redis/redis.util';
 import { UserRole, UserStatus } from '@prisma/client';
 import { StreamsService } from '../streams/streams.service';
 import { isDevMode } from '../../common/runtime-mode';
@@ -133,23 +134,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly streamsService: StreamsService,
     @Optional() private readonly tokenBlacklist?: TokenBlacklistService,
   ) {
-    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-    try {
-      this.redis = new Redis(redisUrl, {
-        lazyConnect: true,
-        enableOfflineQueue: false,
-        maxRetriesPerRequest: 0,
-      });
-      this.redis.on('error', (err) => {
-        this.logger.debug(`Redis offline: ${err.message}`);
-      });
-      // lazyConnect never connected on its own, so every Redis branch below was dead code.
-      this.redis.connect().catch(() => {
-        /* Redis is optional: the in-memory limiter and DB-backed mutes keep working */
-      });
-    } catch {
-      this.redis = null;
-    }
+    this.redis = createOptionalRedisClient(this.logger, 'ChatGateway');
   }
 
   afterInit(_server: Server) {

@@ -2,17 +2,11 @@ import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import { Public } from '../../common/decorators/public.decorator';
 import { PrismaService } from '../../database/prisma.service';
-import Redis from 'ioredis';
 
 @SkipThrottle()
 @Controller('health')
 export class HealthController {
-  private redis: Redis;
-
-  constructor(private readonly prisma: PrismaService) {
-    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-    this.redis = new Redis(redisUrl, { lazyConnect: true });
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   @Public()
   @Get('live')

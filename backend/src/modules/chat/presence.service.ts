@@ -14,13 +14,14 @@
  * Not persisted to DB — counts are ephemeral live-only data.
  */
 
-import { Injectable, Inject, Logger } from '@nestjs/common';
+import { Injectable, Inject, Logger, OnModuleDestroy } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import {
   IVideoProviderService,
   VIDEO_PROVIDER_TOKEN,
 } from '../video/interfaces/video-provider.interface';
 import Redis from 'ioredis';
+import { createOptionalRedisClient } from '../../common/redis/redis.util';
 
 export interface ViewerEntry {
   identity: string;
@@ -36,11 +37,13 @@ interface InternalViewerRecord extends ViewerEntry {
 }
 
 @Injectable()
-export class PresenceService {
+export class PresenceService implements OnModuleDestroy {
   private readonly logger = new Logger(PresenceService.name);
+  private static readonly IDLE_RECONCILE_INTERVAL_MS = 10 * 60_000;
 
   /** Publisher / regular redis connection */
   private redis: Redis | null = null;
+  private lastReconcileAt = 0;
 
   /** Dedicated subscriber connection (a subscribed redis client cannot issue commands) */
   private redisSubscriber: Redis | null = null;
@@ -67,22 +70,7 @@ export class PresenceService {
     @Inject(VIDEO_PROVIDER_TOKEN)
     private readonly videoProvider: IVideoProviderService,
   ) {
-    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-    try {
-      this.redis = new Redis(redisUrl, {
-        lazyConnect: true,
-        enableOfflineQueue: false,
-        maxRetriesPerRequest: 0,
-      });
-      this.redis.on('error', (err) =>
-        this.logger.debug(`PresenceService Redis offline: ${err.message}`),
-      );
-      // lazyConnect + isRedisReady() guard meant nothing ever triggered a connection: connect explicitly.
-      // (ioredis reconnects by itself after this; offline commands fail fast and fall back to memory.)
-      this.redis.connect().catch(() => {});
-    } catch {
-      this.redis = null;
-    }
+    this.redis = createOptionalRedisClient(this.logger, 'PresenceService');
   }
 
   /**
@@ -92,32 +80,28 @@ export class PresenceService {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setGateway(gw: any) {
     this.gateway = gw;
-    // The viewer registry lives in THIS process's memory, so the reconciler has to run in the process
-    // that owns the sockets (the API). The cron worker never gets a gateway (afterInit does not run in a
-    // standalone application context) and compose sets RUN_CRONS=false on the API, so the old
-    // cron-driven reconcileAll() ran nowhere.
+    // Run every 30s when live viewers/sockets exist; back off to 10m when completely idle
+    // so serverless Postgres can suspend cleanly during inactivity.
     if (!this.reconcileTimer) {
       this.reconcileTimer = setInterval(() => {
+        const hasActivity =
+          this.streamViewers.size > 0 || (this.gateway?.server?.engine?.clientsCount ?? 0) > 0;
+        if (!hasActivity && Date.now() - this.lastReconcileAt < PresenceService.IDLE_RECONCILE_INTERVAL_MS) {
+          return;
+        }
+        this.lastReconcileAt = Date.now();
         this.reconcileAll().catch(() => {});
       }, 30_000);
       this.reconcileTimer.unref?.();
     }
-    if (!this.redisSubscriber) {
-      const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-      try {
-        this.redisSubscriber = new Redis(redisUrl, {
-          lazyConnect: true,
-          enableOfflineQueue: false,
-          maxRetriesPerRequest: 0,
-        });
-        this.redisSubscriber.on('error', () => {});
-        // subscribe() on a not-yet-connected client with enableOfflineQueue:false is rejected, so the
-        // relay was never registered. Connect first, subscribe on every (re)connect.
-        const sub = this.redisSubscriber;
+    if (!this.redisSubscriber && this.redis) {
+      const sub = createOptionalRedisClient(this.logger, 'PresenceService (sub)');
+      if (sub) {
+        this.redisSubscriber = sub;
         const subscribe = () => sub.subscribe('shubh:presence:count').catch(() => {});
         sub.on('ready', subscribe);
-        sub.connect().catch(() => {});
-        this.redisSubscriber.on('message', (_channel, msg) => {
+        if (sub.status === 'ready') subscribe();
+        sub.on('message', (_channel, msg) => {
           try {
             const payload = JSON.parse(msg);
             if (payload?.streamId && typeof payload.count === 'number') {
@@ -127,10 +111,17 @@ export class PresenceService {
             // malformed message — ignore
           }
         });
-      } catch {
-        this.redisSubscriber = null;
       }
     }
+  }
+
+  onModuleDestroy() {
+    if (this.reconcileTimer) {
+      clearInterval(this.reconcileTimer);
+      this.reconcileTimer = null;
+    }
+    if (this.redis) this.redis.disconnect();
+    if (this.redisSubscriber) this.redisSubscriber.disconnect();
   }
 
   private isRedisReady(): boolean {

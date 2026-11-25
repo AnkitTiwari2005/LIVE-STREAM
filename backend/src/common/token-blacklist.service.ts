@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import Redis from 'ioredis';
+import { createOptionalRedisClient } from './redis/redis.util';
 
 @Injectable()
 export class TokenBlacklistService implements OnModuleInit, OnModuleDestroy {
@@ -9,25 +10,9 @@ export class TokenBlacklistService implements OnModuleInit, OnModuleDestroy {
   private sweeper: NodeJS.Timeout | null = null;
 
   onModuleInit() {
-    const redisUrl = process.env.REDIS_URL;
-    if (redisUrl) {
-      try {
-        this.redis = new Redis(redisUrl, {
-          maxRetriesPerRequest: 1,
-          lazyConnect: true,
-          enableOfflineQueue: false,
-          retryStrategy: (times: number) => Math.min(times * 500, 10000), // N11: keep reconnecting; never give up permanently
-        });
-        this.redis.on('error', (err) => {
-          this.logger.debug(`TokenBlacklist Redis offline: ${err.message}`);
-        });
-        this.redis.connect().catch((err) => {
-          this.logger.debug(`TokenBlacklist Redis offline: ${err.message}`);
-        });
-      } catch (err: any) {
-        this.logger.debug(`Could not initialize Redis for TokenBlacklist: ${err.message}`);
-      }
-    }
+    this.redis = createOptionalRedisClient(this.logger, 'TokenBlacklist', {
+      maxRetriesPerRequest: 1,
+    });
 
     // Periodic sweep of expired in-memory blacklist entries every 5 minutes
     this.sweeper = setInterval(() => {

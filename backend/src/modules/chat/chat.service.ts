@@ -2,6 +2,8 @@ import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { IndicWordFilter } from './utils/indic-word-filter';
 
+const WORD_FILTER_RELOAD_MS = 10 * 60_000;
+
 @Injectable()
 export class ChatService implements OnModuleInit {
   private readonly logger = new Logger(ChatService.name);
@@ -16,12 +18,13 @@ export class ChatService implements OnModuleInit {
     this.reloadWordFilter().catch((err) =>
       this.logger.error(`Initial word filter load failed: ${err.message}`),
     );
-    // B-05: 60-second periodic poll so multiple instances/workers sync
-    setInterval(() => {
+    // B-05: Periodic sync (10m interval keeps DB compute idle-friendly on serverless Postgres).
+    const timer = setInterval(() => {
       this.reloadWordFilter().catch((err) =>
         this.logger.error(`Periodic word filter reload failed: ${err.message}`),
       );
-    }, 60_000);
+    }, WORD_FILTER_RELOAD_MS);
+    timer.unref?.();
   }
 
   async reloadWordFilter() {
