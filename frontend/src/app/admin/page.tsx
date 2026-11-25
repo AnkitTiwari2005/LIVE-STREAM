@@ -850,6 +850,7 @@ export default function AdminConsolePage() {
                     {/* View Public Profile Link */}
                     {(() => {
                       const SLUG_MAP: Record<string, string> = {
+                        'tripathiayush068@gmail.com': 'rohit-tiwari',
                         'rohit.tiwari@shubhdarshan.com': 'rohit-tiwari',
                         'skjyotish@gmail.com': 'santosh-shastri',
                         'ravi.pathak@shubhdarshan.com': 'ravi-pathak',

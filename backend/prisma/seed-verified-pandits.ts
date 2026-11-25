@@ -20,7 +20,8 @@ async function main() {
     {
       slug: 'rohit-tiwari',
       name: 'पंडित रोहित तिवारी (ज्योतिषाचार्य)',
-      email: 'rohit.tiwari@shubhdarshan.com',
+      email: 'tripathiayush068@gmail.com',
+      role: UserRole.ADMIN,
       avatarUrl: '/images/pandits/pandit-rohit-tiwari.webp',
       bio: 'Founder of Param Darshan and revered Vedic astrologer based in Delhi. Specialized in Parashari Jyotish, authentic Kundli Milan, Vivah Sanskar vidhi, and auspicious matrimonial alignments.',
       specialties: ['Matrimonial Advisor', 'Kundli Milan', 'Vedic Astrology', 'Vivah Sanskar'],
@@ -140,7 +141,7 @@ async function main() {
           name: p.name,
           email: p.email,
           passwordHash,
-          role: UserRole.STREAMER,
+          role: (p as any).role || UserRole.STREAMER,
           status: UserStatus.ACTIVE,
           isEmailVerified: true,
           isAgeConfirmed18Plus: true,
@@ -155,7 +156,7 @@ async function main() {
         where: { id: user.id },
         data: {
           name: p.name,
-          role: UserRole.STREAMER,
+          role: (p as any).role || UserRole.STREAMER,
           status: UserStatus.ACTIVE,
           avatarUrl: p.avatarUrl,
           isEmailVerified: true,
