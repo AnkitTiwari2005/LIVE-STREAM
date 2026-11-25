@@ -1,6 +1,11 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
 
+import * as dns from 'dns';
+try {
+  dns.setDefaultResultOrder('ipv4first');
+} catch {}
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe, Logger } from '@nestjs/common';
@@ -15,8 +20,20 @@ import { validateProductionSecrets } from './common/config/validate-env';
 import { isDevMode, isProductionLike } from './common/runtime-mode';
 import { isAllowedSocketOrigin } from './modules/chat/chat.gateway';
 
+const bootstrapLogger = new Logger('Bootstrap');
+
+process.on('uncaughtException', (err: any) => {
+  bootstrapLogger.error(`Uncaught Exception: ${err?.message || err}`, err?.stack);
+});
+
+process.on('unhandledRejection', (reason: any) => {
+  bootstrapLogger.error(`Unhandled Rejection: ${reason?.message || reason}`, reason?.stack);
+});
+
 async function bootstrap() {
-  const logger = new Logger('Bootstrap');
+  const logger = bootstrapLogger;
+  const mem = process.memoryUsage();
+  logger.log(`Booting Node.js PID ${process.pid} (RSS: ${Math.round(mem.rss / 1024 / 1024)}MB, Heap: ${Math.round(mem.heapUsed / 1024 / 1024)}MB)...`);
 
   // B-08 & N-11: Boot-time Production Secret Enforcement
   validateProductionSecrets('Bootstrap');
@@ -426,12 +443,17 @@ Sacred Live Pooja, Aarti Darshan & Vedic Astrology Streaming Platform
   }
 
   const port = process.env.PORT || 4000;
-  logger.log(`Attempting to bind HTTP server to port ${port} (0.0.0.0)...`);
+  logger.log(`Attempting to bind HTTP server to port/socket [${port}]...`);
   try {
-    await app.listen(port, '0.0.0.0');
-    logger.log(`API Server successfully running on port ${port} (0.0.0.0) with prefix /api/v1 (OpenAPI docs at /api/docs)`);
+    if (typeof port === 'string' && (port.includes('/') || port.includes('\\') || isNaN(Number(port)))) {
+      await app.listen(port);
+      logger.log(`API Server successfully running on socket [${port}] with prefix /api/v1 (OpenAPI docs at /api/docs)`);
+    } else {
+      await app.listen(Number(port), '0.0.0.0');
+      logger.log(`API Server successfully running on port ${port} (0.0.0.0) with prefix /api/v1 (OpenAPI docs at /api/docs)`);
+    }
   } catch (listenErr: any) {
-    logger.error(`Failed to bind server to port ${port}: ${listenErr?.message || listenErr}`, listenErr?.stack);
+    logger.error(`Failed to bind server to port/socket [${port}]: ${listenErr?.message || listenErr}`, listenErr?.stack);
     throw listenErr;
   }
 }
