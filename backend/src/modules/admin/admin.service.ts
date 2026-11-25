@@ -28,12 +28,12 @@ export class AdminService {
       openReports,
       pendingKyc,
     ] = await Promise.all([
-      this.prisma.user.count(),
-      this.prisma.streamerProfile.count({ where: { kycStatus: 'APPROVED' } }),
-      this.prisma.stream.count({ where: { status: StreamStatus.LIVE } }),
-      this.prisma.stream.count(),
-      this.prisma.report.count({ where: { status: 'OPEN' } }),
-      this.prisma.streamerProfile.count({ where: { kycStatus: 'PENDING' } }),
+      this.prisma.user.count().catch(() => 0),
+      this.prisma.streamerProfile.count({ where: { kycStatus: 'APPROVED' } }).catch(() => 0),
+      this.prisma.stream.count({ where: { status: StreamStatus.LIVE } }).catch(() => 0),
+      this.prisma.stream.count().catch(() => 0),
+      this.prisma.report.count({ where: { status: 'OPEN' } }).catch(() => 0),
+      this.prisma.streamerProfile.count({ where: { kycStatus: 'PENDING' } }).catch(() => 0),
     ]);
 
     return {
