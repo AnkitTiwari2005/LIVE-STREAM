@@ -11,8 +11,11 @@ export class ChatService implements OnModuleInit {
     this.wordFilter = new IndicWordFilter([]);
   }
 
-  async onModuleInit() {
-    await this.reloadWordFilter();
+  onModuleInit() {
+    // Load filter non-blocking so Hostinger Passenger's 3s listen() check never times out on cold DB connect.
+    this.reloadWordFilter().catch((err) =>
+      this.logger.error(`Initial word filter load failed: ${err.message}`),
+    );
     // B-05: 60-second periodic poll so multiple instances/workers sync
     setInterval(() => {
       this.reloadWordFilter().catch((err) =>
