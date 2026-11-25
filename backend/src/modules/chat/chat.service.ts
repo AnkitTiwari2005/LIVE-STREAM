@@ -14,14 +14,16 @@ export class ChatService implements OnModuleInit {
   }
 
   onModuleInit() {
-    // Load filter non-blocking so Hostinger Passenger's 3s listen() check never times out on cold DB connect.
-    this.reloadWordFilter().catch((err) =>
-      this.logger.error(`Initial word filter load failed: ${err.message}`),
-    );
+    // Delay initial load by 500ms so Passenger finishes worker spawn and port listening before first DB query
+    setTimeout(() => {
+      this.reloadWordFilter().catch((err) =>
+        this.logger.warn(`Initial word filter load deferred: ${err?.message || err}`),
+      );
+    }, 500);
     // B-05: Periodic sync (10m interval keeps DB compute idle-friendly on serverless Postgres).
     const timer = setInterval(() => {
       this.reloadWordFilter().catch((err) =>
-        this.logger.error(`Periodic word filter reload failed: ${err.message}`),
+        this.logger.warn(`Periodic word filter reload deferred: ${err?.message || err}`),
       );
     }, WORD_FILTER_RELOAD_MS);
     timer.unref?.();
