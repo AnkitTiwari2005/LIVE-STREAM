@@ -1,4 +1,5 @@
 import { finalizeStreamRecord } from '../../common/stream-lifecycle';
+import { calculateCoinEarningsBreakdown } from '../../common/config/economy.constants';
 import { Injectable, NotFoundException, BadRequestException, Inject, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { UserStatus, StreamStatus, UserRole, KycStatus } from '@prisma/client';
@@ -315,6 +316,11 @@ export class AdminService {
 
   // --- Pooja Booking Oversight (DakshinaOffering = booking record) ---
   async getPoojaBookings(status?: string, page = 1, limit = 50) {
+    if (status && !['ALL', 'PENDING', 'SUCCESS', 'FAILED'].includes(status)) {
+      throw new BadRequestException('status must be ALL, PENDING, SUCCESS or FAILED');
+    }
+    page = Number.isFinite(page) && page >= 1 ? Math.floor(page) : 1;
+    limit = Number.isFinite(limit) && limit >= 1 ? Math.min(Math.floor(limit), 200) : 50;
     const where: any = { status: 'SUCCESS' };
     if (status && status !== 'ALL') {
       where.status = status;
@@ -372,72 +378,57 @@ export class AdminService {
     };
   }
 
-  // --- Dakshina Payout Ledger ---
+  // --- Pandit earnings ledger ---
+  // Single source of truth = StreamerEarning (Dakshina + watch-time), the same table the pandit's own
+  // earnings page uses, converted with the shared economy helpers (150 coins = Rs100, 85% pandit share).
   async getDakshinaLedger() {
-    // Aggregate successful dakshina offerings grouped by pandit (stream.streamerId)
-    const offerings = await this.prisma.dakshinaOffering.findMany({
-      where: { status: 'SUCCESS' },
-      include: {
-        stream: {
-          select: {
-            streamerId: true,
-            streamer: {
-              select: { id: true, name: true, email: true, avatarUrl: true },
-            },
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
+    const groups = await this.prisma.streamerEarning.groupBy({
+      by: ['streamerId'],
+      _sum: { coins: true },
+      _count: { _all: true },
+      _max: { createdAt: true },
     });
 
-    // Group by pandit
-    const panditMap = new Map<string, {
-      panditId: string;
-      panditName: string;
-      panditEmail: string;
-      panditAvatarUrl: string | null;
-      totalCoins: number;
-      transactionCount: number;
-      lastDakshinaAt: Date | null;
-    }>();
+    const users = groups.length
+      ? await this.prisma.user.findMany({
+          where: { id: { in: groups.map((g) => g.streamerId) } },
+          select: { id: true, name: true, email: true, avatarUrl: true },
+        })
+      : [];
+    const byId = new Map(users.map((u) => [u.id, u]));
 
-    for (const o of offerings) {
-      if (!o.stream?.streamer) continue;
-      const { id: panditId, name, email, avatarUrl } = o.stream.streamer;
-      const existing = panditMap.get(panditId);
-      if (existing) {
-        existing.totalCoins += o.coins || 0;
-        existing.transactionCount += 1;
-        if (!existing.lastDakshinaAt || o.createdAt > existing.lastDakshinaAt) {
-          existing.lastDakshinaAt = o.createdAt;
-        }
-      } else {
-        panditMap.set(panditId, {
-          panditId,
-          panditName: name,
-          panditEmail: email,
-          panditAvatarUrl: avatarUrl || null,
-          totalCoins: o.coins || 0,
-          transactionCount: 1,
-          lastDakshinaAt: o.createdAt,
-        });
-      }
-    }
-
-    const ledger = Array.from(panditMap.values())
-      .sort((a, b) => b.totalCoins - a.totalCoins)
-      .map((p) => ({
-        ...p,
-        totalInr: parseFloat((p.totalCoins / 10).toFixed(2)),
-      }));
+    const ledger = groups
+      .map((g) => {
+        const u = byId.get(g.streamerId);
+        const totalCoins = g._sum.coins || 0;
+        const b = calculateCoinEarningsBreakdown(totalCoins);
+        return {
+          panditId: g.streamerId,
+          panditName: u?.name || 'Unknown',
+          panditEmail: u?.email || '',
+          panditAvatarUrl: u?.avatarUrl || null,
+          totalCoins,
+          transactionCount: g._count._all,
+          lastDakshinaAt: g._max.createdAt || null,
+          grossInr: b.grossInr,
+          platformFeeInr: b.platformFeeInr,
+          // Net payable to the pandit (after the platform share).
+          totalInr: b.netInr,
+        };
+      })
+      .sort((x, y) => y.totalCoins - x.totalCoins);
 
     const platformTotalCoins = ledger.reduce((acc, p) => acc + p.totalCoins, 0);
     const platformTotalTransactions = ledger.reduce((acc, p) => acc + p.transactionCount, 0);
+    const platformBreakdown = calculateCoinEarningsBreakdown(platformTotalCoins);
 
     return {
       ledger,
       platformTotalCoins,
-      platformTotalInr: parseFloat((platformTotalCoins / 10).toFixed(2)),
+      platformGrossInr: platformBreakdown.grossInr,
+      platformFeeInr: platformBreakdown.platformFeeInr,
+      // Net payable to pandits.
+      platformTotalInr: ledger.reduce((acc, p) => acc + p.totalInr, 0),
       platformTotalTransactions,
     };
   }

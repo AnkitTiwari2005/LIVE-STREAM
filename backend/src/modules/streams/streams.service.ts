@@ -805,6 +805,21 @@ export class StreamsService {
       });
       if (!ok) throw new ServiceUnavailableException('Could not grant video access. Please try again.');
 
+      // The lock above is per process. With several API instances two grants could interleave, so
+      // confirm against LiveKit that we are the only guest; if not, back out (fail safe: retry).
+      const after = await this.videoProvider.listParticipants(streamId);
+      const guests = (after ?? []).filter((p) => p.attributes?.videoGuest === '1' && p.canPublish);
+      if (guests.length > 1) {
+        await this.videoProvider.updateParticipantPermissions(streamId, identity, {
+          canPublish: false,
+          attributes: { videoGuest: '' },
+        });
+        throw new ConflictException({
+          message: 'Another devotee just received the video slot. Please try again.',
+          code: 'VIDEO_SLOT_TAKEN',
+        });
+      }
+
       await this.auditVideo(streamId, actorId, identity, 'VIDEO_GRANT');
       this.chatGateway?.emitVideoGuestChanged?.(streamId, { identity, name: target.name, active: true });
       this.chatGateway?.emitToIdentity?.(streamId, identity, 'video:granted', { streamId });

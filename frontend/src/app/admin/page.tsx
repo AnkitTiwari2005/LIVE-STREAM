@@ -105,7 +105,6 @@ export default function AdminConsolePage() {
     platformTotalTransactions: 0,
   });
   const [searchLedger, setSearchLedger] = useState('');
-  const [payoutStatusMap, setPayoutStatusMap] = useState<Record<string, 'SETTLED' | 'PENDING'>>({});
 
   // M-01: Inline rejection modal — replaces window.prompt() which is blocked in some
   // browsers and leaks the admin URL in some CSP configurations.
@@ -405,6 +404,12 @@ export default function AdminConsolePage() {
     }
   };
 
+  // Neutralise spreadsheet formula injection (=, +, -, @) and quotes in exported text.
+  const csvSafe = (v: any) => {
+    const t = String(v ?? '').replace(/"/g, '""');
+    return /^[=+\-@\t\r]/.test(t) ? `'${t}` : t;
+  };
+
   const exportDakshinaCsv = () => {
     if (!dakshinaData.ledger.length) {
       toast.error('No dakshina records to export.');
@@ -414,19 +419,17 @@ export default function AdminConsolePage() {
       'Pandit Name',
       'Email',
       'Total Coins',
-      'Amount (INR)',
+      'Net payable (INR)',
       'Offerings Count',
       'Last Offering At',
-      'Settlement Status',
     ];
     const rows = dakshinaData.ledger.map((p) => [
-      `"${(p.panditName || '').replace(/"/g, '""')}"`,
-      `"${p.panditEmail || ''}"`,
+      `"${csvSafe(p.panditName)}"`,
+      `"${csvSafe(p.panditEmail)}"`,
       p.totalCoins || 0,
       p.totalInr || 0,
       p.transactionCount || 0,
       p.lastDakshinaAt ? `"${new Date(p.lastDakshinaAt).toISOString()}"` : 'N/A',
-      `"${payoutStatusMap[p.panditId] || 'PENDING'}"`,
     ]);
     const csvContent =
       'data:text/csv;charset=utf-8,' +
@@ -1494,12 +1497,12 @@ export default function AdminConsolePage() {
           {/* Summary Financial KPI Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
-              <span className="text-[11px] text-stone-400 uppercase font-semibold block">Total Platform Dakshina</span>
+              <span className="text-[11px] text-stone-400 uppercase font-semibold block">Total Pandit Earnings (Dakshina + watch time)</span>
               <span className="text-2xl font-extrabold text-gold mt-1 block">
                 {dakshinaData.platformTotalCoins.toLocaleString()} Coins
               </span>
               <span className="text-[11px] text-stone-500 block mt-0.5">
-                ₹{dakshinaData.platformTotalInr.toLocaleString()} INR equivalent
+                ₹{dakshinaData.platformTotalInr.toLocaleString()} net payable to pandits (85%)
               </span>
             </div>
             <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
@@ -1570,7 +1573,6 @@ export default function AdminConsolePage() {
                     );
                   })
                   .map((p) => {
-                    const isSettled = payoutStatusMap[p.panditId] === 'SETTLED';
                     return (
                       <div
                         key={p.panditId}
@@ -1622,28 +1624,8 @@ export default function AdminConsolePage() {
                             </span>
                           </div>
 
-                          {/* Payout Tracking Toggle */}
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => {
-                                setPayoutStatusMap((prev) => ({
-                                  ...prev,
-                                  [p.panditId]: isSettled ? 'PENDING' : 'SETTLED',
-                                }));
-                                toast.success(
-                                  `Settlement status for ${p.panditName} marked as ${
-                                    isSettled ? 'PENDING' : 'SETTLED'
-                                  }`
-                                );
-                              }}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition border ${
-                                isSettled
-                                  ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40 hover:bg-emerald-900/60'
-                                  : 'bg-amber-950/40 text-amber-300 border-amber-500/40 hover:bg-amber-900/40'
-                              }`}
-                            >
-                              {isSettled ? '✓ Settled' : 'Pending Payout'}
-                            </button>
+                          <div className="text-[10px] text-stone-500 max-w-[140px]">
+                            Net payable after the 15% platform share. Payout settlement is not tracked here yet.
                           </div>
                         </div>
                       </div>

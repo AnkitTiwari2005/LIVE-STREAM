@@ -136,6 +136,21 @@ const STREAMER = U(1), A = U(2), B = U(3), C = U(4);
   r = await g(A);
   ok(r.success, 'slot can be given again after the guest left');
 
+  addP(B);
+  // cross-instance race: another instance granted someone between our check and our grant
+  for (const p of room.values()) { p.canPublish = false; delete p.attributes.videoGuest; }
+  const realUpdate = provider.updateParticipantPermissions;
+  provider.updateParticipantPermissions = async (r: string, id: string, o: any) => {
+    const res = await realUpdate(r, id, o);
+    if (o.canPublish && id === A) { room.get(B).canPublish = true; room.get(B).attributes.videoGuest = '1'; }
+    return res;
+  };
+  await g(A).then(() => ok(false, 'race: second guest detected'), (e: any) => ok(e?.constructor?.name === 'ConflictException', 'race: second guest detected and refused'));
+  provider.updateParticipantPermissions = realUpdate;
+  ok(!room.get(A).canPublish, 'race: losing grant is rolled back');
+  for (const p of room.values()) { p.canPublish = false; delete p.attributes.videoGuest; }
+  await g(A);
+
   // reads + mute
   const cur = await svc.getVideoGuest('s1', STREAMER, 'STREAMER');
   ok(cur.guest?.identity === A, 'getVideoGuest reports the current guest');
