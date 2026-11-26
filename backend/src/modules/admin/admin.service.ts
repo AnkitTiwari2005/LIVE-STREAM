@@ -17,9 +17,12 @@ function maskEmail(email: string): string {
   return `${visible}***@${domain}`;
 }
 
+const CATEGORY_CACHE_TTL_MS = 5 * 60_000;
+
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
+  private categoriesCache: { data: any[]; expiresAt: number } | null = null;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -180,17 +183,25 @@ export class AdminService {
 
   // --- Category Management ---
   async getCategories() {
-    return this.prisma.streamCategory.findMany({ orderBy: { displayOrder: 'asc' } });
+    const now = Date.now();
+    if (this.categoriesCache && now < this.categoriesCache.expiresAt) {
+      return this.categoriesCache.data;
+    }
+    const categories = await this.prisma.streamCategory.findMany({ orderBy: { displayOrder: 'asc' } });
+    this.categoriesCache = { data: categories, expiresAt: now + CATEGORY_CACHE_TTL_MS };
+    return categories;
   }
 
   async createCategory(name: string, slug: string, displayOrder = 0) {
-    return this.prisma.streamCategory.create({
+    const created = await this.prisma.streamCategory.create({
       data: { name, slug, displayOrder },
     });
+    this.categoriesCache = null;
+    return created;
   }
 
   async updateCategory(id: string, name: string, displayOrder?: number, isActive?: boolean) {
-    return this.prisma.streamCategory.update({
+    const updated = await this.prisma.streamCategory.update({
       where: { id },
       data: {
         name,
@@ -198,6 +209,8 @@ export class AdminService {
         isActive: isActive ?? undefined,
       },
     });
+    this.categoriesCache = null;
+    return updated;
   }
 
   // --- Chat Word Filter Management ---
@@ -633,6 +646,7 @@ export class AdminService {
       );
     }
     const deleted = await this.prisma.streamCategory.delete({ where: { id } });
+    this.categoriesCache = null;
     if (adminId && adminEmail) {
       await this.prisma.auditLog.create({
         data: {

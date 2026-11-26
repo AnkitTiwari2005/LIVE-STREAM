@@ -1,4 +1,5 @@
 import { StreamStatus, ViewingSessionStatus } from '@prisma/client';
+import { dbActivity } from './db-activity.coordinator';
 
 /** Minimal shape shared by PrismaService and an interactive-transaction client. */
 export interface StreamLifecycleDb {
@@ -46,6 +47,11 @@ export async function finalizeStreamRecord(
     where: { streamId: stream.id, status: ViewingSessionStatus.ACTIVE },
     data: { status: opts.sessionStatus ?? ViewingSessionStatus.COMPLETED_NATURAL, endedAt },
   });
+
+  if (res.count > 0) {
+    dbActivity.markBroadcastDirty();
+    dbActivity.markRemindersDirty();
+  }
 
   return { changed: res.count > 0, durationSeconds };
 }

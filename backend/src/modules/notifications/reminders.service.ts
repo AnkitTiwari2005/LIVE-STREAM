@@ -3,6 +3,7 @@ import * as crypto from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { MailerService } from './mailer.service';
 import { StreamStatus } from '@prisma/client';
+import { dbActivity } from '../../common/db-activity.coordinator';
 
 function escapeHtml(str: string): string {
   if (!str) return '';
@@ -49,6 +50,7 @@ export class RemindersService {
       },
     });
 
+    dbActivity.notifyScheduledReminder(stream.scheduledAt);
     return { message: 'Reminder set successfully. You will receive an email 15 minutes before the stream.' };
   }
 
@@ -59,6 +61,7 @@ export class RemindersService {
           userId_streamId: { userId, streamId },
         },
       });
+      dbActivity.markRemindersDirty();
       return { message: 'Reminder removed' };
     } catch {
       return { message: 'Reminder was not active' };

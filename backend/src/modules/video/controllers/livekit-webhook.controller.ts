@@ -20,6 +20,7 @@ import { StreamStatus } from '@prisma/client';
 import { SkipThrottle } from '@nestjs/throttler';
 import { Public } from '../../../common/decorators/public.decorator';
 import { PresenceAccessor } from '../../chat/presence.accessor';
+import { dbActivity } from '../../../common/db-activity.coordinator';
 
 @SkipThrottle()
 @Public()
@@ -158,6 +159,7 @@ export class LiveKitWebhookController {
             where: { id: stream.id },
             data: { status: StreamStatus.LIVE },
           });
+          dbActivity.wakeBroadcasts();
         }
         break;
       }
@@ -185,6 +187,7 @@ export class LiveKitWebhookController {
             where: { id: stream.id },
             data: { status: StreamStatus.RECONNECTING_GRACE_PERIOD },
           });
+          dbActivity.wakeBroadcasts();
         }
 
         // B-16: Record leftAt for the viewer session that actually left.

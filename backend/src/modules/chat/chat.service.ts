@@ -2,7 +2,7 @@ import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { IndicWordFilter } from './utils/indic-word-filter';
 
-const WORD_FILTER_RELOAD_MS = 10 * 60_000;
+const WORD_FILTER_RELOAD_MS = 6 * 60 * 60_000; // Reloaded immediately on admin edit; 6h fallback keeps DB idle-friendly
 
 @Injectable()
 export class ChatService implements OnModuleInit {

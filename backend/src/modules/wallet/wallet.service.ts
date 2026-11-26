@@ -9,6 +9,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
+import { dbActivity } from '../../common/db-activity.coordinator';
 import { LiveKitProviderService } from '../video/providers/livekit-provider.service';
 import { MeterTickDto } from './dto/meter-tick.dto';
 import { CreateTopupOrderDto, VerifyTopupDto } from './dto/topup-order.dto';
@@ -313,6 +314,8 @@ export class WalletService {
       delta: COINS_PER_MINUTE,
       source: 'WATCH_TIME',
     });
+
+    dbActivity.wakeBroadcasts();
 
     this.logger.log(
       `Devotee [${userId}] entered stream [${streamId}]. Minute 1 debited atomically. Balance: ${startResult.balanceAfter} coins.`,

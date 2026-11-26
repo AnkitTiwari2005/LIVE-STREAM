@@ -23,11 +23,15 @@ import {
   VIDEO_PROVIDER_TOKEN,
 } from '../video/interfaces/video-provider.interface';
 import { getLiveKitPublicUrl } from '../../common/livekit-url.util';
+import { dbActivity } from '../../common/db-activity.coordinator';
+
+const PUBLIC_STREAMS_CACHE_TTL_MS = 15_000;
 
 @Injectable()
 export class StreamsService {
   private readonly logger = new Logger(StreamsService.name);
   static readonly MAX_ROOM_PARTICIPANTS = 100;
+  private publicStreamsCache: { data: any[]; expiresAt: number; version: number } | null = null;
 
   // Set via StreamsService.setDependencies() called from ChatGateway.afterInit()
   // to avoid circular NestJS DI (StreamsModule ↔ ChatModule).
@@ -75,6 +79,7 @@ export class StreamsService {
       include: { category: true },
     });
 
+    dbActivity.bumpPublicStreamsVersion();
     this.logger.log(`Stream created [${stream.id}] by streamer ${streamerId} with status ${stream.status}`);
     return stream;
   }
@@ -215,6 +220,8 @@ export class StreamsService {
       metadata: { role: 'streamer' },
     });
 
+    dbActivity.wakeBroadcasts();
+    dbActivity.markRemindersDirty();
     this.logger.log(`Stream [${stream.id}] is now LIVE. Room: ${room.roomId}`);
     return {
       stream: updatedStream,
@@ -274,6 +281,8 @@ export class StreamsService {
       });
     }
 
+    dbActivity.markBroadcastDirty();
+    dbActivity.markRemindersDirty();
     this.logger.log(`Stream [${streamId}] ended. Duration: ${duration}s, Peak: ${stream.peakViewers}`);
     return { message: 'Stream ended successfully', stream: updatedStream };
   }
@@ -415,13 +424,25 @@ export class StreamsService {
   }
 
   async getPublicStreams(categoryId?: string, search?: string) {
+    const isUnfiltered = !categoryId && !search;
+    const now = Date.now();
+    const version = dbActivity.getPublicStreamsVersion();
+    if (
+      isUnfiltered &&
+      this.publicStreamsCache &&
+      now < this.publicStreamsCache.expiresAt &&
+      this.publicStreamsCache.version === version
+    ) {
+      return this.publicStreamsCache.data;
+    }
+
     const where: any = {
       visibility: StreamVisibility.PUBLIC,
       status: { in: [StreamStatus.LIVE, StreamStatus.SCHEDULED] },
       // Stale SCHEDULED rows (never went live) are only cancelled after 48 h: don't list them meanwhile.
       OR: [
         { status: StreamStatus.LIVE },
-        { scheduledAt: { gte: new Date(Date.now() - 6 * 3600 * 1000) } },
+        { scheduledAt: { gte: new Date(now - 6 * 3600 * 1000) } },
       ],
     };
 
@@ -461,11 +482,21 @@ export class StreamsService {
     });
 
     // B-14: Explicitly sort LIVE streams before SCHEDULED streams
-    return streams.sort((a, b) => {
+    const sorted = streams.sort((a, b) => {
       if (a.status === StreamStatus.LIVE && b.status !== StreamStatus.LIVE) return -1;
       if (a.status !== StreamStatus.LIVE && b.status === StreamStatus.LIVE) return 1;
       return 0;
     });
+
+    if (isUnfiltered) {
+      this.publicStreamsCache = {
+        data: sorted,
+        expiresAt: now + PUBLIC_STREAMS_CACHE_TTL_MS,
+        version: dbActivity.getPublicStreamsVersion(),
+      };
+    }
+
+    return sorted;
   }
 
   async getStreamerMine(streamerId: string) {
@@ -515,6 +546,10 @@ export class StreamsService {
         data: { isSentScheduled: false, isSent15Min: false },
       });
     }
+    dbActivity.bumpPublicStreamsVersion();
+    if (scheduleChanged || (newSchedule && stream.status === StreamStatus.DRAFT)) {
+      dbActivity.markRemindersDirty();
+    }
     return updated;
   }
 
@@ -526,10 +561,13 @@ export class StreamsService {
     if (stream.status !== StreamStatus.DRAFT && stream.status !== StreamStatus.SCHEDULED) {
       throw new BadRequestException('Only draft or scheduled streams can be cancelled or deleted');
     }
-    return this.prisma.stream.update({
+    const cancelled = await this.prisma.stream.update({
       where: { id: streamId },
       data: { status: StreamStatus.CANCELLED },
     });
+    dbActivity.bumpPublicStreamsVersion();
+    dbActivity.markRemindersDirty();
+    return cancelled;
   }
 
   async getStreamerPastStreams(streamerId: string) {

@@ -22,6 +22,7 @@ import {
 } from '../video/interfaces/video-provider.interface';
 import Redis from 'ioredis';
 import { createOptionalRedisClient } from '../../common/redis/redis.util';
+import { dbActivity } from '../../common/db-activity.coordinator';
 
 export interface ViewerEntry {
   identity: string;
@@ -39,7 +40,7 @@ interface InternalViewerRecord extends ViewerEntry {
 @Injectable()
 export class PresenceService implements OnModuleDestroy {
   private readonly logger = new Logger(PresenceService.name);
-  private static readonly IDLE_RECONCILE_INTERVAL_MS = 10 * 60_000;
+  private static readonly IDLE_RECONCILE_INTERVAL_MS = 3 * 60 * 60_000;
 
   /** Publisher / regular redis connection */
   private redis: Redis | null = null;
@@ -80,12 +81,14 @@ export class PresenceService implements OnModuleDestroy {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setGateway(gw: any) {
     this.gateway = gw;
-    // Run every 30s when live viewers/sockets exist; back off to 10m when completely idle
+    // Run every 30s when broadcasts, viewers, or sockets are active; back off to 3h when idle
     // so serverless Postgres can suspend cleanly during inactivity.
     if (!this.reconcileTimer) {
       this.reconcileTimer = setInterval(() => {
         const hasActivity =
-          this.streamViewers.size > 0 || (this.gateway?.server?.engine?.clientsCount ?? 0) > 0;
+          this.streamViewers.size > 0 ||
+          (this.gateway?.server?.engine?.clientsCount ?? 0) > 0 ||
+          dbActivity.isBroadcastActive();
         if (!hasActivity && Date.now() - this.lastReconcileAt < PresenceService.IDLE_RECONCILE_INTERVAL_MS) {
           return;
         }

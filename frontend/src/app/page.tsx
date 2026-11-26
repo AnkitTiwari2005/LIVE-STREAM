@@ -368,6 +368,27 @@ export default function HomePage() {
   }, [searchQuery]);
 
   useEffect(() => {
+    let cancelled = false;
+    async function loadCategories() {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+        const catRes = await fetch(`${apiUrl}/admin/categories`);
+        if (catRes.ok && !cancelled) {
+          const cats = await catRes.json();
+          setCategories(cats);
+        }
+      } catch {}
+    }
+    loadCategories();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    let lastFetchedAt = 0;
+
     async function loadStreams() {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
@@ -377,35 +398,41 @@ export default function HomePage() {
         if (debouncedSearch) params.append('search', debouncedSearch);
         if (params.toString()) streamUrl += `?${params.toString()}`;
         const streamRes = await fetch(streamUrl, { cache: 'no-store' });
-        if (streamRes.ok) {
+        if (streamRes.ok && !cancelled) {
           const data = await streamRes.json();
           setStreams(data);
         }
+        lastFetchedAt = Date.now();
       } catch (err) {
         console.error('Failed to fetch public stream data:', err);
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
 
-    async function loadData() {
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
-        // Load categories once
-        const catRes = await fetch(`${apiUrl}/admin/categories`);
-        if (catRes.ok) {
-          const cats = await catRes.json();
-          setCategories(cats);
-        }
-      } catch {}
-      await loadStreams();
-    }
+    loadStreams();
 
-    loadData();
+    // Poll streams every 30s only while the tab is visible so background tabs do not wake serverless DB.
+    const pollInterval = setInterval(() => {
+      if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+        loadStreams();
+      }
+    }, 30_000);
 
-    // Poll streams every 30 seconds so live status updates automatically without cache-clear
-    const pollInterval = setInterval(loadStreams, 30_000);
-    return () => clearInterval(pollInterval);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && Date.now() - lastFetchedAt >= 15_000) {
+        loadStreams();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      cancelled = true;
+      clearInterval(pollInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [selectedCategory, debouncedSearch]);
 
   const liveStreams = streams.filter((s) => s.status === 'LIVE');

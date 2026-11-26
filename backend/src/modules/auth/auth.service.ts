@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../database/prisma.service';
+import { dbActivity } from '../../common/db-activity.coordinator';
 import { MailerService } from '../notifications/mailer.service';
 import { StorageService } from '../storage/storage.service';
 import { StreamsService } from '../streams/streams.service';
@@ -713,6 +714,8 @@ export class AuthService {
               endedAt: new Date(),
             },
           });
+          dbActivity.markRemindersDirty();
+          dbActivity.bumpPublicStreamsVersion();
         }
       } catch (err: any) {
         this.logger.warn(`Failed to conclude stream ${s.id} on user deletion: ${err.message}`);

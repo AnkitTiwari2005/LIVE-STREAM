@@ -6,6 +6,7 @@ import { validateProductionSecrets } from './common/config/validate-env';
 async function bootstrap() {
   const logger = new Logger('WorkerBootstrap');
   process.env.RUN_CRONS = 'true';
+  process.env.WORKER_PROCESS = 'true';
 
   // B-08 & N-11: Boot-time Production Secret Enforcement for background worker
   validateProductionSecrets('WorkerBootstrap');
