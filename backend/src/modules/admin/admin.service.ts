@@ -435,8 +435,11 @@ export class AdminService {
         const paidCoins = payout?.paidCoins || 0;
         const dueCoins = Math.max(0, earnedCoins - paidCoins);
         const earnedBreakdown = calculateCoinEarningsBreakdown(earnedCoins);
-        const paidBreakdown = calculateCoinEarningsBreakdown(paidCoins);
         const dueBreakdown = calculateCoinEarningsBreakdown(dueCoins);
+        // Net figures use the same cumulative rule as recordPayout, so earned = paid + due exactly.
+        const netPaiseOf = (c: number) => Math.round(calculateCoinEarningsBreakdown(c).netInr * 100);
+        const paidNetPaise = netPaiseOf(paidCoins);
+        const dueNetPaise = Math.max(0, netPaiseOf(earnedCoins) - paidNetPaise);
         return {
           panditId: g.streamerId,
           panditName: u?.name || 'Unknown',
@@ -455,9 +458,9 @@ export class AdminService {
           // Due breakdown (the real "how much to pay now")
           dueGrossInr: dueBreakdown.grossInr,
           duePlatformFeeInr: dueBreakdown.platformFeeInr,
-          dueNetInr: dueBreakdown.netInr,
+          dueNetInr: dueNetPaise / 100,
           // Paid breakdown
-          paidNetInr: paidBreakdown.netInr,
+          paidNetInr: paidNetPaise / 100,
         };
       })
       .sort((x, y) => y.dueCoins - x.dueCoins);
@@ -467,7 +470,6 @@ export class AdminService {
     const platformDueCoins = ledger.reduce((acc, p) => acc + p.dueCoins, 0);
     const platformTotalTransactions = ledger.reduce((acc, p) => acc + p.transactionCount, 0);
     const platformBreakdown = calculateCoinEarningsBreakdown(platformTotalCoins);
-    const platformDueBreakdown = calculateCoinEarningsBreakdown(platformDueCoins);
 
     return {
       ledger,
@@ -477,7 +479,7 @@ export class AdminService {
       platformGrossInr: platformBreakdown.grossInr,
       platformFeeInr: platformBreakdown.platformFeeInr,
       platformTotalInr: ledger.reduce((acc, p) => acc + p.totalInr, 0),
-      platformDueNetInr: platformDueBreakdown.netInr,
+      platformDueNetInr: Math.round(ledger.reduce((acc, p) => acc + p.dueNetInr * 100, 0)) / 100,
       platformTotalTransactions,
     };
   }
@@ -502,29 +504,39 @@ export class AdminService {
     const payer = await this.prisma.user.findUnique({ where: { id: paidById }, select: { id: true } });
     if (!payer) throw new NotFoundException('Admin account not found');
 
-    // Calculate unsettled coins
-    const [earnedAgg, paidAgg] = await Promise.all([
-      this.prisma.streamerEarning.aggregate({ where: { streamerId }, _sum: { coins: true } }),
-      this.prisma.panditPayout.aggregate({ where: { streamerId }, _sum: { coins: true } }),
-    ]);
-    const earnedCoins = earnedAgg._sum.coins || 0;
-    const paidCoins = paidAgg._sum.coins || 0;
-    const dueCoins = Math.max(0, earnedCoins - paidCoins);
-
-    if (coins <= 0) throw new BadRequestException('coins must be a positive integer');
-    if (coins > dueCoins) {
-      throw new BadRequestException(
-        `Cannot settle ${coins} coins: only ${dueCoins} coins are currently outstanding for this pandit (earned ${earnedCoins}, already paid ${paidCoins}).`,
-      );
-    }
-
-    const breakdown = calculateCoinEarningsBreakdown(coins);
-    // Store netPaise as integer (₹1 = 100 paise) to avoid float rounding
-    const netPaise = Math.round(breakdown.netInr * 100);
+    if (!Number.isInteger(coins) || coins <= 0) throw new BadRequestException('coins must be a positive integer');
+    if (periodFrom && Number.isNaN(new Date(periodFrom).getTime())) throw new BadRequestException('periodFrom is not a valid date');
+    if (Number.isNaN(new Date(periodTo).getTime())) throw new BadRequestException('periodTo is not a valid date');
 
     let payout: any;
+    let breakdown = calculateCoinEarningsBreakdown(coins);
+    let dueAfter = 0;
     try {
       payout = await this.prisma.$transaction(async (tx) => {
+        // Serialise concurrent payouts for the same pandit: without this lock two requests can both read the
+        // same "due" figure and together settle more than was earned.
+        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${'pandit-payout:' + streamerId}))`;
+
+        const [earnedAgg, paidAgg] = await Promise.all([
+          tx.streamerEarning.aggregate({ where: { streamerId }, _sum: { coins: true } }),
+          tx.panditPayout.aggregate({ where: { streamerId }, _sum: { coins: true } }),
+        ]);
+        const earnedCoins = earnedAgg._sum.coins || 0;
+        const paidCoins = paidAgg._sum.coins || 0;
+        const dueCoins = Math.max(0, earnedCoins - paidCoins);
+        if (coins > dueCoins) {
+          throw new BadRequestException(
+            `Cannot settle ${coins} coins: only ${dueCoins} coins are currently outstanding for this pandit (earned ${earnedCoins}, already paid ${paidCoins}).`,
+          );
+        }
+
+        breakdown = calculateCoinEarningsBreakdown(coins);
+        // Net paid is the difference of the cumulative net before/after this payout, so any number of part-payments
+        // always adds up to exactly the net earned (no per-payout rounding drift; 1-coin payouts can't overpay).
+        const netPaiseOf = (c: number) => Math.round(calculateCoinEarningsBreakdown(c).netInr * 100);
+        const netPaise = netPaiseOf(paidCoins + coins) - netPaiseOf(paidCoins);
+        dueAfter = dueCoins - coins;
+
         const p = await tx.panditPayout.create({
           data: {
             streamerId,
@@ -549,9 +561,8 @@ export class AdminService {
             details: {
               panditName: pandit.name,
               coins,
-              netInr: breakdown.netInr,
+              netInr: netPaise / 100,
               grossInr: breakdown.grossInr,
-              platformFeeInr: breakdown.platformFeeInr,
               reference,
               method: method || null,
               periodTo,
@@ -574,10 +585,9 @@ export class AdminService {
 
     return {
       ...payout,
-      netInr: breakdown.netInr,
+      netInr: payout.netPaise / 100,
       grossInr: breakdown.grossInr,
-      platformFeeInr: breakdown.platformFeeInr,
-      dueCoinsAfter: dueCoins - coins,
+      dueCoinsAfter: dueAfter,
     };
   }
 

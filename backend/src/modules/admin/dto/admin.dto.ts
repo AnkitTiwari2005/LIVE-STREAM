@@ -1,4 +1,5 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString, IsNumber, IsBoolean, MaxLength, Matches } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, IsNumber, IsBoolean, IsInt, Min, IsISO8601, MaxLength, Matches } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserStatus } from '@prisma/client';
 
@@ -149,17 +150,17 @@ export class RecordPayoutDto {
   streamerId: string;
 
   @ApiProperty({ description: 'Gross coins settled (must not exceed unsettled due coins)', example: 1500 })
-  @IsNumber()
+  @IsInt()
+  @Min(1)
   coins: number;
 
   @ApiProperty({ required: false, description: 'ISO date string – start of earning period covered', example: '2026-11-01T00:00:00.000Z' })
   @IsOptional()
-  @IsString()
+  @IsISO8601()
   periodFrom?: string;
 
   @ApiProperty({ description: 'ISO date string – end of earning period covered (inclusive)', example: '2026-11-30T23:59:59.999Z' })
-  @IsString()
-  @IsNotEmpty()
+  @IsISO8601()
   periodTo: string;
 
   @ApiProperty({ required: false, description: 'Payment method', example: 'UPI' })
@@ -169,6 +170,7 @@ export class RecordPayoutDto {
   method?: string;
 
   @ApiProperty({ description: 'UTR / transaction ID / cheque no.', example: 'UTR12345678901234' })
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
   @IsNotEmpty()
   @MaxLength(120)
@@ -177,6 +179,7 @@ export class RecordPayoutDto {
   @ApiProperty({ required: false, description: 'Optional admin note', example: 'November settlement' })
   @IsOptional()
   @IsString()
+  @MaxLength(500)
   note?: string;
 }
 
