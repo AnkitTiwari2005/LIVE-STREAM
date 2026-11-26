@@ -124,31 +124,98 @@ async function bootstrap() {
   expressApp.get('/robots.txt', (_req: any, res: any) => {
     res.type('text/plain; charset=utf-8');
     // R-08: Use siteOrigin (from FRONTEND_ORIGIN env var) so search engines get the correct domain.
-    // Also disallow private/admin/api paths from indexing.
+    // Also disallow private/admin/api paths from indexing across general and AI crawlers.
     res.send(`User-agent: *
 Content-Signal: search=yes, ai-train=no
 Allow: /
-Disallow: /account
-Disallow: /admin
-Disallow: /api
-Disallow: /forgot-password
-Disallow: /join
-Disallow: /login
-Disallow: /register
-Disallow: /reset-password
-Disallow: /streamer
-Disallow: /studio
-Disallow: /verify-email
-Disallow: /wallet
+Disallow: /account/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /forgot-password/
+Disallow: /join/
+Disallow: /login/
+Disallow: /register/
+Disallow: /reset-password/
+Disallow: /streamer/
+Disallow: /studio/
+Disallow: /verify-email/
+Disallow: /wallet/
 
+# Explicitly grant indexing & citation access to leading AI crawlers
 User-agent: GPTBot
 Allow: /
+Disallow: /account/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /forgot-password/
+Disallow: /join/
+Disallow: /login/
+Disallow: /register/
+Disallow: /reset-password/
+Disallow: /streamer/
+Disallow: /studio/
+Disallow: /verify-email/
+Disallow: /wallet/
 
 User-agent: ClaudeBot
 Allow: /
+Disallow: /account/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /forgot-password/
+Disallow: /join/
+Disallow: /login/
+Disallow: /register/
+Disallow: /reset-password/
+Disallow: /streamer/
+Disallow: /studio/
+Disallow: /verify-email/
+Disallow: /wallet/
 
 User-agent: PerplexityBot
 Allow: /
+Disallow: /account/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /forgot-password/
+Disallow: /join/
+Disallow: /login/
+Disallow: /register/
+Disallow: /reset-password/
+Disallow: /streamer/
+Disallow: /studio/
+Disallow: /verify-email/
+Disallow: /wallet/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /account/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /forgot-password/
+Disallow: /join/
+Disallow: /login/
+Disallow: /register/
+Disallow: /reset-password/
+Disallow: /streamer/
+Disallow: /studio/
+Disallow: /verify-email/
+Disallow: /wallet/
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /account/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /forgot-password/
+Disallow: /join/
+Disallow: /login/
+Disallow: /register/
+Disallow: /reset-password/
+Disallow: /streamer/
+Disallow: /studio/
+Disallow: /verify-email/
+Disallow: /wallet/
 
 User-agent: Googlebot
 Allow: /
