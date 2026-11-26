@@ -440,6 +440,8 @@ cd ../frontend && node tests/i18n-and-chart.test.js
    Provide production values for `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `LIVEKIT_*`, `JWT_*`, `ENCRYPTION_MASTER_KEY`, `RAZORPAY_*`, and `BREVO_*`.
 4. **Deploy Database Migrations**:
    Run `npx prisma migrate deploy` to apply all schema updates to your production PostgreSQL database.
+5. **Persistent Upload & KYC Storage**:
+   Under Hostinger's immutable `hbuilds/versions/<uuid>/nodejs` directory layout, `StorageService` and `main.ts` ([`storage-paths.util.ts`](backend/src/common/storage-paths.util.ts)) automatically resolve public uploads and private KYC documents to `<domain-root>/persistent-storage/{uploads,kyc}` outside versioned build folders so user uploads survive future deploys. Check startup logs for `Serving public uploads from .../persistent-storage/uploads` (or set `STORAGE_ROOT` explicitly to override).
 
 ---
 
