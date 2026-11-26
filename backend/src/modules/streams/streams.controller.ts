@@ -24,6 +24,16 @@ import { UserRole } from '@prisma/client';
 import { Request } from 'express';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 
+// Express has already URL-decoded route params; decode again only when the value is still percent-encoded,
+// and never let a stray '%' turn into an unhandled URIError (500).
+function safeDecode(v: string): string {
+  try {
+    return decodeURIComponent(v);
+  } catch {
+    return v;
+  }
+}
+
 @ApiTags('Streams')
 @Controller('streams')
 export class StreamsController {
@@ -142,7 +152,7 @@ export class StreamsController {
     @CurrentUser() user: any,
     @Body() dto: GrantVideoGuestDto,
   ) {
-    return this.streamsService.grantVideoGuest(streamId, user.id, user.role, decodeURIComponent(identity), {
+    return this.streamsService.grantVideoGuest(streamId, user.id, user.role, safeDecode(identity), {
       replace: dto?.replace === true,
     });
   }
@@ -156,7 +166,7 @@ export class StreamsController {
     @Param('identity') identity: string,
     @CurrentUser() user: any,
   ) {
-    return this.streamsService.revokeVideoGuest(streamId, user.id, user.role, decodeURIComponent(identity));
+    return this.streamsService.revokeVideoGuest(streamId, user.id, user.role, safeDecode(identity));
   }
 
   @Roles(UserRole.STREAMER, UserRole.ADMIN)
@@ -169,7 +179,7 @@ export class StreamsController {
     @CurrentUser() user: any,
     @Body() dto: MuteParticipantDto,
   ) {
-    return this.streamsService.muteParticipantMedia(streamId, user.id, user.role, decodeURIComponent(identity), dto);
+    return this.streamsService.muteParticipantMedia(streamId, user.id, user.role, safeDecode(identity), dto);
   }
 
   @Roles(UserRole.STREAMER, UserRole.ADMIN)
@@ -186,7 +196,7 @@ export class StreamsController {
       streamId,
       user.id,
       user.role,
-      decodeURIComponent(identity),
+      safeDecode(identity),
       dto,
     );
   }

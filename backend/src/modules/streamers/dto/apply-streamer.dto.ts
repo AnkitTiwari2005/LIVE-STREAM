@@ -1,4 +1,4 @@
-import { IsArray, IsNotEmpty, IsOptional, IsString, IsEnum, IsIn, Matches, ValidateNested, ArrayMaxSize } from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional, IsString, IsEnum, IsIn, Matches, ValidateNested, ArrayMaxSize, MaxLength } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { KycStatus } from '@prisma/client';
@@ -30,16 +30,21 @@ export class ApplyStreamerDto {
   @ApiProperty({ example: 'Vedic pandit with 15+ years experience conducting Maha Yagya and Kundli readings.' })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(2000)
   bio: string;
 
   @ApiProperty({ example: ['Hindi', 'Sanskrit', 'English'] })
   @IsArray()
+  @ArrayMaxSize(15)
   @IsString({ each: true })
+  @MaxLength(50, { each: true })
   languages: string[];
 
   @ApiProperty({ example: ['Vedic Pooja', 'Kundli Match', 'Vastu Consultation'] })
   @IsArray()
+  @ArrayMaxSize(25)
   @IsString({ each: true })
+  @MaxLength(80, { each: true })
   specialties: string[];
 
   @ApiProperty({

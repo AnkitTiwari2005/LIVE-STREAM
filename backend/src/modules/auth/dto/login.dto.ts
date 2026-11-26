@@ -53,3 +53,11 @@ export class DeleteAccountDto {
   @IsString()
   password?: string;
 }
+
+export class UpdateProfileDto {
+  @ApiProperty({ example: 'Ankit Sharma' })
+  @IsString()
+  @MinLength(2, { message: 'Name must be at least 2 characters long' })
+  @MaxLength(100)
+  name: string;
+}

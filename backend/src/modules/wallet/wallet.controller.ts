@@ -45,6 +45,7 @@ export class WalletController {
     return this.walletService.getCoinPackages();
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('topup/create-order')
   @ApiOperation({ summary: 'Initiate Razorpay order for coin package recharge' })
   async createTopupOrder(

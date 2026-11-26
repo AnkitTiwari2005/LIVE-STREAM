@@ -317,7 +317,11 @@ export class StreamsService {
     }
 
     const participantId = verifiedUser?.id || `guest_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-    const participantName = guestName || (verifiedUser ? verifiedUser.name || 'Registered Devotee' : 'Guest Devotee');
+    // guestName is client-supplied and becomes the participant's display name for everyone in the room:
+    // accept only a short plain string (no control chars) so it cannot be used to impersonate or bloat the token.
+    const cleanGuestName =
+      typeof guestName === 'string' ? guestName.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 60) : '';
+    const participantName = cleanGuestName || (verifiedUser ? verifiedUser.name || 'Registered Devotee' : 'Guest Devotee');
 
     let viewingSession: any = null;
 
@@ -357,15 +361,31 @@ export class StreamsService {
       }
     }
 
-    // Record or update viewer session
-    await this.prisma.viewerSession.create({
-      data: {
-        streamId,
-        userId: verifiedUser?.id || null,
-        guestName: participantName,
-        ipAddress: ip || null,
-      },
-    });
+    // Record or update viewer session: de-duplicate reconnects for the same user in this stream
+    // so 5-minute token refresh polling does not bloat the database with duplicate rows.
+    let existingViewerSession: any = null;
+    if (verifiedUser?.id) {
+      existingViewerSession = await this.prisma.viewerSession.findFirst({
+        where: {
+          streamId,
+          userId: verifiedUser.id,
+          leftAt: null,
+          isRemoved: false,
+        },
+        select: { id: true },
+      });
+    }
+
+    if (!existingViewerSession) {
+      await this.prisma.viewerSession.create({
+        data: {
+          streamId,
+          userId: verifiedUser?.id || null,
+          guestName: participantName,
+          ipAddress: ip || null,
+        },
+      });
+    }
 
     // R-03: Reduced viewer token TTL from 60 to 5 minutes.
     // A 60-min token cannot be revoked — if a viewer's session is terminated by the

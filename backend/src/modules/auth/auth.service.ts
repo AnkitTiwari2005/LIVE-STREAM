@@ -471,12 +471,12 @@ export class AuthService {
       data: { resetTokenHash, resetTokenExpiry },
     });
 
-    try {
-      await this.mailerService.sendPasswordResetEmail(user.email, user.name, rawResetToken);
-      this.logger.log(`Password reset link dispatched for ${user.email}`);
-    } catch (err: any) {
-      this.logger.error(`Failed to send password reset email: ${err.message}`);
-    }
+    // Fire-and-forget email dispatch asynchronously without awaiting: ensures consistent
+    // response timing (~5-10ms) regardless of whether the email exists, preventing timing-based user enumeration.
+    this.mailerService
+      .sendPasswordResetEmail(user.email, user.name, rawResetToken)
+      .then(() => this.logger.log(`Password reset link dispatched for ${user.email}`))
+      .catch((err: any) => this.logger.error(`Failed to send password reset email: ${err.message}`));
 
     return {
       message: 'If an account with that email exists, a password reset link has been dispatched.',

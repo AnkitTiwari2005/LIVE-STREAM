@@ -607,6 +607,18 @@ export class WalletService {
       throw new NotFoundException('Selected coin package is not active');
     }
 
+    // Guard against pending order accumulation
+    const recentPendingCount = await this.prisma.walletTopupOrder.count({
+      where: {
+        userId,
+        status: PaymentStatus.PENDING,
+        createdAt: { gte: new Date(Date.now() - 15 * 60 * 1000) },
+      },
+    });
+    if (recentPendingCount >= 5) {
+      throw new BadRequestException('You have several pending recharge orders. Please complete or wait for them to expire before creating a new order.');
+    }
+
     const configured = !!process.env.RAZORPAY_KEY_ID && !!process.env.RAZORPAY_KEY_SECRET;
     if (!configured && isProd() && process.env.ALLOW_MOCK_PAYMENTS !== 'true') {
       throw new ServiceUnavailableException('Payments are not configured in production');

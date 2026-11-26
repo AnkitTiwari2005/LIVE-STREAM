@@ -79,7 +79,8 @@ export class AdminController {
   @Get('audit-logs')
   @ApiOperation({ summary: 'View immutable audit trail of all moderation and admin actions (FR-R4)' })
   async getAuditLogs(@Query('limit') limit?: number) {
-    return this.adminService.getAuditLogs(limit ? Number(limit) : 100);
+    const n = Math.floor(Number(limit));
+    return this.adminService.getAuditLogs(Number.isFinite(n) && n >= 1 ? Math.min(n, 500) : 100);
   }
 
   // --- Categories (FR-M6) ---

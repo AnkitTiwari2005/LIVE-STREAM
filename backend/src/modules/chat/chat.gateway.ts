@@ -245,8 +245,13 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         if (blocked) res = { ok: false, reason: 'You have been blocked from this stream' };
       }
     } else if (!isModerator && userId) {
+      // A ban/suspension/deletion must also silence sockets that connected BEFORE it happened
+      // (the REST guard re-checks status on every request; sockets only checked at connect).
+      const account = await this.prisma.user.findUnique({ where: { id: userId }, select: { status: true, deletedAt: true } });
       const blocked = await this.prisma.blockedViewer.findFirst({ where: { streamId: stream.id, userId } });
-      if (blocked) res = { ok: false, reason: 'You have been blocked from this stream' };
+      if (!account || account.deletedAt || ['BANNED', 'SUSPENDED', 'DELETION_REQUESTED'].includes(account.status as string)) {
+        res = { ok: false, reason: 'Your account is restricted from chat' };
+      } else if (blocked) res = { ok: false, reason: 'You have been blocked from this stream' };
       else if (stream.visibility === 'PRIVATE') {
         const sessionId = client.data.sessionIds?.[stream.id];
         const session = await this.prisma.viewerSession.findFirst({

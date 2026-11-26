@@ -56,6 +56,11 @@ export class AdminService {
   }
 
   async searchUsers(query?: string, role?: UserRole, status?: UserStatus) {
+    if (role && !Object.values(UserRole).includes(role)) throw new BadRequestException('Invalid role filter');
+    if (status && !Object.values(UserStatus).includes(status)) throw new BadRequestException('Invalid status filter');
+    if (query !== undefined && (typeof query !== 'string' || query.length > 100)) {
+      throw new BadRequestException('query must be a string of at most 100 characters');
+    }
     const where: any = {};
     if (role) where.role = role;
     if (status) where.status = status;
@@ -169,7 +174,7 @@ export class AdminService {
   async getAuditLogs(limit = 100) {
     return this.prisma.auditLog.findMany({
       orderBy: { createdAt: 'desc' },
-      take: limit,
+      take: Math.min(Math.max(Math.floor(Number(limit)) || 100, 1), 500),
     });
   }
 

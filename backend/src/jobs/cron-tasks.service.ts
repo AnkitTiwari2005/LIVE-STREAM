@@ -203,6 +203,14 @@ export class CronTasksService {
       },
     });
 
+    // 1b. Purge viewer sessions > 30 days old for concluded streams to prevent unbounded table growth
+    const deletedViewerSessions = await this.prisma.viewerSession.deleteMany({
+      where: {
+        joinedAt: { lte: thirtyDaysAgo },
+        stream: { status: { in: [StreamStatus.ENDED, StreamStatus.CANCELLED] } },
+      },
+    });
+
     // 2. Anonymize personal identifiers > 90 days old (matches the published retention policy)
     const anonymizedIps = await this.prisma.viewerSession.updateMany({
       where: { joinedAt: { lte: ninetyDaysAgo }, ipAddress: { not: null } },

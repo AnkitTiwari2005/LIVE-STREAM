@@ -264,32 +264,38 @@ export class PrivateLinksService {
       }
     }
 
-    // Check max viewer limit
-    if (link.maxViewers) {
-      const activeSessionsCount = await this.prisma.viewerSession.count({
-        where: {
+    const participantName =
+      (typeof dto.guestName === 'string' ? dto.guestName.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 60) : '') ||
+      verifiedUser?.name ||
+      'Private Devotee';
+
+    // Capacity check + session insert in ONE transaction under a per-link lock: otherwise two devotees
+    // claiming a 1-on-1 link at the same moment both pass the count and both get in.
+    const session = await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${'private-link-claim:' + link.id}))`;
+      if (link.maxViewers) {
+        const activeSessionsCount = await tx.viewerSession.count({
+          where: {
+            streamId: link.streamId,
+            privateLinkId: link.id,
+            leftAt: null,
+            isRemoved: false,
+          },
+        });
+        if (activeSessionsCount >= link.maxViewers) {
+          throw new ForbiddenException('This private live session has reached its maximum viewer capacity');
+        }
+      }
+      // Create session record first to get consistent identity (B-11 / S-01)
+      return tx.viewerSession.create({
+        data: {
           streamId: link.streamId,
           privateLinkId: link.id,
-          leftAt: null,
-          isRemoved: false,
+          userId: verifiedUser?.id || null,
+          guestName: participantName,
+          ipAddress: ip || null,
         },
       });
-      if (activeSessionsCount >= link.maxViewers) {
-        throw new ForbiddenException('This private live session has reached its maximum viewer capacity');
-      }
-    }
-
-    const participantName = dto.guestName || verifiedUser?.name || 'Private Devotee';
-
-    // Create session record first to get consistent identity (B-11 / S-01)
-    const session = await this.prisma.viewerSession.create({
-      data: {
-        streamId: link.streamId,
-        privateLinkId: link.id,
-        userId: verifiedUser?.id || null,
-        guestName: participantName,
-        ipAddress: ip || null,
-      },
     });
 
     const participantId = verifiedUser ? verifiedUser.id : `priv_guest_${session.id}`;

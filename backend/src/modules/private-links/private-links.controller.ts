@@ -9,7 +9,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { PrivateLinksService } from './private-links.service';
-import { CreatePrivateLinkDto, ClaimPrivateLinkDto } from './dto/create-private-link.dto';
+import { CreatePrivateLinkDto, ClaimPrivateLinkDto, KickBlockViewerDto } from './dto/create-private-link.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Public } from '../../common/decorators/public.decorator';
@@ -108,16 +108,14 @@ export class PrivateLinksController {
   async kickAndBlockViewer(
     @Param('streamId') streamId: string,
     @CurrentUser('id') streamerId: string,
-    @Body('targetUserId') targetUserId?: string,
-    @Body('targetSessionId') targetSessionId?: string,
-    @Body('reason') reason?: string,
+    @Body() dto: KickBlockViewerDto,
   ) {
     return this.privateLinksService.kickAndBlockViewer(
       streamId,
       streamerId,
-      targetUserId,
-      targetSessionId,
-      reason,
+      dto?.targetUserId,
+      dto?.targetSessionId,
+      dto?.reason,
     );
   }
 }

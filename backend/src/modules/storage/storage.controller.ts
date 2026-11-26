@@ -10,6 +10,7 @@ import {
   BadRequestException,
   ForbiddenException,
   PayloadTooLargeException,
+  Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import * as fs from 'fs';
@@ -18,17 +19,24 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '@prisma/client';
+import { PresignedUrlDto } from './dto/presigned-url.dto';
+import { PrismaService } from '../../database/prisma.service';
 
 @ApiTags('Storage')
 @ApiBearerAuth()
 @Controller('storage')
 export class StorageController {
-  constructor(private readonly storageService: StorageService) {}
+  private readonly logger = new Logger(StorageController.name);
+
+  constructor(
+    private readonly storageService: StorageService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @Post('presigned-url')
   @ApiOperation({ summary: 'Obtain upload authorization for verified KYC or stream assets' })
   async getPresignedUrl(
-    @Body() body: { filename: string; contentType: string; folder?: string },
+    @Body() body: PresignedUrlDto,
     @CurrentUser('id') userId: string,
   ) {
     if (!body.filename || !body.contentType) {
@@ -93,10 +101,34 @@ export class StorageController {
   @Get('kyc-document')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Admin-only secure retrieval of verified KYC identity documents (B-06)' })
-  async getKycDocument(@Query('key') key: string, @Res() res: Response) {
+  async getKycDocument(
+    @Query('key') key: string,
+    @CurrentUser() admin: any,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     if (!key) {
       throw new BadRequestException('key query parameter is required');
     }
+
+    // Audit log KYC document access for compliance and DPDP audit trail
+    this.prisma.auditLog
+      .create({
+        data: {
+          actorId: admin?.id || 'admin',
+          actorEmail: admin?.email || 'admin@paramdarshan.com',
+          action: 'KYC_DOCUMENT_VIEWED',
+          targetResource: `Storage:${key}`,
+          details: {
+            ip: (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip,
+            userAgent: req.headers['user-agent'] || 'unknown',
+          },
+        },
+      })
+      .catch((err) => {
+        this.logger.warn(`Failed to write KYC audit log: ${err?.message || err}`);
+      });
+
     const { filePath, contentType } = this.storageService.getKycFile(key);
     res.setHeader('Content-Type', contentType);
     res.setHeader('Cache-Control', 'private, no-store');
