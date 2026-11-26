@@ -19,6 +19,7 @@ import helmet from 'helmet';
 import { validateProductionSecrets } from './common/config/validate-env';
 import { isDevMode, isProductionLike } from './common/runtime-mode';
 import { isAllowedSocketOrigin } from './modules/chat/chat.gateway';
+import { ensureWritableStorageDir, resolveStorageDirs } from './common/storage-paths.util';
 
 const bootstrapLogger = new Logger('Bootstrap');
 
@@ -335,11 +336,11 @@ Sitemap: ${siteOrigin}/sitemap.xml
 </urlset>`);
   });
 
-  // Mount public uploads directory
-  const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-  }
+  // Mount public uploads directory (persistent outside Hostinger versioned build directories)
+  const fallbackUploadsDir = path.join(process.cwd(), 'public', 'uploads');
+  const resolvedStorage = resolveStorageDirs(process.cwd(), process.env);
+  const uploadsDir = ensureWritableStorageDir(resolvedStorage.uploadDir, fallbackUploadsDir, logger);
+  logger.log(`Serving public uploads from ${uploadsDir}`);
   expressApp.use('/uploads', express.static(uploadsDir, { maxAge: '30d' }));
 
   // Unified Next.js Frontend Static Client Serving

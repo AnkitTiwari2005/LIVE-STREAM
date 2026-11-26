@@ -76,5 +76,24 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
   const [maj, min, pat] = String(engineIoPkg.version).split('.').map(Number);
   ok(maj > 6 || (maj === 6 && (min > 6 || (min === 6 && pat >= 12))), `engine.io ${engineIoPkg.version} is patched (>= 6.6.12)`);
 
+  // AuthService: case-insensitive email lookup across register/login/forgotPassword
+  const { AuthService } = require('../src/modules/auth/auth.service');
+  const findCalls: any[] = [];
+  const authPrisma: any = {
+    user: {
+      findFirst: async (args: any) => {
+        findCalls.push(args);
+        return null;
+      },
+    },
+  };
+  const authSvc = new AuthService(authPrisma, {} as any, {} as any, {} as any, {} as any);
+  await authSvc.forgotPassword('Kdtripathi481@GMAIL.com');
+  const clauses = findCalls[0]?.where?.OR || [];
+  ok(
+    clauses.some((c: any) => c?.email?.equals === 'kdtripathi481@gmail.com' && c?.email?.mode === 'insensitive'),
+    'auth lookup queries lowercased email with Prisma mode=insensitive',
+  );
+
   console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);
 })();

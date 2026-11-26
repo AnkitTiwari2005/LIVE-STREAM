@@ -2,6 +2,7 @@ import { Injectable, Logger, BadRequestException, PayloadTooLargeException } fro
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
+import { ensureWritableStorageDir, resolveStorageDirs } from '../../common/storage-paths.util';
 
 export const ALLOWED_FOLDERS = ['media', 'avatars', 'thumbnails', 'kyc'] as const;
 export type AllowedFolder = typeof ALLOWED_FOLDERS[number];
@@ -28,16 +29,16 @@ const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
 @Injectable()
 export class StorageService {
   private readonly logger = new Logger(StorageService.name);
-  private readonly uploadDir = path.join(process.cwd(), 'public', 'uploads');
-  private readonly privateKycDir = path.join(process.cwd(), 'storage', 'kyc');
+  private readonly uploadDir: string;
+  private readonly privateKycDir: string;
 
   constructor() {
-    if (!fs.existsSync(this.uploadDir)) {
-      fs.mkdirSync(this.uploadDir, { recursive: true });
-    }
-    if (!fs.existsSync(this.privateKycDir)) {
-      fs.mkdirSync(this.privateKycDir, { recursive: true });
-    }
+    const fallbackUploadDir = path.join(process.cwd(), 'public', 'uploads');
+    const fallbackKycDir = path.join(process.cwd(), 'storage', 'kyc');
+    const resolved = resolveStorageDirs(process.cwd(), process.env);
+
+    this.uploadDir = ensureWritableStorageDir(resolved.uploadDir, fallbackUploadDir, this.logger);
+    this.privateKycDir = ensureWritableStorageDir(resolved.privateKycDir, fallbackKycDir, this.logger);
   }
 
   /**

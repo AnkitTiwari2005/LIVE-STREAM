@@ -114,14 +114,29 @@ export class AuthService {
     private readonly streamsService?: StreamsService,
   ) {}
 
-  async register(dto: RegisterDto) {
-    const normalizedEmail = normalizeEmail(dto.email);
-    const existing = await this.prisma.user.findFirst({
+  private findActiveUserByEmail(email: string, include?: Prisma.UserInclude): Promise<any> {
+    const trimmed = (email || '').trim();
+    const rawLower = trimmed.toLowerCase();
+    const normalizedEmail = normalizeEmail(trimmed);
+    const emailClauses: Prisma.UserWhereInput[] = [
+      { email: { equals: normalizedEmail, mode: 'insensitive' } },
+    ];
+    if (rawLower && rawLower !== normalizedEmail) {
+      emailClauses.push({ email: { equals: rawLower, mode: 'insensitive' } });
+    }
+
+    return this.prisma.user.findFirst({
       where: {
-        OR: [{ email: normalizedEmail }, { email: dto.email.trim().toLowerCase() }],
+        OR: emailClauses,
         deletedAt: null,
       },
+      ...(include ? { include } : {}),
     });
+  }
+
+  async register(dto: RegisterDto) {
+    const normalizedEmail = normalizeEmail(dto.email);
+    const existing = await this.findActiveUserByEmail(dto.email);
     if (existing) {
       throw new ConflictException('An account with this email address already exists');
     }
@@ -246,14 +261,9 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    const normalizedEmail = normalizeEmail(dto.email);
-    const rawEmail = dto.email.trim().toLowerCase();
-    const user = await this.prisma.user.findFirst({
-      where: {
-        OR: [{ email: normalizedEmail }, { email: rawEmail }],
-        deletedAt: null,
-      },
-      include: { streamerProfile: true, wallet: true },
+    const user = await this.findActiveUserByEmail(dto.email, {
+      streamerProfile: true,
+      wallet: true,
     });
 
     if (!user || !user.passwordHash) {
@@ -450,14 +460,7 @@ export class AuthService {
   }
 
   async forgotPassword(email: string) {
-    const normalizedEmail = normalizeEmail(email);
-    const rawEmail = email.trim().toLowerCase();
-    const user = await this.prisma.user.findFirst({
-      where: {
-        OR: [{ email: normalizedEmail }, { email: rawEmail }],
-        deletedAt: null,
-      },
-    });
+    const user = await this.findActiveUserByEmail(email);
     if (!user) {
       // Generic success to prevent user enumeration
       return { message: 'If an account with that email exists, a password reset link has been dispatched.' };

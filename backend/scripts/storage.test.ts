@@ -106,6 +106,30 @@ async function runTests() {
   // Clean up test file
   await storageService.deleteFile(testPngKey);
 
+  // 7. Persistent storage path resolution across Hostinger versioned deploys & STORAGE_ROOT
+  const { resolveStorageDirs } = require('../src/common/storage-paths.util');
+  const hostingerDirs = resolveStorageDirs(
+    '/home/u392157842/domains/paramdarshan.com/hbuilds/versions/01a217e3-fb2f-7079-83dc-09a13d224647/nodejs',
+    {},
+  );
+  assert(
+    hostingerDirs.uploadDir === path.join('/home/u392157842/domains/paramdarshan.com', 'persistent-storage', 'uploads') &&
+      hostingerDirs.privateKycDir === path.join('/home/u392157842/domains/paramdarshan.com', 'persistent-storage', 'kyc'),
+    'Resolves Hostinger uploads and KYC outside ephemeral hbuilds/versions folder',
+  );
+  const overrideDirs = resolveStorageDirs('/tmp/any', { STORAGE_ROOT: '/var/data/pooja' });
+  assert(
+    overrideDirs.uploadDir === path.join(path.resolve('/var/data/pooja'), 'uploads') &&
+      overrideDirs.privateKycDir === path.join(path.resolve('/var/data/pooja'), 'kyc'),
+    'Honors explicit STORAGE_ROOT override',
+  );
+  const dockerDirs = resolveStorageDirs('/app', {});
+  assert(
+    dockerDirs.uploadDir === path.join('/app', 'public', 'uploads') &&
+      dockerDirs.privateKycDir === path.join('/app', 'storage', 'kyc'),
+    'Preserves Docker /app public/uploads and storage/kyc defaults',
+  );
+
   console.log('--- ALL STORAGE TESTS PASSED SUCCESSFULLY! ---');
   process.exit(0);
 }
