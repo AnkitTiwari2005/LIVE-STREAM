@@ -1,12 +1,15 @@
 import { PrismaClient, UserRole, UserStatus, KycStatus, StreamStatus, StreamVisibility } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { assertSafeToSeedPandits } from './reseed-guard';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🕉️ --- Syncing 7 Authentic Verified Pandits into Database --- 🕉️');
+  // Throws BEFORE any database access unless the operator explicitly opted in with a strong env password.
+  const seedPassword = assertSafeToSeedPandits();
+  console.log('🕉️ --- Syncing Verified Pandits into Database --- 🕉️');
 
-  const passwordHash = await bcrypt.hash('SanatanDharma@2026', 12);
+  const passwordHash = await bcrypt.hash(seedPassword, 12);
 
   // 1. Fetch categories
   const poojaCat = await prisma.streamCategory.findUnique({ where: { slug: 'pooja' } });
@@ -21,7 +24,6 @@ async function main() {
       slug: 'rohit-tiwari',
       name: 'पंडित रोहित तिवारी (ज्योतिषाचार्य)',
       email: 'tripathiayush068@gmail.com',
-      role: UserRole.ADMIN,
       avatarUrl: '/images/pandits/pandit-rohit-tiwari.webp',
       bio: 'Founder of Param Darshan and revered Vedic astrologer based in Delhi. Specialized in Parashari Jyotish, authentic Kundli Milan, Vivah Sanskar vidhi, and auspicious matrimonial alignments.',
       specialties: ['Matrimonial Advisor', 'Kundli Milan', 'Vedic Astrology', 'Vivah Sanskar'],
@@ -165,7 +167,7 @@ async function main() {
   ];
 
   for (const p of panditsData) {
-    // 1. Find or create user
+    // 1. Find or create user (never auto-grants ADMIN or overwrites existing roles)
     let user = await prisma.user.findUnique({ where: { email: p.email } });
     if (!user) {
       user = await prisma.user.create({
@@ -173,7 +175,7 @@ async function main() {
           name: p.name,
           email: p.email,
           passwordHash,
-          role: (p as any).role || UserRole.STREAMER,
+          role: UserRole.STREAMER,
           status: UserStatus.ACTIVE,
           isEmailVerified: true,
           isAgeConfirmed18Plus: true,
@@ -188,13 +190,12 @@ async function main() {
         where: { id: user.id },
         data: {
           name: p.name,
-          role: (p as any).role || UserRole.STREAMER,
           status: UserStatus.ACTIVE,
           avatarUrl: p.avatarUrl,
           isEmailVerified: true,
         },
       });
-      console.log(`  🔄 Updated User to Streamer: ${user.name} <${user.email}>`);
+      console.log(`  🔄 Updated User Profile: ${user.name} <${user.email}> (role preserved: ${user.role})`);
     }
 
     // 2. Find or create streamer profile

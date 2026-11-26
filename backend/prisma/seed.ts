@@ -140,7 +140,18 @@ async function main() {
   console.log(`Seeded ${COIN_PACKAGES_CATALOG.length} coin packages.`);
 
   // 5. Default Platform Admin User (FR-A4)
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@platform-domain.com';
+  const rawAdminEmail = (process.env.ADMIN_EMAIL || '').trim();
+  const isProd = process.env.NODE_ENV === 'production';
+  if (
+    isProd &&
+    (!rawAdminEmail ||
+      rawAdminEmail.includes('platform-domain.com') ||
+      rawAdminEmail.includes('replace_with') ||
+      rawAdminEmail.includes('example.com'))
+  ) {
+    throw new Error('ADMIN_EMAIL must be set to a valid non-placeholder email in production.');
+  }
+  const adminEmail = rawAdminEmail || 'admin@platform-domain.com';
   const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
 
   if (!existingAdmin) {

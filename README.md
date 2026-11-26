@@ -369,7 +369,9 @@ npm install
 npx prisma generate
 npx prisma migrate deploy
 npm run prisma:seed
-npx ts-node prisma/seed-verified-pandits.ts
+
+# Optional (local/staging only — guarded against accidental production runs):
+# CONFIRM_PANDIT_SEED=SEED_VERIFIED_PANDITS SEED_PANDIT_PASSWORD='your-strong-min-12-char-pass' npx ts-node prisma/seed-verified-pandits.ts
 ```
 
 ### 3. Run the Unified Local Server
@@ -421,12 +423,14 @@ cd ../frontend && node tests/i18n-and-chart.test.js
 
 ### Option A — Unified Single-Host Deployment (Hostinger / Node.js Host)
 
+> **Important:** In this topology, Hostinger runs `backend/` directly and Express serves the pre-built static client from `backend/public/client/`. Do **not** delete `backend/public/client/`.
+
 1. **Build and Sync Frontend Assets**:
    ```bash
-   cd frontend
-   npm run build
-   # Copies the static export into backend/public/client
-   robocopy out ../backend/public/client /E /IS /IT
+   # Linux/macOS (atomic sync + verification):
+   bash scripts/sync-client.sh
+   # Windows PowerShell:
+   cd frontend && npm run build && robocopy out ../backend/public/client /E /PURGE
    ```
 2. **Commit and Deploy Backend**:
    * Set root directory to `backend`.
@@ -441,7 +445,7 @@ cd ../frontend && node tests/i18n-and-chart.test.js
 
 ### Option B — Multi-Container Docker Compose Stack (Linux VPS)
 
-Param Darshan includes a production-ready `docker-compose.yml` deploying 8 isolated services:
+Param Darshan includes a production-ready `docker-compose.yml` deploying isolated services:
 * `pooja_nginx`: TLS termination, reverse proxy, and Cloudflare real-IP restoration.
 * `pooja_api`: Clustered NestJS API serving REST and Socket.IO.
 * `pooja_worker`: Headless background cron task scheduler.
@@ -455,12 +459,12 @@ Param Darshan includes a production-ready `docker-compose.yml` deploying 8 isola
 git clone https://github.com/AnkitTiwari2005/LIVE-STREAM.git /opt/shubhdarshan
 cd /opt/shubhdarshan
 
-# 2. Configure production environment
+# 2. Configure production environment (including ADMIN_EMAIL and ADMIN_BOOTSTRAP_PASSWORD)
 cp .env.example .env.production
 chmod 600 .env.production
 
-# 3. Generate LiveKit configuration
-bash scripts/render-livekit-config.sh .env.production
+# 3. Render domain-specific LiveKit & Nginx configurations from templates
+bash scripts/render-vps-configs.sh .env.production
 
 # 4. Tune Linux kernel UDP buffers for high-concurrency WebRTC
 sudo cp scripts/sysctl-webrtc.conf /etc/sysctl.d/99-webrtc.conf
@@ -470,25 +474,15 @@ sudo sysctl --system
 docker compose --env-file .env.production up -d --build
 
 # 6. Apply database migrations & seed initial data
-docker exec -it pooja_api npx prisma migrate deploy
-docker exec -it pooja_api npm run prisma:seed
+docker compose --env-file .env.production exec api npx prisma migrate deploy
+docker compose --env-file .env.production exec api npm run prisma:seed
 ```
 
 ---
 
 ## Verified Pandit Seed Accounts
 
-For staging and local demonstration, the platform includes 7 pre-seeded verified Acharyas:
-
-| Pandit Name | Role / Specialty | Seed Email | Default Password |
-| :--- | :--- | :--- | :--- |
-| **पंडित रोहित तिवारी** | Founder & Matrimonial Astrologer | `rohit.tiwari@shubhdarshan.com` | `SanatanDharma@2026` |
-| **पंडित संतोष कुमार शास्त्री** | Co-Founder & Vastu Shastra Expert | `skjyotish@gmail.com` | `SanatanDharma@2026` |
-| **पंडित रवि पाठक** | Karmakand & Ganesh Aradhana | `ravi.pathak@shubhdarshan.com` | `SanatanDharma@2026` |
-| **पंडित नितिन शर्मा** | Shukla Yajurveda & Sundarkand Path | `nitin.sharma@shubhdarshan.com` | `SanatanDharma@2026` |
-| **पंडित उमेश शास्त्री** | Maha Rudrabhishek & Chandi Path | `umesh.shastri@shubhdarshan.com` | `SanatanDharma@2026` |
-| **आचार्य कुबेर दत्त त्रिपाठी** | Astrological Sankalp & Navgrah Shanti | `kuber.tripathi@shubhdarshan.com` | `SanatanDharma@2026` |
-| **पंडित सुभाष शास्त्री** | Satyanarayan Katha & Vedic Chanting | `subhash.shastri@shubhdarshan.com` | `SanatanDharma@2026` |
+For local/staging setup only, `prisma/seed-verified-pandits.ts` provisions curated Acharya profiles using the password supplied via `SEED_PANDIT_PASSWORD` (requires `CONFIRM_PANDIT_SEED=SEED_VERIFIED_PANDITS` and blocks `NODE_ENV=production` by default). Production administrator credentials must be provisioned exclusively via `ADMIN_EMAIL` and `ADMIN_BOOTSTRAP_PASSWORD` during `prisma:seed` and protected with TOTP 2FA in `/account#2fa`.
 
 ---
 

@@ -60,5 +60,21 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
     ok(!rej || rej.reason.constructor.name === 'ForbiddenException', 'the second claimant gets 403 capacity error');
     ok(sessions[0]?.guestName === 'A' || sessions[0]?.guestName === 'B', 'guestName is stored sanitised');
   } else { ok(false, 'could not construct PrivateLinksService in harness'); }
+
+  // Pandit seed guard: fails closed without opt-in, rejects production and committed defaults
+  const { assertSafeToSeedPandits } = require('../prisma/reseed-guard');
+  const throws = (fn: () => unknown) => { try { fn(); return false; } catch { return true; } };
+  ok(throws(() => assertSafeToSeedPandits({})), 'pandit seed guard: refuses without opt-in');
+  ok(throws(() => assertSafeToSeedPandits({ CONFIRM_PANDIT_SEED: 'SEED_VERIFIED_PANDITS', NODE_ENV: 'production', SEED_PANDIT_PASSWORD: 'StrongCustomPass!2026' })), 'pandit seed guard: refuses in NODE_ENV=production');
+  ok(throws(() => assertSafeToSeedPandits({ CONFIRM_PANDIT_SEED: 'SEED_VERIFIED_PANDITS', SEED_PANDIT_PASSWORD: 'SanatanDharma@2026' })), 'pandit seed guard: rejects old committed password');
+  ok(!throws(() => assertSafeToSeedPandits({ CONFIRM_PANDIT_SEED: 'SEED_VERIFIED_PANDITS', SEED_PANDIT_PASSWORD: 'UniqueStagingPass#99' })), 'pandit seed guard: accepts explicit staging opt-in + strong password');
+
+  // Verify patched engine.io version against GHSA-v775-f652-7rv6
+  const fs = require('fs');
+  const path = require('path');
+  const engineIoPkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../node_modules/engine.io/package.json'), 'utf8'));
+  const [maj, min, pat] = String(engineIoPkg.version).split('.').map(Number);
+  ok(maj > 6 || (maj === 6 && (min > 6 || (min === 6 && pat >= 12))), `engine.io ${engineIoPkg.version} is patched (>= 6.6.12)`);
+
   console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);
 })();
