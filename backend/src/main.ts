@@ -176,30 +176,9 @@ Sitemap: ${siteOrigin}/sitemap.xml
 
 ## Machine-Readable Resources & APIs
 - [Sitemap XML](${siteOrigin}/sitemap.xml): Machine-readable index of all public canonical routes.
-- [MCP Server Card](${siteOrigin}/.well-known/mcp/server-card.json): Model Context Protocol (SEP-1649) discovery manifest.
 - [Live System Health](${siteOrigin}/api/v1/health/live): Public server uptime and liveness probe.
 - [Database Ready Probe](${siteOrigin}/api/v1/health/ready): Public database connectivity probe.
 `);
-  });
-
-  expressApp.get('/.well-known/mcp/server-card.json', (_req: any, res: any) => {
-    res.type('application/json; charset=utf-8');
-    res.send(JSON.stringify({
-      $schema: 'https://modelcontextprotocol.io/schemas/server-card/v1.json',
-      name: 'Param Darshan MCP Server',
-      version: '1.0.0',
-      description: 'Vedic Astrology, Live Temple Darshan, and Sacred Pooja Rituals Model Context Protocol (MCP) Server',
-      endpoint: `${siteOrigin}/api/v1`,
-      homepage: siteOrigin,
-      capabilities: {
-        tools: true,
-        resources: true,
-        prompts: false,
-      },
-      authentication: {
-        type: 'none',
-      },
-    }, null, 2));
   });
 
   expressApp.get('/sitemap.xml', (_req: any, res: any) => {

@@ -106,8 +106,12 @@ export class AdminController {
 
   @Delete('categories/:id')
   @ApiOperation({ summary: 'Delete a stream category if no streams are linked' })
-  async deleteCategory(@Param('id') id: string) {
-    return this.adminService.deleteCategory(id);
+  async deleteCategory(
+    @Param('id') id: string,
+    @CurrentUser('id') adminId: string,
+    @CurrentUser('email') adminEmail: string,
+  ) {
+    return this.adminService.deleteCategory(id, adminId, adminEmail);
   }
 
   // --- Prohibited Words (FR-M6) ---

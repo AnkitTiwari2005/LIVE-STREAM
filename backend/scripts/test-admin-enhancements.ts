@@ -41,8 +41,21 @@ async function runTestSuite() {
       throw new Error('updateCategory returned unexpected state');
     }
 
-    await adminService.deleteCategory(created.id);
-    console.log(`[PASS] Test 2c: deleteCategory succeeded.`);
+    await adminService.deleteCategory(created.id, 'test-admin-id', 'admin@example.com');
+    const auditEntry = await prisma.auditLog.findFirst({
+      where: {
+        action: 'DELETE_STREAM_CATEGORY',
+        targetResource: `StreamCategory:${created.id}`,
+      },
+    });
+    if (!auditEntry) {
+      throw new Error('Audit log entry for DELETE_STREAM_CATEGORY was not recorded');
+    }
+    // Clean up test audit log entry
+    await prisma.auditLog.deleteMany({
+      where: { targetResource: `StreamCategory:${created.id}` },
+    }).catch(() => {});
+    console.log(`[PASS] Test 2c: deleteCategory succeeded with audit log recorded.`);
     passed++;
   } catch (err: any) {
     console.error(`[FAIL] Test 2: Category CRUD threw: ${err.message}`);

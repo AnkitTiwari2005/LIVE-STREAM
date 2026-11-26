@@ -434,7 +434,7 @@ export class AdminService {
   }
 
   // --- Delete Category ---
-  async deleteCategory(id: string) {
+  async deleteCategory(id: string, adminId?: string, adminEmail?: string) {
     // Verify no active streams use this category before deletion
     const usageCount = await this.prisma.stream.count({ where: { categoryId: id } });
     if (usageCount > 0) {
@@ -442,7 +442,19 @@ export class AdminService {
         `Cannot delete category: ${usageCount} stream(s) are assigned to it. Reassign or archive them first.`,
       );
     }
-    return this.prisma.streamCategory.delete({ where: { id } });
+    const deleted = await this.prisma.streamCategory.delete({ where: { id } });
+    if (adminId && adminEmail) {
+      await this.prisma.auditLog.create({
+        data: {
+          actorId: adminId,
+          actorEmail: adminEmail,
+          action: 'DELETE_STREAM_CATEGORY',
+          targetResource: `StreamCategory:${id}`,
+          details: { name: (deleted as any).name ?? null },
+        },
+      });
+    }
+    return deleted;
   }
 
   // --- Pandit Management & Special Badges ---

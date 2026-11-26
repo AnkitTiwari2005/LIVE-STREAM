@@ -17,6 +17,5 @@
 
 ## Machine-Readable Resources & APIs
 - [Sitemap XML](https://paramdarshan.com/sitemap.xml): Machine-readable index of all public canonical routes.
-- [MCP Server Card](https://paramdarshan.com/.well-known/mcp/server-card.json): Model Context Protocol (SEP-1649) discovery manifest.
 - [Live System Health](https://paramdarshan.com/api/v1/health/live): Public server uptime and liveness probe.
 - [Database Ready Probe](https://paramdarshan.com/api/v1/health/ready): Public database connectivity probe.
