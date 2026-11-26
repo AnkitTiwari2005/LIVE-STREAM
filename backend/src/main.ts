@@ -24,9 +24,6 @@ const bootstrapLogger = new Logger('Bootstrap');
 
 process.on('uncaughtException', (err: any) => {
   bootstrapLogger.error(`Uncaught Exception: ${err?.message || err}`, err?.stack);
-  // Process state is undefined after an uncaught exception: log, then exit so the process manager
-  // (Passenger / docker restart policy) starts a clean instance instead of serving from a corrupt one.
-  setTimeout(() => process.exit(1), 200).unref();
 });
 
 process.on('unhandledRejection', (reason: any) => {
