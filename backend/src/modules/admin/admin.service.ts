@@ -1,6 +1,6 @@
 import { finalizeStreamRecord } from '../../common/stream-lifecycle';
 import { calculateCoinEarningsBreakdown } from '../../common/config/economy.constants';
-import { Injectable, NotFoundException, BadRequestException, Inject, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException, Inject, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { UserStatus, StreamStatus, UserRole, KycStatus } from '@prisma/client';
 import {
@@ -8,6 +8,14 @@ import {
   VIDEO_PROVIDER_TOKEN,
 } from '../video/interfaces/video-provider.interface';
 import { ChatService } from '../chat/chat.service';
+
+/** Masks a devotee email for privacy: "ab***@gmail.com" */
+function maskEmail(email: string): string {
+  if (!email || !email.includes('@')) return email;
+  const [user, domain] = email.split('@');
+  const visible = user.slice(0, Math.min(2, user.length));
+  return `${visible}***@${domain}`;
+}
 
 @Injectable()
 export class AdminService {
@@ -314,7 +322,7 @@ export class AdminService {
     };
   }
 
-  // --- Pooja Booking Oversight (DakshinaOffering = booking record) ---
+  // --- Dakshina Offerings Oversight (DakshinaOffering table - devotee dakshina payments during streams. Email is masked at this layer for privacy.) ---
   async getPoojaBookings(status?: string, page = 1, limit = 50) {
     if (status && !['ALL', 'PENDING', 'SUCCESS', 'FAILED'].includes(status)) {
       throw new BadRequestException('status must be ALL, PENDING, SUCCESS or FAILED');
@@ -359,7 +367,7 @@ export class AdminService {
       data: offerings.map((o) => ({
         id: o.id,
         devoteeName: o.devoteeName,
-        devoteeEmail: o.devotee?.email || null,
+        devoteeEmail: o.devotee?.email ? maskEmail(o.devotee.email) : null,
         gotra: o.gotra || null,
         panditName: o.stream?.streamer?.name || null,
         panditEmail: o.stream?.streamer?.email || null,
@@ -382,16 +390,38 @@ export class AdminService {
   // Single source of truth = StreamerEarning (Dakshina + watch-time), the same table the pandit's own
   // earnings page uses, converted with the shared economy helpers (150 coins = Rs100, 85% pandit share).
   async getDakshinaLedger() {
-    const groups = await this.prisma.streamerEarning.groupBy({
-      by: ['streamerId'],
-      _sum: { coins: true },
-      _count: { _all: true },
-      _max: { createdAt: true },
-    });
+    const [groups, payoutGroups] = await Promise.all([
+      this.prisma.streamerEarning.groupBy({
+        by: ['streamerId'],
+        _sum: { coins: true },
+        _count: { _all: true },
+        _max: { createdAt: true },
+      }),
+      this.prisma.panditPayout.groupBy({
+        by: ['streamerId'],
+        _sum: { coins: true, netPaise: true },
+        _max: { paidAt: true },
+      }),
+    ]);
 
-    const users = groups.length
+    const payoutMap = new Map(
+      payoutGroups.map((pg) => [
+        pg.streamerId,
+        {
+          paidCoins: pg._sum.coins || 0,
+          paidNetPaise: pg._sum.netPaise || 0,
+          lastPaidAt: pg._max.paidAt || null,
+        },
+      ]),
+    );
+
+    const allStreamerIds = Array.from(
+      new Set([...groups.map((g) => g.streamerId), ...payoutGroups.map((pg) => pg.streamerId)]),
+    );
+
+    const users = allStreamerIds.length
       ? await this.prisma.user.findMany({
-          where: { id: { in: groups.map((g) => g.streamerId) } },
+          where: { id: { in: allStreamerIds } },
           select: { id: true, name: true, email: true, avatarUrl: true },
         })
       : [];
@@ -400,37 +430,182 @@ export class AdminService {
     const ledger = groups
       .map((g) => {
         const u = byId.get(g.streamerId);
-        const totalCoins = g._sum.coins || 0;
-        const b = calculateCoinEarningsBreakdown(totalCoins);
+        const earnedCoins = g._sum.coins || 0;
+        const payout = payoutMap.get(g.streamerId);
+        const paidCoins = payout?.paidCoins || 0;
+        const dueCoins = Math.max(0, earnedCoins - paidCoins);
+        const earnedBreakdown = calculateCoinEarningsBreakdown(earnedCoins);
+        const paidBreakdown = calculateCoinEarningsBreakdown(paidCoins);
+        const dueBreakdown = calculateCoinEarningsBreakdown(dueCoins);
         return {
           panditId: g.streamerId,
           panditName: u?.name || 'Unknown',
           panditEmail: u?.email || '',
           panditAvatarUrl: u?.avatarUrl || null,
-          totalCoins,
+          earnedCoins,
+          paidCoins,
+          dueCoins,
           transactionCount: g._count._all,
           lastDakshinaAt: g._max.createdAt || null,
-          grossInr: b.grossInr,
-          platformFeeInr: b.platformFeeInr,
-          // Net payable to the pandit (after the platform share).
-          totalInr: b.netInr,
+          lastPaidAt: payout?.lastPaidAt || null,
+          // Earned breakdown
+          grossInr: earnedBreakdown.grossInr,
+          platformFeeInr: earnedBreakdown.platformFeeInr,
+          totalInr: earnedBreakdown.netInr,  // kept for CSV backward-compat
+          // Due breakdown (the real "how much to pay now")
+          dueGrossInr: dueBreakdown.grossInr,
+          duePlatformFeeInr: dueBreakdown.platformFeeInr,
+          dueNetInr: dueBreakdown.netInr,
+          // Paid breakdown
+          paidNetInr: paidBreakdown.netInr,
         };
       })
-      .sort((x, y) => y.totalCoins - x.totalCoins);
+      .sort((x, y) => y.dueCoins - x.dueCoins);
 
-    const platformTotalCoins = ledger.reduce((acc, p) => acc + p.totalCoins, 0);
+    const platformTotalCoins = ledger.reduce((acc, p) => acc + p.earnedCoins, 0);
+    const platformPaidCoins = ledger.reduce((acc, p) => acc + p.paidCoins, 0);
+    const platformDueCoins = ledger.reduce((acc, p) => acc + p.dueCoins, 0);
     const platformTotalTransactions = ledger.reduce((acc, p) => acc + p.transactionCount, 0);
     const platformBreakdown = calculateCoinEarningsBreakdown(platformTotalCoins);
+    const platformDueBreakdown = calculateCoinEarningsBreakdown(platformDueCoins);
 
     return {
       ledger,
       platformTotalCoins,
+      platformPaidCoins,
+      platformDueCoins,
       platformGrossInr: platformBreakdown.grossInr,
       platformFeeInr: platformBreakdown.platformFeeInr,
-      // Net payable to pandits.
       platformTotalInr: ledger.reduce((acc, p) => acc + p.totalInr, 0),
+      platformDueNetInr: platformDueBreakdown.netInr,
       platformTotalTransactions,
     };
+  }
+
+  // --- Payout Settlement ---
+  async recordPayout(
+    streamerId: string,
+    coins: number,
+    periodTo: string,
+    reference: string,
+    paidById: string,
+    paidByEmail: string,
+    periodFrom?: string,
+    method?: string,
+    note?: string,
+  ) {
+    // Validate pandit exists
+    const pandit = await this.prisma.user.findUnique({ where: { id: streamerId }, select: { id: true, name: true } });
+    if (!pandit) throw new NotFoundException('Pandit not found');
+
+    // Validate admin/payer exists
+    const payer = await this.prisma.user.findUnique({ where: { id: paidById }, select: { id: true } });
+    if (!payer) throw new NotFoundException('Admin account not found');
+
+    // Calculate unsettled coins
+    const [earnedAgg, paidAgg] = await Promise.all([
+      this.prisma.streamerEarning.aggregate({ where: { streamerId }, _sum: { coins: true } }),
+      this.prisma.panditPayout.aggregate({ where: { streamerId }, _sum: { coins: true } }),
+    ]);
+    const earnedCoins = earnedAgg._sum.coins || 0;
+    const paidCoins = paidAgg._sum.coins || 0;
+    const dueCoins = Math.max(0, earnedCoins - paidCoins);
+
+    if (coins <= 0) throw new BadRequestException('coins must be a positive integer');
+    if (coins > dueCoins) {
+      throw new BadRequestException(
+        `Cannot settle ${coins} coins: only ${dueCoins} coins are currently outstanding for this pandit (earned ${earnedCoins}, already paid ${paidCoins}).`,
+      );
+    }
+
+    const breakdown = calculateCoinEarningsBreakdown(coins);
+    // Store netPaise as integer (₹1 = 100 paise) to avoid float rounding
+    const netPaise = Math.round(breakdown.netInr * 100);
+
+    let payout: any;
+    try {
+      payout = await this.prisma.$transaction(async (tx) => {
+        const p = await tx.panditPayout.create({
+          data: {
+            streamerId,
+            coins,
+            netPaise,
+            periodFrom: periodFrom ? new Date(periodFrom) : null,
+            periodTo: new Date(periodTo),
+            method: method || null,
+            reference,
+            note: note || null,
+            paidById,
+            paidAt: new Date(),
+          },
+        });
+
+        await tx.auditLog.create({
+          data: {
+            actorId: paidById,
+            actorEmail: paidByEmail,
+            action: 'RECORD_PANDIT_PAYOUT',
+            targetResource: `User:${streamerId}`,
+            details: {
+              panditName: pandit.name,
+              coins,
+              netInr: breakdown.netInr,
+              grossInr: breakdown.grossInr,
+              platformFeeInr: breakdown.platformFeeInr,
+              reference,
+              method: method || null,
+              periodTo,
+              note: note || null,
+            },
+          },
+        });
+
+        return p;
+      });
+    } catch (err: any) {
+      // Prisma unique constraint: same streamer + reference already recorded
+      if (err?.code === 'P2002') {
+        throw new BadRequestException(
+          `A payout with reference "${reference}" already exists for this pandit. Use a unique transaction ID.`,
+        );
+      }
+      throw err;
+    }
+
+    return {
+      ...payout,
+      netInr: breakdown.netInr,
+      grossInr: breakdown.grossInr,
+      platformFeeInr: breakdown.platformFeeInr,
+      dueCoinsAfter: dueCoins - coins,
+    };
+  }
+
+  // --- List payouts for a specific pandit ---
+  async getPanditPayouts(streamerId: string) {
+    const pandit = await this.prisma.user.findUnique({ where: { id: streamerId }, select: { id: true, name: true } });
+    if (!pandit) throw new NotFoundException('Pandit not found');
+
+    const payouts = await this.prisma.panditPayout.findMany({
+      where: { streamerId },
+      include: {
+        paidBy: { select: { name: true, email: true } },
+      },
+      orderBy: { paidAt: 'desc' },
+    });
+
+    return payouts.map((p) => ({
+      id: p.id,
+      coins: p.coins,
+      netInr: p.netPaise / 100,
+      periodFrom: p.periodFrom,
+      periodTo: p.periodTo,
+      method: p.method,
+      reference: p.reference,
+      note: p.note,
+      paidAt: p.paidAt,
+      paidBy: p.paidBy ? `${p.paidBy.name} (${p.paidBy.email})` : null,
+    }));
   }
 
   // --- Delete Category ---

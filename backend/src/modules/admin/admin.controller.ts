@@ -24,6 +24,7 @@ import {
   UpdateBannerDto,
   ToggleSpecialBadgeDto,
   ToggleVerifiedBadgeDto,
+  RecordPayoutDto,
 } from './dto/admin.dto';
 
 @ApiTags('Admin Panel')
@@ -204,9 +205,9 @@ export class AdminController {
     );
   }
 
-  // --- Pooja Booking Oversight ---
+  // --- Dakshina Offerings Oversight ---
   @Get('bookings')
-  @ApiOperation({ summary: 'List and search pooja booking records with devotee gotra and assigned pandit' })
+  @ApiOperation({ summary: 'List and search dakshina offering records (DakshinaOffering table). Devotee email is masked by default for privacy.' })
   async getPoojaBookings(
     @Query('status') status?: string,
     @Query('page') page?: number,
@@ -221,8 +222,35 @@ export class AdminController {
 
   // --- Pandit Dakshina Payout Ledger ---
   @Get('dakshina-ledger')
-  @ApiOperation({ summary: 'Financial settlement view of accumulated Dakshina per pandit' })
+  @ApiOperation({ summary: 'Financial settlement view of accumulated Dakshina per pandit (earned vs paid vs due)' })
   async getDakshinaLedger() {
     return this.adminService.getDakshinaLedger();
+  }
+
+  // --- Payout Settlement ---
+  @Post('payouts')
+  @ApiOperation({ summary: 'Record a manual payout settlement to a pandit (creates AuditLog row)' })
+  async recordPayout(
+    @Body() dto: RecordPayoutDto,
+    @CurrentUser('id') adminId: string,
+    @CurrentUser('email') adminEmail: string,
+  ) {
+    return this.adminService.recordPayout(
+      dto.streamerId,
+      dto.coins,
+      dto.periodTo,
+      dto.reference,
+      adminId,
+      adminEmail,
+      dto.periodFrom,
+      dto.method,
+      dto.note,
+    );
+  }
+
+  @Get('payouts/:streamerId')
+  @ApiOperation({ summary: 'List all recorded payouts for a specific pandit' })
+  async getPanditPayouts(@Param('streamerId') streamerId: string) {
+    return this.adminService.getPanditPayouts(streamerId);
   }
 }

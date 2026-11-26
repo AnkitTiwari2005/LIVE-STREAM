@@ -121,6 +121,8 @@ model User {
   topupOrders          WalletTopupOrder[]
   streamerEarnings     StreamerEarning[]  @relation("StreamerEarnings")
   viewerContributions  StreamerEarning[]  @relation("ViewerContributions")
+  panditPayouts        PanditPayout[]     @relation("PanditPayouts")
+  payoutsApproved      PanditPayout[]     @relation("PayoutApprovedBy")
 
   @@index([email])
   @@index([role, status])
@@ -417,6 +419,35 @@ model StreamerEarning {
 
   @@index([streamerId, createdAt])
   @@index([streamId])
+}
+
+// ==================================================
+// PANDIT PAYOUT SETTLEMENT LEDGER
+// Records each manual settlement payment to a pandit.
+// earnedCoins = sum of StreamerEarning.coins for the pandit (gross lifetime).
+// paidCoins   = sum of PanditPayout.coins (gross settled to date).
+// dueCoins    = earnedCoins - paidCoins (amount still owed).
+// ==================================================
+
+model PanditPayout {
+  id          String    @id @default(uuid())
+  streamerId  String
+  streamer    User      @relation("PanditPayouts", fields: [streamerId], references: [id], onDelete: Restrict)
+  coins       Int                         // gross coins covered by this payout (same unit as StreamerEarning)
+  netPaise    Int                         // net amount actually paid in paise (100 paise = ₹1), from calculateCoinEarningsBreakdown
+  periodFrom  DateTime? @db.Timestamptz   // optional: earliest StreamerEarning.createdAt covered
+  periodTo    DateTime  @db.Timestamptz   // earnings with createdAt <= periodTo are covered by this payout
+  method      String?   @db.VarChar(40)   // e.g. UPI, NEFT, IMPS
+  reference   String    @db.VarChar(120)  // UTR / transaction ID / cheque no.
+  note        String?   @db.Text          // optional admin note
+  paidById    String
+  paidBy      User      @relation("PayoutApprovedBy", fields: [paidById], references: [id], onDelete: Restrict)
+  paidAt      DateTime  @default(now())   @db.Timestamptz
+  createdAt   DateTime  @default(now())   @db.Timestamptz
+
+  @@unique([streamerId, reference])
+  @@index([streamerId, paidAt])
+  @@index([paidById])
 }
 
 

@@ -8,9 +8,11 @@ function getOptimizedDatabaseUrl(): string | undefined {
     const parsed = new URL(rawUrl);
     // Strip channel_binding if present as it can trigger TLS handshake panics in Tokio query engine on Linux
     parsed.searchParams.delete('channel_binding');
-    // Ensure connection_limit is safe for shared hosting CloudLinux LVE limits (default 5)
+    // Ensure connection_limit is safe for shared hosting CloudLinux LVE limits.
+    // Override via DB_CONNECTION_LIMIT env var (default: 5).
+    // docker-compose.yml sets it to 10 for the api process and 5 for the worker.
     if (!parsed.searchParams.has('connection_limit')) {
-      parsed.searchParams.set('connection_limit', '5');
+      parsed.searchParams.set('connection_limit', process.env.DB_CONNECTION_LIMIT || '5');
     }
     // Ensure pool_timeout is reasonable
     if (!parsed.searchParams.has('pool_timeout')) {

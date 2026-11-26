@@ -13,17 +13,23 @@ const ok = (c: boolean, m: string) => { c ? pass++ : fail++; console.log(`${c ? 
       { streamerId: 'p1', _sum: { coins: 150 }, _count: { _all: 2 }, _max: { createdAt: new Date('2026-11-01') } },
       { streamerId: 'p2', _sum: { coins: 1500 }, _count: { _all: 9 }, _max: { createdAt: null } },
     ] },
+    // Mock panditPayout: no prior payouts so paidCoins = 0 for all pandits
+    panditPayout: { groupBy: async () => [] },
     user: { findMany: async () => [{ id: 'p1', name: 'A', email: 'a@x', avatarUrl: null }, { id: 'p2', name: 'B', email: 'b@x', avatarUrl: null }] },
     dakshinaOffering: { findMany: async (q: any) => { (prisma as any).lastQ = q; return []; }, count: async () => 0 },
   };
   const s = new AdminService(prisma, {} as any, {} as any);
   const r = await s.getDakshinaLedger();
+  // After main39 fix#1, field is 'earnedCoins' (not 'totalCoins'). Sort is by dueCoins desc (= earnedCoins since paidCoins=0).
   const p2 = r.ledger[0], p1 = r.ledger[1];
-  ok(p2.panditId === 'p2' && p2.totalCoins === 1500, 'sorted by coins');
+  ok(p2.panditId === 'p2' && p2.earnedCoins === 1500, 'sorted by dueCoins desc; earnedCoins=1500 for p2');
   ok(p1.grossInr === 100 && p1.totalInr === 85 && p1.platformFeeInr === 15, '150 coins = Rs100 gross, Rs85 net, Rs15 fee');
   ok(p2.grossInr === 1000 && p2.totalInr === 850, '1500 coins = Rs1000 gross, Rs850 net');
   ok(r.platformTotalCoins === 1650 && r.platformTotalInr === 935 && r.platformGrossInr === 1100, 'platform totals consistent');
   ok(p2.lastDakshinaAt === null, 'null last date handled');
+  // dueCoins = earnedCoins when no payouts
+  ok(p1.dueCoins === 150 && p2.dueCoins === 1500, 'dueCoins = earnedCoins when no prior payouts');
+  ok(r.platformDueCoins === 1650, 'platformDueCoins = sum of all dueCoins');
   const bad = await s.getPoojaBookings('HACK', 1, 10).then(() => false, (e: any) => e.constructor.name === 'BadRequestException');
   ok(bad, 'invalid booking status rejected (400, not 500)');
   await s.getPoojaBookings('ALL', -3, 99999);

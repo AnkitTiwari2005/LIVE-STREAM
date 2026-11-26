@@ -24,6 +24,10 @@ const bootstrapLogger = new Logger('Bootstrap');
 
 process.on('uncaughtException', (err: any) => {
   bootstrapLogger.error(`Uncaught Exception: ${err?.message || err}`, err?.stack);
+  // After an uncaughtException, Node's internal state is undefined.
+  // Exit so Passenger / docker restarts a clean instance.
+  // 200 ms delay lets the error log flush before the process terminates.
+  setTimeout(() => process.exit(1), 200).unref();
 });
 
 process.on('unhandledRejection', (reason: any) => {

@@ -142,3 +142,41 @@ export class ToggleVerifiedBadgeDto {
   isVerifiedBadge: boolean;
 }
 
+export class RecordPayoutDto {
+  @ApiProperty({ example: 'uuid-of-streamer' })
+  @IsString()
+  @IsNotEmpty()
+  streamerId: string;
+
+  @ApiProperty({ description: 'Gross coins settled (must not exceed unsettled due coins)', example: 1500 })
+  @IsNumber()
+  coins: number;
+
+  @ApiProperty({ required: false, description: 'ISO date string – start of earning period covered', example: '2026-11-01T00:00:00.000Z' })
+  @IsOptional()
+  @IsString()
+  periodFrom?: string;
+
+  @ApiProperty({ description: 'ISO date string – end of earning period covered (inclusive)', example: '2026-11-30T23:59:59.999Z' })
+  @IsString()
+  @IsNotEmpty()
+  periodTo: string;
+
+  @ApiProperty({ required: false, description: 'Payment method', example: 'UPI' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  method?: string;
+
+  @ApiProperty({ description: 'UTR / transaction ID / cheque no.', example: 'UTR12345678901234' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(120)
+  reference: string;
+
+  @ApiProperty({ required: false, description: 'Optional admin note', example: 'November settlement' })
+  @IsOptional()
+  @IsString()
+  note?: string;
+}
+

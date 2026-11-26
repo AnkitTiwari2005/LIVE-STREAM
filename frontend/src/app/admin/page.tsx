@@ -85,7 +85,7 @@ export default function AdminConsolePage() {
     isActive: true,
   });
 
-  // Pooja Bookings Oversight State
+  // Dakshina Offerings Oversight State
   const [bookingsList, setBookingsList] = useState<any[]>([]);
   const [bookingsTotal, setBookingsTotal] = useState(0);
   const [bookingStatusFilter, setBookingStatusFilter] = useState<'ALL' | 'SUCCESS' | 'PENDING' | 'FAILED'>('ALL');
@@ -96,15 +96,26 @@ export default function AdminConsolePage() {
   const [dakshinaData, setDakshinaData] = useState<{
     ledger: any[];
     platformTotalCoins: number;
+    platformPaidCoins: number;
+    platformDueCoins: number;
     platformTotalInr: number;
+    platformDueNetInr: number;
     platformTotalTransactions: number;
   }>({
     ledger: [],
     platformTotalCoins: 0,
+    platformPaidCoins: 0,
+    platformDueCoins: 0,
     platformTotalInr: 0,
+    platformDueNetInr: 0,
     platformTotalTransactions: 0,
   });
   const [searchLedger, setSearchLedger] = useState('');
+
+  // Payout Modal State
+  const [payoutModal, setPayoutModal] = useState<{ panditId: string; panditName: string; dueCoins: number; dueNetInr: number } | null>(null);
+  const [payoutForm, setPayoutForm] = useState({ coins: '', periodTo: new Date().toISOString().split('T')[0], method: 'UPI', reference: '', note: '' });
+  const [savingPayout, setSavingPayout] = useState(false);
 
   // M-01: Inline rejection modal — replaces window.prompt() which is blocked in some
   // browsers and leaks the admin URL in some CSP configurations.
@@ -236,7 +247,7 @@ export default function AdminConsolePage() {
       const categoriesRes = await fetch(`${apiUrl}/admin/categories`);
       if (categoriesRes.ok) setCategoriesList(await categoriesRes.json());
 
-      // 1.7. Pooja Bookings (Initial 50)
+      // 1.7. Dakshina Offerings (Initial 50)
       const bookingsRes = await fetch(`${apiUrl}/admin/bookings`, { headers });
       if (bookingsRes.ok) {
         const bData = await bookingsRes.json();
@@ -404,6 +415,32 @@ export default function AdminConsolePage() {
     }
   };
 
+  const handleRecordPayout = async () => {
+    if (!payoutModal) return;
+    setSavingPayout(true);
+    try {
+      await apiFetch('/admin/payouts', {
+        method: 'POST',
+        body: JSON.stringify({
+          streamerId: payoutModal.panditId,
+          coins: Number(payoutForm.coins),
+          periodTo: new Date(payoutForm.periodTo).toISOString(),
+          method: payoutForm.method,
+          reference: payoutForm.reference.trim(),
+          note: payoutForm.note.trim() || undefined,
+        }),
+      });
+      toast.success('Payout recorded successfully!');
+      setPayoutModal(null);
+      setPayoutForm({ coins: '', periodTo: new Date().toISOString().split('T')[0], method: 'UPI', reference: '', note: '' });
+      fetchDakshinaLedger();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to record payout');
+    } finally {
+      setSavingPayout(false);
+    }
+  };
+
   // Neutralise spreadsheet formula injection (=, +, -, @) and quotes in exported text.
   const csvSafe = (v: any) => {
     const t = String(v ?? '').replace(/"/g, '""');
@@ -418,18 +455,28 @@ export default function AdminConsolePage() {
     const headers = [
       'Pandit Name',
       'Email',
-      'Total Coins',
-      'Net payable (INR)',
+      'Earned Coins',
+      'Paid Coins',
+      'Due Coins',
+      'Net Earned (INR)',
+      'Due Net INR (₹)',
+      'Paid Net INR (₹)',
       'Offerings Count',
       'Last Offering At',
+      'Last Paid At',
     ];
     const rows = dakshinaData.ledger.map((p) => [
       `"${csvSafe(p.panditName)}"`,
       `"${csvSafe(p.panditEmail)}"`,
-      p.totalCoins || 0,
-      p.totalInr || 0,
+      p.earnedCoins ?? p.totalCoins ?? 0,
+      p.paidCoins ?? 0,
+      p.dueCoins ?? 0,
+      (p.totalInr ?? 0).toFixed(2),
+      (p.dueNetInr ?? 0).toFixed(2),
+      (p.paidNetInr ?? 0).toFixed(2),
       p.transactionCount || 0,
       p.lastDakshinaAt ? `"${new Date(p.lastDakshinaAt).toISOString()}"` : 'N/A',
+      p.lastPaidAt ? `"${new Date(p.lastPaidAt).toISOString()}"` : 'N/A',
     ]);
     const csvContent =
       'data:text/csv;charset=utf-8,' +
@@ -843,7 +890,7 @@ export default function AdminConsolePage() {
           { key: 'kpi', label: 'Overview Metrics' },
           { key: 'pandits', label: `Vedic Pandits (${panditsList.length})` },
           { key: 'categories', label: `Stream Categories (${categoriesList.length})` },
-          { key: 'bookings', label: `Pooja Bookings (${bookingsTotal || bookingsList.length})` },
+          { key: 'bookings', label: `Dakshina Offerings (${bookingsTotal || bookingsList.length})` },
           { key: 'dakshina', label: 'Dakshina Ledger' },
           { key: 'kyc', label: `Pending KYC (${kycList.length})` },
           { key: 'streams', label: `Live Monitor (${liveStreams.length})` },
@@ -1338,17 +1385,17 @@ export default function AdminConsolePage() {
         </div>
       )}
 
-      {/* Tab: Private Pooja Bookings Oversight */}
+      {/* Tab: Dakshina Offerings Oversight */}
       {activeTab === 'bookings' && (
         <div className="space-y-6">
           {/* Summary KPI Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
-              <span className="text-[11px] text-stone-400 uppercase font-semibold block">Total Bookings</span>
+              <span className="text-[11px] text-stone-400 uppercase font-semibold block">Total Offerings</span>
               <span className="text-2xl font-extrabold text-white mt-1 block">{bookingsTotal}</span>
             </div>
             <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
-              <span className="text-[11px] text-emerald-400 uppercase font-semibold block">Confirmed / Success</span>
+              <span className="text-[11px] text-emerald-400 uppercase font-semibold block">Confirmed</span>
               <span className="text-2xl font-extrabold text-emerald-400 mt-1 block">
                 {bookingsList.filter((b) => b.status === 'SUCCESS').length}
               </span>
@@ -1373,7 +1420,7 @@ export default function AdminConsolePage() {
               <Search className="w-4 h-4 absolute left-3 top-3 text-stone-400" />
               <input
                 type="text"
-                placeholder="Search by devotee, gotra, pandit, or pooja..."
+                placeholder="Search by devotee, gotra, or pandit ji..."
                 value={searchBooking}
                 onChange={(e) => setSearchBooking(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold"
@@ -1393,7 +1440,7 @@ export default function AdminConsolePage() {
                       : 'bg-stone-950 text-stone-400 hover:text-white border border-stone-800'
                   }`}
                 >
-                  {st === 'ALL' ? 'All Bookings' : st}
+                  {st === 'ALL' ? 'All Offerings' : st}
                 </button>
               ))}
               <button
@@ -1430,7 +1477,7 @@ export default function AdminConsolePage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-bold text-white text-sm">{b.devoteeName}</span>
                       {b.devoteeEmail && (
-                        <span className="text-xs text-stone-400">({b.devoteeEmail})</span>
+                        <span className="text-xs text-stone-400 font-mono" title="Email masked for privacy">({b.devoteeEmail} 🔒)</span>
                       )}
                       {b.gotra && (
                         <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-950/60 text-amber-300 border border-amber-600/40">
@@ -1484,7 +1531,7 @@ export default function AdminConsolePage() {
 
             {bookingsList.length === 0 && (
               <div className="bg-stone-900 border border-stone-800 p-12 text-center rounded-2xl text-stone-400 text-xs">
-                No pooja booking records found matching current criteria.
+                No dakshina offering records found matching current criteria.
               </div>
             )}
           </div>
@@ -1499,16 +1546,19 @@ export default function AdminConsolePage() {
             <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
               <span className="text-[11px] text-stone-400 uppercase font-semibold block">Total Pandit Earnings (Dakshina + watch time)</span>
               <span className="text-2xl font-extrabold text-gold mt-1 block">
-                {dakshinaData.platformTotalCoins.toLocaleString()} Coins
+                {(dakshinaData.platformTotalCoins ?? 0).toLocaleString()} Coins
               </span>
               <span className="text-[11px] text-stone-500 block mt-0.5">
-                ₹{dakshinaData.platformTotalInr.toLocaleString()} net payable to pandits (85%)
+                ₹{(dakshinaData.platformTotalInr ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} net earned (85%)
               </span>
             </div>
-            <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
-              <span className="text-[11px] text-stone-400 uppercase font-semibold block">Total Offerings Received</span>
-              <span className="text-2xl font-extrabold text-white mt-1 block">
-                {dakshinaData.platformTotalTransactions}
+            <div className="bg-stone-900 border border-amber-500/20 p-4 rounded-2xl shadow-sm">
+              <span className="text-[11px] text-amber-400 uppercase font-semibold block">Total Due to Pandits</span>
+              <span className="text-2xl font-extrabold text-amber-400 mt-1 block">
+                {(dakshinaData.platformDueCoins ?? 0).toLocaleString()} Coins
+              </span>
+              <span className="text-[11px] text-stone-500 block mt-0.5">
+                ₹{(dakshinaData.platformDueNetInr ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} pending settlement
               </span>
             </div>
             <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
@@ -1596,24 +1646,37 @@ export default function AdminConsolePage() {
                         </div>
 
                         <div className="flex flex-wrap items-center gap-6">
+                          {/* Earned */}
                           <div>
-                            <span className="text-[10px] text-stone-400 uppercase font-semibold block">Total Coins</span>
+                            <span className="text-[10px] text-stone-400 uppercase font-semibold block">Earned</span>
                             <span className="font-extrabold text-gold text-base flex items-center gap-1">
-                              <Coins className="w-3.5 h-3.5" /> {p.totalCoins.toLocaleString()}
+                              <Coins className="w-3.5 h-3.5" /> {(p.earnedCoins ?? p.totalCoins ?? 0).toLocaleString()}
                             </span>
+                            <span className="text-[10px] text-stone-500 block">₹{(p.totalInr ?? 0).toFixed(2)} net</span>
                           </div>
 
+                          {/* Paid */}
                           <div>
-                            <span className="text-[10px] text-stone-400 uppercase font-semibold block">Net Value (INR)</span>
-                            <span className="font-extrabold text-emerald-400 text-base">
-                              ₹{p.totalInr.toFixed(2)}
+                            <span className="text-[10px] text-stone-400 uppercase font-semibold block">Paid</span>
+                            <span className="font-extrabold text-emerald-400 text-base flex items-center gap-1">
+                              <Coins className="w-3.5 h-3.5" /> {(p.paidCoins ?? 0).toLocaleString()}
                             </span>
+                            <span className="text-[10px] text-stone-500 block">₹{(p.paidNetInr ?? 0).toFixed(2)}</span>
+                          </div>
+
+                          {/* Due */}
+                          <div>
+                            <span className="text-[10px] text-stone-400 uppercase font-semibold block">Due</span>
+                            <span className={`font-extrabold text-base flex items-center gap-1 ${(p.dueCoins ?? 0) > 0 ? 'text-amber-400' : 'text-stone-500'}`}>
+                              <Coins className="w-3.5 h-3.5" /> {(p.dueCoins ?? 0).toLocaleString()}
+                            </span>
+                            <span className={`text-[10px] block ${(p.dueCoins ?? 0) > 0 ? 'text-amber-500' : 'text-stone-500'}`}>₹{(p.dueNetInr ?? 0).toFixed(2)}</span>
                           </div>
 
                           <div>
                             <span className="text-[10px] text-stone-400 uppercase font-semibold block">Offerings</span>
                             <span className="font-bold text-white text-sm">
-                              {p.transactionCount} transactions
+                              {p.transactionCount} txns
                             </span>
                           </div>
 
@@ -1624,9 +1687,17 @@ export default function AdminConsolePage() {
                             </span>
                           </div>
 
-                          <div className="text-[10px] text-stone-500 max-w-[140px]">
-                            Net payable after the 15% platform share. Payout settlement is not tracked here yet.
-                          </div>
+                          {/* Record Payout button */}
+                          <button
+                            onClick={() => {
+                              setPayoutModal({ panditId: p.panditId, panditName: p.panditName, dueCoins: p.dueCoins ?? 0, dueNetInr: p.dueNetInr ?? 0 });
+                              setPayoutForm({ coins: String(p.dueCoins ?? ''), periodTo: new Date().toISOString().split('T')[0], method: 'UPI', reference: '', note: '' });
+                            }}
+                            disabled={(p.dueCoins ?? 0) === 0}
+                            className="px-3.5 py-1.5 bg-gradient-to-r from-amber-600 to-yellow-500 text-obsidian rounded-xl text-xs font-bold flex items-center gap-1.5 shadow hover:opacity-90 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                          >
+                            <IndianRupee className="w-3.5 h-3.5" /> Record Payout
+                          </button>
                         </div>
                       </div>
                     );
@@ -1636,6 +1707,106 @@ export default function AdminConsolePage() {
           </div>
         </div>
       )}
+
+      {/* ===== Payout Modal ===== */}
+      {payoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-stone-950 border border-amber-500/30 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-amber-500/15 pb-4">
+              <h3 className="font-serif text-lg font-bold text-white flex items-center gap-2">
+                <IndianRupee className="w-5 h-5 text-amber-400" /> Record Payout
+              </h3>
+              <button onClick={() => setPayoutModal(null)} className="text-stone-400 hover:text-white p-1 transition"><X className="w-5 h-5" /></button>
+            </div>
+            <p className="text-xs text-stone-300">
+              Recording settlement for{' '}
+              <strong className="text-amber-300 font-serif">{payoutModal.panditName}</strong>.{' '}
+              Due:{' '}
+              <strong className="text-amber-400">{payoutModal.dueCoins.toLocaleString()} coins (₹{payoutModal.dueNetInr.toFixed(2)} net)</strong>.
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="text-[10px] text-stone-400 uppercase font-semibold block mb-1">Coins to Settle (≤ {payoutModal.dueCoins.toLocaleString()} due)</label>
+                <input
+                  type="number"
+                  placeholder={`Max: ${payoutModal.dueCoins}`}
+                  value={payoutForm.coins}
+                  onChange={(e) => setPayoutForm((p) => ({ ...p, coins: e.target.value }))}
+                  max={payoutModal.dueCoins}
+                  min={1}
+                  className="w-full px-3.5 py-2.5 bg-stone-900 border border-amber-500/30 rounded-xl text-white text-xs focus:outline-none focus:border-amber-400 placeholder-stone-600"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] text-stone-400 uppercase font-semibold block mb-1">Period To (earnings up to this date)</label>
+                <input
+                  type="date"
+                  value={payoutForm.periodTo}
+                  onChange={(e) => setPayoutForm((p) => ({ ...p, periodTo: e.target.value }))}
+                  className="w-full px-3.5 py-2.5 bg-stone-900 border border-amber-500/30 rounded-xl text-white text-xs focus:outline-none focus:border-amber-400"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] text-stone-400 uppercase font-semibold block mb-1">Payment Method</label>
+                <select
+                  value={payoutForm.method}
+                  onChange={(e) => setPayoutForm((p) => ({ ...p, method: e.target.value }))}
+                  className="w-full px-3.5 py-2.5 bg-stone-900 border border-amber-500/30 rounded-xl text-white text-xs focus:outline-none focus:border-amber-400"
+                >
+                  <option value="UPI">UPI</option>
+                  <option value="NEFT">NEFT</option>
+                  <option value="IMPS">IMPS</option>
+                  <option value="RTGS">RTGS</option>
+                  <option value="Cheque">Cheque</option>
+                  <option value="Cash">Cash</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] text-stone-400 uppercase font-semibold block mb-1">UTR / Transaction ID *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 423987654321 (required, must be unique)"
+                  value={payoutForm.reference}
+                  onChange={(e) => setPayoutForm((p) => ({ ...p, reference: e.target.value }))}
+                  className="w-full px-3.5 py-2.5 bg-stone-900 border border-amber-500/30 rounded-xl text-white text-xs focus:outline-none focus:border-amber-400 placeholder-stone-600"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] text-stone-400 uppercase font-semibold block mb-1">Note (optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. November settlement"
+                  value={payoutForm.note}
+                  onChange={(e) => setPayoutForm((p) => ({ ...p, note: e.target.value }))}
+                  className="w-full px-3.5 py-2.5 bg-stone-900 border border-amber-500/30 rounded-xl text-white text-xs focus:outline-none focus:border-amber-400 placeholder-stone-600"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-amber-500/15">
+              <button
+                onClick={() => setPayoutModal(null)}
+                className="px-4 py-2 bg-stone-900 text-stone-300 hover:text-white rounded-xl text-xs font-semibold transition"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={
+                  savingPayout ||
+                  !payoutForm.coins ||
+                  Number(payoutForm.coins) <= 0 ||
+                  Number(payoutForm.coins) > payoutModal.dueCoins ||
+                  !payoutForm.reference.trim()
+                }
+                onClick={handleRecordPayout}
+                className="px-5 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-stone-950 rounded-xl text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition"
+              >
+                {savingPayout ? 'Saving...' : 'Record Payout'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {activeTab === 'kyc' && (
         <div className="space-y-4">
           {kycList.length === 0 ? (
