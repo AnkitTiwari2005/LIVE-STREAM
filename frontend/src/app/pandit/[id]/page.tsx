@@ -47,26 +47,6 @@ const CURATED_PANDIT_METADATA: Record<string, { title: string; description: stri
     description:
       'Profile and Vedic rituals by Pandit Nandkishor Tripathi, specializing in Karmakand, Vedic Astrology, Graha Shanti, and Anushthan.',
   },
-  'aarav-sharma': {
-    title: 'Pandit Aarav Sharma — Head Archak, Kashi Vishwanath Parampara',
-    description:
-      'Profile and live poojas by Pandit Aarav Sharma, specializing in Rudrabhishek, Mahamrityunjaya Jaap, and Vedic Chanting.',
-  },
-  'hariram-vyas': {
-    title: 'Pandit Hariram Vyas — Senior Purohit, Haridwar Ganga Sabha',
-    description:
-      'Profile and live rituals by Pandit Hariram Vyas, specializing in Sandhya Aarti, Navgrah Shanti, and Kavach Path.',
-  },
-  'vishwanath-bhatt': {
-    title: 'Pandit Vishwanath Bhatt — Vedic Scholar, Tirupati Tradition',
-    description:
-      'Profile and live recitals by Pandit Vishwanath Bhatt, specializing in Vishnu Sahasranama, Satyanarayan Katha, and Vedic Chanting.',
-  },
-  devrishi: {
-    title: 'Acharya Devrishi — Sanskrit & Jyotish Acharya, Rishikesh',
-    description:
-      'Profile and Vedic astrology sessions by Acharya Devrishi, specializing in Vedic Astrology, Kundli Milan, and Vastu Shanti.',
-  },
 };
 
 export async function generateMetadata({
@@ -101,10 +81,6 @@ export async function generateStaticParams() {
     { id: 'subhash-shastri' },
     { id: 'sumit-shastri' },
     { id: 'nandkishor-tripathi' },
-    { id: 'aarav-sharma' },
-    { id: 'hariram-vyas' },
-    { id: 'vishwanath-bhatt' },
-    { id: 'devrishi' },
   ];
 }
 

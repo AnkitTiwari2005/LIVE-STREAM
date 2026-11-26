@@ -219,10 +219,8 @@ export class StreamersService {
         'umesh-shastri': ['Umesh', 'उमेश'],
         'kuber-tripathi': ['Kuber', 'कुबेर'],
         'subhash-shastri': ['Subhash', 'सुभाष'],
-        'aarav-sharma': ['Aarav', 'आरव'],
-        'hariram-vyas': ['Hariram', 'हरिराम'],
-        'vishwanath-bhatt': ['Vishwanath', 'विश्वनाथ'],
-        'devrishi': ['Devrishi', 'देवरिषि'],
+        'sumit-shastri': ['Sumit', 'सुमित'],
+        'nandkishor-tripathi': ['Nandkishor', 'नंदकिशोर'],
       };
 
       const searchTerms = SLUG_TO_SEARCH[profileIdOrUserId.toLowerCase()];

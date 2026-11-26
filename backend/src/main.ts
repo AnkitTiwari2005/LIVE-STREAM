@@ -437,11 +437,19 @@ Sacred Live Pooja, Aarti Darshan & Vedic Astrology Streaming Platform
       }
 
       // Dynamic pandit profile fallback: /pandit/:id -> /pandit/rohit-tiwari/index.html
+      // Explicitly 404 retired legacy demo slugs so they do not soft-fallback to another profile.
       if (cleanPath.startsWith('pandit/')) {
+        const RETIRED_PANDIT_SLUGS = new Set(['aarav-sharma', 'hariram-vyas', 'vishwanath-bhatt', 'devrishi']);
+        const requestedSlug = cleanPath.slice('pandit/'.length).replace(/\/+$/, '').toLowerCase();
+        if (RETIRED_PANDIT_SLUGS.has(requestedSlug)) {
+          const notFoundPage = path.join(clientDir, '404.html');
+          if (fs.existsSync(notFoundPage)) {
+            return res.status(404).sendFile(notFoundPage);
+          }
+          return res.status(404).send('Not Found');
+        }
         const panditFile = path.join(clientDir, 'pandit', 'rohit-tiwari', 'index.html');
         if (fs.existsSync(panditFile)) return res.sendFile(panditFile);
-        const legacyFile = path.join(clientDir, 'pandit', 'aarav-sharma', 'index.html');
-        if (fs.existsSync(legacyFile)) return res.sendFile(legacyFile);
       }
 
       // Explicit schedule route check (/schedule -> /schedule/index.html)
