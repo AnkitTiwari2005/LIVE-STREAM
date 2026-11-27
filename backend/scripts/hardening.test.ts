@@ -1,9 +1,13 @@
 process.env.LIVEKIT_PUBLIC_URL = 'ws://127.0.0.1:7880';
+process.env.JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || 'offline_test_access_secret_key_min_32c';
+process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'offline_test_refresh_secret_key_min_32c';
+process.env.ENCRYPTION_MASTER_KEY = process.env.ENCRYPTION_MASTER_KEY || Buffer.alloc(32, 7).toString('base64');
+process.env.TWO_FACTOR_SECRET_KEY = process.env.TWO_FACTOR_SECRET_KEY || Buffer.alloc(32, 9).toString('base64');
 /* Offline checks for main41 hardening. Run: npx ts-node --transpile-only scripts/hardening.test.ts */
 import Module from 'module';
 const o = (Module as any)._load;
 (Module as any)._load = function (r: string, ...a: any[]) {
-  if (r === '@prisma/client') { const e = (...k: string[]) => Object.fromEntries(k.map((x) => [x, x])); return { StreamStatus: e('LIVE', 'SCHEDULED', 'ENDED', 'CANCELLED', 'RECONNECTING_GRACE_PERIOD'), UserRole: e('ADMIN', 'STREAMER', 'VIEWER'), UserStatus: e('ACTIVE', 'BANNED', 'SUSPENDED', 'DELETION_REQUESTED'), PaymentStatus: e('PENDING', 'SUCCESS', 'FAILED'), StreamVisibility: e('PUBLIC', 'PRIVATE'), KycStatus: e('PENDING', 'APPROVED', 'REJECTED'), StreamerEarningSource: e('LIVE_SESSION', 'GIFT', 'DAKSHINA'), Prisma: { JsonNull: 'JsonNull' }, PrismaClient: class {} }; }
+  if (r === '@prisma/client') { const e = (...k: string[]) => Object.fromEntries(k.map((x) => [x, x])); return { StreamStatus: e('LIVE', 'SCHEDULED', 'ENDED', 'CANCELLED', 'RECONNECTING_GRACE_PERIOD'), UserRole: e('ADMIN', 'STREAMER', 'VIEWER'), UserStatus: e('ACTIVE', 'BANNED', 'SUSPENDED', 'DELETION_REQUESTED'), PaymentStatus: e('PENDING', 'SUCCESS', 'FAILED'), StreamVisibility: e('PUBLIC', 'PRIVATE'), KycStatus: e('PENDING', 'APPROVED', 'REJECTED'), StreamerEarningSource: e('LIVE_SESSION', 'GIFT', 'DAKSHINA'), PoojaBookingStatus: e('PENDING', 'APPROVED', 'DECLINED', 'CANCELLED'), Prisma: { JsonNull: 'JsonNull' }, PrismaClient: class {} }; }
   return o.call(this, r, ...a);
 };
 let pass = 0, fail = 0;
@@ -117,13 +121,20 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
       },
     },
     dakshinaOffering: { updateMany: async () => ({ count: 0 }) },
+    poojaBooking: {
+      updateMany: async (args: any) => {
+        updateCalls.push({ poojaBookingArgs: args });
+        return { count: 1 };
+      },
+    },
     stream: { findMany: async () => [] },
     privateAccessLink: { updateMany: async () => ({ count: 0 }) },
     auditLog: { create: async () => ({}) },
   };
   const delAuthSvc = new AuthService(delPrisma, {} as any, {} as any, {} as any, {} as any);
   await delAuthSvc.deleteAccount('u-del');
-  const scrubbed = updateCalls[0]?.data || {};
+  const scrubbed = updateCalls.find((c) => c.data)?.data || {};
+  const poojaUpdateCalls = updateCalls.filter((c) => c.poojaBookingArgs).map((c) => c.poojaBookingArgs);
   ok(
     scrubbed.googleId === null &&
       scrubbed.resetTokenHash === null &&
@@ -132,8 +143,10 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
       Array.isArray(scrubbed.twoFactorBackupCodes) &&
       scrubbed.twoFactorBackupCodes.length === 0 &&
       scrubbed.isTwoFactorEnabled === false &&
-      scrubbed.deletedAt instanceof Date,
-    'AuthService.deleteAccount scrubs googleId, reset tokens, and 2FA secrets',
+      scrubbed.deletedAt instanceof Date &&
+      poojaUpdateCalls.some((c) => c?.where?.devoteeId === 'u-del' && c?.data?.devoteeName === 'Deleted Devotee') &&
+      poojaUpdateCalls.some((c) => c?.where?.panditId === 'u-del' && c?.data?.status === 'CANCELLED'),
+    'AuthService.deleteAccount scrubs OAuth/2FA secrets and redacts/cancels PoojaBooking records',
   );
 
   findCalls.length = 0;
@@ -306,6 +319,262 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
     rejectErasedBlocked = err instanceof BadRequestException;
   }
   ok(rejectErasedBlocked, 'AdminService.rejectPanditDeletion refuses restoring an already erased account');
+
+  // --- AuthService: getMeExtras (Pandit-Admin + Last-Admin), changePassword, logoutAll, disable2FA ---
+  const throwsAsync = async (fn: () => Promise<unknown>) => { try { await fn(); return false; } catch { return true; } };
+  const { ForbiddenException } = require('@nestjs/common');
+  const { isTokenIssuedBeforePasswordChange } = require('../src/common/token-freshness.util');
+  const bcrypt = require('bcryptjs');
+  const initialHash = await bcrypt.hash('OldPass!123', 4);
+  let activeAdminCount = 1;
+  const authState: any = {
+    id: 'u-rohit',
+    name: 'Pandit Rohit Tiwari',
+    email: 'tripathiayush068@gmail.com',
+    role: 'ADMIN',
+    status: 'ACTIVE',
+    deletedAt: null,
+    isEmailVerified: true,
+    isTwoFactorEnabled: true,
+    emailNotification: true,
+    preferredLanguage: 'en',
+    passwordHash: initialHash,
+    passwordChangedAt: null,
+    twoFactorSecretEnc: CryptoUtil.encryptAesGcm('JBSWY3DPEHPK3PXP'),
+    twoFactorBackupCodes: [],
+    streamerProfile: { id: 'sp-rt', kycStatus: 'APPROVED', slug: 'rohit-tiwari', specialBadgeTitle: 'Chief Acharya' },
+  };
+  const authSecAudits: any[] = [];
+  const authSecPrisma: any = {
+    user: {
+      findUnique: async () => authState,
+      count: async () => activeAdminCount,
+      update: async (args: any) => {
+        Object.assign(authState, args.data);
+        return { ...authState };
+      },
+    },
+    auditLog: { create: async (args: any) => { authSecAudits.push(args); return {}; } },
+  };
+  const mockJwt = { sign: (payload: any) => JSON.stringify(payload) };
+  const authSecSvc = new AuthService(authSecPrisma, mockJwt as any, {} as any, {} as any, {} as any);
+
+  const me1 = await authSecSvc.getMeExtras('u-rohit');
+  ok(
+    me1.hasPassword === true &&
+      me1.isLastAdmin === true &&
+      me1.streamerProfile?.kycStatus === 'APPROVED' &&
+      me1.streamerProfile?.slug === 'rohit-tiwari' &&
+      !('passwordHash' in me1),
+    'AuthService.getMeExtras exposes Pandit-Admin profile, isLastAdmin=true, and strips secrets',
+  );
+  activeAdminCount = 2;
+  const me2 = await authSecSvc.getMeExtras('u-rohit');
+  ok(me2.isLastAdmin === false, 'AuthService.getMeExtras sets isLastAdmin=false when multiple admins exist');
+
+  ok(
+    await throwsAsync(() => authSecSvc.changePassword('u-rohit', { currentPassword: 'WrongPassword!', newPassword: 'NewPassword!456' })),
+    'AuthService.changePassword rejects incorrect current password',
+  );
+  const cpRes = await authSecSvc.changePassword('u-rohit', { currentPassword: 'OldPass!123', newPassword: 'NewPassword!456' });
+  const cpClaims = JSON.parse(cpRes.accessToken);
+  const pwChangedAt1 = authState.passwordChangedAt as Date;
+  ok(
+    pwChangedAt1 instanceof Date &&
+      isTokenIssuedBeforePasswordChange(cpClaims.iat - 1, pwChangedAt1) === true &&
+      isTokenIssuedBeforePasswordChange(cpClaims.iat, pwChangedAt1) === false &&
+      authSecAudits.some((a) => a?.data?.action === 'PASSWORD_CHANGED'),
+    'AuthService.changePassword rotates passwordChangedAt and keeps new token valid while revoking older tokens',
+  );
+
+  const laRes = await authSecSvc.logoutAllOtherDevices('u-rohit');
+  const laClaims = JSON.parse(laRes.accessToken);
+  const pwChangedAt2 = authState.passwordChangedAt as Date;
+  ok(
+    pwChangedAt2.getTime() > pwChangedAt1.getTime() &&
+      isTokenIssuedBeforePasswordChange(cpClaims.iat, pwChangedAt2) === true &&
+      isTokenIssuedBeforePasswordChange(laClaims.iat, pwChangedAt2) === false &&
+      authSecAudits.some((a) => a?.data?.action === 'SESSION_LOGOUT_ALL'),
+    'AuthService.logoutAllOtherDevices advances rotation second even within same second and revokes prior token',
+  );
+
+  let adminDisableBlocked = false;
+  try {
+    await authSecSvc.disableTwoFactor('u-rohit', { password: 'NewPassword!456', token: 'BACKUP01' });
+  } catch (err: any) {
+    adminDisableBlocked = err instanceof ForbiddenException;
+  }
+  ok(adminDisableBlocked, 'AuthService.disableTwoFactor forbids ADMIN accounts from disabling 2FA');
+
+  authState.role = 'VIEWER';
+  authState.twoFactorBackupCodes = [CryptoUtil.hashSha256('BACKUP01')];
+  await authSecSvc.disableTwoFactor('u-rohit', { password: 'NewPassword!456', token: 'BACKUP01' });
+  ok(
+    authState.isTwoFactorEnabled === false &&
+      authState.twoFactorSecretEnc === null &&
+      Array.isArray(authState.twoFactorBackupCodes) &&
+      authState.twoFactorBackupCodes.length === 0,
+    'AuthService.disableTwoFactor disables 2FA for non-Admin users using password + valid backup code',
+  );
+
+  // --- PoojaBookingsService: create, slug resolution, self-booking guard, Pandit-Admin approve/decline, cancel ---
+  const { PoojaBookingsService } = require('../src/modules/pooja-bookings/pooja-bookings.service');
+  const { CreatePoojaBookingDto, RespondPoojaBookingDto } = require('../src/modules/pooja-bookings/dto/pooja-booking.dto');
+  ok(
+    !(await bad(CreatePoojaBookingDto, {
+      panditIdOrSlug: 'rohit-tiwari',
+      poojaId: 'rudrabhishek',
+      poojaName: 'Maha Rudrabhishek',
+      devoteeName: 'Devotee',
+      scheduledDate: '2026-12-01',
+      timeSlot: 'Morning',
+      sankalpIntent: 'Family peace',
+    })),
+    'CreatePoojaBookingDto accepts valid booking payload',
+  );
+  ok(
+    await bad(RespondPoojaBookingDto, { decision: 'INVALID_STATUS' }),
+    'RespondPoojaBookingDto rejects unknown decision value',
+  );
+
+  const pbUsers: Record<string, any> = {
+    'u-devotee': { id: 'u-devotee', name: 'Ankit Devotee', email: 'dev@example.com', role: 'VIEWER', status: 'ACTIVE', deletedAt: null, streamerProfile: null },
+    'u-rohit': { id: 'u-rohit', name: 'Pandit Rohit Tiwari', email: 'tripathiayush068@gmail.com', role: 'ADMIN', status: 'ACTIVE', deletedAt: null, avatarUrl: '/images/pandits/pandit-rohit-tiwari.webp', streamerProfile: { id: 'sp-rt', userId: 'u-rohit', slug: 'rohit-tiwari', kycStatus: 'APPROVED', specialBadgeTitle: 'Chief Acharya' } },
+    'u-other': { id: 'u-other', name: 'Pandit Ravi', email: 'ravi@example.com', role: 'STREAMER', status: 'ACTIVE', deletedAt: null, streamerProfile: { id: 'sp-rv', userId: 'u-other', slug: 'ravi-pathak', kycStatus: 'APPROVED', specialBadgeTitle: 'Vedic Acharya' } },
+  };
+  const pbRows: any[] = [];
+  const pbAudits: any[] = [];
+  const pbPrisma: any = {
+    user: {
+      findUnique: async ({ where }: any) => pbUsers[where.id] || null,
+    },
+    streamerProfile: {
+      findFirst: async ({ where }: any) => {
+        const ors = where?.OR || [];
+        return (
+          Object.values(pbUsers)
+            .map((u: any) => (u.streamerProfile ? { ...u.streamerProfile, user: u } : null))
+            .find(
+              (sp: any) =>
+                sp &&
+                sp.kycStatus === where?.kycStatus &&
+                ors.some((o: any) => o.userId === sp.userId || o.id === sp.id || (o.slug && o.slug === sp.slug)),
+            ) || null
+        );
+      },
+    },
+    poojaBooking: {
+      create: async ({ data }: any) => {
+        const row = {
+          id: `pb-${pbRows.length + 1}`,
+          createdAt: new Date(),
+          confirmedAt: null,
+          confirmedTime: null,
+          roomLink: null,
+          declineReason: null,
+          ...data,
+          pandit: pbUsers[data.panditId],
+          streamerProfile: pbUsers[data.panditId]?.streamerProfile,
+        };
+        pbRows.push(row);
+        return row;
+      },
+      findMany: async ({ where }: any) =>
+        pbRows.filter((r) => (!where.devoteeId || r.devoteeId === where.devoteeId) && (!where.panditId || r.panditId === where.panditId) && (!where.status?.not || r.status !== where.status.not)),
+      findUnique: async ({ where }: any) => pbRows.find((r) => r.id === where.id) || null,
+      update: async ({ where, data }: any) => {
+        const row = pbRows.find((r) => r.id === where.id);
+        Object.assign(row, data);
+        return row;
+      },
+    },
+    auditLog: { create: async (args: any) => { pbAudits.push(args); return {}; } },
+  };
+  const pbSvc = new PoojaBookingsService(pbPrisma);
+
+  const createdPb = await pbSvc.createBooking('u-devotee', {
+    panditIdOrSlug: '73b080c9-8bfb-41e6-8c5a-dba40c9409c5',
+    poojaId: 'rudrabhishek',
+    poojaName: 'Maha Rudrabhishek',
+    category: 'Shiva',
+    dakshinaCoins: 150,
+    devoteeName: 'Ankit Devotee',
+    devoteeGotra: 'Bharadwaj',
+    scheduledDate: '2026-12-01',
+    timeSlot: 'Morning (07:00 AM)',
+    sankalpIntent: 'Family wellbeing',
+  });
+  ok(
+    createdPb.status === 'PENDING' && createdPb.panditId === 'u-rohit' && createdPb.panditSlug === 'rohit-tiwari',
+    'PoojaBookingsService.createBooking resolves legacy catalog ID to verified Pandit-Admin and saves PENDING request',
+  );
+
+  ok(
+    await throwsAsync(() =>
+      pbSvc.createBooking('u-rohit', {
+        panditIdOrSlug: 'rohit-tiwari',
+        poojaId: 'rudrabhishek',
+        poojaName: 'Maha Rudrabhishek',
+        devoteeName: 'Self',
+        scheduledDate: '2026-12-01',
+        timeSlot: 'Morning',
+        sankalpIntent: 'Test',
+      }),
+    ),
+    'PoojaBookingsService.createBooking blocks self-booking',
+  );
+
+  ok(
+    await throwsAsync(() => pbSvc.getStreamerRequests('u-devotee')),
+    'PoojaBookingsService.getStreamerRequests blocks regular devotee accounts',
+  );
+
+  const rohitInbox = await pbSvc.getStreamerRequests('u-rohit');
+  ok(
+    rohitInbox.length === 1 && rohitInbox[0].id === createdPb.id,
+    'PoojaBookingsService.getStreamerRequests admits Pandit-Admin and returns incoming devotee booking',
+  );
+
+  ok(
+    await throwsAsync(() => pbSvc.respondToRequest('u-other', createdPb.id, { decision: 'APPROVED' })),
+    'PoojaBookingsService.respondToRequest blocks other pandits from approving someone else’s booking',
+  );
+
+  const approvedPb = await pbSvc.respondToRequest('u-rohit', createdPb.id, {
+    decision: 'APPROVED',
+    confirmedTime: '2026-12-01 07:30 AM IST',
+  });
+  ok(
+    approvedPb.status === 'APPROVED' &&
+      approvedPb.confirmedTime === '2026-12-01 07:30 AM IST' &&
+      pbAudits.some((a) => a?.data?.action === 'PANDIT_BOOKING_APPROVED'),
+    'PoojaBookingsService.respondToRequest allows Pandit-Admin to approve and logs PANDIT_BOOKING_APPROVED',
+  );
+
+  ok(
+    await throwsAsync(() => pbSvc.respondToRequest('u-rohit', createdPb.id, { decision: 'DECLINED' })),
+    'PoojaBookingsService.respondToRequest rejects duplicate transitions after decision',
+  );
+  ok(
+    await throwsAsync(() => pbSvc.cancelMyBooking('u-devotee', createdPb.id)),
+    'PoojaBookingsService.cancelMyBooking prevents cancelling an already-approved booking',
+  );
+
+  const pendingPb = await pbSvc.createBooking('u-devotee', {
+    panditIdOrSlug: 'ravi-pathak',
+    poojaId: 'navgraha',
+    poojaName: 'Navgraha Shanti',
+    devoteeName: 'Ankit Devotee',
+    scheduledDate: '2026-12-02',
+    timeSlot: 'Evening',
+    sankalpIntent: 'Peace',
+  });
+  await pbSvc.cancelMyBooking('u-devotee', pendingPb.id);
+  const myVisible = await pbSvc.getMyBookings('u-devotee');
+  ok(
+    myVisible.length === 1 && myVisible[0].id === createdPb.id,
+    'PoojaBookingsService.cancelMyBooking cancels PENDING booking and excludes it from getMyBookings',
+  );
 
   console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);
 })();

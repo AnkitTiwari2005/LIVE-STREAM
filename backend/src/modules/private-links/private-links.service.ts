@@ -20,6 +20,7 @@ import { isProductionLike } from '../../common/runtime-mode';
 import { StreamStatus, StreamVisibility, UserStatus } from '@prisma/client';
 import { forwardRef } from '@nestjs/common';
 import { StreamsService } from '../streams/streams.service';
+import { isTokenIssuedBeforePasswordChange } from '../../common/token-freshness.util';
 
 function getFrontendOrigin(): string {
   const origin = process.env.FRONTEND_ORIGIN || (process.env.DOMAIN ? `https://${process.env.DOMAIN}` : null);
@@ -220,10 +221,9 @@ export class PrivateLinksService {
 
         const isDeletedAccount =
           candidateUser.status === UserStatus.DELETION_REQUESTED || Boolean(candidateUser.deletedAt);
-        const isStalePasswordResetToken = Boolean(
-          candidateUser.passwordChangedAt &&
-            typeof tokenIat === 'number' &&
-            new Date(tokenIat * 1000) < candidateUser.passwordChangedAt,
+        const isStalePasswordResetToken = isTokenIssuedBeforePasswordChange(
+          tokenIat,
+          candidateUser.passwordChangedAt,
         );
 
         if (!isDeletedAccount && !isStalePasswordResetToken) {

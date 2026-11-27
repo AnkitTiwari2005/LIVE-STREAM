@@ -3,6 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '../../../database/prisma.service';
 import { TokenBlacklistService } from '../../../common/token-blacklist.service';
+import { isTokenIssuedBeforePasswordChange } from '../../../common/token-freshness.util';
 import { UserStatus } from '@prisma/client';
 
 export interface JwtPayload {
@@ -78,11 +79,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // H-10: Reject tokens that were issued before the most recent password reset.
     // This invalidates all existing sessions (mobile, web, stolen tokens) the moment
     // a user resets their password, without needing a database token blacklist.
-    if (user.passwordChangedAt && payload.iat) {
-      const issuedAt = new Date(payload.iat * 1000);
-      if (issuedAt < user.passwordChangedAt) {
-        throw new UnauthorizedException('Session expired after password change — please log in again.');
-      }
+    if (isTokenIssuedBeforePasswordChange(payload.iat, user.passwordChangedAt)) {
+      throw new UnauthorizedException('Session expired after password change — please log in again.');
     }
 
     if (user.status === UserStatus.BANNED) {

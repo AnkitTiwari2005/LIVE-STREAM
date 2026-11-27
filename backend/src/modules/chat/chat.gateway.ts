@@ -21,6 +21,7 @@ import { UserRole, UserStatus } from '@prisma/client';
 import { StreamsService } from '../streams/streams.service';
 import { isDevMode } from '../../common/runtime-mode';
 import { TokenBlacklistService } from '../../common/token-blacklist.service';
+import { isTokenIssuedBeforePasswordChange } from '../../common/token-freshness.util';
 
 class InMemoryChatCache {
   private rateLimits = new Map<string, number>();
@@ -191,7 +192,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         return null;
       }
 
-      if (dbUser.passwordChangedAt && payload.iat && new Date(payload.iat * 1000) < dbUser.passwordChangedAt) {
+      if (isTokenIssuedBeforePasswordChange(payload.iat, dbUser.passwordChangedAt)) {
         return null;
       }
 

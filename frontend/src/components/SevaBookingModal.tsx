@@ -263,10 +263,49 @@ function SevaBookingFlow({
     }
   };
 
-  const handleConfirmAndSendRequest = () => {
+  const handleConfirmAndSendRequest = async () => {
     if (!user) {
       toast.error('Please sign in or register to consecrate your live pooja.');
       return;
+    }
+
+    if (BOOKINGS_ENABLED) {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('pooja_token') : null;
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+      try {
+        const res = await fetch(`${apiUrl}/pooja-bookings`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            panditIdOrSlug: selectedPandit.panditId,
+            poojaId: selectedSeva.id,
+            poojaName: selectedSeva.name,
+            category: selectedSeva.category,
+            dakshinaCoins: currentDakshina,
+            devoteeName: devoteeName.trim(),
+            devoteeGotra: devoteeGotra.trim() || 'Kashyap',
+            scheduledDate: bookingDate,
+            timeSlot,
+            sankalpIntent,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          toast.error(data.message || 'Unable to submit pooja booking request.');
+          return;
+        }
+        setCreatedBooking(data);
+        setStep(4);
+        toast.success('Pooja request sent to Pandit Ji. Check My Booked Poojas for confirmation.');
+        return;
+      } catch {
+        toast.error('Network error while submitting pooja booking request.');
+        return;
+      }
     }
 
     const refCode = `PD-${Math.floor(100000 + Math.random() * 900000)}`;

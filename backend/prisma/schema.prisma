@@ -124,6 +124,8 @@ model User {
   viewerContributions  StreamerEarning[]  @relation("ViewerContributions")
   panditPayouts        PanditPayout[]     @relation("PanditPayouts")
   payoutsApproved      PanditPayout[]     @relation("PayoutApprovedBy")
+  devoteePoojaBookings PoojaBooking[]     @relation("DevoteePoojaBookings")
+  panditPoojaBookings  PoojaBooking[]     @relation("PanditPoojaBookings")
 
   @@index([email])
   @@index([role, status])
@@ -148,7 +150,8 @@ model StreamerProfile {
   createdAt        DateTime     @default(now()) @db.Timestamptz
   updatedAt        DateTime     @updatedAt @db.Timestamptz
 
-  followers        Follow[]     @relation("StreamerFollowers")
+  followers        Follow[]       @relation("StreamerFollowers")
+  poojaBookings    PoojaBooking[]
 
   @@index([kycStatus])
 }
@@ -450,6 +453,43 @@ model PanditPayout {
   @@unique([streamerId, reference])
   @@index([streamerId, paidAt])
   @@index([paidById])
+}
+
+enum PoojaBookingStatus {
+  PENDING
+  APPROVED
+  DECLINED
+  CANCELLED
+}
+
+model PoojaBooking {
+  id                String             @id @default(uuid())
+  refCode           String             @unique @db.VarChar(24)
+  devoteeId         String?
+  devotee           User?              @relation("DevoteePoojaBookings", fields: [devoteeId], references: [id], onDelete: SetNull)
+  devoteeName       String             @db.VarChar(100)
+  devoteeGotra      String?            @db.VarChar(100)
+  panditId          String
+  pandit            User               @relation("PanditPoojaBookings", fields: [panditId], references: [id], onDelete: Cascade)
+  streamerProfileId String?
+  streamerProfile   StreamerProfile?   @relation(fields: [streamerProfileId], references: [id], onDelete: SetNull)
+  poojaId           String             @db.VarChar(80)
+  poojaName         String             @db.VarChar(180)
+  category          String?            @db.VarChar(100)
+  dakshinaCoins     Int                @default(0)
+  scheduledDate     String             @db.VarChar(32)
+  timeSlot          String             @db.VarChar(120)
+  sankalpIntent     String             @db.VarChar(500)
+  status            PoojaBookingStatus @default(PENDING)
+  roomLink          String?            @db.VarChar(300)
+  confirmedTime     String?            @db.VarChar(200)
+  declineReason     String?            @db.VarChar(300)
+  confirmedAt       DateTime?          @db.Timestamptz
+  createdAt         DateTime           @default(now()) @db.Timestamptz
+  updatedAt         DateTime           @updatedAt @db.Timestamptz
+
+  @@index([devoteeId, createdAt])
+  @@index([panditId, status, createdAt])
 }
 
 

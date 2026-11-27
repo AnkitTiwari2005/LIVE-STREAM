@@ -18,10 +18,11 @@ import { StorageService } from '../storage/storage.service';
 import { StreamsService } from '../streams/streams.service';
 import { TokenBlacklistService } from '../../common/token-blacklist.service';
 import { RegisterDto } from './dto/register.dto';
-import { LoginDto, ResetPasswordDto, VerifyTotpDto } from './dto/login.dto';
+import { LoginDto, ResetPasswordDto, VerifyTotpDto, UpdateProfileDto, ChangePasswordDto, DisableTwoFactorDto } from './dto/login.dto';
 import { CryptoUtil } from '../../common/crypto.util';
 import { resolveTwoFactorSecret } from '../../common/config/validate-env';
 import { isDevMode, isProductionLike } from '../../common/runtime-mode';
+import { isTokenIssuedBeforePasswordChange } from '../../common/token-freshness.util';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 import { Prisma, UserRole, UserStatus, WalletTxType, WalletTxCategory, StreamStatus, KycStatus } from '@prisma/client';
@@ -351,37 +352,27 @@ export class AuthService {
       throw new UnauthorizedException('User 2FA is not configured');
     }
 
-    const totpSecret = CryptoUtil.decryptAesGcm(user.twoFactorSecretEnc);
-    const isValid = authenticator.verify({ token: dto.token, secret: totpSecret });
+    const match = this.verifyTotpOrBackup(user, dto.token);
 
-    if (!isValid) {
-      // Check backup codes (N8: support salted HMAC-SHA256 and legacy plain SHA-256)
-      const normalizedToken = dto.token.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-      const hmacHash = crypto.createHmac('sha256', resolveTwoFactorSecret()).update(normalizedToken).digest('hex');
-      const legacyHash = CryptoUtil.hashSha256(dto.token.trim());
-
-      let backupIndex = user.twoFactorBackupCodes.indexOf(hmacHash);
-      if (backupIndex === -1) {
-        backupIndex = user.twoFactorBackupCodes.indexOf(legacyHash);
-      }
-
-      if (backupIndex === -1) {
-        // R-05: Count this failed attempt (window stays anchored to first failure)
-        const fails = this.incrementTotpFail(userId);
-        const remaining = Math.max(0, 5 - fails);
-        if (remaining > 0) {
-          throw new UnauthorizedException(
-            `Invalid authenticator verification code. ${remaining} attempt(s) remaining.`,
-          );
-        }
-        const waitAfterLock = this.getTotpLockRemainingSeconds(userId);
+    if (!match.valid) {
+      // R-05: Count this failed attempt (window stays anchored to first failure)
+      const fails = this.incrementTotpFail(userId);
+      const remaining = Math.max(0, 5 - fails);
+      if (remaining > 0) {
         throw new UnauthorizedException(
-          `Too many incorrect verification codes. Please wait ${this.formatTotpWaitTime(waitAfterLock)} before trying again.`,
+          `Invalid authenticator verification code. ${remaining} attempt(s) remaining.`,
         );
       }
+      const waitAfterLock = this.getTotpLockRemainingSeconds(userId);
+      throw new UnauthorizedException(
+        `Too many incorrect verification codes. Please wait ${this.formatTotpWaitTime(waitAfterLock)} before trying again.`,
+      );
+    }
+
+    if (match.usedBackupIndex >= 0) {
       // Remove used backup code
       const updatedCodes = [...user.twoFactorBackupCodes];
-      updatedCodes.splice(backupIndex, 1);
+      updatedCodes.splice(match.usedBackupIndex, 1);
       await this.prisma.user.update({
         where: { id: user.id },
         data: { twoFactorBackupCodes: updatedCodes },
@@ -549,10 +540,8 @@ export class AuthService {
     // up to 30 days even after the account owner has reset their password.
     // Compare in whole seconds (Math.floor) so a login in the same second as the reset
     // is not incorrectly rejected.
-    if (user.passwordChangedAt && payload.iat) {
-      if (Math.floor(payload.iat) < Math.floor(user.passwordChangedAt.getTime() / 1000)) {
-        throw new UnauthorizedException('Session expired after password change — please log in again.');
-      }
+    if (isTokenIssuedBeforePasswordChange(payload.iat, user.passwordChangedAt)) {
+      throw new UnauthorizedException('Session expired after password change — please log in again.');
     }
 
     return this.generateTokens(user);
@@ -591,13 +580,69 @@ export class AuthService {
     return { message: 'Password has been successfully updated. You may now log in.' };
   }
 
-  generateTokens(user: any) {
+  private verifyTotpOrBackup(user: any, rawToken: string): { valid: boolean; usedBackupIndex: number } {
+    if (!user?.twoFactorSecretEnc || !rawToken) {
+      return { valid: false, usedBackupIndex: -1 };
+    }
+    const totpSecret = CryptoUtil.decryptAesGcm(user.twoFactorSecretEnc);
+    if (authenticator.verify({ token: rawToken, secret: totpSecret })) {
+      return { valid: true, usedBackupIndex: -1 };
+    }
+
+    const backupCodes: string[] = Array.isArray(user.twoFactorBackupCodes) ? user.twoFactorBackupCodes : [];
+    const normalizedToken = rawToken.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    const hmacHash = crypto.createHmac('sha256', resolveTwoFactorSecret()).update(normalizedToken).digest('hex');
+    const legacyHash = CryptoUtil.hashSha256(rawToken.trim());
+
+    let backupIndex = backupCodes.indexOf(hmacHash);
+    if (backupIndex === -1) {
+      backupIndex = backupCodes.indexOf(legacyHash);
+    }
+
+    return { valid: backupIndex !== -1, usedBackupIndex: backupIndex };
+  }
+
+  private nextRotationSecond(currentPasswordChangedAt?: Date | null): number {
+    const baseline = Math.floor(Date.now() / 1000) + 1;
+    const existing = currentPasswordChangedAt ? Math.floor(currentPasswordChangedAt.getTime() / 1000) + 1 : 0;
+    return Math.max(baseline, existing);
+  }
+
+  private formatSessionUserPayload(user: any, isLastAdmin = false) {
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      status: user.status,
+      isEmailVerified: user.isEmailVerified,
+      isTwoFactorEnabled: user.isTwoFactorEnabled === true,
+      emailNotification: user.emailNotification ?? true,
+      preferredLanguage: user.preferredLanguage ?? 'en',
+      avatarUrl: user.avatarUrl,
+      hasPassword: Boolean(user.passwordHash),
+      ...(user.role === UserRole.ADMIN ? { isLastAdmin } : {}),
+      streamerProfile: user.streamerProfile
+        ? {
+            id: user.streamerProfile.id,
+            slug: user.streamerProfile.slug ?? null,
+            kycStatus: user.streamerProfile.kycStatus,
+            isVerifiedBadge: user.streamerProfile.isVerifiedBadge,
+            hasSpecialBadge: user.streamerProfile.hasSpecialBadge,
+            specialBadgeTitle: user.streamerProfile.specialBadgeTitle,
+          }
+        : null,
+    };
+  }
+
+  generateTokens(user: any, customIatSeconds?: number) {
     const jti = CryptoUtil.generate128BitToken();
-    const payload = {
+    const payload: any = {
       sub: user.id,
       email: user.email,
       role: user.role,
       jti,
+      ...(typeof customIatSeconds === 'number' ? { iat: customIatSeconds } : {}),
     };
 
     const accessToken = this.jwtService.sign(payload, {
@@ -614,14 +659,7 @@ export class AuthService {
       accessToken,
       refreshToken,
       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        isEmailVerified: user.isEmailVerified,
-        isTwoFactorEnabled: user.isTwoFactorEnabled === true,
-        avatarUrl: user.avatarUrl,
-        streamerProfile: user.streamerProfile,
+        ...this.formatSessionUserPayload(user),
         wallet: user.wallet ? {
           balanceCoins: user.wallet.balanceCoins,
           bonusCoins: user.wallet.bonusCoins,
@@ -631,24 +669,229 @@ export class AuthService {
     };
   }
 
-  async updateProfile(userId: string, data: { name?: string }) {
-    if (!data.name || data.name.trim().length < 2) {
-      throw new BadRequestException('Name must be at least 2 characters long');
-    }
-    const updated = await this.prisma.user.update({
+  async getMeExtras(userId: string) {
+    const row = await this.prisma.user.findUnique({
       where: { id: userId },
-      data: { name: data.name.trim() },
       select: {
-        id: true,
-        email: true,
-        name: true,
+        passwordHash: true,
+        emailNotification: true,
+        preferredLanguage: true,
         role: true,
-        status: true,
-        isEmailVerified: true,
-        isTwoFactorEnabled: true,
+        streamerProfile: {
+          select: {
+            id: true,
+            slug: true,
+            kycStatus: true,
+            isVerifiedBadge: true,
+            hasSpecialBadge: true,
+            specialBadgeTitle: true,
+          },
+        },
       },
     });
-    return updated;
+
+    const isLastAdmin =
+      row?.role === UserRole.ADMIN
+        ? (await this.prisma.user.count({
+            where: {
+              role: UserRole.ADMIN,
+              deletedAt: null,
+              status: { not: UserStatus.DELETION_REQUESTED },
+            },
+          })) <= 1
+        : undefined;
+
+    return {
+      hasPassword: Boolean(row?.passwordHash),
+      ...(row?.emailNotification !== undefined ? { emailNotification: row.emailNotification } : {}),
+      ...(row?.preferredLanguage !== undefined ? { preferredLanguage: row.preferredLanguage } : {}),
+      ...(row?.streamerProfile !== undefined ? { streamerProfile: row.streamerProfile } : {}),
+      ...(isLastAdmin !== undefined ? { isLastAdmin } : {}),
+    };
+  }
+
+  async getSessionUser(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { streamerProfile: true },
+    });
+    if (!user || user.deletedAt || user.status === UserStatus.DELETION_REQUESTED) {
+      throw new UnauthorizedException('User account is no longer active');
+    }
+
+    let isLastAdmin = false;
+    if (user.role === UserRole.ADMIN) {
+      const activeAdmins = await this.prisma.user.count({
+        where: {
+          role: UserRole.ADMIN,
+          deletedAt: null,
+          status: { not: UserStatus.DELETION_REQUESTED },
+        },
+      });
+      isLastAdmin = activeAdmins <= 1;
+    }
+
+    return this.formatSessionUserPayload(user, isLastAdmin);
+  }
+
+  async updateProfile(userId: string, data: UpdateProfileDto) {
+    const updateData: any = {};
+
+    if (data.name !== undefined) {
+      if (!data.name || data.name.trim().length < 2) {
+        throw new BadRequestException('Name must be at least 2 characters long');
+      }
+      updateData.name = data.name.trim();
+    }
+    if (data.emailNotification !== undefined) {
+      updateData.emailNotification = Boolean(data.emailNotification);
+    }
+    if (data.preferredLanguage !== undefined) {
+      updateData.preferredLanguage = data.preferredLanguage;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      throw new BadRequestException('No profile changes supplied');
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+      include: { streamerProfile: true },
+    });
+    return this.formatSessionUserPayload(updated);
+  }
+
+  async changePassword(userId: string, dto: ChangePasswordDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { streamerProfile: true, wallet: true },
+    });
+    if (!user || user.deletedAt || user.status === UserStatus.DELETION_REQUESTED) {
+      throw new UnauthorizedException('User account is not active');
+    }
+
+    if (user.passwordHash) {
+      if (!dto.currentPassword) {
+        throw new BadRequestException('Current password is required');
+      }
+      const matchesCurrent = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+      if (!matchesCurrent) {
+        throw new UnauthorizedException('Current password is incorrect');
+      }
+      const sameAsOld = await bcrypt.compare(dto.newPassword, user.passwordHash);
+      if (sameAsOld) {
+        throw new BadRequestException('New password must be different from your current password');
+      }
+    }
+
+    const passwordHash = await bcrypt.hash(dto.newPassword, 12);
+    const rotationSec = this.nextRotationSecond(user.passwordChangedAt);
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash,
+        resetTokenHash: null,
+        resetTokenExpiry: null,
+        passwordChangedAt: new Date(rotationSec * 1000),
+      },
+      include: { streamerProfile: true, wallet: true },
+    });
+
+    await this.prisma.auditLog.create({
+      data: {
+        actorId: userId,
+        actorEmail: user.email,
+        action: 'PASSWORD_CHANGED',
+        targetResource: `User:${userId}`,
+        details: { hadPassword: Boolean(user.passwordHash) },
+      },
+    });
+
+    const tokens = this.generateTokens(updatedUser, rotationSec);
+    return {
+      ...tokens,
+      message: 'Password updated successfully. All other active sessions have been signed out.',
+    };
+  }
+
+  async logoutAllOtherDevices(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { streamerProfile: true, wallet: true },
+    });
+    if (!user || user.deletedAt || user.status === UserStatus.DELETION_REQUESTED) {
+      throw new UnauthorizedException('User account is not active');
+    }
+
+    const rotationSec = this.nextRotationSecond(user.passwordChangedAt);
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordChangedAt: new Date(rotationSec * 1000) },
+      include: { streamerProfile: true, wallet: true },
+    });
+
+    await this.prisma.auditLog.create({
+      data: {
+        actorId: userId,
+        actorEmail: user.email,
+        action: 'SESSION_LOGOUT_ALL',
+        targetResource: `User:${userId}`,
+      },
+    });
+
+    const tokens = this.generateTokens(updatedUser, rotationSec);
+    return {
+      ...tokens,
+      message: 'Signed out from all other devices and browsers.',
+    };
+  }
+
+  async disableTwoFactor(userId: string, dto: DisableTwoFactorDto) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.deletedAt) throw new NotFoundException('User not found');
+
+    if (user.role === UserRole.ADMIN) {
+      throw new ForbiddenException('Two-factor authentication is mandatory for administrator accounts');
+    }
+    if (!user.isTwoFactorEnabled || !user.twoFactorSecretEnc) {
+      throw new BadRequestException('Two-factor authentication is not currently enabled');
+    }
+
+    if (user.passwordHash) {
+      if (!dto.password) {
+        throw new BadRequestException('Account password is required to disable 2FA');
+      }
+      const passwordOk = await bcrypt.compare(dto.password, user.passwordHash);
+      if (!passwordOk) {
+        throw new UnauthorizedException('Incorrect password');
+      }
+    }
+
+    const codeCheck = this.verifyTotpOrBackup(user, dto.token);
+    if (!codeCheck.valid) {
+      throw new UnauthorizedException('Invalid 2FA authenticator or backup code');
+    }
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        twoFactorSecretEnc: null,
+        twoFactorBackupCodes: [],
+        isTwoFactorEnabled: false,
+      },
+    });
+
+    await this.prisma.auditLog.create({
+      data: {
+        actorId: userId,
+        actorEmail: user.email,
+        action: 'TWO_FA_DISABLED',
+        targetResource: `User:${userId}`,
+      },
+    });
+
+    return { message: 'Two-factor authentication has been disabled for your account.' };
   }
 
   async hasPassword(userId: string): Promise<boolean> {

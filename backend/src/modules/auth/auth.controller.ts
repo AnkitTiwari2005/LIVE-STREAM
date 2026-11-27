@@ -15,7 +15,16 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
-import { LoginDto, ForgotPasswordDto, ResetPasswordDto, VerifyTotpDto, DeleteAccountDto, UpdateProfileDto } from './dto/login.dto';
+import {
+  LoginDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+  VerifyTotpDto,
+  DeleteAccountDto,
+  UpdateProfileDto,
+  ChangePasswordDto,
+  DisableTwoFactorDto,
+} from './dto/login.dto';
 import { Response, Request } from 'express';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -196,19 +205,70 @@ export class AuthController {
   @Header('Pragma', 'no-cache')
   @ApiOperation({ summary: 'Get current user profile and session data' })
   async getMe(@CurrentUser() user: any) {
-    // The client needs to know whether a password exists (Google-only accounts have none), never the hash.
-    return { ...user, hasPassword: await this.authService.hasPassword(user.id) };
+    // Merge fresh profile/preference flags & streamerProfile (preserving hasPassword without exposing passwordHash)
+    const extras = await this.authService.getMeExtras(user.id);
+    return { ...user, ...extras };
   }
 
   @Patch('profile')
   @Header('Cache-Control', 'no-store, no-cache, must-revalidate, private')
   @Header('Pragma', 'no-cache')
-  @ApiOperation({ summary: 'Update devotee profile name and details' })
+  @ApiOperation({ summary: 'Update profile name, email notifications, and language preference' })
   async updateProfile(
     @CurrentUser('id') userId: string,
     @Body() dto: UpdateProfileDto,
   ) {
-    return this.authService.updateProfile(userId, { name: dto.name });
+    return this.authService.updateProfile(userId, dto);
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  @Header('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+  @Header('Pragma', 'no-cache')
+  @ApiOperation({ summary: 'Change password while signed in and rotate active session tokens' })
+  async changePassword(
+    @CurrentUser('id') userId: string,
+    @Body() dto: ChangePasswordDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.changePassword(userId, dto);
+    this.setAuthCookies(res, result.accessToken, result.refreshToken);
+    return {
+      accessToken: result.accessToken,
+      user: result.user,
+      message: result.message,
+    };
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Post('disable-2fa')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Disable TOTP 2FA for non-administrator accounts' })
+  async disable2FA(
+    @CurrentUser('id') userId: string,
+    @Body() dto: DisableTwoFactorDto,
+  ) {
+    return this.authService.disableTwoFactor(userId, dto);
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Post('logout-all')
+  @HttpCode(HttpStatus.OK)
+  @Header('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+  @Header('Pragma', 'no-cache')
+  @ApiOperation({ summary: 'Invalidate sessions on all other devices while rotating current session' })
+  async logoutAll(
+    @CurrentUser('id') userId: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.logoutAllOtherDevices(userId);
+    this.setAuthCookies(res, result.accessToken, result.refreshToken);
+    return {
+      accessToken: result.accessToken,
+      user: result.user,
+      message: result.message,
+    };
   }
 
   @Post('delete-account')

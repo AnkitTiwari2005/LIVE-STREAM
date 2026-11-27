@@ -20,6 +20,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
 import { WalletModule } from './modules/wallet/wallet.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { KundliModule } from './modules/kundli/kundli.module';
+import { PoojaBookingsModule } from './modules/pooja-bookings/pooja-bookings.module';
 
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
@@ -49,6 +50,7 @@ import { CronTasksService } from './jobs/cron-tasks.service';
     WalletModule,
     StorageModule,
     KundliModule,
+    PoojaBookingsModule,
   ],
   providers: [
     CronTasksService,

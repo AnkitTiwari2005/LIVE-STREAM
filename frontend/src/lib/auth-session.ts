@@ -84,3 +84,18 @@ export function setClientSession(user: any, token: string) {
     window.dispatchEvent(new Event('sd-auth-change'));
   } catch {}
 }
+
+/**
+ * Shared role/capability flags so Navbar and Account Settings classify Viewers,
+ * Approved Pandits (including Pandit-Admins), and pure Admins identically.
+ */
+export function getAccountCapabilities(user: any) {
+  const role = user?.role;
+  const kycStatus = user?.streamerProfile?.kycStatus;
+  const isApprovedPandit =
+    role === 'STREAMER' || (role === 'ADMIN' && kycStatus === 'APPROVED');
+  const isViewer = role === 'VIEWER';
+  const isAdmin = role === 'ADMIN';
+  const isPureAdmin = isAdmin && !isApprovedPandit;
+  return { isApprovedPandit, isViewer, isAdmin, isPureAdmin };
+}

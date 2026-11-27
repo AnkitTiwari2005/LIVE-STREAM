@@ -24,13 +24,19 @@ import {
   AlertCircle,
   ExternalLink,
   ChevronRight,
-  RotateCcw,
+  Lock,
+  LogOut,
+  Bell,
 } from 'lucide-react';
 import { OmIcon, CoinIcon, DiyaIcon, VerifiedPanditBadge } from '@/components/icons/SpiritualIcons';
 import { useToast } from '@/components/Toast';
 import SevaBookingModal, { BookingRecord } from '@/components/SevaBookingModal';
-import { PANDIT_PRICING_CATALOG } from '@/data/poojaCatalog';
-import { decodeJwtClaims, purgeClientSession } from '@/lib/auth-session';
+import {
+  decodeJwtClaims,
+  getAccountCapabilities,
+  purgeClientSession,
+  setClientSession,
+} from '@/lib/auth-session';
 
 export default function AccountPage() {
   const router = useRouter();
@@ -48,24 +54,72 @@ export default function AccountPage() {
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // Profile Edit State
+  // Profile Edit & Preferences State
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameInput, setNameInput] = useState('');
   const [nameSaving, setNameSaving] = useState(false);
   const [nameMsg, setNameMsg] = useState<string | null>(null);
+  const [prefSaving, setPrefSaving] = useState(false);
 
-  // Devotee Bookings State
+  // Password & Session Security State
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwError, setPwError] = useState<string | null>(null);
+  const [pwSuccess, setPwSuccess] = useState<string | null>(null);
+  const [resetEmailSending, setResetEmailSending] = useState(false);
+  const [resetEmailMsg, setResetEmailMsg] = useState<string | null>(null);
+  const [logoutAllLoading, setLogoutAllLoading] = useState(false);
+  const [logoutAllMsg, setLogoutAllMsg] = useState<string | null>(null);
+
+  // 2FA Rotation & Disable State
+  const [rotateOpen, setRotateOpen] = useState(false);
+  const [rotateCurrentToken, setRotateCurrentToken] = useState('');
+  const [disable2faOpen, setDisable2faOpen] = useState(false);
+  const [disable2faPassword, setDisable2faPassword] = useState('');
+  const [disable2faToken, setDisable2faToken] = useState('');
+
+  // Devotee Bookings State (Viewers only)
   const [bookings, setBookings] = useState<BookingRecord[]>([]);
   const [bookingFilter, setBookingFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'DECLINED'>('ALL');
   const [rebookModalOpen, setRebookModalOpen] = useState(false);
   const [rebookPoojaId, setRebookPoojaId] = useState<string | undefined>(undefined);
 
-  // Bug #1 & #6 fix: Accept userId param so bookings are always read from the correct per-user key.
-  // Falls back to 'guest' if called before profile loads, but init() below ensures userId is known first.
-  const loadBookings = (userId?: string) => {
+  // Pandit Incoming Requests State (Approved Pandits & Pandit-Admins)
+  const [panditRequests, setPanditRequests] = useState<BookingRecord[]>([]);
+  const [panditFilter, setPanditFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'DECLINED'>('ALL');
+  const [panditBusyId, setPanditBusyId] = useState<string | null>(null);
+  const [declineDraftId, setDeclineDraftId] = useState<string | null>(null);
+  const [declineReasonInput, setDeclineReasonInput] = useState('');
+  const [approveTimeInput, setApproveTimeInput] = useState<Record<string, string>>({});
+
+  const { isApprovedPandit, isViewer, isAdmin } = getAccountCapabilities(user);
+
+  const loadBookings = async (userId?: string) => {
     if (typeof window === 'undefined') return;
+    const uid = userId || user?.id || 'guest';
+    const token = localStorage.getItem('pooja_token');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+
+    let remoteRows: BookingRecord[] = [];
+    if (token) {
+      try {
+        const res = await fetch(`${apiUrl}/pooja-bookings/mine?_t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const parsed = await res.json();
+          if (Array.isArray(parsed)) remoteRows = parsed;
+        }
+      } catch {
+        // Fallback to local records below if network is temporarily unavailable
+      }
+    }
+
+    let localRows: BookingRecord[] = [];
     try {
-      const uid = userId || 'guest';
       const key = `paramdarshan_bookings_${uid}`;
       const legacyKey = `shubhdarshan_bookings_${uid}`;
       const stored = localStorage.getItem(key) ?? localStorage.getItem(legacyKey);
@@ -73,45 +127,77 @@ export default function AccountPage() {
         if (!localStorage.getItem(key)) {
           localStorage.setItem(key, stored);
         }
-        setBookings(JSON.parse(stored));
-      } else {
-        setBookings([]);
+        const parsedLocal = JSON.parse(stored);
+        if (Array.isArray(parsedLocal)) localRows = parsedLocal;
       }
-      // R-04: Removed fake seed booking "SHUBH-749210" for "Ankit Sharma".
-      // The seed made devotees believe their booking was submitted to a real pandit.
-      // Now we simply show an empty state when no bookings exist.
     } catch {
-      setBookings([]);
+      localRows = [];
+    }
+
+    const seen = new Set(remoteRows.map((r) => `${r.id}|${r.refCode}`));
+    const merged = [
+      ...remoteRows,
+      ...localRows.filter((l) => !seen.has(`${l.id}|${l.refCode}`) && !remoteRows.some((r) => r.refCode === l.refCode)),
+    ];
+    setBookings(merged);
+  };
+
+  const loadPanditRequests = async () => {
+    if (typeof window === 'undefined') return;
+    const token = localStorage.getItem('pooja_token');
+    if (!token) return;
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    try {
+      const res = await fetch(`${apiUrl}/pooja-bookings/streamer/requests?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const rows = await res.json();
+        setPanditRequests(Array.isArray(rows) ? rows : []);
+      }
+    } catch {
+      // Ignore network hiccup
     }
   };
 
-  const updateBooking = (id: string, updates: Partial<BookingRecord>) => {
-    const updated = bookings.map((b) => (b.id === id ? { ...b, ...updates } : b));
-    setBookings(updated);
-    if (typeof window !== 'undefined') {
-      const userId = JSON.parse(localStorage.getItem('pooja_user') || '{}')?.id || 'guest';
-      localStorage.setItem(`paramdarshan_bookings_${userId}`, JSON.stringify(updated));
+  const handleRespondToRequest = async (id: string, decision: 'APPROVED' | 'DECLINED') => {
+    const token = localStorage.getItem('pooja_token');
+    if (!token) return;
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    setPanditBusyId(id);
+    try {
+      const payload =
+        decision === 'APPROVED'
+          ? { decision, confirmedTime: approveTimeInput[id]?.trim() || undefined }
+          : { decision, declineReason: declineReasonInput.trim() || undefined };
+      const res = await fetch(`${apiUrl}/pooja-bookings/${encodeURIComponent(id)}/respond`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || 'Unable to update pooja request');
+      }
+      setPanditRequests((prev) => prev.map((r) => (r.id === id ? data : r)));
+      if (decision === 'DECLINED') {
+        setDeclineDraftId(null);
+        setDeclineReasonInput('');
+      }
+      toast.success(
+        decision === 'APPROVED'
+          ? 'Pooja request confirmed. Devotee can now see the approved slot.'
+          : 'Pooja request marked unavailable.',
+      );
+    } catch (err: any) {
+      toast.error(err.message || 'Could not update pooja request.');
+    } finally {
+      setPanditBusyId(null);
     }
-  };
-
-  // R-04: Removed handleSimulateApprove and handleSimulateDecline.
-  // These buttons appeared for every devotee and misleadingly simulated a pandit
-  // accepting/declining a booking that was only stored in localStorage.
-
-  const handleAutoMatchPandit = (booking: BookingRecord) => {
-    const nextPandit = PANDIT_PRICING_CATALOG.find((p) => p.panditId !== booking.panditId) || PANDIT_PRICING_CATALOG[1];
-    updateBooking(booking.id, {
-      panditId: nextPandit.panditId,
-      panditName: nextPandit.name,
-      panditAvatar: nextPandit.avatar,
-      panditTitle: nextPandit.title,
-      dakshinaCoins: nextPandit.dakshinaCoins,
-      status: 'APPROVED',
-      confirmedTime: `Transferred & confirmed with ${nextPandit.name}`,
-      roomLink: '/join/invite',
-      declineReason: undefined,
-    });
-    toast.success(`Ritual successfully transferred to ${nextPandit.name} and confirmed!`);
   };
 
   const handleChooseAnotherPandit = (booking: BookingRecord) => {
@@ -119,7 +205,26 @@ export default function AccountPage() {
     setRebookModalOpen(true);
   };
 
-  const handleDeleteBooking = (id: string) => {
+  const handleDeleteBooking = async (id: string) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('pooja_token') : null;
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    if (token && !id.startsWith('booking-')) {
+      try {
+        const res = await fetch(`${apiUrl}/pooja-bookings/${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          toast.error(data.message || 'Unable to cancel booking request.');
+          return;
+        }
+      } catch {
+        toast.error('Network error while cancelling booking.');
+        return;
+      }
+    }
+
     const updated = bookings.filter((b) => b.id !== id);
     setBookings(updated);
     if (typeof window !== 'undefined') {
@@ -161,7 +266,18 @@ export default function AccountPage() {
         setUser(data);
         setNameInput(data.name || '');
         localStorage.setItem('pooja_user', JSON.stringify(data));
-        loadBookings(data.id);
+
+        const caps = getAccountCapabilities(data);
+        if (caps.isViewer) {
+          loadBookings(data.id);
+        } else {
+          setBookings([]);
+        }
+        if (caps.isApprovedPandit) {
+          loadPanditRequests();
+        } else {
+          setPanditRequests([]);
+        }
       } else {
         if (res.status === 401) {
           purgeClientSession();
@@ -187,16 +303,23 @@ export default function AccountPage() {
       ? JSON.parse(localStorage.getItem('pooja_user') || 'null')
       : null;
 
-    // SD-SEC-2026-004: Only pre-hydrate bookings if cached user ID matches active JWT claim!
+    // SD-SEC-2026-004: Only pre-hydrate role-scoped data if cached user ID matches active JWT claim!
     if (claims?.sub && cachedUser?.id === claims.sub) {
       setUser(cachedUser);
       setNameInput(cachedUser.name || '');
-      loadBookings(cachedUser.id);
+      const caps = getAccountCapabilities(cachedUser);
+      if (caps.isViewer) {
+        loadBookings(cachedUser.id);
+      }
+      if (caps.isApprovedPandit) {
+        loadPanditRequests();
+      }
     } else {
       // Stale or contaminated cache: do not render previous user data
       localStorage.removeItem('pooja_user');
       setUser(null);
       setBookings([]);
+      setPanditRequests([]);
     }
 
     loadProfile();
@@ -220,8 +343,9 @@ export default function AccountPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to update name');
-      setUser((prev: any) => ({ ...prev, name: data.name }));
-      localStorage.setItem('pooja_user', JSON.stringify({ ...user, name: data.name }));
+      const mergedUser = { ...user, ...data };
+      setUser(mergedUser);
+      localStorage.setItem('pooja_user', JSON.stringify(mergedUser));
       setIsEditingName(false);
       setNameMsg('Profile name updated successfully!');
       setTimeout(() => setNameMsg(null), 3000);
@@ -229,6 +353,140 @@ export default function AccountPage() {
       setNameMsg(err.message || 'Failed to update');
     } finally {
       setNameSaving(false);
+    }
+  };
+
+  const handleToggleEmailNotification = async () => {
+    if (!user || prefSaving) return;
+    setPrefSaving(true);
+    const token = localStorage.getItem('pooja_token');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    const nextVal = user.emailNotification === false;
+    try {
+      const res = await fetch(`${apiUrl}/auth/profile`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ emailNotification: nextVal }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Failed to update email preference');
+      const mergedUser = { ...user, ...data };
+      setUser(mergedUser);
+      localStorage.setItem('pooja_user', JSON.stringify(mergedUser));
+      toast.success(nextVal ? 'Email alerts enabled.' : 'Email alerts paused.');
+    } catch (err: any) {
+      toast.error(err.message || 'Could not update preference.');
+    } finally {
+      setPrefSaving(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwError(null);
+    setPwSuccess(null);
+
+    if (user?.hasPassword !== false && !currentPassword) {
+      setPwError('Please enter your current password.');
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPwError('New password must be at least 8 characters long.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPwError('New password and confirmation do not match.');
+      return;
+    }
+
+    setPwSaving(true);
+    const token = localStorage.getItem('pooja_token');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    try {
+      const res = await fetch(`${apiUrl}/auth/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: 'include',
+        body: JSON.stringify(
+          user?.hasPassword === false
+            ? { newPassword }
+            : { currentPassword, newPassword },
+        ),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Failed to change password');
+
+      if (data.accessToken && data.user) {
+        const nextUser = { ...data.user, isLastAdmin: user?.isLastAdmin ?? false };
+        setUser(nextUser);
+        setClientSession(nextUser, data.accessToken);
+      }
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setPwSuccess(
+        data.message || 'Password updated successfully. All other sessions have been signed out.',
+      );
+      toast.success('Password updated successfully.');
+    } catch (err: any) {
+      setPwError(err.message || 'Could not update password.');
+    } finally {
+      setPwSaving(false);
+    }
+  };
+
+  const handleSendPasswordReset = async () => {
+    if (!user?.email || resetEmailSending) return;
+    setResetEmailSending(true);
+    setResetEmailMsg(null);
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    try {
+      const res = await fetch(`${apiUrl}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Unable to send reset link');
+      setResetEmailMsg(`Password reset instructions sent to ${user.email}.`);
+    } catch (err: any) {
+      setResetEmailMsg(err.message || 'Could not send reset email.');
+    } finally {
+      setResetEmailSending(false);
+    }
+  };
+
+  const handleLogoutAllDevices = async () => {
+    if (logoutAllLoading) return;
+    setLogoutAllLoading(true);
+    setLogoutAllMsg(null);
+    const token = localStorage.getItem('pooja_token');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    try {
+      const res = await fetch(`${apiUrl}/auth/logout-all`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Failed to revoke other sessions');
+      if (data.accessToken && data.user) {
+        const nextUser = { ...data.user, isLastAdmin: user?.isLastAdmin ?? false };
+        setUser(nextUser);
+        setClientSession(nextUser, data.accessToken);
+      }
+      setLogoutAllMsg(data.message || 'Signed out from all other browsers and devices.');
+      toast.success('All other devices have been signed out.');
+    } catch (err: any) {
+      toast.error(err.message || 'Unable to revoke other sessions.');
+    } finally {
+      setLogoutAllLoading(false);
     }
   };
 
@@ -257,11 +515,79 @@ export default function AccountPage() {
     try {
       const res = await fetch(`${apiUrl}/auth/setup-2fa`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({}),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to initialize 2FA');
       setTwoFaData(data);
+    } catch (err: any) {
+      setTwoFaError(err.message);
+    } finally {
+      setTwoFaLoading(false);
+    }
+  };
+
+  const handleRotate2FA = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTwoFaError(null);
+    setTwoFaSuccess(null);
+    setTwoFaLoading(true);
+    const token = localStorage.getItem('pooja_token');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    try {
+      const res = await fetch(`${apiUrl}/auth/setup-2fa`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ currentToken: rotateCurrentToken.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Verification failed for current 2FA code');
+      setTwoFaData(data);
+      setRotateOpen(false);
+      setRotateCurrentToken('');
+      setTotpInput('');
+    } catch (err: any) {
+      setTwoFaError(err.message);
+    } finally {
+      setTwoFaLoading(false);
+    }
+  };
+
+  const handleDisable2FA = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTwoFaError(null);
+    setTwoFaSuccess(null);
+    setTwoFaLoading(true);
+    const token = localStorage.getItem('pooja_token');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    try {
+      const res = await fetch(`${apiUrl}/auth/disable-2fa`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(
+          user?.hasPassword === false
+            ? { token: disable2faToken.trim() }
+            : { password: disable2faPassword, token: disable2faToken.trim() },
+        ),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Failed to disable 2FA');
+      setDisable2faOpen(false);
+      setDisable2faPassword('');
+      setDisable2faToken('');
+      setTwoFaData(null);
+      setTwoFaSuccess(data.message || 'Two-factor authentication disabled.');
+      loadProfile();
     } catch (err: any) {
       setTwoFaError(err.message);
     } finally {
@@ -288,6 +614,7 @@ export default function AccountPage() {
       if (!res.ok) throw new Error(data.message || 'Verification failed');
       setTwoFaSuccess('Two-factor authentication successfully activated!');
       setTwoFaData(null);
+      setTotpInput('');
       loadProfile();
     } catch (err: any) {
       setTwoFaError(err.message);
@@ -394,11 +721,15 @@ export default function AccountPage() {
               </h2>
               {/* Role Badge */}
               <div>
-                {user?.role === 'ADMIN' ? (
+                {isAdmin && isApprovedPandit ? (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-3 py-1 rounded-full border border-amber-300 dark:border-amber-500/30">
+                    <Shield className="w-3.5 h-3.5" /> Admin · Verified Vedic Pandit Ji
+                  </span>
+                ) : isAdmin ? (
                   <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-3 py-1 rounded-full border border-amber-300 dark:border-amber-500/30">
                     <Shield className="w-3.5 h-3.5" /> Platform Administrator
                   </span>
-                ) : user?.role === 'STREAMER' ? (
+                ) : isApprovedPandit ? (
                   <span className="inline-flex items-center gap-1.5 text-xs font-bold text-orange-800 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/60 px-3 py-1 rounded-full border border-orange-300 dark:border-orange-500/30">
                     <VerifiedPanditBadge size={16} /> Verified Vedic Pandit Ji
                   </span>
@@ -499,9 +830,96 @@ export default function AccountPage() {
                 View Ledger <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
+
+            {/* Email Alerts Preference & Role Shortcuts */}
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800/80 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-2 rounded-xl bg-amber-500/10 dark:bg-gold/10 text-amber-700 dark:text-gold shrink-0">
+                    <Bell className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs font-bold text-stone-900 dark:text-white block">
+                      Email Notifications
+                    </span>
+                    <span className="text-[11px] text-stone-600 dark:text-stone-400 block">
+                      Live darshan alerts and account security emails
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={user?.emailNotification !== false}
+                  disabled={prefSaving}
+                  onClick={handleToggleEmailNotification}
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ${
+                    user?.emailNotification !== false
+                      ? 'bg-emerald-600'
+                      : 'bg-stone-300 dark:bg-stone-700'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      user?.emailNotification !== false ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800/80 flex flex-wrap items-center gap-2">
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 text-xs font-bold text-amber-900 dark:text-amber-300 transition"
+                  >
+                    <Shield className="w-3.5 h-3.5" /> Admin Console
+                  </Link>
+                )}
+                {isApprovedPandit && (
+                  <>
+                    <Link
+                      href="/studio/create"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/30 text-xs font-bold text-stone-900 dark:text-gold-pale transition"
+                    >
+                      <Video className="w-3.5 h-3.5 text-gold" /> Go Live Studio
+                    </Link>
+                    <Link
+                      href="/studio/streams"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-stone-300 dark:border-stone-700 hover:border-gold text-xs font-semibold text-stone-800 dark:text-stone-200 transition"
+                    >
+                      My Broadcasts
+                    </Link>
+                    <Link
+                      href="/streamer/earnings"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-stone-300 dark:border-stone-700 hover:border-gold text-xs font-semibold text-stone-800 dark:text-stone-200 transition"
+                    >
+                      Earnings &amp; Dakshina
+                    </Link>
+                  </>
+                )}
+                {isViewer && (
+                  <>
+                    <Link
+                      href="/streamer/apply"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/30 text-xs font-bold text-stone-900 dark:text-gold-pale transition"
+                    >
+                      <DiyaIcon size={14} /> Become a Pandit Ji
+                    </Link>
+                    <Link
+                      href="/streamer/status"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-stone-300 dark:border-stone-700 hover:border-gold text-xs font-semibold text-stone-800 dark:text-stone-200 transition"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> KYC Status
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* MY BOOKED POOJAS & SANKALPS (LIVE STATUS TRACKING) */}
+          {/* MY BOOKED POOJAS & SANKALPS (VIEWERS / DEVOTEES ONLY) */}
+          {isViewer && (
           <div id="bookings" className="bg-obsidian-soft border border-gold/25 rounded-3xl p-6 sm:p-8 shadow-xl scroll-mt-20">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-gold/15">
               <div>
@@ -576,7 +994,7 @@ export default function AccountPage() {
                     <span
                       className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full transition-colors ${
                         isSelected
-                          ? 'bg-black/25 text-white dark:bg-stone-950/20 dark:text-stone-950'
+                          ? 'bg-[#5c050a] text-white dark:bg-stone-950/25 dark:text-stone-950'
                           : 'bg-stone-200 text-stone-800 dark:bg-gold/15 dark:text-gold-pale dark:border dark:border-gold/25'
                       }`}
                     >
@@ -787,20 +1205,12 @@ export default function AccountPage() {
 
                             {isDeclined && (
                               <>
-                                {/* User options if declined: Choose another pandit OR Auto-match */}
                                 <button
                                   onClick={() => handleChooseAnotherPandit(b)}
                                   className="px-4 py-1.5 rounded-full bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold transition flex items-center gap-1.5 shadow-md"
                                 >
-                                  <RotateCcw className="w-3 h-3" />
+                                  <RefreshCw className="w-3 h-3" />
                                   <span>Choose Another Pandit Ji</span>
-                                </button>
-                                <button
-                                  onClick={() => handleAutoMatchPandit(b)}
-                                  className="px-3.5 py-1.5 rounded-full border border-gold/40 bg-gold/10 hover:bg-gold/20 text-gold-pale text-xs font-bold transition flex items-center gap-1"
-                                >
-                                  <Sparkles className="w-3 h-3 text-gold" />
-                                  <span>Auto-match Available Pandit Ji</span>
                                 </button>
                                 <button
                                   onClick={() => handleDeleteBooking(b.id)}
@@ -818,6 +1228,362 @@ export default function AccountPage() {
                   })
               )}
             </div>
+          </div>
+          )}
+
+          {/* PANDIT POOJA REQUESTS & APPROVALS (APPROVED PANDITS & PANDIT-ADMINS ONLY) */}
+          {isApprovedPandit && (
+            <div
+              id="pooja-requests"
+              className="bg-obsidian-soft border border-gold/25 rounded-3xl p-6 sm:p-8 shadow-xl scroll-mt-20"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-gold/15">
+                <div>
+                  <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.24em] text-gold-soft mb-1">
+                    <DiyaIcon size={12} /> Devotee Bookings &amp; Sankalp Queue
+                  </span>
+                  <h2 className="font-serif text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+                    Pooja Requests &amp; Approvals
+                  </h2>
+                  <p className="text-xs text-stone-400 mt-0.5">
+                    Review incoming devotee pooja requests and confirm or decline slots in real time
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={loadPanditRequests}
+                    className="px-3.5 py-2 rounded-full border border-stone-300 dark:border-gold/30 hover:border-amber-500 dark:hover:border-gold text-stone-700 dark:text-gold-pale text-xs font-semibold transition flex items-center gap-1.5 bg-white dark:bg-obsidian shadow-sm"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Refresh</span>
+                  </button>
+                  <Link
+                    href="/studio/create"
+                    className="px-4 py-2 rounded-full bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold transition flex items-center gap-1.5 shadow-md"
+                  >
+                    <Video className="w-3.5 h-3.5" />
+                    <span>Go Live Studio</span>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Filter Tabs */}
+              <div className="flex items-center gap-2 overflow-x-auto w-full max-w-full min-w-0 py-4 no-scrollbar border-b border-stone-200 dark:border-stone-800">
+                {(['ALL', 'PENDING', 'APPROVED', 'DECLINED'] as const).map((filter) => {
+                  const count =
+                    filter === 'ALL'
+                      ? panditRequests.length
+                      : panditRequests.filter((r) => r.status === filter).length;
+                  const isSelected = panditFilter === filter;
+                  return (
+                    <button
+                      key={filter}
+                      onClick={() => setPanditFilter(filter)}
+                      className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-bold transition flex items-center gap-1.5 shrink-0 ${
+                        isSelected
+                          ? 'bg-gold text-obsidian shadow'
+                          : 'bg-stone-100 dark:bg-obsidian border border-stone-200 dark:border-gold/15 text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <span>
+                        {filter === 'ALL'
+                          ? 'All Requests'
+                          : filter === 'PENDING'
+                          ? 'Pending Approval'
+                          : filter === 'APPROVED'
+                          ? 'Approved'
+                          : 'Declined'}
+                      </span>
+                      <span
+                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full transition-colors ${
+                          isSelected
+                            ? 'bg-[#5c050a] text-white dark:bg-stone-950/25 dark:text-stone-950'
+                            : 'bg-stone-200 text-stone-800 dark:bg-gold/15 dark:text-gold-pale dark:border dark:border-gold/25'
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Incoming Requests List */}
+              <div className="mt-6 space-y-4">
+                {panditRequests.filter((r) => panditFilter === 'ALL' || r.status === panditFilter).length === 0 ? (
+                  <div className="p-8 text-center bg-obsidian rounded-2xl border border-stone-800 space-y-2">
+                    <div className="w-12 h-12 rounded-full bg-gold/10 border border-gold/25 flex items-center justify-center text-gold mx-auto">
+                      <Calendar className="w-5 h-5" />
+                    </div>
+                    <p className="text-sm font-serif font-bold text-white">
+                      No {panditFilter === 'ALL' ? '' : panditFilter.toLowerCase()} devotee requests yet
+                    </p>
+                    <p className="text-xs text-stone-400 max-w-md mx-auto">
+                      When devotees submit personalized 1-on-1 Vedic pooja requests for your sanctum schedule, they will appear here for your approval.
+                    </p>
+                  </div>
+                ) : (
+                  panditRequests
+                    .filter((r) => panditFilter === 'ALL' || r.status === panditFilter)
+                    .map((r) => {
+                      const isPending = r.status === 'PENDING';
+                      const isApproved = r.status === 'APPROVED';
+                      const isDeclined = r.status === 'DECLINED';
+                      const busy = panditBusyId === r.id;
+
+                      return (
+                        <div
+                          key={r.id}
+                          className={`rounded-2xl border p-5 sm:p-6 transition-all shadow-lg space-y-4 ${
+                            isApproved
+                              ? 'bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-500/40'
+                              : isDeclined
+                              ? 'bg-red-50/70 dark:bg-red-950/20 border-red-300 dark:border-red-500/40'
+                              : 'bg-amber-50/70 dark:bg-amber-950/20 border-amber-300 dark:border-amber-500/35'
+                          }`}
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-stone-200 dark:border-stone-800">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
+                                  isApproved
+                                    ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/40'
+                                    : isDeclined
+                                    ? 'bg-red-100 dark:bg-red-950/80 text-red-900 dark:text-red-300 border-red-300 dark:border-red-500/40'
+                                    : 'bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border-amber-300 dark:border-amber-500/40'
+                                }`}
+                              >
+                                {isPending
+                                  ? 'Pending Your Approval'
+                                  : isApproved
+                                  ? 'Approved by You'
+                                  : 'Declined'}
+                              </span>
+                              <span className="font-mono text-xs text-stone-600 dark:text-stone-400 bg-stone-100 dark:bg-obsidian-soft px-2.5 py-0.5 rounded border border-stone-200 dark:border-stone-800">
+                                {r.refCode}
+                              </span>
+                            </div>
+                            <span className="font-mono font-bold text-gold-pale text-xs sm:text-sm flex items-center gap-1">
+                              <CoinIcon size={13} /> {r.dakshinaCoins} Coins Dakshina
+                            </span>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <h3 className="font-serif text-lg font-bold text-white">{r.poojaName}</h3>
+                              <span className="text-[11px] text-stone-400">
+                                Requested {new Date(r.createdAt || Date.now()).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-stone-300">
+                              <div><strong>Devotee:</strong> {r.devoteeName} ({r.devoteeGotra || 'Kashyap'} Gotra)</div>
+                              <div><strong>Preferred Slot:</strong> {r.scheduledDate} · {r.timeSlot}</div>
+                              <div className="sm:col-span-2"><strong>Sankalp Intent:</strong> {r.sankalpIntent}</div>
+                            </div>
+                          </div>
+
+                          <div className="pt-3 border-t border-stone-200 dark:border-stone-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            {isPending ? (
+                              declineDraftId === r.id ? (
+                                <div className="w-full flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                                  <input
+                                    type="text"
+                                    value={declineReasonInput}
+                                    onChange={(e) => setDeclineReasonInput(e.target.value)}
+                                    placeholder="Optional note for devotee (e.g. temple duty at this hour)"
+                                    className="flex-1 px-3 py-1.5 rounded-xl bg-white dark:bg-obsidian border border-red-300 dark:border-red-700/60 text-xs text-stone-900 dark:text-white focus:outline-none"
+                                  />
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      disabled={busy}
+                                      onClick={() => handleRespondToRequest(r.id, 'DECLINED')}
+                                      className="px-3.5 py-1.5 rounded-full bg-red-700 hover:bg-red-600 text-white text-xs font-bold transition disabled:opacity-50"
+                                    >
+                                      {busy ? 'Saving...' : 'Confirm Decline'}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setDeclineDraftId(null);
+                                        setDeclineReasonInput('');
+                                      }}
+                                      className="px-3 py-1.5 rounded-full bg-stone-200 dark:bg-stone-800 text-stone-800 dark:text-stone-300 text-xs font-semibold"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <>
+                                  <input
+                                    type="text"
+                                    value={approveTimeInput[r.id] || ''}
+                                    onChange={(e) =>
+                                      setApproveTimeInput((prev) => ({ ...prev, [r.id]: e.target.value }))
+                                    }
+                                    placeholder="Optional confirmed time/note"
+                                    className="flex-1 max-w-xs px-3 py-1.5 rounded-xl bg-white dark:bg-obsidian border border-stone-300 dark:border-gold/25 text-xs text-stone-900 dark:text-white focus:outline-none focus:border-gold"
+                                  />
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      disabled={busy}
+                                      onClick={() => handleRespondToRequest(r.id, 'APPROVED')}
+                                      className="px-4 py-1.5 rounded-full bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold transition disabled:opacity-50"
+                                    >
+                                      {busy ? 'Updating...' : 'Approve Slot'}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={busy}
+                                      onClick={() => {
+                                        setDeclineDraftId(r.id);
+                                        setDeclineReasonInput('');
+                                      }}
+                                      className="px-3.5 py-1.5 rounded-full border border-red-400/60 text-red-700 dark:text-red-300 hover:bg-red-500/10 text-xs font-semibold transition disabled:opacity-50"
+                                    >
+                                      Decline
+                                    </button>
+                                  </div>
+                                </>
+                              )
+                            ) : isApproved ? (
+                              <>
+                                <span className="text-xs text-emerald-800 dark:text-emerald-300 font-medium">
+                                  Confirmed for: {r.confirmedTime || `${r.scheduledDate} · ${r.timeSlot}`}
+                                </span>
+                                <Link
+                                  href="/studio/create"
+                                  className="px-4 py-1.5 rounded-full bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold transition inline-flex items-center gap-1.5"
+                                >
+                                  <Video className="w-3.5 h-3.5" /> Open Broadcast Studio
+                                </Link>
+                              </>
+                            ) : (
+                              <span className="text-xs text-red-800 dark:text-red-300">
+                                {r.declineReason || 'Marked unavailable for this slot'}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Password & Sign-In Security */}
+          <div id="security" className="bg-obsidian-soft border border-gold/25 rounded-3xl p-6 sm:p-8 shadow-xl scroll-mt-24">
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <div>
+                <h2 className="text-lg font-bold text-stone-900 dark:text-white flex items-center gap-2">
+                  <Lock className="w-5 h-5 text-amber-700 dark:text-gold" /> Password &amp; Sign-In Security
+                </h2>
+                <p className="text-xs text-stone-600 dark:text-stone-400 mt-0.5">
+                  {user?.hasPassword === false
+                    ? 'You signed in with Google. Optionally set a direct account password below.'
+                    : 'Update your password regularly or sign out other active devices.'}
+                </p>
+              </div>
+            </div>
+
+            {pwSuccess && (
+              <div className="p-3 mb-4 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-500/30 rounded-xl text-xs text-emerald-800 dark:text-emerald-400">
+                {pwSuccess}
+              </div>
+            )}
+            {pwError && (
+              <div className="p-3 mb-4 bg-red-50 dark:bg-red-950/50 border border-red-300 dark:border-red-500/30 rounded-xl text-xs text-red-700 dark:text-red-400">
+                {pwError}
+              </div>
+            )}
+
+            <form onSubmit={handleChangePassword} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {user?.hasPassword !== false && (
+                <div>
+                  <label className="block text-[11px] font-semibold text-stone-600 dark:text-stone-400 mb-1">
+                    Current Password
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Enter current password"
+                    className="w-full px-3 py-2 bg-white dark:bg-obsidian border border-stone-300 dark:border-gold/25 rounded-xl text-xs text-stone-900 dark:text-white focus:outline-none focus:border-gold"
+                  />
+                </div>
+              )}
+              <div>
+                <label className="block text-[11px] font-semibold text-stone-600 dark:text-stone-400 mb-1">
+                  {user?.hasPassword === false ? 'New Password (min 8 chars)' : 'New Password'}
+                </label>
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="At least 8 characters"
+                  className="w-full px-3 py-2 bg-white dark:bg-obsidian border border-stone-300 dark:border-gold/25 rounded-xl text-xs text-stone-900 dark:text-white focus:outline-none focus:border-gold"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-stone-600 dark:text-stone-400 mb-1">
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Repeat new password"
+                  className="w-full px-3 py-2 bg-white dark:bg-obsidian border border-stone-300 dark:border-gold/25 rounded-xl text-xs text-stone-900 dark:text-white focus:outline-none focus:border-gold"
+                />
+              </div>
+              <div className="sm:col-span-3 flex flex-wrap items-center gap-3 pt-1">
+                <button
+                  type="submit"
+                  disabled={pwSaving}
+                  className="px-4 py-2 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-xl text-xs transition disabled:opacity-50 shadow-sm"
+                >
+                  {pwSaving
+                    ? 'Updating...'
+                    : user?.hasPassword === false
+                    ? 'Set Account Password'
+                    : 'Update Password'}
+                </button>
+                <button
+                  type="button"
+                  disabled={resetEmailSending}
+                  onClick={handleSendPasswordReset}
+                  className="px-4 py-2 bg-stone-100 hover:bg-stone-200 dark:bg-stone-900 dark:hover:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200 font-semibold rounded-xl text-xs transition disabled:opacity-50"
+                >
+                  {resetEmailSending ? 'Sending...' : 'Send Password Reset Link'}
+                </button>
+                <button
+                  type="button"
+                  disabled={logoutAllLoading}
+                  onClick={handleLogoutAllDevices}
+                  className="px-4 py-2 bg-stone-100 hover:bg-stone-200 dark:bg-stone-900 dark:hover:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200 font-semibold rounded-xl text-xs transition inline-flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>{logoutAllLoading ? 'Signing out...' : 'Log Out All Other Devices'}</span>
+                </button>
+              </div>
+            </form>
+
+            {resetEmailMsg && (
+              <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-3">{resetEmailMsg}</p>
+            )}
+            {logoutAllMsg && (
+              <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-2">{logoutAllMsg}</p>
+            )}
           </div>
 
             {/* Two-Factor Authentication (2FA) */}
@@ -838,7 +1604,7 @@ export default function AccountPage() {
                 )}
               </div>
 
-              {user?.role === 'ADMIN' && !user?.isTwoFactorEnabled && (
+              {isAdmin && !user?.isTwoFactorEnabled && (
                 <div className="p-3.5 mb-4 bg-amber-500/15 border border-amber-500/40 rounded-xl text-xs text-amber-900 dark:text-amber-200 flex items-center gap-2">
                   <Shield className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0" />
                   <span>
@@ -854,7 +1620,7 @@ export default function AccountPage() {
               )}
 
               {twoFaError && (
-                <div className="p-3 mb-4 bg-red-950/50 border border-red-500/30 rounded-xl text-xs text-red-400">
+                <div className="p-3 mb-4 bg-red-50 dark:bg-red-950/50 border border-red-300 dark:border-red-500/30 rounded-xl text-xs text-red-700 dark:text-red-400">
                   {twoFaError}
                 </div>
               )}
@@ -869,8 +1635,110 @@ export default function AccountPage() {
                 </button>
               )}
 
+              {user?.isTwoFactorEnabled && !twoFaData && (
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRotateOpen((o) => !o);
+                        setDisable2faOpen(false);
+                        setTwoFaError(null);
+                      }}
+                      className="px-4 py-2 bg-gold/15 hover:bg-gold/25 text-stone-900 dark:text-gold-pale border border-gold/30 font-semibold rounded-xl text-xs transition"
+                    >
+                      Rotate / Re-enroll Authenticator
+                    </button>
+                    {!isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDisable2faOpen((o) => !o);
+                          setRotateOpen(false);
+                          setTwoFaError(null);
+                        }}
+                        className="px-4 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/50 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/60 font-semibold rounded-xl text-xs transition"
+                      >
+                        Disable 2FA
+                      </button>
+                    )}
+                  </div>
+
+                  {isAdmin && (
+                    <p className="text-[11px] text-stone-600 dark:text-stone-400">
+                      Two-factor authentication is mandatory for Administrators and cannot be disabled; you may rotate it to a new authenticator device above.
+                    </p>
+                  )}
+
+                  {rotateOpen && (
+                    <form onSubmit={handleRotate2FA} className="p-4 bg-stone-50 dark:bg-obsidian rounded-2xl border border-stone-200 dark:border-gold/20 space-y-3 max-w-md">
+                      <p className="text-xs font-semibold text-stone-800 dark:text-stone-200">
+                        Verify your current 6-digit authenticator code (or a backup code) to generate a new QR secret:
+                      </p>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          required
+                          value={rotateCurrentToken}
+                          onChange={(e) => setRotateCurrentToken(e.target.value)}
+                          placeholder="Current 6-digit or backup code"
+                          className="flex-1 px-3 py-2 bg-white dark:bg-obsidian-soft border border-stone-300 dark:border-gold/25 rounded-xl text-xs text-stone-900 dark:text-white font-mono focus:outline-none focus:border-gold"
+                        />
+                        <button
+                          type="submit"
+                          disabled={twoFaLoading || !rotateCurrentToken.trim()}
+                          className="px-4 py-2 bg-gold hover:bg-gold-deep text-obsidian rounded-xl text-xs font-bold transition disabled:opacity-50"
+                        >
+                          {twoFaLoading ? 'Checking...' : 'Continue'}
+                        </button>
+                      </div>
+                    </form>
+                  )}
+
+                  {disable2faOpen && !isAdmin && (
+                    <form onSubmit={handleDisable2FA} className="p-4 bg-red-50/70 dark:bg-red-950/30 rounded-2xl border border-red-200 dark:border-red-800/50 space-y-3 max-w-md">
+                      <p className="text-xs font-semibold text-red-800 dark:text-red-300">
+                        Confirm your current 2FA code {user?.hasPassword === false ? '' : 'and password '}to disable two-factor authentication:
+                      </p>
+                      {user?.hasPassword !== false && (
+                        <input
+                          type="password"
+                          required
+                          value={disable2faPassword}
+                          onChange={(e) => setDisable2faPassword(e.target.value)}
+                          placeholder="Current account password"
+                          className="w-full px-3 py-2 bg-white dark:bg-obsidian border border-red-200 dark:border-red-800/60 rounded-xl text-xs text-stone-900 dark:text-white focus:outline-none"
+                        />
+                      )}
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          required
+                          value={disable2faToken}
+                          onChange={(e) => setDisable2faToken(e.target.value)}
+                          placeholder="Current 6-digit or backup code"
+                          className="flex-1 px-3 py-2 bg-white dark:bg-obsidian border border-red-200 dark:border-red-800/60 rounded-xl text-xs text-stone-900 dark:text-white font-mono focus:outline-none"
+                        />
+                        <button
+                          type="submit"
+                          disabled={twoFaLoading || !disable2faToken.trim()}
+                          className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-xl text-xs font-bold transition disabled:opacity-50"
+                        >
+                          {twoFaLoading ? 'Disabling...' : 'Confirm Disable'}
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              )}
+
               {twoFaData && (
                 <div className="mt-4 p-5 bg-obsidian rounded-2xl border border-gold/25 space-y-4">
+                  {user?.isTwoFactorEnabled && (
+                    <p className="text-xs text-amber-700 dark:text-amber-300 font-medium">
+                      Finish Step 2 right away by verifying a code from your newly scanned device so your authenticator stays synced.
+                    </p>
+                  )}
                   <div className="flex flex-col sm:flex-row items-center gap-6">
                     <img
                       src={twoFaData.qrCode}
@@ -889,7 +1757,7 @@ export default function AccountPage() {
                     </div>
                   </div>
 
-                  <form onSubmit={handleConfirm2FA} className="flex gap-2 max-w-sm pt-2">
+                  <form onSubmit={handleConfirm2FA} className="flex flex-wrap gap-2 max-w-md pt-2">
                     <input
                       type="text"
                       required
@@ -897,7 +1765,7 @@ export default function AccountPage() {
                       value={totpInput}
                       onChange={(e) => setTotpInput(e.target.value)}
                       placeholder="Enter 6-digit code"
-                      className="flex-1 px-3 py-2 bg-obsidian border border-gold/25 rounded-xl text-sm text-foreground font-mono tracking-widest focus:outline-none focus:border-gold"
+                      className="flex-1 min-w-[160px] px-3 py-2 bg-obsidian border border-gold/25 rounded-xl text-sm text-foreground font-mono tracking-widest focus:outline-none focus:border-gold"
                     />
                     <button
                       type="submit"
@@ -905,6 +1773,16 @@ export default function AccountPage() {
                       className="px-4 py-2 bg-gold hover:bg-gold-deep text-obsidian rounded-xl text-xs font-bold transition disabled:opacity-50"
                     >
                       {twoFaLoading ? 'Verifying...' : 'Activate 2FA'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTwoFaData(null);
+                        setTotpInput('');
+                      }}
+                      className="px-3.5 py-2 bg-stone-200 hover:bg-stone-300 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-300 rounded-xl text-xs font-semibold transition"
+                    >
+                      Cancel
                     </button>
                   </form>
                 </div>
@@ -919,6 +1797,15 @@ export default function AccountPage() {
               <p className="text-xs text-stone-600 dark:text-stone-400 mb-4">
                 Under Section 12(3) of the Digital Personal Data Protection Act (DPDP Act, 2023), you have the absolute statutory right to request erasure of your personal data and account records.
               </p>
+
+              {user?.isLastAdmin && (
+                <div className="p-3.5 mb-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-500/30 rounded-xl text-xs text-amber-900 dark:text-amber-200 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0" />
+                  <span>
+                    <strong>Last Platform Administrator Notice:</strong> You are currently the sole active Platform Administrator. Assign another Administrator before deleting this account.
+                  </span>
+                </div>
+              )}
 
               {deleteConfirm ? (
                 <div className="p-4 sm:p-5 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-500/30 rounded-2xl space-y-4">
@@ -969,7 +1856,8 @@ export default function AccountPage() {
               ) : (
                 <button
                   onClick={() => setDeleteConfirm(true)}
-                  className="px-4 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/60 dark:hover:bg-red-900/60 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/60 rounded-xl text-xs font-semibold transition"
+                  disabled={Boolean(user?.isLastAdmin)}
+                  className="px-4 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/60 dark:hover:bg-red-900/60 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/60 rounded-xl text-xs font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Request Account Deletion (DPDP Act)
                 </button>
@@ -983,7 +1871,7 @@ export default function AccountPage() {
         isOpen={rebookModalOpen}
         onClose={() => {
           setRebookModalOpen(false);
-          loadBookings();
+          if (isViewer) loadBookings(user?.id);
         }}
         initialSevaId={rebookPoojaId}
       />

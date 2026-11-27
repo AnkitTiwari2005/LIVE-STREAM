@@ -69,6 +69,29 @@ export async function performAccountErasureTx(
     },
   });
 
+  if (tx.poojaBooking?.updateMany) {
+    await Promise.resolve(
+      tx.poojaBooking.updateMany({
+        where: { devoteeId: userId },
+        data: {
+          devoteeName: 'Deleted Devotee',
+          devoteeGotra: null,
+          sankalpIntent: '[DPDP Redacted]',
+        },
+      }),
+    ).catch(() => {});
+
+    await Promise.resolve(
+      tx.poojaBooking.updateMany({
+        where: { panditId: userId, status: { in: ['PENDING', 'APPROVED'] } },
+        data: {
+          status: 'CANCELLED',
+          declineReason: 'Pandit account closed',
+        },
+      }),
+    ).catch(() => {});
+  }
+
   if (tx.privateAccessLink?.updateMany) {
     await Promise.resolve(
       tx.privateAccessLink.updateMany({

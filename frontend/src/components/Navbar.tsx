@@ -25,7 +25,7 @@ import { SearchPalette } from './SearchPalette';
 import { ThemeToggle } from './ThemeToggle';
 import { LanguageToggle } from './LanguageToggle';
 import { OmIcon, CoinIcon, PranamIcon, DiyaIcon } from '@/components/icons/SpiritualIcons';
-import { decodeJwtClaims, purgeClientSession } from '@/lib/auth-session';
+import { decodeJwtClaims, getAccountCapabilities, purgeClientSession } from '@/lib/auth-session';
 
 export function Navbar() {
   const [user, setUser] = useState<any>(null);
@@ -247,6 +247,8 @@ export function Navbar() {
     window.location.href = '/login';
   };
 
+  const { isApprovedPandit, isViewer, isAdmin } = getAccountCapabilities(user);
+
   return (
     <>
       <header className="sticky top-0 z-50 glass-strong border-b border-gold/15 py-2 shadow-[0_8px_40px_rgba(0,0,0,0.55)] backdrop-blur-xl w-full max-w-full overflow-x-clip">
@@ -428,8 +430,8 @@ export function Navbar() {
             <ThemeToggle className="h-8 w-8" />
             <LanguageToggle className="h-8 w-8" />
 
-            {/* Quick Broadcaster Studio (Streamers only) */}
-            {user?.role === 'STREAMER' && (
+            {/* Quick Broadcaster Studio (Approved Pandits, including Pandit-Admins) */}
+            {isApprovedPandit && (
               <Link
                 href="/studio/create"
                 className="whitespace-nowrap shrink-0 flex items-center gap-1 rounded-full bg-gold/15 hover:bg-gold/25 border border-gold/30 h-8 px-2.5 text-xs font-bold text-gold-pale transition shadow-sm"
@@ -441,7 +443,7 @@ export function Navbar() {
             )}
 
             {/* Quick Admin Console (Admin only) */}
-            {user?.role === 'ADMIN' && (
+            {isAdmin && (
               <Link
                 href="/admin"
                 className="whitespace-nowrap shrink-0 flex items-center gap-1 rounded-full border border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-950/60 h-8 px-2.5 text-xs font-bold text-amber-900 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition shadow-sm"
@@ -485,13 +487,13 @@ export function Navbar() {
                       <div className="user-dropdown-header p-3 rounded-xl mb-2 shadow-sm">
                         <div className="user-name font-bold text-stone-900 dark:text-white text-sm truncate">{user.name}</div>
                         <div className="flex items-center justify-between mt-1">
-                          <span className="text-[10px] text-amber-700 dark:text-gold font-bold uppercase tracking-wider">{user.role || 'DEVOTEE'}</span>
+                          <span className="text-[10px] text-amber-700 dark:text-gold font-bold uppercase tracking-wider">{isApprovedPandit && isAdmin ? 'ADMIN · PANDIT JI' : (user.role || 'DEVOTEE')}</span>
                           <span className="text-[10px] text-stone-600 dark:text-stone-300 font-medium">{coinBalance !== null ? `${coinBalance} Coins` : ''}</span>
                         </div>
                       </div>
 
                       <div className="space-y-1">
-                        {user.role === 'STREAMER' && (
+                        {isApprovedPandit && (
                           <>
                             <Link
                               href="/studio/create"
@@ -517,9 +519,17 @@ export function Navbar() {
                               <CoinIcon size={16} className="text-gold shrink-0" />
                               <span>Earnings &amp; Dakshina</span>
                             </Link>
+                            <Link
+                              href="/account#pooja-requests"
+                              onClick={() => setUserDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
+                            >
+                              <Calendar className="w-4 h-4 text-gold shrink-0" />
+                              <span>Pooja Requests &amp; Approvals</span>
+                            </Link>
                           </>
                         )}
-                        {user.role === 'ADMIN' && (
+                        {isAdmin && (
                           <Link
                             href="/admin"
                             onClick={() => setUserDropdownOpen(false)}
@@ -529,7 +539,7 @@ export function Navbar() {
                             <span>Admin Console</span>
                           </Link>
                         )}
-                        {user.role === 'VIEWER' && (
+                        {isViewer && (
                           <>
                             <Link
                               href="/streamer/apply"
@@ -547,16 +557,16 @@ export function Navbar() {
                               <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" />
                               <span>Pandit Ji KYC Status</span>
                             </Link>
+                            <Link
+                              href="/account#bookings"
+                              onClick={() => setUserDropdownOpen(false)}
+                              className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
+                            >
+                              <DiyaIcon size={16} className="text-gold shrink-0" />
+                              <span>My Booked Poojas</span>
+                            </Link>
                           </>
                         )}
-                        <Link
-                          href="/account#bookings"
-                          onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
-                        >
-                          <DiyaIcon size={16} className="text-gold shrink-0" />
-                          <span>My Booked Poojas</span>
-                        </Link>
                         <Link
                           href="/account"
                           onClick={() => setUserDropdownOpen(false)}
@@ -697,7 +707,7 @@ export function Navbar() {
                 FAQ &amp; Support
               </Link>
 
-              {user?.role === 'STREAMER' && (
+              {isApprovedPandit && (
                 <>
                   <Link
                     href="/studio/create"
@@ -720,10 +730,17 @@ export function Navbar() {
                   >
                     <CoinIcon size={16} /> Pandit Ji Earnings &amp; Dakshina
                   </Link>
+                  <Link
+                    href="/account#pooja-requests"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="mobile-nav-link font-bold py-1.5 flex items-center gap-2"
+                  >
+                    <Calendar className="w-4 h-4 text-amber-700 dark:text-gold" /> Pooja Requests &amp; Approvals
+                  </Link>
                 </>
               )}
 
-              {user?.role === 'ADMIN' && (
+              {isAdmin && (
                 <Link
                   href="/admin"
                   onClick={() => setMobileMenuOpen(false)}
@@ -733,7 +750,7 @@ export function Navbar() {
                 </Link>
               )}
 
-              {user?.role === 'VIEWER' && (
+              {isViewer && (
                 <>
                   <Link
                     href="/streamer/apply"
@@ -748,6 +765,13 @@ export function Navbar() {
                     className="mobile-nav-link font-semibold py-1.5 flex items-center gap-2"
                   >
                     <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400" /> Pandit Ji KYC Status
+                  </Link>
+                  <Link
+                    href="/account#bookings"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="mobile-nav-link font-semibold py-1.5 flex items-center gap-2"
+                  >
+                    <DiyaIcon size={16} /> My Booked Poojas
                   </Link>
                 </>
               )}
