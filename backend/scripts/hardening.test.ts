@@ -3,7 +3,7 @@ process.env.LIVEKIT_PUBLIC_URL = 'ws://127.0.0.1:7880';
 import Module from 'module';
 const o = (Module as any)._load;
 (Module as any)._load = function (r: string, ...a: any[]) {
-  if (r === '@prisma/client') { const e = (...k: string[]) => Object.fromEntries(k.map((x) => [x, x])); return { StreamStatus: e('LIVE', 'ENDED', 'RECONNECTING_GRACE_PERIOD'), UserRole: e('ADMIN', 'STREAMER', 'VIEWER'), UserStatus: e('ACTIVE', 'BANNED', 'SUSPENDED', 'DELETION_REQUESTED'), PaymentStatus: e('PENDING', 'SUCCESS', 'FAILED'), StreamVisibility: e('PUBLIC', 'PRIVATE'), KycStatus: e('PENDING', 'APPROVED', 'REJECTED'), Prisma: {}, PrismaClient: class {} }; }
+  if (r === '@prisma/client') { const e = (...k: string[]) => Object.fromEntries(k.map((x) => [x, x])); return { StreamStatus: e('LIVE', 'SCHEDULED', 'ENDED', 'CANCELLED', 'RECONNECTING_GRACE_PERIOD'), UserRole: e('ADMIN', 'STREAMER', 'VIEWER'), UserStatus: e('ACTIVE', 'BANNED', 'SUSPENDED', 'DELETION_REQUESTED'), PaymentStatus: e('PENDING', 'SUCCESS', 'FAILED'), StreamVisibility: e('PUBLIC', 'PRIVATE'), KycStatus: e('PENDING', 'APPROVED', 'REJECTED'), StreamerEarningSource: e('LIVE_SESSION', 'GIFT', 'DAKSHINA'), Prisma: { JsonNull: 'JsonNull' }, PrismaClient: class {} }; }
   return o.call(this, r, ...a);
 };
 let pass = 0, fail = 0;
@@ -94,6 +94,90 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
     clauses.some((c: any) => c?.email?.equals === 'kdtripathi481@gmail.com' && c?.email?.mode === 'insensitive'),
     'auth lookup queries lowercased email with Prisma mode=insensitive',
   );
+
+  // AuthService: deleteAccount scrubs OAuth/reset/2FA credentials and token lookups reject deleted users
+  const updateCalls: any[] = [];
+  const delPrisma: any = {
+    user: {
+      findFirst: async (args: any) => {
+        findCalls.push(args);
+        return null;
+      },
+      findUnique: async () => ({
+        id: 'u-del',
+        email: 'victim@example.com',
+        passwordHash: null,
+        role: 'VIEWER',
+        streamerProfile: { id: 'sp-del', kycDocuments: null },
+        wallet: { id: 'w-del', balanceCoins: 0, bonusCoins: 0, purchasedCoins: 0 },
+      }),
+      update: async (args: any) => {
+        updateCalls.push(args);
+        return {};
+      },
+    },
+    dakshinaOffering: { updateMany: async () => ({ count: 0 }) },
+    stream: { findMany: async () => [] },
+    privateAccessLink: { updateMany: async () => ({ count: 0 }) },
+    auditLog: { create: async () => ({}) },
+  };
+  const delAuthSvc = new AuthService(delPrisma, {} as any, {} as any, {} as any, {} as any);
+  await delAuthSvc.deleteAccount('u-del');
+  const scrubbed = updateCalls[0]?.data || {};
+  ok(
+    scrubbed.googleId === null &&
+      scrubbed.resetTokenHash === null &&
+      scrubbed.resetTokenExpiry === null &&
+      scrubbed.twoFactorSecretEnc === null &&
+      Array.isArray(scrubbed.twoFactorBackupCodes) &&
+      scrubbed.twoFactorBackupCodes.length === 0 &&
+      scrubbed.isTwoFactorEnabled === false &&
+      scrubbed.deletedAt instanceof Date,
+    'AuthService.deleteAccount scrubs googleId, reset tokens, and 2FA secrets',
+  );
+
+  findCalls.length = 0;
+  try { await delAuthSvc.verifyEmail('raw-verify-token'); } catch {}
+  try { await delAuthSvc.resetPassword({ token: 'raw-reset-token', newPassword: 'ValidPassword123!' }); } catch {}
+  ok(
+    findCalls.length === 2 &&
+      findCalls[0]?.where?.deletedAt === null &&
+      findCalls[1]?.where?.deletedAt === null,
+    'AuthService.verifyEmail and resetPassword exclude soft-deleted users',
+  );
+
+  // StreamersService: exclude soft-deleted users from public profile lookups and follows
+  const { StreamersService } = require('../src/modules/streamers/streamers.service');
+  const { NotFoundException } = require('@nestjs/common');
+  const streamerQueries: any[] = [];
+  const streamersPrisma: any = {
+    streamerProfile: {
+      findFirst: async (args: any) => {
+        streamerQueries.push(args);
+        return null;
+      },
+      findUnique: async () => ({
+        id: 'sp-deleted',
+        userId: 'u-deleted',
+        user: { deletedAt: new Date() },
+      }),
+    },
+  };
+  const streamersSvc = new StreamersService(streamersPrisma);
+  try { await streamersSvc.getPublicProfile('ravi-pathak'); } catch {}
+  ok(
+    streamerQueries.length === 2 &&
+      streamerQueries[0]?.where?.user?.deletedAt === null &&
+      streamerQueries[1]?.where?.user?.deletedAt === null,
+    'StreamersService.getPublicProfile filters deleted users on direct and slug lookups',
+  );
+  let rejectedDeletedFollow = false;
+  try {
+    await streamersSvc.follow('follower-1', 'sp-deleted');
+  } catch (err: any) {
+    rejectedDeletedFollow = err instanceof NotFoundException;
+  }
+  ok(rejectedDeletedFollow, 'StreamersService.follow rejects soft-deleted pandit profiles');
 
   console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);
 })();

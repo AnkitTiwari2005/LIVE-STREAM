@@ -107,7 +107,7 @@ async function runTests() {
   await storageService.deleteFile(testPngKey);
 
   // 7. Persistent storage path resolution across Hostinger versioned deploys & STORAGE_ROOT
-  const { resolveStorageDirs } = require('../src/common/storage-paths.util');
+  const { resolveStorageDirs, ensureWritableStorageDir } = require('../src/common/storage-paths.util');
   const hostingerDirs = resolveStorageDirs(
     '/home/u392157842/domains/paramdarshan.com/hbuilds/versions/01a217e3-fb2f-7079-83dc-09a13d224647/nodejs',
     {},
@@ -129,6 +129,30 @@ async function runTests() {
       dockerDirs.privateKycDir === path.join('/app', 'storage', 'kyc'),
     'Preserves Docker /app public/uploads and storage/kyc defaults',
   );
+
+  const tmpBase = fs.mkdtempSync(path.join(require('os').tmpdir(), 'pd-storage-test-'));
+  try {
+    const existingPreferred = path.join(tmpBase, 'preferred-ro');
+    const fallbackDir = path.join(tmpBase, 'fallback');
+    fs.mkdirSync(existingPreferred, { recursive: true });
+    const warnings: string[] = [];
+    const mockLogger: any = { warn: (msg: string) => warnings.push(msg) };
+
+    const resolvedWritable = ensureWritableStorageDir(existingPreferred, fallbackDir, mockLogger, () => {});
+    assert(resolvedWritable === existingPreferred && warnings.length === 0, 'Uses preferred directory when writable');
+
+    const resolvedFallback = ensureWritableStorageDir(existingPreferred, fallbackDir, mockLogger, () => {
+      const err: any = new Error('EACCES: permission denied');
+      err.code = 'EACCES';
+      throw err;
+    });
+    assert(
+      resolvedFallback === fallbackDir && fs.existsSync(fallbackDir) && warnings.length === 1,
+      'Falls back when existing preferred directory is not writable',
+    );
+  } finally {
+    fs.rmSync(tmpBase, { recursive: true, force: true });
+  }
 
   console.log('--- ALL STORAGE TESTS PASSED SUCCESSFULLY! ---');
   process.exit(0);

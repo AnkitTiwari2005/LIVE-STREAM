@@ -200,6 +200,7 @@ export class StreamersService {
       where: {
         OR: [{ id: profileIdOrUserId }, { userId: profileIdOrUserId }],
         kycStatus: KycStatus.APPROVED,
+        user: { deletedAt: null },
       },
       include: {
         user: {
@@ -229,6 +230,7 @@ export class StreamersService {
           where: {
             kycStatus: KycStatus.APPROVED,
             user: {
+              deletedAt: null,
               OR: searchTerms.map((term) => ({
                 name: { contains: term, mode: 'insensitive' },
               })),
@@ -276,10 +278,11 @@ export class StreamersService {
   }
 
   async follow(followerId: string, streamerProfileId: string) {
-    const profile = await this.prisma.streamerProfile.findUnique({
+    const profile: any = await this.prisma.streamerProfile.findUnique({
       where: { id: streamerProfileId },
+      include: { user: { select: { deletedAt: true } } },
     });
-    if (!profile) throw new NotFoundException('Streamer not found');
+    if (!profile || profile.user?.deletedAt) throw new NotFoundException('Streamer not found');
 
     const follower = await this.prisma.user.findUnique({
       where: { id: followerId },

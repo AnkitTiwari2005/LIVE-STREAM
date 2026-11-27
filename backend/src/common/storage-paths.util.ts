@@ -50,15 +50,17 @@ export function ensureWritableStorageDir(
   preferred: string,
   fallback: string,
   logger?: Logger,
+  checkWritable: (dir: string) => void = (dir) => fs.accessSync(dir, fs.constants.W_OK),
 ): string {
   try {
     if (!fs.existsSync(preferred)) {
       fs.mkdirSync(preferred, { recursive: true });
     }
+    checkWritable(preferred);
     return preferred;
   } catch (err: any) {
     logger?.warn(
-      `Cannot create preferred storage directory [${preferred}] (${err?.message || err}); falling back to [${fallback}].`,
+      `Cannot prepare writable storage directory [${preferred}] (${err?.message || err}); falling back to [${fallback}].`,
     );
     if (!fs.existsSync(fallback)) {
       fs.mkdirSync(fallback, { recursive: true });

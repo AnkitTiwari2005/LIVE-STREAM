@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -eo pipefail
+umask 077
 
 # Trap exit code properly before any cleanup command runs
 trap 'EXIT_CODE=$?; rm -f /tmp/db_dump_*.sql.gz /tmp/storage_dump_*.tar.gz; if [ $EXIT_CODE -ne 0 ]; then curl -s -m 10 -X POST "${ALERT_WEBHOOK_URL}" -d "Backup Failure: exit code ${EXIT_CODE} on host $(hostname)"; fi' EXIT
@@ -20,7 +21,7 @@ RETENTION_DAYS=7
 mkdir -p "${BACKUP_DIR}"
 
 echo "[$(date)] Starting PostgreSQL database backup dump..."
-docker exec pooja_postgres pg_dump -U "${POSTGRES_USER}" "${POSTGRES_DB}" | gzip -9 > "${SQL_GZ}"
+docker exec pooja_postgres pg_dump -U "${POSTGRES_USER}" --clean --if-exists --no-owner --no-privileges "${POSTGRES_DB}" | gzip -9 > "${SQL_GZ}"
 
 echo "[$(date)] Encrypting database archive using age..."
 age -r "${BACKUP_PUBLIC_KEY}" -o "${ENCRYPTED_FILE}" "${SQL_GZ}"

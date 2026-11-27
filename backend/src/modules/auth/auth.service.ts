@@ -206,7 +206,7 @@ export class AuthService {
   async verifyEmail(rawToken: string) {
     const tokenHash = CryptoUtil.hashSha256(rawToken);
     const user = await this.prisma.user.findFirst({
-      where: { emailVerifyTokenHash: tokenHash },
+      where: { emailVerifyTokenHash: tokenHash, deletedAt: null },
       include: { wallet: true },
     });
 
@@ -552,6 +552,7 @@ export class AuthService {
       where: {
         resetTokenHash: tokenHash,
         resetTokenExpiry: { gt: new Date() },
+        deletedAt: null,
       },
     });
 
@@ -750,6 +751,12 @@ export class AuthService {
         deletedAt: new Date(),
         passwordHash: null,
         emailVerifyTokenHash: null,
+        googleId: null,
+        resetTokenHash: null,
+        resetTokenExpiry: null,
+        twoFactorSecretEnc: null,
+        twoFactorBackupCodes: [],
+        isTwoFactorEnabled: false,
         email: anonymizedEmail,
         name: 'Deleted Devotee',
         avatarUrl: null,
