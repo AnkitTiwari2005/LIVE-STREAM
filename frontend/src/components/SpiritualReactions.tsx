@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Socket } from 'socket.io-client';
+import { useLang } from '@/lib/i18n/context';
 
 interface ReactionItem {
   id: string;
@@ -10,14 +11,14 @@ interface ReactionItem {
 }
 
 export const SACRED_EMOJIS = [
-  { emoji: '🙏', name: 'Pranam Vandana' },
-  { emoji: '🪔', name: 'Aarti Diya' },
-  { emoji: '🌸', name: 'Pushpa Arpan' },
-  { emoji: '🔔', name: 'Maha Ghanti' },
-  { emoji: '🕉️', name: 'Om Dhwani' },
-  { emoji: '🥥', name: 'Shriphal Prasad' },
-  { emoji: '❤️', name: 'Bhakti Prem' },
-  { emoji: '✨', name: 'Divya Kripa' },
+  { emoji: '🙏', name: 'Pranam Vandana', nameHi: 'प्रणाम वंदना' },
+  { emoji: '🪔', name: 'Aarti Diya', nameHi: 'आरती दीप' },
+  { emoji: '🌸', name: 'Pushpa Arpan', nameHi: 'पुष्प अर्पण' },
+  { emoji: '🔔', name: 'Maha Ghanti', nameHi: 'महाघंटी' },
+  { emoji: '🕉️', name: 'Om Dhwani', nameHi: 'ॐ ध्वनि' },
+  { emoji: '🥥', name: 'Shriphal Prasad', nameHi: 'श्रीफल प्रसाद' },
+  { emoji: '❤️', name: 'Bhakti Prem', nameHi: 'भक्ति प्रेम' },
+  { emoji: '✨', name: 'Divya Kripa', nameHi: 'दिव्य कृपा' },
 ];
 
 export function mapToEmoji(typeOrEmoji: string): string {
@@ -148,6 +149,7 @@ export function DevotionalEmojiBar({
   streamId: string;
   onReact?: (emoji: string) => void;
 }) {
+  const { lang } = useLang();
   const sendReaction = (emoji: string) => {
     // 1. Trigger local optimistic animation immediately!
     if (typeof window !== 'undefined') {
@@ -162,21 +164,24 @@ export function DevotionalEmojiBar({
   return (
     <div className="flex items-center justify-between gap-1 sm:gap-2 bg-white dark:bg-obsidian-deep/80 border border-stone-200 dark:border-gold/20 rounded-2xl px-3 py-2 shadow-sm dark:shadow-lg backdrop-blur-md">
       <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-wider text-stone-700 dark:text-gold-soft mr-1">
-        Bhav Arpan:
+        {lang === 'hi' ? 'भाव अर्पण:' : 'Bhav Arpan:'}
       </span>
       <div className="flex items-center justify-between flex-1 gap-1">
-        {SACRED_EMOJIS.map(({ emoji, name }) => (
+        {SACRED_EMOJIS.map(({ emoji, name, nameHi }) => {
+          const label = lang === 'hi' ? nameHi : name;
+          return (
           <button
             key={emoji}
             type="button"
             onClick={() => sendReaction(emoji)}
             className="flex-1 flex items-center justify-center text-xl sm:text-2xl p-1.5 rounded-xl hover:bg-amber-500/10 dark:hover:bg-gold/15 active:scale-130 transition transform hover:scale-115"
-            title={name}
-            aria-label={name}
+            title={label}
+            aria-label={label}
           >
             {emoji}
           </button>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

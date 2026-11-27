@@ -49,9 +49,17 @@ import {
   VerifiedPanditBadge,
 } from '@/components/icons/SpiritualIcons';
 import { useToast } from '@/components/Toast';
+import { useLang } from '@/lib/i18n/context';
+import {
+  formatCoins,
+  formatLocaleDateTime,
+  translateCategoryLabel,
+} from '@/lib/i18n/format';
 
 export default function StreamPlayerClient() {
   const toast = useToast();
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
   const { id: paramId } = useParams() as { id: string };
   const [id, setId] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -131,9 +139,9 @@ export default function StreamPlayerClient() {
 
   useEffect(() => {
     if (stream?.title) {
-      document.title = `${stream.title} | Param Darshan`;
+      document.title = `${stream.title} | ${lang === 'hi' ? 'परम दर्शन' : 'Param Darshan'}`;
     }
-  }, [stream?.title]);
+  }, [stream?.title, lang]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -210,7 +218,7 @@ export default function StreamPlayerClient() {
     try {
       // 1. Fetch stream details
       const streamRes = await fetch(`${apiUrl}/streams/${id}`);
-      if (!streamRes.ok) throw new Error('Stream not found');
+      if (!streamRes.ok) throw new Error(L('Stream not found', 'प्रसारण नहीं मिला'));
       const streamData = await streamRes.json();
       setStream(streamData);
 
@@ -250,7 +258,7 @@ export default function StreamPlayerClient() {
 
       if (!tokenRes.ok) {
         const errJson = await tokenRes.json().catch(() => ({}));
-        const errMsg = errJson.message || 'Failed to join stream session';
+        const errMsg = errJson.message || L('Failed to join stream session', 'प्रसारण सत्र से जुड़ने में समस्या हुई');
         if (errMsg.toLowerCase().includes('not currently live')) {
           setStreamEnded(true);
           setStream((prev: any) => (prev ? { ...prev, status: 'ENDED' } : prev));
@@ -274,7 +282,7 @@ export default function StreamPlayerClient() {
         syncLocalWalletBalance(resData.remainingCoins);
       }
     } catch (err: any) {
-      const msg = err.message || 'Error connecting to sacred stream';
+      const msg = err.message || L('Error connecting to sacred stream', 'पवित्र प्रसारण से जुड़ने में त्रुटि');
       setError(msg);
       if (msg.toLowerCase().includes('not currently live')) {
         setStreamEnded(true);
@@ -409,7 +417,7 @@ export default function StreamPlayerClient() {
             recoveryAttemptsRef.current += 1;
             if (recoveryAttemptsRef.current > 3) {
               setToken(null);
-              setError('Your viewing session expired and could not be restored automatically. Please reload the page.');
+              setError(L('Your viewing session expired and could not be restored automatically. Please reload the page.', 'आपका दर्शन सत्र समाप्त हो गया और स्वतः बहाल नहीं हो सका। कृपया पृष्ठ को पुनः लोड करें।'));
               return;
             }
             await fetchStreamAndToken();
@@ -434,7 +442,7 @@ export default function StreamPlayerClient() {
             if (billingErrorCountRef.current >= 5) {
               setConnectionWarning(false);
               setToken(null);
-              setError('Unable to reach the billing server. Please reload the page to continue.');
+              setError(L('Unable to reach the billing server. Please reload the page to continue.', 'बिलिंग सर्वर से संपर्क नहीं हो पा रहा है। जारी रखने के लिए कृपया पृष्ठ रीलोड करें।'));
               if (meterIntervalRef.current) clearInterval(meterIntervalRef.current);
             } else {
               setConnectionWarning(true);
@@ -460,13 +468,13 @@ export default function StreamPlayerClient() {
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: stream?.title || 'Param Darshan Live Stream',
-        text: `Watch live darshan: ${stream?.title}`,
+        title: stream?.title || L('Param Darshan Live Stream', 'परम दर्शन लाइव प्रसारण'),
+        text: L(`Watch live darshan: ${stream?.title}`, `लाइव दर्शन देखें: ${stream?.title}`),
         url: window.location.href,
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
-      toast.success('Sacred broadcast link copied to clipboard!');
+      toast.success(L('Sacred broadcast link copied to clipboard!', 'पवित्र प्रसारण लिंक कॉपी हो गया!'));
     }
   };
 
@@ -474,14 +482,14 @@ export default function StreamPlayerClient() {
     try {
       const data = await apiFetch(`/notifications/remind/${id}`, { method: 'POST' });
       setReminderSet(true);
-      toast.success(data.message || 'Email reminder set! You will be notified when this pooja goes live.');
+      toast.success(data.message || L('Email reminder set! You will be notified when this pooja goes live.', 'ईमेल रिमाइंडर सेट हो गया! पूजा लाइव होते ही आपको सूचना मिलेगी।'));
     } catch (err: any) {
       if (err.status === 401) {
-        toast.info('Please sign in to set email reminders.');
+        toast.info(L('Please sign in to set email reminders.', 'ईमेल रिमाइंडर सेट करने के लिए कृपया साइन इन करें।'));
         window.location.href = `/login?redirect=/stream/${id}`;
         return;
       }
-      toast.error(err.message || 'Failed to set reminder.');
+      toast.error(err.message || L('Failed to set reminder.', 'रिमाइंडर सेट नहीं हो सका।'));
     }
   };
 
@@ -498,11 +506,11 @@ export default function StreamPlayerClient() {
           details: reportDetails.trim() || undefined,
         }),
       });
-      toast.success('Sacred community report submitted. Our Vedic moderation team will review it.');
+      toast.success(L('Sacred community report submitted. Our Vedic moderation team will review it.', 'रिपोर्ट सबमिट हो गई। हमारी मॉडरेशन टीम शीघ्र इसकी समीक्षा करेगी।'));
       setReportModalOpen(false);
       setReportDetails('');
     } catch (err: any) {
-      toast.error(err.message || 'Failed to submit report.');
+      toast.error(err.message || L('Failed to submit report.', 'रिपोर्ट सबमिट नहीं हो सकी।'));
     } finally {
       setReporting(false);
     }
@@ -532,12 +540,12 @@ export default function StreamPlayerClient() {
         <div className="mb-4 p-3 bg-amber-50 dark:bg-stone-800/90 border border-amber-300 dark:border-stone-600/70 rounded-2xl flex items-center justify-between gap-3 text-stone-900 dark:text-stone-200 shadow-lg">
           <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold">
             <AlertCircle className="w-4 h-4 text-amber-800 dark:text-amber-400 shrink-0" />
-            <span>Connection issue detected — retrying billing. Your stream continues.</span>
+            <span>{L('Connection issue detected — retrying billing. Your stream continues.', 'कनेक्शन में अस्थायी समस्या — बिलिंग पुनः प्रयास कर रही है। आपका प्रसारण जारी है।')}</span>
           </div>
           <button
             onClick={() => setConnectionWarning(false)}
             className="p-1 hover:bg-amber-200/70 dark:hover:bg-stone-700 rounded-lg transition"
-            aria-label="Dismiss"
+            aria-label={L('Dismiss', 'बंद करें')}
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -548,7 +556,7 @@ export default function StreamPlayerClient() {
         <div className="mb-4 p-3 bg-amber-50 dark:bg-stone-800/90 border border-amber-400 dark:border-amber-600/40 rounded-2xl flex items-center justify-between gap-3 text-stone-900 dark:text-stone-200 shadow-lg">
           <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold">
             <AlertCircle className="w-4 h-4 text-amber-800 dark:text-amber-400 shrink-0" />
-            <span>Stream connection lost. Click to reconnect.</span>
+            <span>{L('Stream connection lost. Click to reconnect.', 'प्रसारण कनेक्शन टूट गया। पुनः जुड़ने के लिए क्लिक करें।')}</span>
           </div>
           <button
             onClick={() => {
@@ -558,7 +566,7 @@ export default function StreamPlayerClient() {
             }}
             className="px-3 py-1.5 bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold rounded-lg shadow transition"
           >
-            Reconnect
+            {L('Reconnect', 'पुनः जुड़ें')}
           </button>
         </div>
       )}
@@ -568,14 +576,17 @@ export default function StreamPlayerClient() {
           <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold">
             <CoinIcon size={18} />
             <span>
-              Low Darshan Balance: {availableMinutes} minute(s) remaining ({remainingCoins} Coins).
+              {L(
+                `Low Darshan Balance: ${availableMinutes} minute(s) remaining (${remainingCoins} Coins).`,
+                `कम दर्शन शेष: ${availableMinutes} मिनट शेष (${remainingCoins} कॉइन)।`,
+              )}
             </span>
           </div>
           <button
             onClick={() => setTopupModalOpen(true)}
             className="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-bold rounded-lg shadow transition-colors flex items-center gap-1"
           >
-            <Zap className="w-3 h-3 fill-stone-950" /> Recharge Now
+            <Zap className="w-3 h-3 fill-stone-950" /> {L('Recharge Now', 'अभी रिचार्ज करें')}
           </button>
         </div>
       )}
@@ -586,14 +597,22 @@ export default function StreamPlayerClient() {
           <div className="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
             <span className="live-dot shrink-0" />
             <span>
-              Pandit Ji is live now: <strong className="text-stone-950 dark:text-white">&ldquo;{activeOtherLiveStream.title}&rdquo;</strong> with {activeOtherLiveStream.streamer?.name || 'Acharya'}
+              {lang === 'hi' ? (
+                <>
+                  पंडित जी अभी लाइव हैं: <strong className="text-stone-950 dark:text-white">&ldquo;{activeOtherLiveStream.title}&rdquo;</strong> — {activeOtherLiveStream.streamer?.name || 'आचार्य'} के साथ
+                </>
+              ) : (
+                <>
+                  Pandit Ji is live now: <strong className="text-stone-950 dark:text-white">&ldquo;{activeOtherLiveStream.title}&rdquo;</strong> with {activeOtherLiveStream.streamer?.name || 'Acharya'}
+                </>
+              )}
             </span>
           </div>
           <Link
             href={`/stream/${activeOtherLiveStream.id}`}
             className="px-4 py-1.5 bg-gold hover:bg-gold-deep text-obsidian text-xs font-extrabold rounded-full shadow transition-all shrink-0 flex items-center gap-1.5 hover:scale-105"
           >
-            <span>Watch Live Darshan Now</span>
+            <span>{L('Watch Live Darshan Now', 'अभी लाइव दर्शन देखें')}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
@@ -609,24 +628,27 @@ export default function StreamPlayerClient() {
       {streamEnded ? (
         <div className="w-full aspect-video max-h-[600px] bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-3xl flex flex-col items-center justify-center p-8 text-center shadow-xl">
           <PranamIcon size={56} className="mb-4 text-amber-700 dark:text-amber-500" />
-          <h2 className="text-2xl font-bold text-stone-900 dark:text-white mb-2">Sacred Broadcast Concluded</h2>
+          <h2 className="text-2xl font-bold text-stone-900 dark:text-white mb-2">{L('Sacred Broadcast Concluded', 'पवित्र प्रसारण संपन्न हुआ')}</h2>
           <p className="text-stone-600 dark:text-stone-400 text-sm max-w-md mb-4">
-            This live broadcast by {stream?.streamer?.name || 'Pandit Ji'} is not active or has concluded. May divine blessings be upon you.
+            {L(
+              `This live broadcast by ${stream?.streamer?.name || 'Pandit Ji'} is not active or has concluded. May divine blessings be upon you.`,
+              `${stream?.streamer?.name || 'पंडित जी'} द्वारा यह लाइव प्रसारण समाप्त हो चुका है या सक्रिय नहीं है। ईश्वर का दिव्य आशीर्वाद आप पर बना रहे।`,
+            )}
           </p>
 
           {activeOtherLiveStream ? (
             <div className="mt-2 p-5 rounded-2xl bg-amber-50 dark:bg-gradient-to-r dark:from-amber-500/20 dark:via-orange-500/20 dark:to-amber-500/20 border border-amber-400 dark:border-amber-500/50 text-center max-w-md shadow-xl">
               <span className="text-[11px] font-extrabold uppercase tracking-widest text-amber-900 dark:text-amber-300 flex items-center justify-center gap-2 mb-1.5">
-                <span className="live-dot" /> Live Darshan Active Right Now
+                <span className="live-dot" /> {L('Live Darshan Active Right Now', 'इस समय लाइव दर्शन सक्रिय है')}
               </span>
               <p className="text-base font-bold text-stone-950 dark:text-white mb-4">
-                &ldquo;{activeOtherLiveStream.title}&rdquo; by {activeOtherLiveStream.streamer?.name || 'Vedic Pandit Ji'}
+                &ldquo;{activeOtherLiveStream.title}&rdquo; {L('by', 'द्वारा')} {activeOtherLiveStream.streamer?.name || L('Vedic Pandit Ji', 'वैदिक पंडित जी')}
               </p>
               <Link
                 href={`/stream/${activeOtherLiveStream.id}`}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-red-600 via-amber-500 to-orange-500 text-white font-extrabold text-xs shadow-xl hover:scale-105 transition-transform"
               >
-                <span>Join Active Live Darshan Now</span>
+                <span>{L('Join Active Live Darshan Now', 'सक्रिय लाइव दर्शन से अभी जुड़ें')}</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -636,13 +658,13 @@ export default function StreamPlayerClient() {
                 href="/schedule"
                 className="px-5 py-2.5 bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold rounded-full transition"
               >
-                View Pooja Schedule
+                {L('View Pooja Schedule', 'पूजा समय-सारिणी देखें')}
               </Link>
               <Link
                 href="/"
                 className="px-5 py-2.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-900 dark:text-stone-200 text-xs font-semibold rounded-full border border-stone-300 dark:border-stone-700 transition"
               >
-                Return to Home
+                {L('Return to Home', 'होम पेज पर लौटें')}
               </Link>
             </div>
           )}
@@ -659,7 +681,7 @@ export default function StreamPlayerClient() {
                     <Calendar className="w-10 h-10" />
                   </div>
                   <span className="text-xs uppercase font-extrabold tracking-widest text-amber-300 mb-1">
-                    Scheduled Sacred Pooja
+                    {L('Scheduled Sacred Pooja', 'निर्धारित पवित्र पूजा')}
                   </span>
                   <h3 className="font-serif text-2xl sm:text-3xl font-bold !text-white mb-2 max-w-md">
                     {stream?.title}
@@ -667,11 +689,14 @@ export default function StreamPlayerClient() {
                   {stream?.scheduledAt && (
                     <p className="!text-stone-200 text-sm font-semibold mb-3 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-1.5 rounded-full inline-flex items-center gap-2 shadow">
                       <Clock className="w-4 h-4 text-amber-300" />
-                      {new Date(stream.scheduledAt).toLocaleString([], { dateStyle: 'full', timeStyle: 'short' })}
+                      {formatLocaleDateTime(stream.scheduledAt, lang)}
                     </p>
                   )}
                   <p className="!text-stone-300 text-xs max-w-sm mb-6 leading-relaxed">
-                    This live pooja broadcast has not commenced yet. Set an email reminder to receive sacred darshan as soon as Pandit Ji goes live.
+                    {L(
+                      'This live pooja broadcast has not commenced yet. Set an email reminder to receive sacred darshan as soon as Pandit Ji goes live.',
+                      'यह लाइव पूजा प्रसारण अभी शुरू नहीं हुआ है। पंडित जी के लाइव होते ही सूचना पाने के लिए ईमेल रिमाइंडर सेट करें।',
+                    )}
                   </p>
                   <div className="flex flex-col sm:flex-row items-center gap-3">
                     <button
@@ -682,12 +707,12 @@ export default function StreamPlayerClient() {
                       {reminderSet ? (
                         <>
                           <CheckCircle2 className="w-4 h-4 text-obsidian" />
-                          <span>Reminder Scheduled ✓</span>
+                          <span>{L('Reminder Scheduled ✓', 'रिमाइंडर सेट हो गया ✓')}</span>
                         </>
                       ) : (
                         <>
                           <Bell className="w-4 h-4" />
-                          <span>Remind Me via Email</span>
+                          <span>{L('Remind Me via Email', 'ईमेल द्वारा याद दिलाएँ')}</span>
                         </>
                       )}
                     </button>
@@ -695,16 +720,16 @@ export default function StreamPlayerClient() {
                       onClick={handleShare}
                       className="px-5 py-3 bg-white/10 hover:bg-white/20 !text-white text-xs font-semibold rounded-full border border-white/25 transition shadow-sm backdrop-blur-sm"
                     >
-                      Share Pooja Link
+                      {L('Share Pooja Link', 'पूजा लिंक साझा करें')}
                     </button>
                   </div>
                 </div>
               ) : isZeroBalance ? (
                 <div className="video-overlay absolute inset-0 z-40 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center text-white">
                   <OmIcon size={52} className="mb-3 text-amber-400" />
-                  <h3 className="font-serif text-2xl font-bold !text-white mb-1">Auspicious Darshan Paused</h3>
+                  <h3 className="font-serif text-2xl font-bold !text-white mb-1">{L('Auspicious Darshan Paused', 'पवित्र दर्शन विराम पर है')}</h3>
                   <p className="!text-stone-300 text-xs sm:text-sm max-w-sm mb-6 leading-relaxed">
-                    You have utilized your available darshan coins. Please recharge your wallet to continue receiving live blessings.
+                    {L('You have utilized your available darshan coins. Please recharge your wallet to continue receiving live blessings.', 'आपके उपलब्ध दर्शन कॉइन समाप्त हो गए हैं। लाइव आशीर्वाद प्राप्त करना जारी रखने के लिए कृपया वॉलेट रिचार्ज करें।')}
                   </p>
                   <div className="flex flex-col sm:flex-row items-center gap-3">
                     <button
@@ -712,13 +737,13 @@ export default function StreamPlayerClient() {
                       className="w-full sm:w-auto px-6 py-3 bg-gold hover:bg-gold-deep text-obsidian font-extrabold rounded-full shadow-xl shadow-gold/20 flex items-center justify-center gap-2 text-sm transition"
                     >
                       <Zap className="w-4 h-4 fill-obsidian" />
-                      <span>Recharge Coins (from ₹{STARTER_PRICE_INR})</span>
+                      <span>{L(`Recharge Coins (from ₹${STARTER_PRICE_INR})`, `कॉइन रिचार्ज करें (₹${STARTER_PRICE_INR} से)`)}</span>
                     </button>
                     <Link
                       href="/"
                       className="text-stone-400 hover:text-gold-pale text-xs font-semibold py-2"
                     >
-                      Return to Darshan Schedule
+                      {L('Return to Darshan Schedule', 'दर्शन समय-सारिणी पर लौटें')}
                     </Link>
                   </div>
                 </div>
@@ -730,13 +755,21 @@ export default function StreamPlayerClient() {
                     </div>
                   </div>
                   <span className="text-[11px] uppercase tracking-widest font-extrabold !text-amber-300 mb-1">
-                    Live Temple Darshan
+                    {L('Live Temple Darshan', 'लाइव मंदिर दर्शन')}
                   </span>
                   <h3 className="font-serif text-xl sm:text-2xl font-bold !text-white mb-2 max-w-md">
-                    Sign in to Receive Live Blessings
+                    {L('Sign in to Receive Live Blessings', 'लाइव आशीर्वाद पाने के लिए साइन इन करें')}
                   </h3>
                   <p className="!text-stone-200 text-xs sm:text-sm max-w-md mb-5 leading-relaxed">
-                    Create a free account to claim <span className="!text-amber-300 font-bold">100 Free Sacred Coins</span> (20 mins of complimentary live darshan) and chant prayers in live chat.
+                    {lang === 'hi' ? (
+                      <>
+                        <span className="!text-amber-300 font-bold">100 मुफ़्त पवित्र कॉइन</span> (20 मिनट का निःशुल्क लाइव दर्शन) पाने और लाइव चैट में मंत्र-प्रार्थना भेजने के लिए निःशुल्क खाता बनाएँ।
+                      </>
+                    ) : (
+                      <>
+                        Create a free account to claim <span className="!text-amber-300 font-bold">100 Free Sacred Coins</span> (20 mins of complimentary live darshan) and chant prayers in live chat.
+                      </>
+                    )}
                   </p>
                   <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto px-4">
                     <Link
@@ -744,7 +777,7 @@ export default function StreamPlayerClient() {
                       className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-amber-500 via-gold to-orange-500 hover:from-amber-400 hover:to-orange-400 text-stone-950 font-extrabold rounded-full shadow-[0_0_24px_rgba(245,158,11,0.4)] flex items-center justify-center gap-2 text-xs sm:text-sm transition-transform active:scale-95"
                     >
                       <Gift className="w-4 h-4 text-stone-950" />
-                      <span className="!text-stone-950 font-extrabold">Claim 100 Free Coins</span>
+                      <span className="!text-stone-950 font-extrabold">{L('Claim 100 Free Coins', '100 मुफ़्त कॉइन पाएँ')}</span>
                     </Link>
                     <Link
                       href={`/login?redirect=/stream/${id}`}
@@ -752,11 +785,11 @@ export default function StreamPlayerClient() {
                       style={{ color: '#fef3c7', backgroundColor: 'rgba(20, 14, 10, 0.85)', borderColor: 'rgba(245, 158, 11, 0.5)' }}
                     >
                       <LogIn className="w-4 h-4 !text-amber-300" />
-                      <span className="font-bold" style={{ color: '#fef3c7' }}>Sign In to Watch</span>
+                      <span className="font-bold" style={{ color: '#fef3c7' }}>{L('Sign In to Watch', 'देखने के लिए लॉगिन करें')}</span>
                     </Link>
                   </div>
                   <span className="text-[10px] !text-stone-300 mt-3 font-medium">
-                    100% Free registration • Instant darshan access
+                    {L('100% Free registration • Instant darshan access', '100% निःशुल्क पंजीकरण • तुरंत दर्शन प्रवेश')}
                   </span>
                 </div>
               ) : token && serverUrl ? (
@@ -805,7 +838,7 @@ export default function StreamPlayerClient() {
                     canAsk={!!currentUser?.id && currentUser.id !== stream?.streamerId && stream?.visibility !== 'PRIVATE'}
                   />
                   <div className="absolute top-4 left-4 z-30">
-                    <StartAudio label="Click to Unmute Live Chanting & Aarti" />
+                    <StartAudio label={L('Click to Unmute Live Chanting & Aarti', 'लाइव मंत्रोच्चार एवं आरती सुनने के लिए क्लिक करें')} />
                   </div>
                 </LiveKitRoom>
               ) : error ? (
@@ -819,7 +852,7 @@ export default function StreamPlayerClient() {
                       href={`/stream/${activeOtherLiveStream.id}`}
                       className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold text-xs shadow-lg transition"
                     >
-                      <span>Watch {activeOtherLiveStream.streamer?.name || 'Live Pandit Ji'} Now</span>
+                      <span>{L(`Watch ${activeOtherLiveStream.streamer?.name || 'Live Pandit Ji'} Now`, `अभी ${activeOtherLiveStream.streamer?.name || 'लाइव पंडित जी'} को देखें`)}</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                   ) : (
@@ -827,7 +860,7 @@ export default function StreamPlayerClient() {
                       onClick={fetchStreamAndToken}
                       className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-100 text-xs font-semibold border border-stone-600 transition"
                     >
-                      <span>Retry Connection</span>
+                      <span>{L('Retry Connection', 'पुनः जुड़ने का प्रयास करें')}</span>
                     </button>
                   )}
                 </div>
@@ -835,7 +868,7 @@ export default function StreamPlayerClient() {
                 <div className="video-overlay flex flex-col items-center gap-3 text-stone-200">
                   <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-gold" />
                   <span className="text-xs uppercase tracking-wider font-semibold text-amber-300">
-                    Connecting to Sacred Broadcast...
+                    {L('Connecting to Sacred Broadcast...', 'पवित्र प्रसारण से जुड़ रहा है...')}
                   </span>
                 </div>
               )}
@@ -846,12 +879,12 @@ export default function StreamPlayerClient() {
                   <button
                     onClick={() => setTopupModalOpen(true)}
                     className="video-overlay flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1 sm:py-1.5 bg-black/85 backdrop-blur-md border border-amber-400/50 hover:border-amber-400 rounded-full text-xs font-bold !text-amber-200 shadow-xl transition-all"
-                    title="Click to recharge coins"
+                    title={L('Click to recharge coins', 'कॉइन रिचार्ज करने के लिए क्लिक करें')}
                   >
                     <CoinIcon size={15} />
-                    <span className="!text-amber-300 font-extrabold">{remainingCoins} Coins</span>
+                    <span className="!text-amber-300 font-extrabold">{formatCoins(remainingCoins, lang)}</span>
                     <span className="!text-stone-200 text-[10px] font-normal hidden xs:inline sm:inline">
-                      ({availableMinutes}m left)
+                      ({L(`${availableMinutes}m left`, `${availableMinutes} मिनट शेष`)})
                     </span>
                     <span className="!text-amber-300 ml-0.5 font-black text-sm leading-none">+</span>
                   </button>
@@ -863,11 +896,11 @@ export default function StreamPlayerClient() {
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-gradient-to-r from-amber-500 via-yellow-400 to-orange-500 text-stone-950 px-4 py-2 rounded-2xl shadow-2xl flex items-center gap-2.5 animate-bounce border-2 border-yellow-200">
                   <DiyaIcon size={24} />
                   <div className="text-xs">
-                    <span className="font-extrabold">{latestDakshina.devoteeName}</span> offered{' '}
+                    <span className="font-extrabold">{latestDakshina.devoteeName}</span> {L('offered', 'ने अर्पित किए')}{' '}
                     <span className="font-black inline-flex items-center gap-1">
-                      <CoinIcon size={13} /> {latestDakshina.coins ?? latestDakshina.amount} Coins
+                      <CoinIcon size={13} /> {formatCoins(Number(latestDakshina.coins ?? latestDakshina.amount), lang)}
                     </span>{' '}
-                    Dakshina!
+                    {L('Dakshina!', 'दक्षिणा!')}
                     {latestDakshina.prayerMessage && (
                       <div className="text-[10px] font-semibold opacity-90 truncate max-w-xs">
                         &ldquo;{latestDakshina.prayerMessage}&rdquo;
@@ -894,29 +927,29 @@ export default function StreamPlayerClient() {
                           <>
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800">
                               <span className="w-1.5 h-1.5 rounded-full bg-red-600 dark:bg-red-500 animate-pulse" />
-                              LIVE
+                              {L('LIVE', 'लाइव')}
                             </span>
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 dark:bg-gold/10 text-amber-800 dark:text-gold-pale border border-amber-300 dark:border-gold/30 shadow-sm">
                               <Eye className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                              <span>{viewerCount ?? stream.peakViewers ?? 0} Watching</span>
+                              <span>{viewerCount ?? stream.peakViewers ?? 0} {L('Watching', 'देख रहे हैं')}</span>
                             </span>
                           </>
                         ) : stream.status === 'SCHEDULED' ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gold/10 text-gold-pale border border-gold/30">
                             <Calendar className="w-3.5 h-3.5 text-gold" />
-                            SCHEDULED
+                            {L('SCHEDULED', 'निर्धारित')}
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-stone-100 dark:bg-stone-900 text-stone-600 dark:text-stone-400 border border-stone-200 dark:border-stone-800">
-                            CONCLUDED
+                            {L('CONCLUDED', 'संपन्न')}
                           </span>
                         )}
                         <span className="text-xs text-amber-700 dark:text-gold-soft font-semibold uppercase tracking-wider">
-                          {stream.category?.name}
+                          {translateCategoryLabel(stream.category?.name, lang)}
                         </span>
                         {remainingCoins !== null && (
                           <span className="text-[11px] font-bold text-amber-900 dark:text-gold-pale bg-amber-500/10 dark:bg-gold/10 border border-amber-500/25 dark:border-gold/25 px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <CoinIcon size={12} /> 5 Coins / min
+                            <CoinIcon size={12} /> {L('5 Coins / min', '5 कॉइन / मिनट')}
                           </span>
                         )}
                       </div>
@@ -929,8 +962,8 @@ export default function StreamPlayerClient() {
                           <PranamIcon size={14} /> {stream.streamer?.name}
                         </span>
                         {stream.streamer?.streamerProfile?.isVerifiedBadge && (
-                          <span className="inline-flex items-center gap-1 text-amber-700 dark:text-gold-soft font-bold text-[11px]" title="Verified Vedic Pandit">
-                            <VerifiedPanditBadge size={14} /> Verified
+                          <span className="inline-flex items-center gap-1 text-amber-700 dark:text-gold-soft font-bold text-[11px]" title={L('Verified Vedic Pandit', 'सत्यापित वैदिक पंडित')}>
+                            <VerifiedPanditBadge size={14} /> {L('Verified', 'सत्यापित')}
                           </span>
                         )}
                       </div>
@@ -943,21 +976,22 @@ export default function StreamPlayerClient() {
                         className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2.5 bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold rounded-full transition-all shadow-[0_0_24px_rgba(245,158,11,0.25)] hover:scale-105 active:scale-95"
                       >
                         <DiyaIcon size={15} />
-                        <span>Arpan Dakshina</span>
+                        <span>{L('Arpan Dakshina', 'दक्षिणा अर्पण')}</span>
                       </button>
                       <button
                         onClick={handleShare}
                         className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2.5 bg-white dark:bg-obsidian border border-stone-200 dark:border-gold/20 hover:bg-stone-50 dark:hover:bg-stone-900 text-stone-700 dark:text-stone-200 text-xs font-semibold rounded-full transition-all shadow-sm"
                       >
-                        <Share2 className="w-3.5 h-3.5 text-amber-700 dark:text-gold-soft" /> Share
+                        <Share2 className="w-3.5 h-3.5 text-amber-700 dark:text-gold-soft" /> {L('Share', 'साझा करें')}
                       </button>
                       <button
                         onClick={() => setReportModalOpen(true)}
                         className="flex items-center gap-1 p-1.5 sm:px-3 sm:py-2.5 bg-white dark:bg-obsidian border border-stone-200 dark:border-gold/20 hover:border-red-500/50 hover:text-red-700 dark:hover:text-red-400 text-stone-600 dark:text-stone-400 text-xs font-semibold rounded-full transition-all shadow-sm"
-                        title="Report this broadcast to moderators"
+                        title={L('Report this broadcast to moderators', 'इस प्रसारण की रिपोर्ट करें')}
+                        aria-label={L('Report this broadcast to moderators', 'इस प्रसारण की रिपोर्ट करें')}
                       >
                         <Flag className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Report</span>
+                        <span className="hidden sm:inline">{L('Report', 'रिपोर्ट')}</span>
                       </button>
                     </div>
                   </div>
@@ -977,7 +1011,7 @@ export default function StreamPlayerClient() {
                     }`}
                   >
                     <MessageSquare className="w-3.5 h-3.5" />
-                    <span>Sacred Live Chat</span>
+                    <span>{L('Sacred Live Chat', 'पवित्र लाइव चैट')}</span>
                   </button>
                   <button
                     onClick={() => setMobileTab('details')}
@@ -988,37 +1022,37 @@ export default function StreamPlayerClient() {
                     }`}
                   >
                     <Info className="w-3.5 h-3.5" />
-                    <span>Pooja Details & Pandit Ji</span>
+                    <span>{L('Pooja Details & Pandit Ji', 'पूजा विवरण एवं पंडित जी')}</span>
                   </button>
                 </div>
 
                 {/* 3. Detailed Information Section (Shown on mobile when 'details' tab selected, ALWAYS visible on desktop) */}
                 <div className={`${mobileTab === 'details' ? 'block' : 'hidden lg:block'} bg-white dark:bg-obsidian-soft border border-stone-200 dark:border-gold/15 rounded-2xl p-4 sm:p-5 shadow-sm dark:shadow-lg space-y-3`}>
                   <h3 className="font-serif text-base font-bold text-stone-900 dark:text-white flex items-center gap-2">
-                    <OmIcon size={18} /> Sacred Pooja Description
+                    <OmIcon size={18} /> {L('Sacred Pooja Description', 'पवित्र पूजा विवरण')}
                   </h3>
                   {stream.description ? (
                     <p className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 leading-relaxed whitespace-pre-line">
                       {stream.description}
                     </p>
                   ) : (
-                    <p className="text-xs text-stone-600 dark:text-stone-400 italic">No additional description provided for this pooja.</p>
+                    <p className="text-xs text-stone-600 dark:text-stone-400 italic">{L('No additional description provided for this pooja.', 'इस पूजा के लिए कोई अतिरिक्त विवरण नहीं दिया गया है।')}</p>
                   )}
 
                   <div className="pt-3 border-t border-stone-200 dark:border-stone-800/80 flex items-center justify-between text-xs text-stone-600 dark:text-stone-300">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-stone-900 dark:text-stone-100 flex items-center gap-1.5">
-                        <PranamIcon size={16} /> Presided by {stream.streamer?.name}
+                        <PranamIcon size={16} /> {L('Presided by', 'मुख्य आचार्य:')} {stream.streamer?.name}
                       </span>
                       {stream.streamer?.streamerProfile?.isVerifiedBadge && (
-                        <span className="inline-flex items-center gap-1 text-amber-800 dark:text-gold-soft font-bold" title="Verified Vedic Pandit">
-                          <VerifiedPanditBadge size={16} /> Verified
+                        <span className="inline-flex items-center gap-1 text-amber-800 dark:text-gold-soft font-bold" title={L('Verified Vedic Pandit', 'सत्यापित वैदिक पंडित')}>
+                          <VerifiedPanditBadge size={16} /> {L('Verified', 'सत्यापित')}
                         </span>
                       )}
                     </div>
                     <span className="flex items-center gap-1 text-stone-600 dark:text-stone-400 font-medium">
                       <Eye className="w-3.5 h-3.5 text-amber-700 dark:text-gold" />
-                      <span>{viewerCount ?? stream.peakViewers ?? 0} Live Devotees</span>
+                      <span>{viewerCount ?? stream.peakViewers ?? 0} {L('Live Devotees', 'लाइव श्रद्धालु')}</span>
                     </span>
                   </div>
                 </div>
@@ -1043,7 +1077,7 @@ export default function StreamPlayerClient() {
           isOpen={dakshinaModalOpen}
           onClose={() => setDakshinaModalOpen(false)}
           streamId={id}
-          streamerName={stream.streamer?.name || 'Vedic Pandit Ji'}
+          streamerName={stream.streamer?.name || L('Vedic Pandit Ji', 'वैदिक पंडित जी')}
           currentUser={currentUser}
           walletBalance={remainingCoins}
           onOpenTopup={() => {
@@ -1074,6 +1108,7 @@ export default function StreamPlayerClient() {
           <div className="bg-white dark:bg-[#1c140d] border border-stone-200 dark:border-gold/30 rounded-3xl p-6 max-w-md w-full shadow-2xl relative text-xs">
             <button
               onClick={() => setReportModalOpen(false)}
+              aria-label={L('Close', 'बंद करें')}
               className="absolute top-4 right-4 text-stone-400 hover:text-stone-900 dark:hover:text-white p-1"
             >
               <X className="w-4 h-4" />
@@ -1081,36 +1116,36 @@ export default function StreamPlayerClient() {
 
             <div className="flex items-center gap-2 mb-4 text-amber-700 dark:text-amber-400 font-bold">
               <Flag className="w-4 h-4" />
-              <span className="text-sm text-stone-900 dark:text-white">Report Sacred Darshan Broadcast</span>
+              <span className="text-sm text-stone-900 dark:text-white">{L('Report Sacred Darshan Broadcast', 'पवित्र दर्शन प्रसारण की रिपोर्ट करें')}</span>
             </div>
 
             <p className="text-stone-600 dark:text-stone-300 mb-4 leading-relaxed">
-              Help maintain sacred dignity and reverence. Reports are reviewed by platform administrators within 2 hours.
+              {L('Help maintain sacred dignity and reverence. Reports are reviewed by platform administrators within 2 hours.', 'पवित्र मर्यादा एवं आस्था की रक्षा में सहायता करें। सभी रिपोर्टों की समीक्षा 2 घंटे के भीतर की जाती है।')}
             </p>
 
             <form onSubmit={handleReportSubmit} className="space-y-4">
               <div>
-                <label className="block font-semibold text-stone-700 dark:text-stone-200 mb-1.5">Primary Reason</label>
+                <label className="block font-semibold text-stone-700 dark:text-stone-200 mb-1.5">{L('Primary Reason', 'मुख्य कारण')}</label>
                 <select
                   value={reportReason}
                   onChange={(e) => setReportReason(e.target.value)}
                   className="w-full p-2.5 rounded-xl bg-stone-50 dark:bg-obsidian border border-stone-300 dark:border-gold/20 text-stone-900 dark:text-stone-200 focus:outline-none focus:border-amber-500 dark:focus:border-gold"
                 >
-                  <option value="Inappropriate Content / Conduct">Inappropriate Content or Conduct</option>
-                  <option value="Harassment or Hate Speech">Harassment or Hate Speech</option>
-                  <option value="Commercial Spam / Unrelated Content">Commercial Spam / Unrelated Content</option>
-                  <option value="Audio/Video Quality / Impersonation">Audio/Video Quality or Impersonation</option>
-                  <option value="Other Violation">Other Community Guidelines Violation</option>
+                  <option value="Inappropriate Content / Conduct">{L('Inappropriate Content or Conduct', 'अनुचित सामग्री या व्यवहार')}</option>
+                  <option value="Harassment or Hate Speech">{L('Harassment or Hate Speech', 'उत्पीड़न या आपत्तिजनक भाषा')}</option>
+                  <option value="Commercial Spam / Unrelated Content">{L('Commercial Spam / Unrelated Content', 'व्यावसायिक स्पैम / अप्रासंगिक सामग्री')}</option>
+                  <option value="Audio/Video Quality / Impersonation">{L('Audio/Video Quality or Impersonation', 'ऑडियो/वीडियो गुणवत्ता या प्रतिरूपण')}</option>
+                  <option value="Other Violation">{L('Other Community Guidelines Violation', 'अन्य सामुदायिक दिशानिर्देश उल्लंघन')}</option>
                 </select>
               </div>
 
               <div>
-                <label className="block font-semibold text-stone-700 dark:text-stone-200 mb-1.5">Additional Details (Optional)</label>
+                <label className="block font-semibold text-stone-700 dark:text-stone-200 mb-1.5">{L('Additional Details (Optional)', 'अतिरिक्त विवरण (वैकल्पिक)')}</label>
                 <textarea
                   rows={3}
                   value={reportDetails}
                   onChange={(e) => setReportDetails(e.target.value)}
-                  placeholder="Describe specific timestamps or details to help moderators..."
+                  placeholder={L('Describe specific timestamps or details to help moderators...', 'मॉडरेटर्स की सहायता हेतु विवरण या समय लिखें...')}
                   className="w-full p-2.5 rounded-xl bg-stone-50 dark:bg-obsidian border border-stone-300 dark:border-gold/20 text-stone-900 dark:text-stone-200 focus:outline-none focus:border-amber-500 dark:focus:border-gold resize-none"
                 />
               </div>
@@ -1121,14 +1156,14 @@ export default function StreamPlayerClient() {
                   onClick={() => setReportModalOpen(false)}
                   className="px-4 py-2 rounded-xl border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 font-semibold"
                 >
-                  Cancel
+                  {L('Cancel', 'रद्द करें')}
                 </button>
                 <button
                   type="submit"
                   disabled={reporting}
                   className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold disabled:opacity-50"
                 >
-                  {reporting ? 'Submitting...' : 'Submit Report'}
+                  {reporting ? L('Submitting...', 'सबमिट हो रहा है...') : L('Submit Report', 'रिपोर्ट सबमिट करें')}
                 </button>
               </div>
             </form>
@@ -1151,6 +1186,8 @@ function VideoRenderer({
   canAsk: boolean;
 }) {
   const toast = useToast();
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
   const room = useRoomContext();
   useRoomTick(room);
   const participants = useParticipants();
@@ -1192,14 +1229,14 @@ function VideoRenderer({
 
   useEffect(() => {
     if (!socket) return;
-    const onGranted = () => toast.success('Pandit Ji allowed you to show your video. Tap "Turn on camera".');
+    const onGranted = () => toast.success(L('Pandit Ji allowed you to show your video. Tap "Turn on camera".', 'पंडित जी ने आपका वीडियो दिखाने की अनुमति दे दी है। "कैमरा चालू करें" दबाएँ।'));
     const onRevoked = (d: { replaced?: boolean }) => {
-      toast.info(d?.replaced ? 'Pandit Ji gave the video slot to another devotee.' : 'Pandit Ji ended your video.');
+      toast.info(d?.replaced ? L('Pandit Ji gave the video slot to another devotee.', 'पंडित जी ने वीडियो स्लॉट अन्य भक्त को दिया।') : L('Pandit Ji ended your video.', 'पंडित जी ने आपका वीडियो बंद कर दिया।'));
       stopLocalMedia();
       setRequested(false);
     };
     const onMuted = (d: { source?: string }) =>
-      toast.info(d?.source === 'camera' ? 'Pandit Ji turned your camera off.' : 'Pandit Ji muted your microphone.');
+      toast.info(d?.source === 'camera' ? L('Pandit Ji turned your camera off.', 'पंडित जी ने आपका कैमरा बंद कर दिया।') : L('Pandit Ji muted your microphone.', 'पंडित जी ने आपका माइक्रोफ़ोन म्यूट कर दिया।'));
     socket.on('video:granted', onGranted);
     socket.on('video:revoked', onRevoked);
     socket.on('video:muted_by_host', onMuted);
@@ -1218,7 +1255,7 @@ function VideoRenderer({
     if (!socket) return;
     socket.emit('video:request', { streamId, cancel: requested });
     setRequested(!requested);
-    toast.info(requested ? 'Request cancelled.' : 'Request sent. Pandit Ji will see it.');
+    toast.info(requested ? L('Request cancelled.', 'अनुरोध रद्द किया गया।') : L('Request sent. Pandit Ji will see it.', 'अनुरोध भेज दिया गया। पंडित जी शीघ्र देखेंगे।'));
   };
 
   const toggle = async (kind: 'cam' | 'mic') => {
@@ -1228,7 +1265,7 @@ function VideoRenderer({
       if (kind === 'cam') await localParticipant.setCameraEnabled(!isCameraEnabled);
       else await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
     } catch (err: any) {
-      toast.error(friendlyMediaError(err));
+      toast.error(friendlyMediaError(err, lang));
     } finally {
       setBusy(false);
     }
@@ -1245,7 +1282,7 @@ function VideoRenderer({
       ) : (
         <div className="video-overlay w-full h-full flex flex-col items-center justify-center text-stone-200 bg-stone-950">
           <DiyaIcon size={44} className="mb-2" />
-          <span className="text-sm font-medium text-stone-200">Awaiting Pandit Ji video transmission...</span>
+          <span className="text-sm font-medium text-stone-200">{L('Awaiting Pandit Ji video transmission...', 'पंडित जी के वीडियो प्रसारण की प्रतीक्षा...')}</span>
         </div>
       )}
 
@@ -1255,8 +1292,8 @@ function VideoRenderer({
             participant={guest}
             cameraRef={camOf(guest.identity)}
             micMuted={guest.isLocal ? !isMicrophoneEnabled : micMutedOf(guest.identity)}
-            label={guest.isLocal ? 'You' : (guest.name || 'Devotee')}
-            badge="Video guest"
+            label={guest.isLocal ? L('You', 'आप') : (guest.name || L('Devotee', 'भक्त'))}
+            badge={L('Video guest', 'वीडियो अतिथि')}
             mirror={guest.isLocal}
             className="w-32 sm:w-48 aspect-video shadow-2xl !border-orange-500/80"
           />
@@ -1273,20 +1310,20 @@ function VideoRenderer({
                 disabled={busy}
                 className={`px-3 py-1.5 rounded-full text-xs font-bold shadow-lg disabled:opacity-60 ${isCameraEnabled ? 'bg-emerald-700 text-white' : 'bg-amber-500 text-stone-950 animate-pulse'}`}
               >
-                {isCameraEnabled ? 'Camera on' : 'Turn on camera'}
+                {isCameraEnabled ? L('Camera on', 'कैमरा चालू') : L('Turn on camera', 'कैमरा चालू करें')}
               </button>
               <button
                 onClick={() => toggle('mic')}
                 disabled={busy}
                 className={`px-3 py-1.5 rounded-full text-xs font-bold shadow-lg disabled:opacity-60 ${isMicrophoneEnabled ? 'bg-emerald-700 text-white' : 'bg-stone-800/90 text-stone-100'}`}
               >
-                {isMicrophoneEnabled ? 'Mic on' : 'Mic off'}
+                {isMicrophoneEnabled ? L('Mic on', 'माइक चालू') : L('Mic off', 'माइक बंद')}
               </button>
               <button
                 onClick={stopLocalMedia}
                 className="px-3 py-1.5 rounded-full text-xs font-bold bg-red-700/90 text-white shadow-lg"
               >
-                Stop video
+                {L('Stop video', 'वीडियो बंद करें')}
               </button>
             </>
           ) : (
@@ -1296,7 +1333,7 @@ function VideoRenderer({
               className="px-3 py-1.5 rounded-full text-xs font-bold bg-black/75 hover:bg-black/90 border border-amber-400/50 text-amber-200 shadow-lg disabled:opacity-60"
               style={{ color: '#fde68a' }}
             >
-              {requested ? 'Cancel video request' : 'Ask to show my video'}
+              {requested ? L('Cancel video request', 'वीडियो अनुरोध रद्द करें') : L('Ask to show my video', 'मेरा वीडियो दिखाने का अनुरोध करें')}
             </button>
           )}
         </div>

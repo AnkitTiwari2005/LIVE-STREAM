@@ -42,13 +42,25 @@ import { useToast } from '@/components/Toast';
 import { DiyaIcon, VerifiedPanditBadge } from '@/components/icons/SpiritualIcons';
 import { SpecialPanditBadge } from '@/components/SpecialPanditBadge';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { useLang } from '@/lib/i18n/context';
+import {
+  formatCoins,
+  formatLocaleDate,
+  formatLocaleDateTime,
+  translateCategoryLabel,
+} from '@/lib/i18n/format';
+import {
+  AdminTabKey,
+  CONFIRM_COPY,
+  ConfirmActionType,
+  translateAdminToken,
+} from './admin-i18n';
 
 export default function AdminConsolePage() {
   const router = useRouter();
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<
-    'kpi' | 'pandits' | 'categories' | 'bookings' | 'dakshina' | 'deletionRequests' | 'kyc' | 'streams' | 'reports' | 'wordFilters' | 'users' | 'audit' | 'banner'
-  >('kpi');
+  const { lang, t: L } = useLang();
+  const [activeTab, setActiveTab] = useState<AdminTabKey>('kpi');
   const [stats, setStats] = useState<any>(null);
   const [panditsList, setPanditsList] = useState<any[]>([]);
   const [deletionRequests, setDeletionRequests] = useState<any[]>([]);
@@ -167,13 +179,18 @@ export default function AdminConsolePage() {
         window.dispatchEvent(new Event('sd-auth-change'));
 
         if (me.role !== 'ADMIN') {
-          toast.error('Access restricted to platform operators only.');
+          toast.error(L('Access restricted to platform operators only.', 'प्रवेश केवल प्लेटफ़ॉर्म संचालकों तक सीमित है।'));
           router.push('/');
           return;
         }
 
         if (!me.isTwoFactorEnabled) {
-          toast.error('Two-factor authentication is required for Platform Administrators. Please set up 2FA.');
+          toast.error(
+            L(
+              'Two-factor authentication is required for Platform Administrators. Please set up 2FA.',
+              'प्लेटफ़ॉर्म व्यवस्थापकों के लिए दो-चरणीय प्रमाणीकरण (2FA) अनिवार्य है। कृपया 2FA सेट करें।',
+            ),
+          );
           router.push('/account#2fa');
           return;
         }
@@ -187,7 +204,10 @@ export default function AdminConsolePage() {
           router.push('/login?redirect=/admin');
           return;
         }
-        toast.error(err?.message || 'Unable to verify administrator session. Please retry.');
+        toast.error(
+          err?.message ||
+            L('Unable to verify administrator session. Please retry.', 'व्यवस्थापक सत्र सत्यापित नहीं हो सका। कृपया पुनः प्रयास करें।'),
+        );
         setLoading(false);
       }
     }
@@ -210,7 +230,7 @@ export default function AdminConsolePage() {
   const openKycDoc = async (storageKey: string) => {
     const token = localStorage.getItem('pooja_token');
     if (!token) {
-      toast.error('Please sign in again.');
+      toast.error(L('Please sign in again.', 'कृपया पुनः साइन इन करें।'));
       return;
     }
     try {
@@ -220,7 +240,12 @@ export default function AdminConsolePage() {
         credentials: 'include',
       });
       if (!res.ok) {
-        toast.error('Could not open the document. It may have been removed or access was denied.');
+        toast.error(
+          L(
+            'Could not open the document. It may have been removed or access was denied.',
+            'दस्तावेज़ खोला नहीं जा सका। संभवतः इसे हटा दिया गया है या पहुँच अस्वीकृत है।',
+          ),
+        );
         return;
       }
       const blob = await res.blob();
@@ -229,7 +254,7 @@ export default function AdminConsolePage() {
       // Release the object URL after 60 seconds to free memory
       setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
     } catch {
-      toast.error('Network error while loading the document. Please try again.');
+      toast.error(L('Network error while loading the document. Please try again.', 'दस्तावेज़ लोड करते समय नेटवर्क त्रुटि हुई। कृपया पुनः प्रयास करें।'));
     }
   };
 
@@ -361,10 +386,10 @@ export default function AdminConsolePage() {
       setNewCategoryName('');
       setNewCategorySlug('');
       setNewCategoryOrder(0);
-      toast.success('Category created successfully!');
+      toast.success(L('Category created successfully!', 'श्रेणी सफलतापूर्वक बन गई!'));
       fetchCategories();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to create category');
+      toast.error(err.message || L('Failed to create category', 'श्रेणी नहीं बन सकी'));
     } finally {
       setSavingCategory(false);
     }
@@ -376,11 +401,11 @@ export default function AdminConsolePage() {
         method: 'PATCH',
         body: JSON.stringify(editCategoryForm),
       });
-      toast.success('Category updated successfully!');
+      toast.success(L('Category updated successfully!', 'श्रेणी सफलतापूर्वक अपडेट हुई!'));
       setEditingCategoryId(null);
       fetchCategories();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to update category');
+      toast.error(err.message || L('Failed to update category', 'श्रेणी अपडेट नहीं हो सकी'));
     }
   };
 
@@ -390,12 +415,16 @@ export default function AdminConsolePage() {
         method: 'PATCH',
         body: JSON.stringify({ isActive: !currentActive }),
       });
-      toast.success(`Category ${!currentActive ? 'activated' : 'deactivated'}!`);
+      toast.success(
+        !currentActive
+          ? L('Category activated!', 'श्रेणी सक्रिय की गई!')
+          : L('Category deactivated!', 'श्रेणी निष्क्रिय की गई!'),
+      );
       setCategoriesList((prev) =>
         prev.map((c) => (c.id === id ? { ...c, isActive: !currentActive } : c))
       );
     } catch (err: any) {
-      toast.error(err.message || 'Failed to toggle category');
+      toast.error(err.message || L('Failed to toggle category', 'श्रेणी स्थिति बदली नहीं जा सकी'));
     }
   };
 
@@ -450,13 +479,13 @@ export default function AdminConsolePage() {
           note: payoutForm.note.trim() || undefined,
         }),
       });
-      toast.success('Payout recorded successfully!');
+      toast.success(L('Payout recorded successfully!', 'भुगतान सफलतापूर्वक दर्ज हो गया!'));
       setPayoutModal(null);
       setPayoutForm({ coins: '', periodTo: new Date().toISOString().split('T')[0], method: 'UPI', reference: '', note: '' });
       fetchDakshinaLedger();
       fetchDeletionRequests();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to record payout');
+      toast.error(err.message || L('Failed to record payout', 'भुगतान दर्ज नहीं हो सका'));
     } finally {
       setSavingPayout(false);
     }
@@ -470,7 +499,7 @@ export default function AdminConsolePage() {
 
   const exportDakshinaCsv = () => {
     if (!dakshinaData.ledger.length) {
-      toast.error('No dakshina records to export.');
+      toast.error(L('No dakshina records to export.', 'निर्यात करने के लिए कोई दक्षिणा रिकॉर्ड नहीं है।'));
       return;
     }
     const headers = [
@@ -512,7 +541,7 @@ export default function AdminConsolePage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success('Dakshina Ledger CSV exported successfully!');
+    toast.success(L('Dakshina Ledger CSV exported successfully!', 'दक्षिणा बही CSV सफलतापूर्वक निर्यात हुई!'));
   };
 
   const handleSaveBanner = async (newEnabled?: boolean) => {
@@ -535,7 +564,7 @@ export default function AdminConsolePage() {
       });
 
       if (!res.ok) {
-        throw new Error('Failed to update banner configuration');
+        throw new Error(L('Failed to update banner configuration', 'बैनर सेटिंग अपडेट नहीं हो सकी'));
       }
 
       const updated = await res.json();
@@ -546,12 +575,16 @@ export default function AdminConsolePage() {
       }));
 
       if (payload.enabled) {
-        toast.success(`Occasion Banner for "${payload.occasion}" is now live sitewide!`);
+        toast.success(
+          lang === 'hi'
+            ? `"${payload.occasion}" उत्सव बैनर अब पूरी वेबसाइट पर लाइव है!`
+            : `Occasion Banner for "${payload.occasion}" is now live sitewide!`,
+        );
       } else {
-        toast.success('Occasion Banner is disabled and removed from the site.');
+        toast.success(L('Occasion Banner is disabled and removed from the site.', 'उत्सव बैनर निष्क्रिय कर साइट से हटा दिया गया है।'));
       }
     } catch (err: any) {
-      toast.error(err.message || 'Error updating banner');
+      toast.error(err.message || L('Error updating banner', 'बैनर अपडेट करने में त्रुटि'));
     } finally {
       setSavingBanner(false);
     }
@@ -576,12 +609,14 @@ export default function AdminConsolePage() {
       );
       toast.success(
         hasSpecialBadge
-          ? `Awarded Special Honors Badge "${title || 'आचार्य रत्न'}" to pandit!`
-          : 'Special Honors Badge revoked.'
+          ? lang === 'hi'
+            ? `पंडित जी को "${title || 'आचार्य रत्न'}" विशेष सम्मान बैज प्रदान किया गया!`
+            : `Awarded Special Honors Badge "${title || 'आचार्य रत्न'}" to pandit!`
+          : L('Special Honors Badge revoked.', 'विशेष सम्मान बैज वापस लिया गया।'),
       );
       setEditingSpecialBadge(null);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to update special badge');
+      toast.error(err.message || L('Failed to update special badge', 'विशेष बैज अपडेट नहीं हो सका'));
     } finally {
       setUpdatingPanditId(null);
     }
@@ -601,11 +636,11 @@ export default function AdminConsolePage() {
       );
       toast.success(
         isVerifiedBadge
-          ? 'KYC Verified Badge enabled for pandit.'
-          : 'Verified Badge disabled.'
+          ? L('KYC Verified Badge enabled for pandit.', 'पंडित जी के लिए KYC सत्यापित बैज सक्रिय किया गया।')
+          : L('Verified Badge disabled.', 'सत्यापित बैज निष्क्रिय किया गया।'),
       );
     } catch (err: any) {
-      toast.error(err.message || 'Failed to update verified badge');
+      toast.error(err.message || L('Failed to update verified badge', 'सत्यापित बैज अपडेट नहीं हो सका'));
     } finally {
       setUpdatingPanditId(null);
     }
@@ -614,7 +649,10 @@ export default function AdminConsolePage() {
   const handleKycDecision = async (profileId: string, decision: 'APPROVED' | 'REJECTED') => {
     if (decision === 'REJECTED') {
       // M-01: Open inline modal instead of window.prompt()
-      setRejectModal({ profileId, reason: 'Qualifications could not be verified.' });
+      setRejectModal({
+        profileId,
+        reason: L('Qualifications could not be verified.', 'योग्यता/प्रमाणपत्र सत्यापित नहीं हो सके।'),
+      });
       return;
     }
     await submitKycDecision(profileId, 'APPROVED', undefined);
@@ -627,9 +665,9 @@ export default function AdminConsolePage() {
         body: JSON.stringify({ decision, rejectionReason }),
       });
       loadAdminData();
-      toast.success('KYC status updated successfully.');
+      toast.success(L('KYC status updated successfully.', 'KYC स्थिति सफलतापूर्वक अपडेट हुई।'));
     } catch (err: any) {
-      toast.error(err.message || 'Failed to update KYC status.');
+      toast.error(err.message || L('Failed to update KYC status.', 'KYC स्थिति अपडेट नहीं हो सकी।'));
     }
   };
 
@@ -642,7 +680,7 @@ export default function AdminConsolePage() {
       const data = await apiFetch(`/admin/users?query=${encodeURIComponent(searchUser)}`);
       setUsers(data);
     } catch (err: any) {
-      toast.error(err.message || 'User search failed.');
+      toast.error(err.message || L('User search failed.', 'उपयोगकर्ता खोज विफल रही।'));
     }
   };
 
@@ -653,9 +691,13 @@ export default function AdminConsolePage() {
         body: JSON.stringify({ status, reason: 'Administrative intervention' }),
       });
       handleSearchUsers();
-      toast.success(`User status updated to ${status}.`);
+      toast.success(
+        lang === 'hi'
+          ? `उपयोगकर्ता स्थिति "${translateAdminToken(status, lang)}" में अपडेट की गई।`
+          : `User status updated to ${status}.`,
+      );
     } catch (err: any) {
-      toast.error(err.message || 'Status change failed.');
+      toast.error(err.message || L('Status change failed.', 'स्थिति बदली नहीं जा सकी।'));
     }
   };
 
@@ -670,9 +712,9 @@ export default function AdminConsolePage() {
         }),
       });
       setReports((prev) => prev.filter((r) => r.id !== reportId));
-      toast.success('Report resolved successfully.');
+      toast.success(L('Report resolved successfully.', 'रिपोर्ट सफलतापूर्वक निस्तारित हुई।'));
     } catch (err: any) {
-      toast.error(err.message || 'Failed to resolve report.');
+      toast.error(err.message || L('Failed to resolve report.', 'रिपोर्ट निस्तारित नहीं हो सकी।'));
     }
   };
 
@@ -686,9 +728,9 @@ export default function AdminConsolePage() {
       });
       setNewWord('');
       loadAdminData();
-      toast.success('Word added to chat filter.');
+      toast.success(L('Word added to chat filter.', 'शब्द चैट फ़िल्टर में जोड़ा गया।'));
     } catch (err: any) {
-      toast.error(err.message || 'Failed to add word to chat filter');
+      toast.error(err.message || L('Failed to add word to chat filter', 'शब्द चैट फ़िल्टर में नहीं जोड़ा जा सका'));
     }
   };
 
@@ -704,16 +746,16 @@ export default function AdminConsolePage() {
         await apiFetch(`/admin/streams/${confirmAction.id}/force-end`, { method: 'POST' });
         setConfirmAction(null);
         loadAdminData();
-        toast.success('Stream ended successfully.');
+        toast.success(L('Stream ended successfully.', 'प्रसारण सफलतापूर्वक समाप्त किया गया।'));
       } else if (confirmAction.type === 'deleteCategory') {
         await apiFetch(`/admin/categories/${confirmAction.id}`, { method: 'DELETE' });
         setCategoriesList((prev) => prev.filter((c) => c.id !== confirmAction.id));
         setConfirmAction(null);
-        toast.success('Category deleted successfully.');
+        toast.success(L('Category deleted successfully.', 'श्रेणी सफलतापूर्वक हटाई गई।'));
       } else if (confirmAction.type === 'approveDeletion') {
         const res = await apiFetch<any>(`/admin/deletion-requests/${confirmAction.id}/approve`, { method: 'POST' });
         setConfirmAction(null);
-        toast.success(res?.message || 'Pandit account approved and permanently erased.');
+        toast.success(res?.message || L('Pandit account approved and permanently erased.', 'पंडित खाता स्वीकृत कर स्थायी रूप से मिटा दिया गया।'));
         loadAdminData();
       } else if (confirmAction.type === 'rejectDeletion') {
         const res = await apiFetch<any>(`/admin/deletion-requests/${confirmAction.id}/reject`, {
@@ -721,19 +763,21 @@ export default function AdminConsolePage() {
           body: JSON.stringify({ reason: 'Deletion request cancelled by administrator' }),
         });
         setConfirmAction(null);
-        toast.success(res?.message || 'Account restored to active status.');
+        toast.success(res?.message || L('Account restored to active status.', 'खाता पुनः सक्रिय स्थिति में बहाल हो गया।'));
         loadAdminData();
       } else {
         const wordId = confirmAction.id;
         await apiFetch(`/admin/word-filters/${wordId}`, { method: 'DELETE' });
         setWordFilters((prev) => prev.filter((w) => w.id !== wordId));
         setConfirmAction(null);
-        toast.success('Word removed from chat filter.');
+        toast.success(L('Word removed from chat filter.', 'शब्द चैट फ़िल्टर से हटाया गया।'));
       }
     } catch (err: any) {
       toast.error(
         err?.message ||
-          (confirmAction.type === 'endStream' ? 'Failed to force end stream.' : 'Failed to remove word'),
+          (confirmAction.type === 'endStream'
+            ? L('Failed to force end stream.', 'प्रसारण तुरंत समाप्त नहीं हो सका।')
+            : L('Failed to remove word', 'शब्द हटाया नहीं जा सका')),
       );
     } finally {
       setConfirmBusy(false);
@@ -749,33 +793,39 @@ export default function AdminConsolePage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
           <div className="w-full max-w-md bg-stone-900 border border-gold/25 rounded-2xl shadow-2xl p-6 space-y-4">
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <X className="w-5 h-5 text-red-400" /> Rejection Reason
+              <X className="w-5 h-5 text-red-400" /> {L('Rejection Reason', 'अस्वीकृति का कारण')}
             </h3>
-            <p className="text-sm text-stone-400">Provide a clear reason. This will be sent to the applicant.</p>
+            <p className="text-sm text-stone-400">
+              {L('Provide a clear reason. This will be sent to the applicant.', 'स्पष्ट कारण लिखें। यह आवेदक को भेजा जाएगा।')}
+            </p>
             <textarea
               className="w-full bg-stone-800 border border-stone-700 rounded-xl px-4 py-3 text-sm text-white placeholder-stone-500 focus:outline-none focus:border-gold/50 resize-none"
               rows={3}
               autoFocus
               value={rejectModal.reason}
               onChange={(e) => setRejectModal({ ...rejectModal, reason: e.target.value })}
-              placeholder="e.g. Qualifications could not be verified."
+              placeholder={L('e.g. Qualifications could not be verified.', 'जैसे: प्रमाणपत्र/योग्यता सत्यापित नहीं हो सकी।')}
             />
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setRejectModal(null)}
                 className="px-4 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-sm font-semibold transition"
               >
-                Cancel
+                {L('Cancel', 'रद्द करें')}
               </button>
               <button
                 onClick={async () => {
                   const { profileId, reason } = rejectModal;
                   setRejectModal(null);
-                  await submitKycDecision(profileId, 'REJECTED', reason || 'Qualifications could not be verified.');
+                  await submitKycDecision(
+                    profileId,
+                    'REJECTED',
+                    reason || L('Qualifications could not be verified.', 'प्रमाणपत्र/योग्यता सत्यापित नहीं हो सकी।'),
+                  );
                 }}
                 className="px-4 py-2 rounded-xl bg-red-700 hover:bg-red-600 text-white text-sm font-bold transition"
               >
-                Confirm Rejection
+                {L('Confirm Rejection', 'अस्वीकृति की पुष्टि करें')}
               </button>
             </div>
           </div>
@@ -790,11 +840,12 @@ export default function AdminConsolePage() {
               <div className="flex items-center gap-2">
                 <Crown className="w-5 h-5 text-amber-400" />
                 <h3 className="font-serif text-lg font-bold text-white">
-                  Special Vedic Honors Badge
+                  {L('Special Vedic Honors Badge', 'विशेष वैदिक सम्मान बैज')}
                 </h3>
               </div>
               <button
                 onClick={() => setEditingSpecialBadge(null)}
+                aria-label={L('Close modal', 'मोडल बंद करें')}
                 className="text-stone-400 hover:text-white p-1"
               >
                 <X className="w-5 h-5" />
@@ -802,13 +853,23 @@ export default function AdminConsolePage() {
             </div>
 
             <p className="text-xs text-stone-300 leading-relaxed">
-              Award or update the prestigious Special Acharya Badge for{' '}
-              <strong className="text-amber-300 font-serif">{editingSpecialBadge.panditName}</strong>. This badge shines prominently on their public profile, search catalog, and live broadcasts.
+              {lang === 'hi' ? (
+                <>
+                  <strong className="text-amber-300 font-serif">{editingSpecialBadge.panditName}</strong> के लिए प्रतिष्ठित विशेष आचार्य सम्मान बैज प्रदान करें या अपडेट करें। यह बैज उनकी सार्वजनिक प्रोफ़ाइल, खोज सूची और लाइव प्रसारणों पर प्रमुखता से चमकता है।
+                </>
+              ) : (
+                <>
+                  Award or update the prestigious Special Acharya Badge for{' '}
+                  <strong className="text-amber-300 font-serif">{editingSpecialBadge.panditName}</strong>. This badge shines prominently on their public profile, search catalog, and live broadcasts.
+                </>
+              )}
             </p>
 
             {/* Live Badge Preview */}
             <div className="bg-obsidian border border-gold/20 rounded-2xl p-4 text-center space-y-2">
-              <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider block">Live Badge Preview</span>
+              <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider block">
+                {L('Live Badge Preview', 'लाइव बैज पूर्वावलोकन')}
+              </span>
               <div className="flex justify-center items-center py-2">
                 <SpecialPanditBadge title={editingSpecialBadge.title || 'आचार्य रत्न'} size="lg" />
               </div>
@@ -817,7 +878,7 @@ export default function AdminConsolePage() {
             {/* Title Input */}
             <div className="space-y-2">
               <label className="block text-xs font-semibold text-stone-200">
-                Honorific Title (हिंदी / Sanskrit)
+                {L('Honorific Title (Hindi / Sanskrit)', 'सम्मान उपाधि (हिंदी / संस्कृत)')}
               </label>
               <input
                 type="text"
@@ -825,7 +886,7 @@ export default function AdminConsolePage() {
                 onChange={(e) =>
                   setEditingSpecialBadge((prev) => prev ? { ...prev, title: e.target.value } : null)
                 }
-                placeholder="e.g. आचार्य रत्न, कर्मकाण्ड रत्न"
+                placeholder={L('e.g. Acharya Ratna, Karmakand Ratna', 'जैसे: आचार्य रत्न, कर्मकाण्ड रत्न')}
                 className="w-full px-3.5 py-2.5 bg-obsidian border border-gold/30 rounded-xl text-white text-xs focus:outline-none focus:border-amber-400"
               />
               <div className="flex flex-wrap gap-1.5 pt-1">
@@ -863,7 +924,7 @@ export default function AdminConsolePage() {
                   }
                   className="px-4 py-2 bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/50 rounded-xl text-xs font-semibold transition"
                 >
-                  Revoke Badge
+                  {L('Revoke Badge', 'बैज वापस लें')}
                 </button>
               ) : (
                 <div />
@@ -874,7 +935,7 @@ export default function AdminConsolePage() {
                   onClick={() => setEditingSpecialBadge(null)}
                   className="px-4 py-2 bg-stone-900 hover:bg-stone-800 text-stone-300 rounded-xl text-xs font-semibold"
                 >
-                  Cancel
+                  {L('Cancel', 'रद्द करें')}
                 </button>
                 <button
                   type="button"
@@ -889,10 +950,10 @@ export default function AdminConsolePage() {
                   className="px-5 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-obsidian rounded-xl text-xs font-bold transition shadow-md"
                 >
                   {updatingPanditId === editingSpecialBadge.profileId
-                    ? 'Saving...'
+                    ? L('Saving...', 'सहेजा जा रहा है...')
                     : editingSpecialBadge.hasSpecialBadge
-                    ? 'Update Badge'
-                    : 'Award Special Badge'}
+                    ? L('Update Badge', 'बैज अपडेट करें')
+                    : L('Award Special Badge', 'विशेष बैज प्रदान करें')}
                 </button>
               </div>
             </div>
@@ -904,36 +965,42 @@ export default function AdminConsolePage() {
         <div className="flex items-center justify-between mb-8 pb-4 border-b border-gold/15">
           <div>
             <h1 className="font-serif text-2xl sm:text-3xl font-bold text-white flex items-center gap-2">
-              <ShieldCheck className="w-6 h-6 text-gold" /> Platform Operator Console
+              <ShieldCheck className="w-6 h-6 text-gold" /> {L('Platform Operator Console', 'प्लेटफ़ॉर्म व्यवस्थापक कंसोल')}
             </h1>
             <p className="text-xs text-stone-400 mt-1">
-              Global monitoring, KYC approvals, emergency kill switches, and audit trail
+              {L(
+                'Global monitoring, KYC approvals, emergency kill switches, and audit trail',
+                'वैश्विक निगरानी, KYC स्वीकृतियाँ, आपातकालीन नियंत्रण और ऑडिट लॉग',
+              )}
             </p>
           </div>
           <button
             onClick={loadAdminData}
             className="text-xs font-semibold px-4 py-2 bg-obsidian-soft hover:bg-stone-800 text-gold-pale border border-gold/20 rounded-full transition-colors"
           >
-            Refresh Data
+            {L('Refresh Data', 'डेटा ताज़ा करें')}
           </button>
         </div>
 
       {/* Tabs */}
       <div className="flex items-center gap-2 border-b border-stone-200 dark:border-stone-800 pb-3 mb-8 overflow-x-auto w-full max-w-full min-w-0 no-scrollbar">
         {[
-          { key: 'kpi', label: 'Overview Metrics' },
-          { key: 'pandits', label: `Vedic Pandits (${panditsList.length})` },
-          { key: 'categories', label: `Stream Categories (${categoriesList.length})` },
-          { key: 'bookings', label: `Dakshina Offerings (${bookingsTotal || bookingsList.length})` },
-          { key: 'dakshina', label: 'Dakshina Ledger' },
-          { key: 'deletionRequests', label: `Deletion Requests (${deletionRequests.length})` },
-          { key: 'kyc', label: `Pending KYC (${kycList.length})` },
-          { key: 'streams', label: `Live Monitor (${liveStreams.length})` },
-          { key: 'reports', label: `Safety Reports (${reports.length})` },
-          { key: 'wordFilters', label: `Prohibited Words (${wordFilters.length})` },
-          { key: 'users', label: `User Directory (${users.length})` },
-          { key: 'audit', label: `Audit Log (${auditLogs.length})` },
-          { key: 'banner', label: `Occasion Banner ${bannerConfig.enabled ? '● Active' : ''}` },
+          { key: 'kpi', label: L('Overview Metrics', 'मुख्य आँकड़े') },
+          { key: 'pandits', label: `${L('Vedic Pandits', 'वैदिक पंडित')} (${panditsList.length})` },
+          { key: 'categories', label: `${L('Stream Categories', 'प्रसारण श्रेणियाँ')} (${categoriesList.length})` },
+          { key: 'bookings', label: `${L('Dakshina Offerings', 'दक्षिणा अर्पण')} (${bookingsTotal || bookingsList.length})` },
+          { key: 'dakshina', label: L('Dakshina Ledger', 'दक्षिणा बही') },
+          { key: 'deletionRequests', label: `${L('Deletion Requests', 'खाता विलोपन अनुरोध')} (${deletionRequests.length})` },
+          { key: 'kyc', label: `${L('Pending KYC', 'लंबित KYC')} (${kycList.length})` },
+          { key: 'streams', label: `${L('Live Monitor', 'लाइव निगरानी')} (${liveStreams.length})` },
+          { key: 'reports', label: `${L('Safety Reports', 'सुरक्षा रिपोर्ट')} (${reports.length})` },
+          { key: 'wordFilters', label: `${L('Prohibited Words', 'प्रतिबंधित शब्द')} (${wordFilters.length})` },
+          { key: 'users', label: `${L('User Directory', 'उपयोगकर्ता सूची')} (${users.length})` },
+          { key: 'audit', label: `${L('Audit Log', 'ऑडिट लॉग')} (${auditLogs.length})` },
+          {
+            key: 'banner',
+            label: `${L('Occasion Banner', 'उत्सव बैनर')} ${bannerConfig.enabled ? L('● Active', '● सक्रिय') : ''}`,
+          },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -953,27 +1020,39 @@ export default function AdminConsolePage() {
       {activeTab === 'kpi' && stats && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
-            <span className="text-[11px] text-stone-600 dark:text-stone-400 uppercase font-semibold block">Total Users</span>
+            <span className="text-[11px] text-stone-600 dark:text-stone-400 uppercase font-semibold block">
+              {L('Total Users', 'कुल उपयोगकर्ता')}
+            </span>
             <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{stats.totalUsers}</span>
           </div>
           <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
-            <span className="text-[11px] text-orange-700 dark:text-orange-400 uppercase font-semibold block">Approved Pandits</span>
+            <span className="text-[11px] text-orange-700 dark:text-orange-400 uppercase font-semibold block">
+              {L('Approved Pandits', 'स्वीकृत पंडित जी')}
+            </span>
             <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{stats.totalStreamers}</span>
           </div>
           <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
-            <span className="text-[11px] text-red-700 dark:text-red-400 uppercase font-semibold block">Live Right Now</span>
+            <span className="text-[11px] text-red-700 dark:text-red-400 uppercase font-semibold block">
+              {L('Live Right Now', 'अभी लाइव')}
+            </span>
             <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{stats.activeLiveStreams}</span>
           </div>
           <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
-            <span className="text-[11px] text-stone-600 dark:text-stone-400 uppercase font-semibold block">Total Broadcasts</span>
+            <span className="text-[11px] text-stone-600 dark:text-stone-400 uppercase font-semibold block">
+              {L('Total Broadcasts', 'कुल प्रसारण')}
+            </span>
             <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{stats.totalStreams}</span>
           </div>
           <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
-            <span className="text-[11px] text-amber-800 dark:text-amber-400 uppercase font-semibold block">Pending KYC</span>
+            <span className="text-[11px] text-amber-800 dark:text-amber-400 uppercase font-semibold block">
+              {L('Pending KYC', 'लंबित KYC')}
+            </span>
             <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{stats.pendingKyc}</span>
           </div>
           <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm dark:shadow-none">
-            <span className="text-[11px] text-rose-700 dark:text-rose-400 uppercase font-semibold block">Open Reports</span>
+            <span className="text-[11px] text-rose-700 dark:text-rose-400 uppercase font-semibold block">
+              {L('Open Reports', 'खुली रिपोर्ट')}
+            </span>
             <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{stats.openReports}</span>
           </div>
         </div>
@@ -985,23 +1064,31 @@ export default function AdminConsolePage() {
           {/* Summary metrics for Pandits */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm">
-              <span className="text-[11px] text-stone-500 dark:text-stone-400 uppercase font-semibold block">Total Pandits</span>
+              <span className="text-[11px] text-stone-500 dark:text-stone-400 uppercase font-semibold block">
+                {L('Total Pandits', 'कुल पंडित जी')}
+              </span>
               <span className="text-2xl font-extrabold text-stone-900 dark:text-white mt-1 block">{panditsList.length}</span>
             </div>
             <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm">
-              <span className="text-[11px] text-amber-500 uppercase font-semibold block">Special Honors (आचार्य रत्न)</span>
+              <span className="text-[11px] text-amber-500 uppercase font-semibold block">
+                {L('Special Honors (आचार्य रत्न)', 'विशेष सम्मान (आचार्य रत्न)')}
+              </span>
               <span className="text-2xl font-extrabold text-amber-400 mt-1 block">
                 {panditsList.filter((p) => p.hasSpecialBadge).length}
               </span>
             </div>
             <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm">
-              <span className="text-[11px] text-emerald-500 uppercase font-semibold block">KYC Verified Badges</span>
+              <span className="text-[11px] text-emerald-500 uppercase font-semibold block">
+                {L('KYC Verified Badges', 'KYC सत्यापित बैज')}
+              </span>
               <span className="text-2xl font-extrabold text-emerald-400 mt-1 block">
                 {panditsList.filter((p) => p.isVerifiedBadge).length}
               </span>
             </div>
             <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl shadow-sm">
-              <span className="text-[11px] text-orange-500 uppercase font-semibold block">Broadcasts Conducted</span>
+              <span className="text-[11px] text-orange-500 uppercase font-semibold block">
+                {L('Broadcasts Conducted', 'संचालित प्रसारण')}
+              </span>
               <span className="text-2xl font-extrabold text-orange-400 mt-1 block">
                 {panditsList.reduce((acc, p) => acc + (p.totalStreams || 0), 0)}
               </span>
@@ -1014,7 +1101,7 @@ export default function AdminConsolePage() {
               <Search className="w-4 h-4 absolute left-3 top-3 text-stone-400" />
               <input
                 type="text"
-                placeholder="Search pandits by name, email, or specialty..."
+                placeholder={L('Search pandits by name, email, or specialty...', 'नाम, ईमेल या विशेषज्ञता से पंडित खोजें...')}
                 value={searchPandit}
                 onChange={(e) => setSearchPandit(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold/40"
@@ -1025,17 +1112,17 @@ export default function AdminConsolePage() {
                 <button
                   key={filter}
                   onClick={() => setPanditFilter(filter)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition whitespace-nowrap ${
                     panditFilter === filter
                       ? 'bg-gold text-obsidian font-bold shadow'
                       : 'bg-stone-950 text-stone-400 hover:text-white border border-stone-800'
                   }`}
                 >
                   {filter === 'all'
-                    ? `All (${panditsList.length})`
+                    ? `${L('All', 'सभी')} (${panditsList.length})`
                     : filter === 'special'
-                    ? `Special Honors (${panditsList.filter((p) => p.hasSpecialBadge).length})`
-                    : `Verified (${panditsList.filter((p) => p.isVerifiedBadge).length})`}
+                    ? `${L('Special Honors', 'विशेष सम्मान')} (${panditsList.filter((p) => p.hasSpecialBadge).length})`
+                    : `${L('Verified', 'सत्यापित')} (${panditsList.filter((p) => p.isVerifiedBadge).length})`}
                 </button>
               ))}
             </div>
@@ -1079,7 +1166,7 @@ export default function AdminConsolePage() {
                         </h4>
                         {pandit.isVerifiedBadge && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950/60 text-emerald-400 border border-emerald-500/40">
-                            <VerifiedPanditBadge size={12} /> KYC Verified
+                            <VerifiedPanditBadge size={12} /> {L('KYC Verified', 'KYC सत्यापित')}
                           </span>
                         )}
                         {pandit.hasSpecialBadge && (
@@ -1087,7 +1174,7 @@ export default function AdminConsolePage() {
                         )}
                         {pandit.status === 'DELETION_REQUESTED' && (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950/70 text-amber-300 border border-amber-500/40">
-                            Deletion Pending
+                            {L('Deletion Pending', 'विलोपन लंबित')}
                           </span>
                         )}
                       </div>
@@ -1095,12 +1182,12 @@ export default function AdminConsolePage() {
                       <div className="flex flex-wrap items-center gap-3 text-[11px] text-stone-400">
                         <span>{pandit.email}</span>
                         <span>•</span>
-                        <span>{pandit.followerCount || 0} Followers</span>
+                        <span>{pandit.followerCount || 0} {L('Followers', 'अनुयायी')}</span>
                         <span>•</span>
-                        <span>{pandit.totalStreams || 0} Broadcasts</span>
+                        <span>{pandit.totalStreams || 0} {L('Broadcasts', 'प्रसारण')}</span>
                         <span>•</span>
                         <span className="uppercase text-[10px] font-bold text-amber-500/90">
-                          KYC: {pandit.kycStatus}
+                          KYC: {translateAdminToken(pandit.kycStatus, lang)}
                         </span>
                       </div>
 
@@ -1144,7 +1231,11 @@ export default function AdminConsolePage() {
                       }`}
                     >
                       <Sparkles className="w-3.5 h-3.5" />
-                      <span>{pandit.hasSpecialBadge ? 'Edit Special Badge' : 'Award Special Badge'}</span>
+                      <span>
+                        {pandit.hasSpecialBadge
+                          ? L('Edit Special Badge', 'विशेष बैज संपादित करें')
+                          : L('Award Special Badge', 'विशेष बैज प्रदान करें')}
+                      </span>
                     </button>
 
                     {/* Toggle Verified KYC Badge Button */}
@@ -1160,7 +1251,11 @@ export default function AdminConsolePage() {
                       }`}
                     >
                       <ShieldCheck className="w-3.5 h-3.5" />
-                      <span>{pandit.isVerifiedBadge ? 'Revoke Verified' : 'Mark Verified'}</span>
+                      <span>
+                        {pandit.isVerifiedBadge
+                          ? L('Revoke Verified', 'सत्यापित हटाएँ')
+                          : L('Mark Verified', 'सत्यापित चिह्नित करें')}
+                      </span>
                     </button>
 
                     {/* View Public Profile Link */}
@@ -1171,7 +1266,7 @@ export default function AdminConsolePage() {
                       className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-stone-950 hover:bg-stone-800 text-stone-300 border border-stone-800 transition"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
-                      <span>View Profile</span>
+                      <span>{L('View Profile', 'प्रोफ़ाइल देखें')}</span>
                     </a>
                   </div>
                 </div>
@@ -1186,17 +1281,23 @@ export default function AdminConsolePage() {
           {/* Summary KPI Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
-              <span className="text-[11px] text-stone-400 uppercase font-semibold block">Total Categories</span>
+              <span className="text-[11px] text-stone-400 uppercase font-semibold block">
+                {L('Total Categories', 'कुल श्रेणियाँ')}
+              </span>
               <span className="text-2xl font-extrabold text-white mt-1 block">{categoriesList.length}</span>
             </div>
             <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
-              <span className="text-[11px] text-emerald-400 uppercase font-semibold block">Active on Platform</span>
+              <span className="text-[11px] text-emerald-400 uppercase font-semibold block">
+                {L('Active on Platform', 'वेबसाइट पर सक्रिय')}
+              </span>
               <span className="text-2xl font-extrabold text-emerald-400 mt-1 block">
                 {categoriesList.filter((c) => c.isActive !== false).length}
               </span>
             </div>
             <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
-              <span className="text-[11px] text-amber-400 uppercase font-semibold block">Inactive / Hidden</span>
+              <span className="text-[11px] text-amber-400 uppercase font-semibold block">
+                {L('Inactive / Hidden', 'निष्क्रिय / छिपी हुई')}
+              </span>
               <span className="text-2xl font-extrabold text-amber-400 mt-1 block">
                 {categoriesList.filter((c) => c.isActive === false).length}
               </span>
@@ -1206,10 +1307,13 @@ export default function AdminConsolePage() {
           {/* Create Category Form */}
           <div className="bg-stone-900 border border-stone-800 p-5 sm:p-6 rounded-2xl shadow-lg">
             <h3 className="text-sm font-bold text-white mb-1.5 flex items-center gap-2">
-              <FolderPlus className="w-4 h-4 text-gold" /> Add New Stream Category
+              <FolderPlus className="w-4 h-4 text-gold" /> {L('Add New Stream Category', 'नई प्रसारण श्रेणी जोड़ें')}
             </h3>
             <p className="text-xs text-stone-400 mb-4">
-              Create sacred stream categories (e.g. Maha Shivratri, Vedic Havan, Bhagavad Gita, Rudrabhishek) for devotees to discover live broadcasts.
+              {L(
+                'Create sacred stream categories (e.g. Maha Shivratri, Vedic Havan, Bhagavad Gita, Rudrabhishek) for devotees to discover live broadcasts.',
+                'भक्तों द्वारा लाइव प्रसारण खोजने के लिए पावन श्रेणियाँ बनाएँ (जैसे: महाशिवरात्रि, वैदिक हवन, भगवद गीता, रुद्राभिषेक)।',
+              )}
             </p>
             <form onSubmit={handleCreateCategory} className="grid grid-cols-1 sm:grid-cols-4 gap-3">
               <div className="sm:col-span-2">
@@ -1223,7 +1327,7 @@ export default function AdminConsolePage() {
                       setNewCategorySlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
                     }
                   }}
-                  placeholder="Category Name (e.g. Maha Shivratri)"
+                  placeholder={L('Category Name (e.g. Maha Shivratri)', 'श्रेणी का नाम (जैसे: महाशिवरात्रि)')}
                   className="w-full px-3.5 py-2.5 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold"
                 />
               </div>
@@ -1232,7 +1336,7 @@ export default function AdminConsolePage() {
                   type="text"
                   value={newCategorySlug}
                   onChange={(e) => setNewCategorySlug(e.target.value)}
-                  placeholder="Slug (e.g. maha-shivratri)"
+                  placeholder={L('Slug (e.g. maha-shivratri)', 'स्लग (जैसे: maha-shivratri)')}
                   className="w-full px-3.5 py-2.5 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold"
                 />
               </div>
@@ -1241,7 +1345,7 @@ export default function AdminConsolePage() {
                   type="number"
                   value={newCategoryOrder}
                   onChange={(e) => setNewCategoryOrder(Number(e.target.value))}
-                  placeholder="Order (0)"
+                  placeholder={L('Order (0)', 'क्रम (0)')}
                   className="w-20 px-3 py-2.5 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold"
                 />
                 <button
@@ -1249,7 +1353,7 @@ export default function AdminConsolePage() {
                   disabled={savingCategory}
                   className="flex-1 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-obsidian rounded-xl text-xs font-bold transition shadow inline-flex items-center justify-center gap-1.5 disabled:opacity-50"
                 >
-                  <Plus className="w-3.5 h-3.5" /> {savingCategory ? 'Creating...' : 'Create'}
+                  <Plus className="w-3.5 h-3.5" /> {savingCategory ? L('Creating...', 'बन रहा है...') : L('Create', 'बनाएँ')}
                 </button>
               </div>
             </form>
@@ -1261,15 +1365,21 @@ export default function AdminConsolePage() {
               <div className="bg-stone-900 border border-gold/30 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
                 <div className="flex items-center justify-between border-b border-stone-800 pb-3">
                   <h3 className="font-serif text-base font-bold text-white flex items-center gap-2">
-                    <Edit2 className="w-4 h-4 text-gold" /> Edit Category
+                    <Edit2 className="w-4 h-4 text-gold" /> {L('Edit Category', 'श्रेणी संपादित करें')}
                   </h3>
-                  <button onClick={() => setEditingCategoryId(null)} className="text-stone-400 hover:text-white">
+                  <button
+                    onClick={() => setEditingCategoryId(null)}
+                    aria-label={L('Close modal', 'मोडल बंद करें')}
+                    className="text-stone-400 hover:text-white"
+                  >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-semibold text-stone-300 mb-1">Category Name</label>
+                    <label className="block text-xs font-semibold text-stone-300 mb-1">
+                      {L('Category Name', 'श्रेणी का नाम')}
+                    </label>
                     <input
                       type="text"
                       value={editCategoryForm.name}
@@ -1278,7 +1388,9 @@ export default function AdminConsolePage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-stone-300 mb-1">Display Order</label>
+                    <label className="block text-xs font-semibold text-stone-300 mb-1">
+                      {L('Display Order', 'प्रदर्शन क्रम')}
+                    </label>
                     <input
                       type="number"
                       value={editCategoryForm.displayOrder}
@@ -1295,7 +1407,7 @@ export default function AdminConsolePage() {
                       className="rounded border-stone-700 text-gold focus:ring-0"
                     />
                     <label htmlFor="catIsActive" className="text-xs text-stone-300 cursor-pointer">
-                      Category is Active and visible on the website
+                      {L('Category is Active and visible on the website', 'श्रेणी सक्रिय है और वेबसाइट पर दिखाई देगी')}
                     </label>
                   </div>
                 </div>
@@ -1305,14 +1417,14 @@ export default function AdminConsolePage() {
                     onClick={() => setEditingCategoryId(null)}
                     className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-xl text-xs font-semibold"
                   >
-                    Cancel
+                    {L('Cancel', 'रद्द करें')}
                   </button>
                   <button
                     type="button"
                     onClick={() => handleUpdateCategory(editingCategoryId)}
                     className="px-4 py-2 bg-gold hover:bg-gold-deep text-obsidian rounded-xl text-xs font-bold transition shadow"
                   >
-                    Save Changes
+                    {L('Save Changes', 'परिवर्तन सहेजें')}
                   </button>
                 </div>
               </div>
@@ -1323,19 +1435,19 @@ export default function AdminConsolePage() {
           <div className="bg-stone-900 border border-stone-800 rounded-2xl overflow-hidden shadow-xl">
             <div className="p-4 bg-stone-950/60 border-b border-stone-800 flex items-center justify-between">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Layers className="w-4 h-4 text-gold" /> Existing Categories ({categoriesList.length})
+                <Layers className="w-4 h-4 text-gold" /> {L('Existing Categories', 'मौजूदा श्रेणियाँ')} ({categoriesList.length})
               </h3>
               <button
                 onClick={fetchCategories}
                 className="text-xs text-stone-400 hover:text-white flex items-center gap-1.5 transition"
               >
-                <RefreshCw className="w-3.5 h-3.5" /> Refresh
+                <RefreshCw className="w-3.5 h-3.5" /> {L('Refresh', 'रिफ़्रेश करें')}
               </button>
             </div>
 
             {categoriesList.length === 0 ? (
               <div className="p-10 text-center text-stone-400 text-xs">
-                No stream categories configured yet. Add your first category above!
+                {L('No stream categories configured yet. Add your first category above!', 'अभी तक कोई प्रसारण श्रेणी नहीं है। ऊपर अपनी पहली श्रेणी जोड़ें!')}
               </div>
             ) : (
               <div className="divide-y divide-stone-800">
@@ -1347,7 +1459,9 @@ export default function AdminConsolePage() {
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-white text-sm truncate">{cat.name}</span>
+                          <span className="font-bold text-white text-sm truncate">
+                            {translateCategoryLabel(cat.name, lang)}
+                          </span>
                           <span
                             className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                               cat.isActive !== false
@@ -1355,10 +1469,12 @@ export default function AdminConsolePage() {
                                 : 'bg-stone-800 text-stone-400 border border-stone-700'
                             }`}
                           >
-                            {cat.isActive !== false ? 'Active' : 'Hidden'}
+                            {cat.isActive !== false ? L('Active', 'सक्रिय') : L('Hidden', 'छिपा हुआ')}
                           </span>
                         </div>
-                        <span className="font-mono text-[11px] text-stone-500 block">slug: {cat.slug}</span>
+                        <span className="font-mono text-[11px] text-stone-500 block">
+                          {L('slug:', 'स्लग:')} {cat.slug}
+                        </span>
                       </div>
                     </div>
 
@@ -1371,7 +1487,7 @@ export default function AdminConsolePage() {
                             : 'bg-emerald-950/60 text-emerald-300 border-emerald-600/40 hover:bg-emerald-900/40'
                         }`}
                       >
-                        {cat.isActive !== false ? 'Deactivate' : 'Activate'}
+                        {cat.isActive !== false ? L('Deactivate', 'निष्क्रिय करें') : L('Activate', 'सक्रिय करें')}
                       </button>
                       <button
                         onClick={() => {
@@ -1384,12 +1500,12 @@ export default function AdminConsolePage() {
                         }}
                         className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-stone-950 hover:bg-stone-800 text-stone-300 border border-stone-800 transition"
                       >
-                        Edit
+                        {L('Edit', 'संपादित करें')}
                       </button>
                       <button
                         onClick={() => handleDeleteCategory(cat.id)}
                         className="p-1.5 text-stone-500 hover:text-red-400 hover:bg-stone-800 rounded-lg transition"
-                        title="Delete Category"
+                        title={L('Delete Category', 'श्रेणी हटाएँ')}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -1408,25 +1524,33 @@ export default function AdminConsolePage() {
           {/* Summary KPI Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
-              <span className="text-[11px] text-stone-400 uppercase font-semibold block">Total Offerings</span>
+              <span className="text-[11px] text-stone-400 uppercase font-semibold block">
+                {L('Total Offerings', 'कुल अर्पण')}
+              </span>
               <span className="text-2xl font-extrabold text-white mt-1 block">{bookingsTotal}</span>
             </div>
             <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
-              <span className="text-[11px] text-emerald-400 uppercase font-semibold block">Confirmed</span>
+              <span className="text-[11px] text-emerald-400 uppercase font-semibold block">
+                {L('Confirmed', 'पुष्ट')}
+              </span>
               <span className="text-2xl font-extrabold text-emerald-400 mt-1 block">
                 {bookingsList.filter((b) => b.status === 'SUCCESS').length}
               </span>
             </div>
             <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
-              <span className="text-[11px] text-amber-400 uppercase font-semibold block">Pending / Unpaid</span>
+              <span className="text-[11px] text-amber-400 uppercase font-semibold block">
+                {L('Pending / Unpaid', 'लंबित / अपूर्ण')}
+              </span>
               <span className="text-2xl font-extrabold text-amber-400 mt-1 block">
                 {bookingsList.filter((b) => b.status === 'PENDING').length}
               </span>
             </div>
             <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
-              <span className="text-[11px] text-gold uppercase font-semibold block">Total Dakshina Volume</span>
+              <span className="text-[11px] text-gold uppercase font-semibold block">
+                {L('Total Dakshina Volume', 'कुल दक्षिणा मात्रा')}
+              </span>
               <span className="text-2xl font-extrabold text-gold mt-1 block">
-                {bookingsList.reduce((acc, b) => acc + (b.coins || 0), 0)} coins
+                {formatCoins(bookingsList.reduce((acc, b) => acc + (b.coins || 0), 0), lang)}
               </span>
             </div>
           </div>
@@ -1437,7 +1561,7 @@ export default function AdminConsolePage() {
               <Search className="w-4 h-4 absolute left-3 top-3 text-stone-400" />
               <input
                 type="text"
-                placeholder="Search by devotee, gotra, or pandit ji..."
+                placeholder={L('Search by devotee, gotra, or pandit ji...', 'भक्त, गोत्र या पंडित जी के नाम से खोजें...')}
                 value={searchBooking}
                 onChange={(e) => setSearchBooking(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold"
@@ -1451,19 +1575,19 @@ export default function AdminConsolePage() {
                     setBookingStatusFilter(st);
                     fetchBookings(st);
                   }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition whitespace-nowrap ${
                     bookingStatusFilter === st
                       ? 'bg-gold text-obsidian font-bold shadow'
                       : 'bg-stone-950 text-stone-400 hover:text-white border border-stone-800'
                   }`}
                 >
-                  {st === 'ALL' ? 'All Offerings' : st}
+                  {st === 'ALL' ? L('All Offerings', 'सभी अर्पण') : translateAdminToken(st, lang)}
                 </button>
               ))}
               <button
                 onClick={() => fetchBookings(bookingStatusFilter)}
                 className="p-2 bg-stone-950 hover:bg-stone-800 text-stone-400 hover:text-white rounded-lg border border-stone-800 transition"
-                title="Refresh"
+                title={L('Refresh', 'रिफ़्रेश करें')}
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${loadingBookings ? 'animate-spin' : ''}`} />
               </button>
@@ -1494,11 +1618,16 @@ export default function AdminConsolePage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-bold text-white text-sm">{b.devoteeName}</span>
                       {b.devoteeEmail && (
-                        <span className="text-xs text-stone-400 font-mono" title="Email masked for privacy">({b.devoteeEmail} 🔒)</span>
+                        <span
+                          className="text-xs text-stone-400 font-mono"
+                          title={L('Email masked for privacy', 'गोपनीयता के लिए ईमेल मास्क्ड है')}
+                        >
+                          ({b.devoteeEmail} 🔒)
+                        </span>
                       )}
                       {b.gotra && (
                         <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-950/60 text-amber-300 border border-amber-600/40">
-                          गोत्र: {b.gotra}
+                          {L('Gotra:', 'गोत्र:')} {b.gotra}
                         </span>
                       )}
                       <span
@@ -1510,24 +1639,26 @@ export default function AdminConsolePage() {
                             : 'bg-red-950/60 text-red-400 border border-red-500/40'
                         }`}
                       >
-                        {b.status}
+                        {translateAdminToken(b.status, lang)}
                       </span>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-4 text-xs text-stone-300">
                       <div>
-                        <span className="text-stone-500">Assigned Pandit:</span>{' '}
-                        <strong className="text-gold font-serif">{b.panditName || 'Temple Priest'}</strong>
+                        <span className="text-stone-500">{L('Assigned Pandit:', 'नियुक्त पंडित जी:')}</span>{' '}
+                        <strong className="text-gold font-serif">
+                          {b.panditName || L('Temple Priest', 'मंदिर पुरोहित')}
+                        </strong>
                       </div>
                       {b.streamTitle && (
                         <div>
-                          <span className="text-stone-500">Pooja Broadcast:</span>{' '}
+                          <span className="text-stone-500">{L('Pooja Broadcast:', 'पूजा प्रसारण:')}</span>{' '}
                           <span className="text-stone-200">{b.streamTitle}</span>
                         </div>
                       )}
                       <div>
-                        <span className="text-stone-500">Dakshina:</span>{' '}
-                        <strong className="text-amber-400">{b.coins || 0} Coins</strong>
+                        <span className="text-stone-500">{L('Dakshina:', 'दक्षिणा:')}</span>{' '}
+                        <strong className="text-amber-400">{formatCoins(b.coins || 0, lang)}</strong>
                         {b.amount ? ` (₹${Number(b.amount).toFixed(2)})` : ''}
                       </div>
                     </div>
@@ -1540,15 +1671,20 @@ export default function AdminConsolePage() {
                   </div>
 
                   <div className="text-right shrink-0 text-[11px] text-stone-500 font-mono flex lg:flex-col justify-between items-end">
-                    <span>{new Date(b.createdAt).toLocaleDateString()}</span>
-                    <span>{new Date(b.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    <span>{formatLocaleDate(b.createdAt, lang)}</span>
+                    <span>
+                      {new Date(b.createdAt).toLocaleTimeString(lang === 'hi' ? 'hi-IN' : [], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
                   </div>
                 </div>
               ))}
 
             {bookingsList.length === 0 && (
               <div className="bg-stone-900 border border-stone-800 p-12 text-center rounded-2xl text-stone-400 text-xs">
-                No dakshina offering records found matching current criteria.
+                {L('No dakshina offering records found matching current criteria.', 'वर्तमान मानदंडों से मेल खाने वाले कोई दक्षिणा अर्पण रिकॉर्ड नहीं मिले।')}
               </div>
             )}
           </div>
@@ -1561,36 +1697,46 @@ export default function AdminConsolePage() {
           {/* Summary Financial KPI Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
-              <span className="text-[11px] text-stone-400 uppercase font-semibold block">Total Pandit Earnings (Dakshina + watch time)</span>
+              <span className="text-[11px] text-stone-400 uppercase font-semibold block">
+                {L('Total Pandit Earnings (Dakshina + watch time)', 'कुल पंडित आय (दक्षिणा + दर्शन-समय)')}
+              </span>
               <span className="text-2xl font-extrabold text-gold mt-1 block">
-                {(dakshinaData.platformTotalCoins ?? 0).toLocaleString()} Coins
+                {formatCoins(dakshinaData.platformTotalCoins ?? 0, lang)}
               </span>
               <span className="text-[11px] text-stone-500 block mt-0.5">
-                ₹{(dakshinaData.platformTotalInr ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} net earned (85%)
+                ₹{(dakshinaData.platformTotalInr ?? 0).toLocaleString(lang === 'hi' ? 'en-IN' : undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
+                {L('net earned (85%)', 'शुद्ध अर्जित (85%)')}
               </span>
             </div>
             <div className="bg-stone-900 border border-amber-500/20 p-4 rounded-2xl shadow-sm">
-              <span className="text-[11px] text-amber-400 uppercase font-semibold block">Total Due to Pandits</span>
+              <span className="text-[11px] text-amber-400 uppercase font-semibold block">
+                {L('Total Due to Pandits', 'पंडितों को कुल देय')}
+              </span>
               <span className="text-2xl font-extrabold text-amber-400 mt-1 block">
-                {(dakshinaData.platformDueCoins ?? 0).toLocaleString()} Coins
+                {formatCoins(dakshinaData.platformDueCoins ?? 0, lang)}
               </span>
               <span className="text-[11px] text-stone-500 block mt-0.5">
-                ₹{(dakshinaData.platformDueNetInr ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} pending settlement
+                ₹{(dakshinaData.platformDueNetInr ?? 0).toLocaleString(lang === 'hi' ? 'en-IN' : undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
+                {L('pending settlement', 'निपटान लंबित')}
               </span>
             </div>
             <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm">
-              <span className="text-[11px] text-stone-400 uppercase font-semibold block">Active Earning Pandits</span>
+              <span className="text-[11px] text-stone-400 uppercase font-semibold block">
+                {L('Active Earning Pandits', 'सक्रिय आय अर्जित पंडित')}
+              </span>
               <span className="text-2xl font-extrabold text-emerald-400 mt-1 block">
                 {dakshinaData.ledger.length}
               </span>
             </div>
             <div className="bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-sm flex flex-col justify-between">
-              <span className="text-[11px] text-stone-400 uppercase font-semibold block">Settlement Export</span>
+              <span className="text-[11px] text-stone-400 uppercase font-semibold block">
+                {L('Settlement Export', 'निपटान निर्यात')}
+              </span>
               <button
                 onClick={exportDakshinaCsv}
                 className="mt-2 w-full py-2 bg-stone-950 hover:bg-stone-800 text-gold border border-gold/30 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow"
               >
-                <Download className="w-3.5 h-3.5" /> Export Ledger CSV
+                <Download className="w-3.5 h-3.5" /> {L('Export Ledger CSV', 'बही CSV निर्यात करें')}
               </button>
             </div>
           </div>
@@ -1601,7 +1747,7 @@ export default function AdminConsolePage() {
               <Search className="w-4 h-4 absolute left-3 top-3 text-stone-400" />
               <input
                 type="text"
-                placeholder="Search pandit by name or email..."
+                placeholder={L('Search pandit by name or email...', 'नाम या ईमेल से पंडित खोजें...')}
                 value={searchLedger}
                 onChange={(e) => setSearchLedger(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold"
@@ -1611,7 +1757,7 @@ export default function AdminConsolePage() {
               onClick={fetchDakshinaLedger}
               className="px-3.5 py-2 bg-stone-950 hover:bg-stone-800 text-stone-300 rounded-xl border border-stone-800 text-xs font-semibold flex items-center gap-1.5 transition"
             >
-              <RefreshCw className="w-3.5 h-3.5" /> Refresh Ledger
+              <RefreshCw className="w-3.5 h-3.5" /> {L('Refresh Ledger', 'बही ताज़ा करें')}
             </button>
           </div>
 
@@ -1619,14 +1765,16 @@ export default function AdminConsolePage() {
           <div className="bg-stone-900 border border-stone-800 rounded-2xl overflow-hidden shadow-xl">
             <div className="p-4 bg-stone-950/60 border-b border-stone-800 flex items-center justify-between">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Coins className="w-4 h-4 text-gold" /> Pandit Dakshina Breakdown & Settlement Roster
+                <Coins className="w-4 h-4 text-gold" /> {L('Pandit Dakshina Breakdown & Settlement Roster', 'पंडित दक्षिणा विवरण व भुगतान सूची')}
               </h3>
-              <span className="text-xs text-stone-400 font-mono">Rate: 10 Coins = ₹1 INR</span>
+              <span className="text-xs text-stone-400 font-mono">
+                {L('Rate: 10 Coins = ₹1 INR', 'दर: 10 कॉइन = ₹1 INR')}
+              </span>
             </div>
 
             {dakshinaData.ledger.length === 0 ? (
               <div className="p-10 text-center text-stone-400 text-xs">
-                No dakshina offerings recorded yet on the platform.
+                {L('No dakshina offerings recorded yet on the platform.', 'प्लेटफ़ॉर्म पर अभी तक कोई दक्षिणा अर्पण दर्ज नहीं है।')}
               </div>
             ) : (
               <div className="divide-y divide-stone-800">
@@ -1661,7 +1809,7 @@ export default function AdminConsolePage() {
                               <span className="font-bold text-white text-sm font-serif">{p.panditName}</span>
                               {p.panditStatus === 'DELETION_REQUESTED' && !p.panditDeletedAt && (
                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950/70 text-amber-300 border border-amber-500/40">
-                                  Deletion Pending
+                                  {L('Deletion Pending', 'विलोपन लंबित')}
                                 </span>
                               )}
                             </div>
@@ -1672,42 +1820,54 @@ export default function AdminConsolePage() {
                         <div className="flex flex-wrap items-center gap-6">
                           {/* Earned */}
                           <div>
-                            <span className="text-[10px] text-stone-400 uppercase font-semibold block">Earned</span>
-                            <span className="font-extrabold text-gold text-base flex items-center gap-1">
-                              <Coins className="w-3.5 h-3.5" /> {(p.earnedCoins ?? p.totalCoins ?? 0).toLocaleString()}
+                            <span className="text-[10px] text-stone-400 uppercase font-semibold block">
+                              {L('Earned', 'अर्जित')}
                             </span>
-                            <span className="text-[10px] text-stone-500 block">₹{(p.totalInr ?? 0).toFixed(2)} net</span>
+                            <span className="font-extrabold text-gold text-base flex items-center gap-1">
+                              <Coins className="w-3.5 h-3.5" /> {(p.earnedCoins ?? p.totalCoins ?? 0).toLocaleString('en-IN')}
+                            </span>
+                            <span className="text-[10px] text-stone-500 block">
+                              ₹{(p.totalInr ?? 0).toFixed(2)} {L('net', 'शुद्ध')}
+                            </span>
                           </div>
 
                           {/* Paid */}
                           <div>
-                            <span className="text-[10px] text-stone-400 uppercase font-semibold block">Paid</span>
+                            <span className="text-[10px] text-stone-400 uppercase font-semibold block">
+                              {L('Paid', 'भुगतान किया गया')}
+                            </span>
                             <span className="font-extrabold text-emerald-400 text-base flex items-center gap-1">
-                              <Coins className="w-3.5 h-3.5" /> {(p.paidCoins ?? 0).toLocaleString()}
+                              <Coins className="w-3.5 h-3.5" /> {(p.paidCoins ?? 0).toLocaleString('en-IN')}
                             </span>
                             <span className="text-[10px] text-stone-500 block">₹{(p.paidNetInr ?? 0).toFixed(2)}</span>
                           </div>
 
                           {/* Due */}
                           <div>
-                            <span className="text-[10px] text-stone-400 uppercase font-semibold block">Due</span>
+                            <span className="text-[10px] text-stone-400 uppercase font-semibold block">
+                              {L('Due', 'बकाया')}
+                            </span>
                             <span className={`font-extrabold text-base flex items-center gap-1 ${(p.dueCoins ?? 0) > 0 ? 'text-amber-400' : 'text-stone-500'}`}>
-                              <Coins className="w-3.5 h-3.5" /> {(p.dueCoins ?? 0).toLocaleString()}
+                              <Coins className="w-3.5 h-3.5" /> {(p.dueCoins ?? 0).toLocaleString('en-IN')}
                             </span>
                             <span className={`text-[10px] block ${(p.dueCoins ?? 0) > 0 ? 'text-amber-500' : 'text-stone-500'}`}>₹{(p.dueNetInr ?? 0).toFixed(2)}</span>
                           </div>
 
                           <div>
-                            <span className="text-[10px] text-stone-400 uppercase font-semibold block">Offerings</span>
+                            <span className="text-[10px] text-stone-400 uppercase font-semibold block">
+                              {L('Offerings', 'अर्पण')}
+                            </span>
                             <span className="font-bold text-white text-sm">
-                              {p.transactionCount} txns
+                              {p.transactionCount} {L('txns', 'लेन-देन')}
                             </span>
                           </div>
 
                           <div>
-                            <span className="text-[10px] text-stone-400 uppercase font-semibold block">Last Offering</span>
+                            <span className="text-[10px] text-stone-400 uppercase font-semibold block">
+                              {L('Last Offering', 'अंतिम अर्पण')}
+                            </span>
                             <span className="text-stone-300 font-mono text-[11px]">
-                              {p.lastDakshinaAt ? new Date(p.lastDakshinaAt).toLocaleDateString() : 'N/A'}
+                              {formatLocaleDate(p.lastDakshinaAt, lang, 'N/A', 'उपलब्ध नहीं')}
                             </span>
                           </div>
 
@@ -1720,7 +1880,7 @@ export default function AdminConsolePage() {
                             disabled={(p.dueCoins ?? 0) === 0}
                             className="px-3.5 py-1.5 bg-gradient-to-r from-amber-600 to-yellow-500 text-obsidian rounded-xl text-xs font-bold flex items-center gap-1.5 shadow hover:opacity-90 transition disabled:opacity-30 disabled:cursor-not-allowed"
                           >
-                            <IndianRupee className="w-3.5 h-3.5" /> Record Payout
+                            <IndianRupee className="w-3.5 h-3.5" /> {L('Record Payout', 'भुगतान दर्ज करें')}
                           </button>
                         </div>
                       </div>
@@ -1738,23 +1898,31 @@ export default function AdminConsolePage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-stone-900/70 p-4 rounded-2xl border border-stone-800">
             <div>
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Trash2 className="w-4 h-4 text-amber-400" /> Pandit Account Deletion Approvals
+                <Trash2 className="w-4 h-4 text-amber-400" /> {L('Pandit Account Deletion Approvals', 'पंडित खाता विलोपन स्वीकृतियाँ')}
               </h3>
               <p className="text-xs text-stone-400 mt-1">
-                Pandit deletion requests stay paused here until all earned payouts are settled (<code className="text-amber-300">dueCoins === 0</code>). Remaining wallet/top-up coins are forfeited with no refund upon approval.
+                {lang === 'hi' ? (
+                  <>
+                    जब तक सभी अर्जित भुगतान निपट नहीं जाते (<code className="text-amber-300">dueCoins === 0</code>), तब तक पंडित विलोपन अनुरोध यहाँ लंबित रहते हैं। स्वीकृति पर शेष वॉलेट/टॉप-अप कॉइन बिना रिफंड समाप्त हो जाते हैं।
+                  </>
+                ) : (
+                  <>
+                    Pandit deletion requests stay paused here until all earned payouts are settled (<code className="text-amber-300">dueCoins === 0</code>). Remaining wallet/top-up coins are forfeited with no refund upon approval.
+                  </>
+                )}
               </p>
             </div>
             <button
               onClick={fetchDeletionRequests}
               className="px-3.5 py-2 bg-stone-950 hover:bg-stone-800 text-stone-300 rounded-xl border border-stone-800 text-xs font-semibold flex items-center gap-1.5 transition shrink-0 self-start sm:self-center"
             >
-              <RefreshCw className="w-3.5 h-3.5" /> Refresh Requests
+              <RefreshCw className="w-3.5 h-3.5" /> {L('Refresh Requests', 'अनुरोध ताज़ा करें')}
             </button>
           </div>
 
           {deletionRequests.length === 0 ? (
             <div className="bg-stone-900 border border-stone-800 p-12 text-center rounded-2xl text-stone-400 text-xs">
-              No pending pandit deletion requests right now.
+              {L('No pending pandit deletion requests right now.', 'इस समय कोई लंबित पंडित विलोपन अनुरोध नहीं है।')}
             </div>
           ) : (
             <div className="space-y-3">
@@ -1767,34 +1935,38 @@ export default function AdminConsolePage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <h4 className="font-serif font-bold text-white text-base">{req.name}</h4>
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950/70 text-amber-300 border border-amber-500/40">
-                        PENDING APPROVAL
+                        {L('PENDING APPROVAL', 'स्वीकृति लंबित')}
                       </span>
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-stone-950 text-stone-300 border border-stone-700">
-                        {req.role}
+                        {translateAdminToken(req.role, lang)}
                       </span>
                     </div>
                     <div className="text-xs text-stone-400">
                       <span>{req.email}</span>
                       {req.deletionRequestedAt && (
-                        <span> • Requested: {new Date(req.deletionRequestedAt).toLocaleString()}</span>
+                        <span>
+                          {' '}• {L('Requested:', 'अनुरोध तिथि:')} {formatLocaleDateTime(req.deletionRequestedAt, lang)}
+                        </span>
                       )}
                     </div>
                     <div className="flex flex-wrap items-center gap-4 pt-1 text-xs">
                       <span className="text-stone-300">
-                        Earned: <strong className="text-gold">{(req.earnedCoins || 0).toLocaleString()}</strong>
+                        {L('Earned:', 'अर्जित:')} <strong className="text-gold">{(req.earnedCoins || 0).toLocaleString('en-IN')}</strong>
                       </span>
                       <span className="text-stone-300">
-                        Paid: <strong className="text-emerald-400">{(req.paidCoins || 0).toLocaleString()}</strong>
+                        {L('Paid:', 'भुगतान:')} <strong className="text-emerald-400">{(req.paidCoins || 0).toLocaleString('en-IN')}</strong>
                       </span>
                       <span className="text-stone-300">
-                        Due:{' '}
+                        {L('Due:', 'बकाया:')}{' '}
                         <strong className={req.dueCoins > 0 ? 'text-red-400' : 'text-emerald-400'}>
-                          {(req.dueCoins || 0).toLocaleString()} coins (₹{(req.dueNetInr || 0).toFixed(2)} net)
+                          {formatCoins(req.dueCoins || 0, lang)} (₹{(req.dueNetInr || 0).toFixed(2)} {L('net', 'शुद्ध')})
                         </strong>
                       </span>
                       {req.walletBalanceCoins > 0 && (
                         <span className="text-stone-500 text-[11px]">
-                          Personal wallet ({req.walletBalanceCoins} coins) forfeited on approval
+                          {lang === 'hi'
+                            ? `स्वीकृति पर व्यक्तिगत वॉलेट (${req.walletBalanceCoins} कॉइन) समाप्त होगा`
+                            : `Personal wallet (${req.walletBalanceCoins} coins) forfeited on approval`}
                         </span>
                       )}
                     </div>
@@ -1820,7 +1992,7 @@ export default function AdminConsolePage() {
                         }}
                         className="px-3.5 py-2 bg-gradient-to-r from-amber-600 to-yellow-500 text-obsidian rounded-xl text-xs font-bold flex items-center gap-1.5 shadow hover:opacity-90 transition"
                       >
-                        <IndianRupee className="w-3.5 h-3.5" /> Settle Payout (₹{(req.dueNetInr || 0).toFixed(2)})
+                        <IndianRupee className="w-3.5 h-3.5" /> {L('Settle Payout', 'भुगतान निपटाएँ')} (₹{(req.dueNetInr || 0).toFixed(2)})
                       </button>
                     )}
 
@@ -1828,8 +2000,10 @@ export default function AdminConsolePage() {
                       disabled={req.dueCoins > 0}
                       title={
                         req.dueCoins > 0
-                          ? `Settle ${req.dueCoins} due coins before approving deletion`
-                          : 'Approve and permanently erase account'
+                          ? lang === 'hi'
+                            ? `विलोपन स्वीकृति से पहले ${req.dueCoins} बकाया कॉइन का भुगतान करें`
+                            : `Settle ${req.dueCoins} due coins before approving deletion`
+                          : L('Approve and permanently erase account', 'स्वीकृत कर खाता स्थायी रूप से मिटाएँ')
                       }
                       onClick={() =>
                         setConfirmAction({
@@ -1840,7 +2014,7 @@ export default function AdminConsolePage() {
                       }
                       className="px-3.5 py-2 bg-red-700 hover:bg-red-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      <Check className="w-3.5 h-3.5" /> Approve &amp; Erase
+                      <Check className="w-3.5 h-3.5" /> {L('Approve & Erase', 'स्वीकृत कर मिटाएँ')}
                     </button>
 
                     <button
@@ -1853,7 +2027,7 @@ export default function AdminConsolePage() {
                       }
                       className="px-3.5 py-2 bg-stone-950 hover:bg-stone-800 text-stone-300 border border-stone-700 rounded-xl text-xs font-semibold transition"
                     >
-                      Restore Account
+                      {L('Restore Account', 'खाता बहाल करें')}
                     </button>
                   </div>
                 </div>
@@ -1869,22 +2043,41 @@ export default function AdminConsolePage() {
           <div className="bg-stone-950 border border-amber-500/30 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5">
             <div className="flex items-center justify-between border-b border-amber-500/15 pb-4">
               <h3 className="font-serif text-lg font-bold text-white flex items-center gap-2">
-                <IndianRupee className="w-5 h-5 text-amber-400" /> Record Payout
+                <IndianRupee className="w-5 h-5 text-amber-400" /> {L('Record Payout', 'भुगतान दर्ज करें')}
               </h3>
-              <button onClick={() => setPayoutModal(null)} className="text-stone-400 hover:text-white p-1 transition"><X className="w-5 h-5" /></button>
+              <button
+                onClick={() => setPayoutModal(null)}
+                aria-label={L('Close modal', 'मोडल बंद करें')}
+                className="text-stone-400 hover:text-white p-1 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
             <p className="text-xs text-stone-300">
-              Recording settlement for{' '}
-              <strong className="text-amber-300 font-serif">{payoutModal.panditName}</strong>.{' '}
-              Due:{' '}
-              <strong className="text-amber-400">{payoutModal.dueCoins.toLocaleString()} coins (₹{payoutModal.dueNetInr.toFixed(2)} net)</strong>.
+              {lang === 'hi' ? (
+                <>
+                  <strong className="text-amber-300 font-serif">{payoutModal.panditName}</strong> के लिए निपटान दर्ज किया जा रहा है। बकाया:{' '}
+                  <strong className="text-amber-400">{formatCoins(payoutModal.dueCoins, lang)} (₹{payoutModal.dueNetInr.toFixed(2)} शुद्ध)</strong>।
+                </>
+              ) : (
+                <>
+                  Recording settlement for{' '}
+                  <strong className="text-amber-300 font-serif">{payoutModal.panditName}</strong>.{' '}
+                  Due:{' '}
+                  <strong className="text-amber-400">{payoutModal.dueCoins.toLocaleString()} coins (₹{payoutModal.dueNetInr.toFixed(2)} net)</strong>.
+                </>
+              )}
             </p>
             <div className="space-y-3">
               <div>
-                <label className="text-[10px] text-stone-400 uppercase font-semibold block mb-1">Coins to Settle (≤ {payoutModal.dueCoins.toLocaleString()} due)</label>
+                <label className="text-[10px] text-stone-400 uppercase font-semibold block mb-1">
+                  {lang === 'hi'
+                    ? `निपटान कॉइन (≤ ${payoutModal.dueCoins.toLocaleString('en-IN')} बकाया)`
+                    : `Coins to Settle (≤ ${payoutModal.dueCoins.toLocaleString()} due)`}
+                </label>
                 <input
                   type="number"
-                  placeholder={`Max: ${payoutModal.dueCoins}`}
+                  placeholder={L(`Max: ${payoutModal.dueCoins}`, `अधिकतम: ${payoutModal.dueCoins}`)}
                   value={payoutForm.coins}
                   onChange={(e) => setPayoutForm((p) => ({ ...p, coins: e.target.value }))}
                   max={payoutModal.dueCoins}
@@ -1893,7 +2086,9 @@ export default function AdminConsolePage() {
                 />
               </div>
               <div>
-                <label className="text-[10px] text-stone-400 uppercase font-semibold block mb-1">Period To (earnings up to this date)</label>
+                <label className="text-[10px] text-stone-400 uppercase font-semibold block mb-1">
+                  {L('Period To (earnings up to this date)', 'अवधि तक (इस तिथि तक की आय)')}
+                </label>
                 <input
                   type="date"
                   value={payoutForm.periodTo}
@@ -1902,7 +2097,9 @@ export default function AdminConsolePage() {
                 />
               </div>
               <div>
-                <label className="text-[10px] text-stone-400 uppercase font-semibold block mb-1">Payment Method</label>
+                <label className="text-[10px] text-stone-400 uppercase font-semibold block mb-1">
+                  {L('Payment Method', 'भुगतान माध्यम')}
+                </label>
                 <select
                   value={payoutForm.method}
                   onChange={(e) => setPayoutForm((p) => ({ ...p, method: e.target.value }))}
@@ -1912,25 +2109,29 @@ export default function AdminConsolePage() {
                   <option value="NEFT">NEFT</option>
                   <option value="IMPS">IMPS</option>
                   <option value="RTGS">RTGS</option>
-                  <option value="Cheque">Cheque</option>
-                  <option value="Cash">Cash</option>
+                  <option value="Cheque">{L('Cheque', 'चेक')}</option>
+                  <option value="Cash">{L('Cash', 'नकद')}</option>
                 </select>
               </div>
               <div>
-                <label className="text-[10px] text-stone-400 uppercase font-semibold block mb-1">UTR / Transaction ID *</label>
+                <label className="text-[10px] text-stone-400 uppercase font-semibold block mb-1">
+                  {L('UTR / Transaction ID *', 'UTR / लेन-देन ID *')}
+                </label>
                 <input
                   type="text"
-                  placeholder="e.g. 423987654321 (required, must be unique)"
+                  placeholder={L('e.g. 423987654321 (required, must be unique)', 'जैसे: 423987654321 (अनिवार्य व अद्वितीय)')}
                   value={payoutForm.reference}
                   onChange={(e) => setPayoutForm((p) => ({ ...p, reference: e.target.value }))}
                   className="w-full px-3.5 py-2.5 bg-stone-900 border border-amber-500/30 rounded-xl text-white text-xs focus:outline-none focus:border-amber-400 placeholder-stone-600"
                 />
               </div>
               <div>
-                <label className="text-[10px] text-stone-400 uppercase font-semibold block mb-1">Note (optional)</label>
+                <label className="text-[10px] text-stone-400 uppercase font-semibold block mb-1">
+                  {L('Note (optional)', 'टिप्पणी (वैकल्पिक)')}
+                </label>
                 <input
                   type="text"
-                  placeholder="e.g. November settlement"
+                  placeholder={L('e.g. November settlement', 'जैसे: नवंबर निपटान')}
                   value={payoutForm.note}
                   onChange={(e) => setPayoutForm((p) => ({ ...p, note: e.target.value }))}
                   className="w-full px-3.5 py-2.5 bg-stone-900 border border-amber-500/30 rounded-xl text-white text-xs focus:outline-none focus:border-amber-400 placeholder-stone-600"
@@ -1942,7 +2143,7 @@ export default function AdminConsolePage() {
                 onClick={() => setPayoutModal(null)}
                 className="px-4 py-2 bg-stone-900 text-stone-300 hover:text-white rounded-xl text-xs font-semibold transition"
               >
-                Cancel
+                {L('Cancel', 'रद्द करें')}
               </button>
               <button
                 disabled={
@@ -1955,7 +2156,7 @@ export default function AdminConsolePage() {
                 onClick={handleRecordPayout}
                 className="px-5 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-stone-950 rounded-xl text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition"
               >
-                {savingPayout ? 'Saving...' : 'Record Payout'}
+                {savingPayout ? L('Saving...', 'सहेजा जा रहा है...') : L('Record Payout', 'भुगतान दर्ज करें')}
               </button>
             </div>
           </div>
@@ -1965,14 +2166,20 @@ export default function AdminConsolePage() {
       {activeTab === 'kyc' && (
         <div className="space-y-4">
           {kycList.length === 0 ? (
-            <p className="text-stone-400 text-sm">No pending streamer verification requests.</p>
+            <p className="text-stone-400 text-sm">
+              {L('No pending streamer verification requests.', 'कोई लंबित पंडित सत्यापन अनुरोध नहीं है।')}
+            </p>
           ) : (
             kycList.map((app) => (
               <div key={app.id} className="bg-stone-900 border border-stone-800 p-5 rounded-2xl flex flex-col sm:flex-row justify-between gap-4">
                 <div className="flex-1">
                   <h3 className="font-bold text-white text-base">{app.user.name} ({app.user.email})</h3>
-                  <p className="text-xs text-stone-400 mt-1"><strong>Languages:</strong> {app.languages.join(', ')}</p>
-                  <p className="text-xs text-stone-400"><strong>Specialties:</strong> {app.specialties.join(', ')}</p>
+                  <p className="text-xs text-stone-400 mt-1">
+                    <strong>{L('Languages:', 'भाषाएँ:')}</strong> {app.languages.join(', ')}
+                  </p>
+                  <p className="text-xs text-stone-400">
+                    <strong>{L('Specialties:', 'विशेषज्ञताएँ:')}</strong> {app.specialties.join(', ')}
+                  </p>
                   <p className="text-xs text-stone-300 mt-2 bg-stone-950 p-2.5 rounded-xl border border-stone-800">{app.bio}</p>
                   {app.kycDocuments && Array.isArray(app.kycDocuments) && app.kycDocuments.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-2">
@@ -1988,7 +2195,7 @@ export default function AdminConsolePage() {
                           className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-50 hover:bg-orange-100 dark:bg-stone-800 dark:hover:bg-stone-700 text-orange-800 dark:text-orange-400 rounded-lg text-xs font-semibold border border-orange-200 dark:border-stone-700 transition"
                         >
                           <FileText className="w-3.5 h-3.5" />
-                          View Credentials Document ({doc.documentType || 'KYC'})
+                          {L('View Credentials Document', 'प्रमाणपत्र दस्तावेज़ देखें')} ({doc.documentType || 'KYC'})
                         </button>
                       ))}
                     </div>
@@ -1999,13 +2206,13 @@ export default function AdminConsolePage() {
                     onClick={() => handleKycDecision(app.id, 'APPROVED')}
                     className="flex items-center gap-1.5 px-4 py-2 bg-green-700 hover:bg-green-600 text-white rounded-xl text-xs font-semibold"
                   >
-                    <Check className="w-3.5 h-3.5" /> Approve & Verify
+                    <Check className="w-3.5 h-3.5" /> {L('Approve & Verify', 'स्वीकृत कर सत्यापित करें')}
                   </button>
                   <button
                     onClick={() => handleKycDecision(app.id, 'REJECTED')}
                     className="flex items-center gap-1.5 px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-xl text-xs font-semibold"
                   >
-                    <X className="w-3.5 h-3.5" /> Reject
+                    <X className="w-3.5 h-3.5" /> {L('Reject', 'अस्वीकृत करें')}
                   </button>
                 </div>
               </div>
@@ -2018,20 +2225,22 @@ export default function AdminConsolePage() {
       {activeTab === 'streams' && (
         <div className="space-y-4">
           {liveStreams.length === 0 ? (
-            <p className="text-stone-400 text-sm">No streams currently live on the server.</p>
+            <p className="text-stone-400 text-sm">{L('No streams currently live on the server.', 'वर्तमान में सर्वर पर कोई लाइव प्रसारण नहीं चल रहा है।')}</p>
           ) : (
             liveStreams.map((s) => (
               <div key={s.id} className="bg-stone-900 border border-stone-800 p-5 rounded-2xl flex items-center justify-between gap-4">
                 <div>
-                  <span className="text-[11px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider block">● LIVE ON AIR</span>
+                  <span className="text-[11px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider block">{L('● LIVE ON AIR', '● अभी लाइव')}</span>
                   <h3 className="text-base font-bold text-white mt-0.5">{s.title}</h3>
-                  <p className="text-xs text-stone-400">Streamer: {s.streamer.name} ({s.streamer.email}) • Category: {s.category.name}</p>
+                  <p className="text-xs text-stone-400">
+                    {L('Pandit Ji:', 'पंडित जी:')} {s.streamer.name} ({s.streamer.email}) • {L('Category:', 'श्रेणी:')} {translateCategoryLabel(s.category.name, lang)}
+                  </p>
                 </div>
                 <button
                   onClick={() => handleForceEndStream(s.id)}
                   className="flex items-center gap-1.5 px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-xl text-xs font-bold shadow-lg"
                 >
-                  <StopCircle className="w-4 h-4" /> Force End Stream (Kill)
+                  <StopCircle className="w-4 h-4" /> {L('Force End Stream (Kill)', 'प्रसारण तुरंत समाप्त करें (Kill)')}
                 </button>
               </div>
             ))
@@ -2043,20 +2252,24 @@ export default function AdminConsolePage() {
       {activeTab === 'reports' && (
         <div className="space-y-4">
           {reports.length === 0 ? (
-            <p className="text-stone-400 text-sm">No safety reports pending.</p>
+            <p className="text-stone-400 text-sm">{L('No safety reports pending.', 'कोई सुरक्षा रिपोर्ट लंबित नहीं है।')}</p>
           ) : (
             reports.map((r) => (
               <div key={r.id} className="bg-stone-900 border border-stone-800 p-5 rounded-2xl flex flex-col sm:flex-row justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider">{r.targetType} REPORT: {r.status}</span>
-                    <span className="text-xs text-stone-600 dark:text-stone-400">By {r.reporter?.name || 'Anonymous Devotee'}</span>
+                    <span className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider">
+                      {translateAdminToken(r.targetType, lang)} {L('REPORT', 'रिपोर्ट')}: {translateAdminToken(r.status, lang)}
+                    </span>
+                    <span className="text-xs text-stone-600 dark:text-stone-400">
+                      {L('By', 'द्वारा:')} {r.reporter?.name || L('Anonymous Devotee', 'अनाम भक्त')}
+                    </span>
                   </div>
                   <h4 className="font-semibold text-white text-sm">{r.reason}</h4>
                   {r.details && <p className="text-xs text-stone-600 dark:text-stone-400 mt-1">{r.details}</p>}
                   {r.chatMessage && (
                     <p className="text-xs text-red-800 dark:text-red-300 mt-2 bg-red-50 dark:bg-stone-950 p-2.5 rounded-xl border border-red-200 dark:border-stone-800 font-mono">
-                      Flagged message: "{r.chatMessage.message}"
+                      {L('Flagged message:', 'चिह्नित संदेश:')} "{r.chatMessage.message}"
                     </p>
                   )}
                 </div>
@@ -2066,13 +2279,13 @@ export default function AdminConsolePage() {
                       onClick={() => handleResolveReport(r.id, 'ACTION_TAKEN')}
                       className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-xl text-xs font-semibold shadow transition"
                     >
-                      Resolve & Action
+                      {L('Resolve & Action', 'कार्रवाई कर निपटाएँ')}
                     </button>
                     <button
                       onClick={() => handleResolveReport(r.id, 'DISMISSED')}
                       className="px-4 py-2 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-300 rounded-xl text-xs font-semibold border border-stone-300 dark:border-stone-700 transition"
                     >
-                      Dismiss Report
+                      {L('Dismiss Report', 'रिपोर्ट खारिज करें')}
                     </button>
                   </div>
                 )}
@@ -2086,9 +2299,12 @@ export default function AdminConsolePage() {
       {activeTab === 'wordFilters' && (
         <div className="space-y-6">
           <div className="bg-stone-900 border border-stone-800 p-5 rounded-2xl shadow-lg">
-            <h3 className="text-sm font-bold text-white mb-2">Add Prohibited Chat Word / Regex</h3>
+            <h3 className="text-sm font-bold text-white mb-2">{L('Add Prohibited Chat Word / Regex', 'निषिद्ध चैट शब्द / Regex जोड़ें')}</h3>
             <p className="text-xs text-stone-400 mb-4">
-              Words added here are automatically masked or blocked across all live pooja chat streams.
+              {L(
+                'Words added here are automatically masked or blocked across all live pooja chat streams.',
+                'यहाँ जोड़े गए शब्द सभी लाइव पूजा चैट प्रसारणों में स्वचालित रूप से छिपाए या अवरुद्ध किए जाते हैं।'
+              )}
             </p>
             <form onSubmit={handleAddWord} className="flex flex-col sm:flex-row gap-3 max-w-xl">
               <input
@@ -2096,7 +2312,7 @@ export default function AdminConsolePage() {
                 required
                 value={newWord}
                 onChange={(e) => setNewWord(e.target.value)}
-                placeholder="e.g. offensive word or phrase"
+                placeholder={L('e.g. offensive word or phrase', 'जैसे: अपमानजनक शब्द या वाक्यांश')}
                 className="flex-1 px-3.5 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:border-orange-500"
               />
               <select
@@ -2104,28 +2320,28 @@ export default function AdminConsolePage() {
                 onChange={(e) => setNewSeverity(e.target.value)}
                 className="px-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white"
               >
-                <option value="BLOCKED">Severity: Block (Auto-drop)</option>
-                <option value="WARNING">Severity: Warn</option>
-                <option value="FLAG">Severity: Flag for Review</option>
+                <option value="BLOCKED">{L('Severity: Block (Auto-drop)', 'गंभीरता: अवरुद्ध (स्वतः रोकें)')}</option>
+                <option value="WARNING">{L('Severity: Warn', 'गंभीरता: चेतावनी')}</option>
+                <option value="FLAG">{L('Severity: Flag for Review', 'गंभीरता: समीक्षा हेतु चिह्नित')}</option>
               </select>
               <button
                 type="submit"
                 className="px-4 py-2 bg-orange-700 hover:bg-orange-600 text-white rounded-xl text-xs font-semibold shadow transition inline-flex items-center justify-center gap-1.5 shrink-0"
               >
-                <Plus className="w-3.5 h-3.5" /> Add Word
+                <Plus className="w-3.5 h-3.5" /> {L('Add Word', 'शब्द जोड़ें')}
               </button>
             </form>
           </div>
 
           <div className="bg-stone-900 border border-stone-800 rounded-2xl overflow-hidden shadow-xl">
               <div className="p-4 bg-stone-950/60 border-b border-stone-800 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-white">Active Chat Filters ({wordFilters.length})</h3>
-              <span className="text-xs text-stone-400 font-mono">Real-time socket matcher</span>
+              <h3 className="text-sm font-bold text-white">{L('Active Chat Filters', 'सक्रिय चैट फ़िल्टर')} ({wordFilters.length})</h3>
+              <span className="text-xs text-stone-400 font-mono">{L('Real-time socket matcher', 'रियल-टाइम सॉकेट मैचर')}</span>
             </div>
 
             {wordFilters.length === 0 ? (
               <div className="p-10 text-center text-stone-400 text-xs">
-                No active custom word filters configured.
+                {L('No active custom word filters configured.', 'कोई सक्रिय कस्टम शब्द फ़िल्टर कॉन्फ़िगर नहीं है।')}
               </div>
             ) : (
               <div className="divide-y divide-stone-800">
@@ -2136,13 +2352,13 @@ export default function AdminConsolePage() {
                         {wf.word}
                       </span>
                       <span className="text-[10px] text-amber-800 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-300 dark:border-amber-800/60 font-semibold">
-                        {wf.severity || 'BLOCKED'}
+                        {translateAdminToken(wf.severity || 'BLOCKED', lang)}
                       </span>
                     </div>
                     <button
                       onClick={() => handleDeleteWord(wf.id)}
                       className="p-1.5 text-stone-600 dark:text-stone-400 hover:text-red-400 hover:bg-stone-800 rounded-lg transition"
-                      title="Remove filter"
+                      title={L('Remove filter', 'फ़िल्टर हटाएँ')}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -2168,7 +2384,7 @@ export default function AdminConsolePage() {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleSearchUsers();
                   }}
-                  placeholder="Search user by name or email (Press Enter)..."
+                  placeholder={L('Search user by name or email (Press Enter)...', 'नाम या ईमेल से उपयोगकर्ता खोजें (Enter दबाएँ)...')}
                   className="w-full pl-9 pr-4 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold"
                 />
               </div>
@@ -2176,7 +2392,7 @@ export default function AdminConsolePage() {
                 onClick={handleSearchUsers}
                 className="px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-obsidian rounded-xl text-xs font-bold transition shadow"
               >
-                Search
+                {L('Search', 'खोजें')}
               </button>
               {searchUser && (
                 <button
@@ -2186,20 +2402,20 @@ export default function AdminConsolePage() {
                   }}
                   className="px-3 py-2 bg-stone-950 hover:bg-stone-800 text-stone-400 rounded-xl text-xs transition border border-stone-800"
                 >
-                  Clear
+                  {L('Clear', 'साफ़ करें')}
                 </button>
               )}
             </div>
 
             <div className="text-xs text-stone-400 flex items-center gap-3">
-              <span>Total in directory: <strong className="text-white">{users.length}</strong></span>
+              <span>{L('Total in directory:', 'निर्देशिका में कुल:')} <strong className="text-white">{users.length}</strong></span>
               <button
                 onClick={() => {
                   setSearchUser('');
                   apiFetch('/admin/users').then((data) => setUsers(data || []));
                 }}
                 className="p-1.5 text-stone-400 hover:text-white rounded-lg transition"
-                title="Refresh user list"
+                title={L('Refresh user list', 'उपयोगकर्ता सूची रीफ़्रेश करें')}
               >
                 <RefreshCw className="w-3.5 h-3.5" />
               </button>
@@ -2227,7 +2443,7 @@ export default function AdminConsolePage() {
                           : 'bg-stone-800 text-stone-300 border border-stone-700'
                       }`}
                     >
-                      {u.role}
+                      {translateAdminToken(u.role, lang)}
                     </span>
 
                     {/* Status badge */}
@@ -2240,30 +2456,30 @@ export default function AdminConsolePage() {
                           : 'bg-red-950/60 text-red-400 border border-red-500/40'
                       }`}
                     >
-                      {u.status}
+                      {translateAdminToken(u.status, lang)}
                     </span>
 
                     {/* 2FA badge */}
                     {u.isTwoFactorEnabled ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-semibold" title="2FA Active">
+                      <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-semibold" title={L('2FA Active', '2FA सक्रिय')}>
                         <ShieldCheck className="w-3 h-3" /> 2FA
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-[10px] text-stone-500 font-semibold" title="2FA Disabled">
-                        <Lock className="w-3 h-3" /> No 2FA
+                      <span className="inline-flex items-center gap-1 text-[10px] text-stone-500 font-semibold" title={L('2FA Disabled', '2FA निष्क्रिय')}>
+                        <Lock className="w-3 h-3" /> {L('No 2FA', '2FA नहीं')}
                       </span>
                     )}
                   </div>
 
                   <div className="text-[11px] text-stone-500 font-mono">
-                    ID: {u.id} • Joined: {new Date(u.createdAt).toLocaleDateString()}
+                    ID: {u.id} • {L('Joined:', 'शामिल तिथि:')} {formatLocaleDate(u.createdAt, lang)}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                   {u.deletedAt ? (
                     <span className="px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-stone-950 text-stone-500 border border-stone-800">
-                      Erased (DPDP)
+                      {L('Erased (DPDP)', 'मिटाया गया (DPDP)')}
                     </span>
                   ) : u.role !== 'ADMIN' ? (
                     <>
@@ -2272,14 +2488,14 @@ export default function AdminConsolePage() {
                           onClick={() => handleUserStatus(u.id, 'BANNED')}
                           className="px-3.5 py-1.5 bg-red-950/60 hover:bg-red-900/60 text-red-300 border border-red-800/50 rounded-xl text-xs font-semibold transition"
                         >
-                          Ban User
+                          {L('Ban User', 'उपयोगकर्ता को प्रतिबंधित करें')}
                         </button>
                       ) : (
                         <button
                           onClick={() => handleUserStatus(u.id, 'ACTIVE')}
                           className="px-3.5 py-1.5 bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-800/50 rounded-xl text-xs font-semibold transition"
                         >
-                          Restore User
+                          {L('Restore User', 'उपयोगकर्ता बहाल करें')}
                         </button>
                       )}
                     </>
@@ -2290,7 +2506,7 @@ export default function AdminConsolePage() {
 
             {users.length === 0 && (
               <div className="bg-stone-900 border border-stone-800 p-12 text-center rounded-2xl text-stone-400 text-xs">
-                No users found matching current query.
+                {L('No users found matching current query.', 'वर्तमान खोज से मेल खाने वाला कोई उपयोगकर्ता नहीं मिला।')}
               </div>
             )}
           </div>
@@ -2302,7 +2518,7 @@ export default function AdminConsolePage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between bg-stone-900/60 p-4 rounded-2xl border border-stone-800 text-xs">
             <span className="text-stone-300">
-              Showing immutable platform audit trail (<strong className="text-white">{auditLogs.length}</strong> events logged)
+              {L('Showing immutable platform audit trail', 'अपरिवर्तनीय प्लेटफ़ॉर्म ऑडिट ट्रेल')} (<strong className="text-white">{auditLogs.length}</strong> {L('events logged', 'घटनाएँ दर्ज')})
             </span>
             <button
               onClick={() => {
@@ -2314,7 +2530,7 @@ export default function AdminConsolePage() {
               }}
               className="px-3 py-1.5 bg-stone-950 hover:bg-stone-800 text-stone-300 rounded-xl border border-stone-800 flex items-center gap-1.5 transition"
             >
-              <RefreshCw className="w-3.5 h-3.5" /> Refresh Logs
+              <RefreshCw className="w-3.5 h-3.5" /> {L('Refresh Logs', 'लॉग रीफ़्रेश करें')}
             </button>
           </div>
 
@@ -2333,7 +2549,7 @@ export default function AdminConsolePage() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3 text-[11px] text-stone-400">
-                    <span>Actor: <strong className="text-stone-300">{log.actorEmail || 'System'}</strong></span>
+                    <span>{L('Actor:', 'कर्ता:')} <strong className="text-stone-300">{log.actorEmail || L('System', 'सिस्टम')}</strong></span>
                     {log.ipAddress && <span>• IP: {log.ipAddress}</span>}
                   </div>
 
@@ -2352,7 +2568,7 @@ export default function AdminConsolePage() {
                 </div>
 
                 <span className="text-stone-400 font-mono text-[11px] shrink-0 self-end sm:self-center">
-                  {new Date(log.createdAt).toLocaleString()}
+                  {formatLocaleDateTime(log.createdAt, lang)}
                 </span>
               </div>
             ))}
@@ -2360,8 +2576,8 @@ export default function AdminConsolePage() {
             {auditLogs.length === 0 && (
               <div className="bg-stone-900 border border-stone-800 p-12 text-center rounded-2xl text-stone-400 text-xs space-y-1">
                 <AlertCircle className="w-6 h-6 text-stone-500 mx-auto mb-2" />
-                <p className="font-bold text-white text-sm">No audit logs recorded yet</p>
-                <p>Immutable moderation, verification, and kill switch events will automatically appear here.</p>
+                <p className="font-bold text-white text-sm">{L('No audit logs recorded yet', 'अभी तक कोई ऑडिट लॉग दर्ज नहीं हुआ है')}</p>
+                <p>{L('Immutable moderation, verification, and kill switch events will automatically appear here.', 'मॉडरेशन, सत्यापन और आपातकालीन प्रसारण समाप्ति (Kill Switch) की अपरिवर्तनीय घटनाएँ यहाँ स्वतः दिखाई देंगी।')}</p>
               </div>
             )}
           </div>
@@ -2377,10 +2593,13 @@ export default function AdminConsolePage() {
               <div>
                 <div className="flex items-center gap-2">
                   <Megaphone className="w-5 h-5 text-gold" />
-                  <h2 className="font-serif text-lg font-bold text-white">Occasion Announcement Banner</h2>
+                  <h2 className="font-serif text-lg font-bold text-white">{L('Occasion Announcement Banner', 'अवसर / पर्व घोषणा बैनर')}</h2>
                 </div>
                 <p className="text-xs text-stone-400 mt-1">
-                  Control the time-limited festival banner displayed at the very top of the website for all devotees.
+                  {L(
+                    'Control the time-limited festival banner displayed at the very top of the website for all devotees.',
+                    'सभी भक्तों के लिए वेबसाइट के सबसे ऊपर दिखने वाला समय-सीमित पर्व बैनर नियंत्रित करें।'
+                  )}
                 </p>
               </div>
 
@@ -2394,7 +2613,7 @@ export default function AdminConsolePage() {
                   }`}
                 >
                   <span className={`w-2 h-2 rounded-full ${bannerConfig.enabled ? 'bg-emerald-400 animate-pulse' : 'bg-stone-500'}`} />
-                  {bannerConfig.enabled ? 'Active on Website' : 'Disabled / Hidden'}
+                  {bannerConfig.enabled ? L('Active on Website', 'वेबसाइट पर सक्रिय') : L('Disabled / Hidden', 'निष्क्रिय / छिपा हुआ')}
                 </span>
 
                 <button
@@ -2407,7 +2626,7 @@ export default function AdminConsolePage() {
                       : 'bg-emerald-700 hover:bg-emerald-600 text-white'
                   }`}
                 >
-                  {bannerConfig.enabled ? 'Disable Banner Now' : 'Enable & Publish'}
+                  {bannerConfig.enabled ? L('Disable Banner Now', 'बैनर अभी बंद करें') : L('Enable & Publish', 'सक्रिय कर प्रकाशित करें')}
                 </button>
               </div>
             </div>
@@ -2416,89 +2635,89 @@ export default function AdminConsolePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-stone-300 mb-1.5">
-                  Occasion Name / Festival Tag
+                  {L('Occasion Name / Festival Tag', 'अवसर का नाम / पर्व टैग')}
                 </label>
                 <input
                   type="text"
                   value={bannerConfig.occasion}
                   onChange={(e) => setBannerConfig({ ...bannerConfig, occasion: e.target.value })}
-                  placeholder="e.g. Deepotsav, Maha Shivratri, Navratri"
+                  placeholder={L('e.g. Deepotsav, Maha Shivratri, Navratri', 'जैसे: दीपोत्सव, महाशिवरात्रि, नवरात्रि')}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-stone-950 border border-stone-800 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold transition"
                 />
                 <span className="text-[10px] text-stone-600 dark:text-stone-400 mt-1 block">
-                  Highlighted with golden drop-shadow at the start of the banner.
+                  {L('Highlighted with golden drop-shadow at the start of the banner.', 'बैनर की शुरुआत में सुनहरी आभा के साथ प्रमुखता से दिखाया जाता है।')}
                 </span>
               </div>
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-stone-300 mb-1.5">
-                  Gradient Color Scheme
+                  {L('Gradient Color Scheme', 'ग्रेडिएंट रंग शैली')}
                 </label>
                 <select
                   value={bannerConfig.gradient}
                   onChange={(e) => setBannerConfig({ ...bannerConfig, gradient: e.target.value })}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-stone-950 border border-stone-800 text-xs text-white focus:outline-none focus:border-gold transition"
                 >
-                  <option value="amber-orange">Deepotsav Flame (Amber-Orange-Crimson)</option>
-                  <option value="kashi-gold">Kashi Sanctum (Rich Gold to Dark Amber)</option>
-                  <option value="vedic-saffron">Vedic Saffron (Vermillion Saffron to Crimson)</option>
+                  <option value="amber-orange">{L('Deepotsav Flame (Amber-Orange-Crimson)', 'दीपोत्सव ज्योति (अंबर-केसरी-सिंदूरी)')}</option>
+                  <option value="kashi-gold">{L('Kashi Sanctum (Rich Gold to Dark Amber)', 'काशी गर्भगृह (स्वर्णिम से गहन अंबर)')}</option>
+                  <option value="vedic-saffron">{L('Vedic Saffron (Vermillion Saffron to Crimson)', 'वैदिक भगवा (सिंदूरी भगवा से सिंदूरी)')}</option>
                 </select>
                 <span className="text-[10px] text-stone-600 dark:text-stone-400 mt-1 block">
-                  Color gradient applied across both mobile and desktop viewports.
+                  {L('Color gradient applied across both mobile and desktop viewports.', 'मोबाइल और डेस्कटॉप दोनों स्क्रीन पर यही रंग ग्रेडिएंट लागू होता है।')}
                 </span>
               </div>
 
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold uppercase tracking-wider text-stone-300 mb-1.5">
-                  Desktop Announcement Headline
+                  {L('Desktop Announcement Headline', 'डेस्कटॉप घोषणा शीर्षक')}
                 </label>
                 <input
                   type="text"
                   value={bannerConfig.message}
                   onChange={(e) => setBannerConfig({ ...bannerConfig, message: e.target.value })}
-                  placeholder="e.g. Join the Grand Deepotsav Mahotsav & Live Ganga Aarti from Bharat's sacred ghats"
+                  placeholder={L("e.g. Join the Grand Deepotsav Mahotsav & Live Ganga Aarti from Bharat's sacred ghats", 'जैसे: भारत के पवित्र घाटों से भव्य दीपोत्सव महोत्सव एवं लाइव गंगा आरती से जुड़ें')}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-stone-950 border border-stone-800 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold transition"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-stone-300 mb-1.5">
-                  Mobile Short Headline
+                  {L('Mobile Short Headline', 'मोबाइल संक्षिप्त शीर्षक')}
                 </label>
                 <input
                   type="text"
                   value={bannerConfig.mobileMessage}
                   onChange={(e) => setBannerConfig({ ...bannerConfig, mobileMessage: e.target.value })}
-                  placeholder="e.g. Live Aarti from sacred ghats"
+                  placeholder={L('e.g. Live Aarti from sacred ghats', 'जैसे: पवित्र घाटों से लाइव आरती')}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-stone-950 border border-stone-800 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold transition"
                 />
                 <span className="text-[10px] text-stone-600 dark:text-stone-400 mt-1 block">
-                  Concise version that fits neatly on 360px–400px mobile screens.
+                  {L('Concise version that fits neatly on 360px–400px mobile screens.', '360px–400px मोबाइल स्क्रीन पर साफ़ दिखने वाला संक्षिप्त संस्करण।')}
                 </span>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-stone-300 mb-1.5">
-                    CTA Button Text
+                    {L('CTA Button Text', 'CTA बटन टेक्स्ट')}
                   </label>
                   <input
                     type="text"
                     value={bannerConfig.ctaText}
                     onChange={(e) => setBannerConfig({ ...bannerConfig, ctaText: e.target.value })}
-                    placeholder="e.g. Watch Live Aarti"
+                    placeholder={L('e.g. Watch Live Aarti', 'जैसे: लाइव आरती देखें')}
                     className="w-full px-3.5 py-2.5 rounded-xl bg-stone-950 border border-stone-800 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold transition"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-stone-300 mb-1.5">
-                    CTA Target Link
+                    {L('CTA Target Link', 'CTA लक्ष्य लिंक')}
                   </label>
                   <input
                     type="text"
                     value={bannerConfig.ctaLink}
                     onChange={(e) => setBannerConfig({ ...bannerConfig, ctaLink: e.target.value })}
-                    placeholder="e.g. /#live-section or /pooja"
+                    placeholder={L('e.g. /#live-section or /pooja', 'जैसे: /#live-section या /pooja')}
                     className="w-full px-3.5 py-2.5 rounded-xl bg-stone-950 border border-stone-800 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold transition"
                   />
                 </div>
@@ -2508,14 +2727,14 @@ export default function AdminConsolePage() {
             {/* Live Visual Preview */}
             <div className="mt-8 pt-6 border-t border-stone-800">
               <span className="text-xs font-bold uppercase tracking-wider text-stone-400 mb-3 flex items-center gap-1.5">
-                <Eye className="w-3.5 h-3.5 text-gold" /> Live Sitewide Banner Preview
+                <Eye className="w-3.5 h-3.5 text-gold" /> {L('Live Sitewide Banner Preview', 'वेबसाइट-व्यापी लाइव बैनर पूर्वावलोकन')}
               </span>
 
               {/* Preview Container */}
               <div className="rounded-2xl border border-stone-800 p-4 bg-stone-950 space-y-3">
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-1">
-                    Desktop View:
+                    {L('Desktop View:', 'डेस्कटॉप दृश्य:')}
                   </span>
                   <div
                     className={`flex items-center justify-between gap-3 px-4 py-2 text-xs rounded-xl text-white shadow-md border border-amber-600/30 ${
@@ -2529,17 +2748,17 @@ export default function AdminConsolePage() {
                     <div className="flex items-center gap-2 truncate">
                       <DiyaIcon size={16} className="text-amber-200 shrink-0" />
                       <span className="font-extrabold text-amber-100">{bannerConfig.occasion}:</span>
-                      <span className="font-medium truncate">{bannerConfig.message || 'Announcement message...'}</span>
+                      <span className="font-medium truncate">{bannerConfig.message || L('Announcement message...', 'घोषणा संदेश...')}</span>
                     </div>
                     <span className="px-3 py-1 rounded-full bg-amber-100 text-stone-950 font-extrabold text-[10px] whitespace-nowrap shrink-0">
-                      {bannerConfig.ctaText || 'Watch Now'}
+                      {bannerConfig.ctaText || L('Watch Now', 'अभी देखें')}
                     </span>
                   </div>
                 </div>
 
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-1">
-                    Mobile View (Simulated Narrow):
+                    {L('Mobile View (Simulated Narrow):', 'मोबाइल दृश्य (संकरा पूर्वावलोकन):')}
                   </span>
                   <div
                     className={`max-w-[340px] flex items-center justify-between gap-2 px-3 py-1.5 text-[11px] rounded-xl text-white shadow-md border border-amber-600/30 ${
@@ -2553,10 +2772,10 @@ export default function AdminConsolePage() {
                     <div className="flex items-center gap-1.5 truncate">
                       <DiyaIcon size={14} className="text-amber-200 shrink-0" />
                       <span className="font-extrabold text-amber-100">{bannerConfig.occasion}:</span>
-                      <span className="font-medium truncate">{bannerConfig.mobileMessage || bannerConfig.message || 'Live broadcast...'}</span>
+                      <span className="font-medium truncate">{bannerConfig.mobileMessage || bannerConfig.message || L('Live broadcast...', 'लाइव प्रसारण...')}</span>
                     </div>
                     <span className="px-2 py-0.5 rounded-full bg-amber-100 text-stone-950 font-extrabold text-[9px] whitespace-nowrap shrink-0">
-                      {bannerConfig.ctaText || 'Watch'}
+                      {bannerConfig.ctaText || L('Watch', 'देखें')}
                     </span>
                   </div>
                 </div>
@@ -2572,7 +2791,7 @@ export default function AdminConsolePage() {
                   disabled={savingBanner}
                   className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-obsidian text-xs font-black rounded-xl transition shadow-lg disabled:opacity-60"
                 >
-                  {savingBanner ? 'Saving...' : 'Save & Publish Live'}
+                  {savingBanner ? L('Saving...', 'सहेजा जा रहा है...') : L('Save & Publish Live', 'सहेजें और लाइव प्रकाशित करें')}
                 </button>
                 <button
                   type="button"
@@ -2580,7 +2799,7 @@ export default function AdminConsolePage() {
                   disabled={savingBanner}
                   className="px-5 py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-bold rounded-xl transition border border-stone-700 disabled:opacity-60"
                 >
-                  {savingBanner ? 'Saving...' : 'Save as Disabled (Hidden)'}
+                  {savingBanner ? L('Saving...', 'सहेजा जा रहा है...') : L('Save as Disabled (Hidden)', 'निष्क्रिय (छिपा हुआ) के रूप में सहेजें')}
                 </button>
               </div>
 
@@ -2591,7 +2810,7 @@ export default function AdminConsolePage() {
                   disabled={savingBanner}
                   className="px-4 py-2 text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-950/40 rounded-xl transition"
                 >
-                  Remove from Site Now
+                  {L('Remove from Site Now', 'वेबसाइट से अभी हटाएँ')}
                 </button>
               )}
             </div>
@@ -2601,40 +2820,24 @@ export default function AdminConsolePage() {
       <ConfirmDialog
         isOpen={Boolean(confirmAction)}
         title={
-          confirmAction?.type === 'endStream'
-            ? 'Emergency Force-End Stream'
-            : confirmAction?.type === 'deleteCategory'
-            ? 'Delete Stream Category'
-            : confirmAction?.type === 'approveDeletion'
-            ? 'Approve & Permanently Erase Pandit Account'
-            : confirmAction?.type === 'rejectDeletion'
-            ? 'Restore Account to Active'
-            : 'Remove Chat Filter Word'
+          confirmAction
+            ? L(CONFIRM_COPY[confirmAction.type].titleEn, CONFIRM_COPY[confirmAction.type].titleHi)
+            : ''
         }
         description={
-          confirmAction?.type === 'endStream'
-            ? 'Emergency Action: Force end this stream immediately on LiveKit SFU? Connected participants will be disconnected right away.'
-            : confirmAction?.type === 'deleteCategory'
-            ? 'Delete this category? If any streams are assigned to it, the action will be blocked to protect platform integrity.'
-            : confirmAction?.type === 'approveDeletion'
-            ? `Permanently erase "${confirmAction.label || 'this pandit'}" under DPDP Act 2023? All personal details, KYC files, credentials, and remaining wallet coins will be wiped permanently (no refund). This succeeds only when dueCoins === 0.`
-            : confirmAction?.type === 'rejectDeletion'
-            ? `Cancel deletion request and restore "${confirmAction.label || 'this user'}" back to ACTIVE status?`
-            : 'Remove this word from the prohibited chat filter list?'
+          confirmAction
+            ? lang === 'hi'
+              ? CONFIRM_COPY[confirmAction.type].descHi(confirmAction.label)
+              : CONFIRM_COPY[confirmAction.type].descEn(confirmAction.label)
+            : ''
         }
         confirmLabel={
-          confirmAction?.type === 'endStream'
-            ? 'Force End Stream'
-            : confirmAction?.type === 'deleteCategory'
-            ? 'Delete Category'
-            : confirmAction?.type === 'approveDeletion'
-            ? 'Approve & Erase'
-            : confirmAction?.type === 'rejectDeletion'
-            ? 'Restore Account'
-            : 'Remove Word'
+          confirmAction
+            ? L(CONFIRM_COPY[confirmAction.type].confirmEn, CONFIRM_COPY[confirmAction.type].confirmHi)
+            : ''
         }
-        cancelLabel="Cancel"
-        variant={confirmAction?.type === 'rejectDeletion' ? 'warning' : 'danger'}
+        cancelLabel={L('Cancel', 'रद्द करें')}
+        variant={confirmAction ? CONFIRM_COPY[confirmAction.type].variant : 'danger'}
         loading={confirmBusy}
         onConfirm={executeConfirmAction}
         onCancel={() => setConfirmAction(null)}

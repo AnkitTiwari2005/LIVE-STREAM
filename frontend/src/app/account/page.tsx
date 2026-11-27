@@ -27,6 +27,7 @@ import {
   Lock,
   LogOut,
   Bell,
+  Languages,
 } from 'lucide-react';
 import { OmIcon, CoinIcon, DiyaIcon, VerifiedPanditBadge } from '@/components/icons/SpiritualIcons';
 import { useToast } from '@/components/Toast';
@@ -37,10 +38,78 @@ import {
   purgeClientSession,
   setClientSession,
 } from '@/lib/auth-session';
+import { useLang } from '@/lib/i18n/context';
+import { formatCoins, formatLocaleDate, translateCategoryLabel } from '@/lib/i18n/format';
+
+type FilterKey = 'ALL' | 'PENDING' | 'APPROVED' | 'DECLINED';
+
+const DEVOTEE_FILTERS: Record<
+  FilterKey,
+  { en: string; hi: string; emptyEn: string; emptyHi: string; dotClass?: string }
+> = {
+  ALL: {
+    en: 'All Bookings',
+    hi: 'सभी बुकिंग',
+    emptyEn: 'No pooja requests found',
+    emptyHi: 'कोई पूजा अनुरोध नहीं मिला',
+  },
+  PENDING: {
+    en: 'Pending Confirmation',
+    hi: 'पुष्टि लंबित',
+    emptyEn: 'No pending pooja requests found',
+    emptyHi: 'कोई लंबित पूजा अनुरोध नहीं मिला',
+    dotClass: 'bg-amber-400 animate-pulse',
+  },
+  APPROVED: {
+    en: 'Confirmed / Approved',
+    hi: 'स्वीकृत / पुष्ट',
+    emptyEn: 'No approved pooja requests found',
+    emptyHi: 'कोई स्वीकृत पूजा अनुरोध नहीं मिला',
+    dotClass: 'bg-emerald-400',
+  },
+  DECLINED: {
+    en: 'Pandit Ji Unavailable',
+    hi: 'पंडित जी अनुपलब्ध',
+    emptyEn: 'No declined pooja requests found',
+    emptyHi: 'कोई अस्वीकृत पूजा अनुरोध नहीं मिला',
+    dotClass: 'bg-red-400',
+  },
+};
+
+const PANDIT_FILTERS: Record<
+  FilterKey,
+  { en: string; hi: string; emptyEn: string; emptyHi: string }
+> = {
+  ALL: {
+    en: 'All Requests',
+    hi: 'सभी अनुरोध',
+    emptyEn: 'No devotee requests yet',
+    emptyHi: 'अभी तक कोई भक्त अनुरोध नहीं आया',
+  },
+  PENDING: {
+    en: 'Pending Approval',
+    hi: 'अनुमोदन लंबित',
+    emptyEn: 'No pending devotee requests yet',
+    emptyHi: 'अभी कोई लंबित भक्त अनुरोध नहीं है',
+  },
+  APPROVED: {
+    en: 'Approved',
+    hi: 'स्वीकृत',
+    emptyEn: 'No approved devotee requests yet',
+    emptyHi: 'अभी कोई स्वीकृत भक्त अनुरोध नहीं है',
+  },
+  DECLINED: {
+    en: 'Declined',
+    hi: 'अस्वीकृत',
+    emptyEn: 'No declined devotee requests yet',
+    emptyHi: 'अभी कोई अस्वीकृत भक्त अनुरोध नहीं है',
+  },
+};
 
 export default function AccountPage() {
   const router = useRouter();
   const toast = useToast();
+  const { lang, setLang, t: L } = useLang();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [twoFaData, setTwoFaData] = useState<{ qrCode: string; backupCodes: string[] } | null>(null);
@@ -181,7 +250,9 @@ export default function AccountPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data.message || 'Unable to update pooja request');
+        throw new Error(
+          data.message || L('Unable to update pooja request', 'पूजा अनुरोध अपडेट नहीं हो सका'),
+        );
       }
       setPanditRequests((prev) => prev.map((r) => (r.id === id ? data : r)));
       if (decision === 'DECLINED') {
@@ -190,11 +261,14 @@ export default function AccountPage() {
       }
       toast.success(
         decision === 'APPROVED'
-          ? 'Pooja request confirmed. Devotee can now see the approved slot.'
-          : 'Pooja request marked unavailable.',
+          ? L(
+              'Pooja request confirmed. Devotee can now see the approved slot.',
+              'पूजा अनुरोध स्वीकृत हो गया। भक्त अब स्वीकृत समय देख सकते हैं।',
+            )
+          : L('Pooja request marked unavailable.', 'पूजा अनुरोध अनुपलब्ध चिह्नित किया गया।'),
       );
     } catch (err: any) {
-      toast.error(err.message || 'Could not update pooja request.');
+      toast.error(err.message || L('Could not update pooja request.', 'पूजा अनुरोध अपडेट नहीं किया जा सका।'));
     } finally {
       setPanditBusyId(null);
     }
@@ -216,11 +290,11 @@ export default function AccountPage() {
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          toast.error(data.message || 'Unable to cancel booking request.');
+          toast.error(data.message || L('Unable to cancel booking request.', 'बुकिंग अनुरोध रद्द नहीं किया जा सका।'));
           return;
         }
       } catch {
-        toast.error('Network error while cancelling booking.');
+        toast.error(L('Network error while cancelling booking.', 'बुकिंग रद्द करते समय नेटवर्क त्रुटि हुई।'));
         return;
       }
     }
@@ -231,7 +305,7 @@ export default function AccountPage() {
       const userId = JSON.parse(localStorage.getItem('pooja_user') || '{}')?.id || 'guest';
       localStorage.setItem(`paramdarshan_bookings_${userId}`, JSON.stringify(updated));
     }
-    toast.info('Booking request removed.');
+    toast.info(L('Booking request removed.', 'बुकिंग अनुरोध हटा दिया गया।'));
   };
 
   const loadProfile = async () => {
@@ -342,15 +416,15 @@ export default function AccountPage() {
         body: JSON.stringify({ name: nameInput.trim() }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to update name');
+      if (!res.ok) throw new Error(data.message || L('Failed to update name', 'नाम अपडेट नहीं हो सका'));
       const mergedUser = { ...user, ...data };
       setUser(mergedUser);
       localStorage.setItem('pooja_user', JSON.stringify(mergedUser));
       setIsEditingName(false);
-      setNameMsg('Profile name updated successfully!');
+      setNameMsg(L('Profile name updated successfully!', 'प्रोफ़ाइल नाम सफलतापूर्वक अपडेट हो गया!'));
       setTimeout(() => setNameMsg(null), 3000);
     } catch (err: any) {
-      setNameMsg(err.message || 'Failed to update');
+      setNameMsg(err.message || L('Failed to update', 'अपडेट नहीं हो सका'));
     } finally {
       setNameSaving(false);
     }
@@ -372,13 +446,17 @@ export default function AccountPage() {
         body: JSON.stringify({ emailNotification: nextVal }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || 'Failed to update email preference');
+      if (!res.ok) throw new Error(data.message || L('Failed to update email preference', 'ईमेल प्राथमिकता अपडेट नहीं हो सकी'));
       const mergedUser = { ...user, ...data };
       setUser(mergedUser);
       localStorage.setItem('pooja_user', JSON.stringify(mergedUser));
-      toast.success(nextVal ? 'Email alerts enabled.' : 'Email alerts paused.');
+      toast.success(
+        nextVal
+          ? L('Email alerts enabled.', 'ईमेल अलर्ट चालू किए गए।')
+          : L('Email alerts paused.', 'ईमेल अलर्ट रोके गए।'),
+      );
     } catch (err: any) {
-      toast.error(err.message || 'Could not update preference.');
+      toast.error(err.message || L('Could not update preference.', 'प्राथमिकता अपडेट नहीं हो सकी।'));
     } finally {
       setPrefSaving(false);
     }
@@ -390,15 +468,15 @@ export default function AccountPage() {
     setPwSuccess(null);
 
     if (user?.hasPassword !== false && !currentPassword) {
-      setPwError('Please enter your current password.');
+      setPwError(L('Please enter your current password.', 'कृपया अपना वर्तमान पासवर्ड दर्ज करें।'));
       return;
     }
     if (newPassword.length < 8) {
-      setPwError('New password must be at least 8 characters long.');
+      setPwError(L('New password must be at least 8 characters long.', 'नया पासवर्ड कम से कम 8 अक्षरों का होना चाहिए।'));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPwError('New password and confirmation do not match.');
+      setPwError(L('New password and confirmation do not match.', 'नया पासवर्ड और पुष्टि पासवर्ड मेल नहीं खाते।'));
       return;
     }
 
@@ -420,7 +498,7 @@ export default function AccountPage() {
         ),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || 'Failed to change password');
+      if (!res.ok) throw new Error(data.message || L('Failed to change password', 'पासवर्ड बदला नहीं जा सका'));
 
       if (data.accessToken && data.user) {
         const nextUser = { ...data.user, isLastAdmin: user?.isLastAdmin ?? false };
@@ -431,11 +509,15 @@ export default function AccountPage() {
       setNewPassword('');
       setConfirmPassword('');
       setPwSuccess(
-        data.message || 'Password updated successfully. All other sessions have been signed out.',
+        data.message ||
+          L(
+            'Password updated successfully. All other sessions have been signed out.',
+            'पासवर्ड सफलतापूर्वक अपडेट हो गया। अन्य सभी सत्र साइन आउट कर दिए गए हैं।',
+          ),
       );
-      toast.success('Password updated successfully.');
+      toast.success(L('Password updated successfully.', 'पासवर्ड सफलतापूर्वक अपडेट हो गया।'));
     } catch (err: any) {
-      setPwError(err.message || 'Could not update password.');
+      setPwError(err.message || L('Could not update password.', 'पासवर्ड अपडेट नहीं हो सका।'));
     } finally {
       setPwSaving(false);
     }
@@ -453,10 +535,15 @@ export default function AccountPage() {
         body: JSON.stringify({ email: user.email }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || 'Unable to send reset link');
-      setResetEmailMsg(`Password reset instructions sent to ${user.email}.`);
+      if (!res.ok) throw new Error(data.message || L('Unable to send reset link', 'रीसेट लिंक नहीं भेजा जा सका'));
+      setResetEmailMsg(
+        L(
+          `Password reset instructions sent to ${user.email}.`,
+          `${user.email} पर पासवर्ड रीसेट निर्देश भेज दिए गए हैं।`,
+        ),
+      );
     } catch (err: any) {
-      setResetEmailMsg(err.message || 'Could not send reset email.');
+      setResetEmailMsg(err.message || L('Could not send reset email.', 'रीसेट ईमेल नहीं भेजा जा सका।'));
     } finally {
       setResetEmailSending(false);
     }
@@ -475,16 +562,22 @@ export default function AccountPage() {
         credentials: 'include',
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || 'Failed to revoke other sessions');
+      if (!res.ok) throw new Error(data.message || L('Failed to revoke other sessions', 'अन्य सत्र रद्द नहीं किए जा सके'));
       if (data.accessToken && data.user) {
         const nextUser = { ...data.user, isLastAdmin: user?.isLastAdmin ?? false };
         setUser(nextUser);
         setClientSession(nextUser, data.accessToken);
       }
-      setLogoutAllMsg(data.message || 'Signed out from all other browsers and devices.');
-      toast.success('All other devices have been signed out.');
+      setLogoutAllMsg(
+        data.message ||
+          L(
+            'Signed out from all other browsers and devices.',
+            'अन्य सभी ब्राउज़र और डिवाइस से साइन आउट कर दिया गया है।',
+          ),
+      );
+      toast.success(L('All other devices have been signed out.', 'अन्य सभी डिवाइस साइन आउट हो गए हैं।'));
     } catch (err: any) {
-      toast.error(err.message || 'Unable to revoke other sessions.');
+      toast.error(err.message || L('Unable to revoke other sessions.', 'अन्य सत्र रद्द नहीं किए जा सके।'));
     } finally {
       setLogoutAllLoading(false);
     }
@@ -500,9 +593,9 @@ export default function AccountPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      setVerifyMsg(data.message || 'Verification link sent!');
+      setVerifyMsg(data.message || L('Verification link sent!', 'सत्यापन लिंक भेज दिया गया!'));
     } catch {
-      setVerifyMsg('Failed to send verification link.');
+      setVerifyMsg(L('Failed to send verification link.', 'सत्यापन लिंक नहीं भेजा जा सका।'));
     }
   };
 
@@ -522,7 +615,7 @@ export default function AccountPage() {
         body: JSON.stringify({}),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to initialize 2FA');
+      if (!res.ok) throw new Error(data.message || L('Failed to initialize 2FA', '2FA प्रारंभ नहीं हो सका'));
       setTwoFaData(data);
     } catch (err: any) {
       setTwoFaError(err.message);
@@ -548,7 +641,11 @@ export default function AccountPage() {
         body: JSON.stringify({ currentToken: rotateCurrentToken.trim() }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Verification failed for current 2FA code');
+      if (!res.ok) {
+        throw new Error(
+          data.message || L('Verification failed for current 2FA code', 'वर्तमान 2FA कोड का सत्यापन विफल रहा'),
+        );
+      }
       setTwoFaData(data);
       setRotateOpen(false);
       setRotateCurrentToken('');
@@ -581,12 +678,12 @@ export default function AccountPage() {
         ),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || 'Failed to disable 2FA');
+      if (!res.ok) throw new Error(data.message || L('Failed to disable 2FA', '2FA निष्क्रिय नहीं हो सका'));
       setDisable2faOpen(false);
       setDisable2faPassword('');
       setDisable2faToken('');
       setTwoFaData(null);
-      setTwoFaSuccess(data.message || 'Two-factor authentication disabled.');
+      setTwoFaSuccess(data.message || L('Two-factor authentication disabled.', 'दो-चरणीय प्रमाणीकरण निष्क्रिय कर दिया गया।'));
       loadProfile();
     } catch (err: any) {
       setTwoFaError(err.message);
@@ -611,8 +708,13 @@ export default function AccountPage() {
         body: JSON.stringify({ token: totpInput }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Verification failed');
-      setTwoFaSuccess('Two-factor authentication successfully activated!');
+      if (!res.ok) throw new Error(data.message || L('Verification failed', 'सत्यापन विफल रहा'));
+      setTwoFaSuccess(
+        L(
+          'Two-factor authentication successfully activated!',
+          'दो-चरणीय प्रमाणीकरण (2FA) सफलतापूर्वक सक्रिय हो गया!',
+        ),
+      );
       setTwoFaData(null);
       setTotpInput('');
       loadProfile();
@@ -626,7 +728,12 @@ export default function AccountPage() {
   const handleDeleteAccount = async () => {
     // hasPassword comes from /auth/me; Google-only accounts have no password to confirm with
     if (user?.hasPassword !== false && !deletePassword) {
-      toast.error('Please enter your password to confirm permanent account erasure.');
+      toast.error(
+        L(
+          'Please enter your password to confirm permanent account erasure.',
+          'स्थायी खाता विलोपन की पुष्टि के लिए कृपया अपना पासवर्ड दर्ज करें।',
+        ),
+      );
       return;
     }
     setDeleteLoading(true);
@@ -647,16 +754,21 @@ export default function AccountPage() {
         purgeClientSession();
         toast.success(
           data.message ||
-            'Your account and personal data have been permanently erased under DPDP Act 2023.',
+            L(
+              'Your account and personal data have been permanently erased under DPDP Act 2023.',
+              'DPDP अधिनियम 2023 के तहत आपका खाता और व्यक्तिगत डेटा स्थायी रूप से मिटा दिया गया है।',
+            ),
         );
         setTimeout(() => {
           window.location.href = '/';
         }, 1800);
       } else {
-        toast.error(data.message || 'Failed to delete account. Please verify your password.');
+        toast.error(
+          data.message || L('Failed to delete account. Please verify your password.', 'खाता हटाने में विफल। कृपया अपना पासवर्ड सत्यापित करें।'),
+        );
       }
     } catch (err: any) {
-      toast.error(err.message || 'Network error while requesting deletion.');
+      toast.error(err.message || L('Network error while requesting deletion.', 'खाता हटाने का अनुरोध करते समय नेटवर्क त्रुटि हुई।'));
     } finally {
       setDeleteLoading(false);
     }
@@ -673,10 +785,14 @@ export default function AccountPage() {
           </div>
           <div>
             <h1 className="font-serif text-2xl sm:text-3xl font-bold text-white flex items-center gap-2">
-              <img src="/logo.webp" alt="Param Darshan" className="w-8 h-8 object-contain inline-block drop-shadow" /> My Sacred Profile &amp; Settings
+              <img src="/logo.webp" alt={L('Param Darshan', 'परम दर्शन')} className="w-8 h-8 object-contain inline-block drop-shadow" />{' '}
+              {L('My Sacred Profile & Settings', 'मेरी पावन प्रोफ़ाइल व सेटिंग्स')}
             </h1>
             <p className="text-xs text-stone-400 mt-0.5">
-              Manage your personal information, security, and devotional preferences
+              {L(
+                'Manage your personal information, security, and devotional preferences',
+                'अपनी व्यक्तिगत जानकारी, सुरक्षा और भक्ति प्राथमिकताएँ प्रबंधित करें',
+              )}
             </p>
           </div>
         </div>
@@ -684,7 +800,7 @@ export default function AccountPage() {
         {loading ? (
           <div className="p-12 text-center text-stone-400">
             <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-gold" />
-            Loading account details...
+            {L('Loading account details...', 'खाते का विवरण लोड हो रहा है...')}
           </div>
         ) : (
           <div className="space-y-8">
@@ -697,10 +813,18 @@ export default function AccountPage() {
                   </div>
                   <div>
                     <span className="text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200 block">
-                      Email Address Not Verified
+                      {L('Email Address Not Verified', 'ईमेल पता सत्यापित नहीं है')}
                     </span>
                     <span className="text-[11px] text-stone-600 dark:text-stone-300 block mt-0.5 leading-relaxed">
-                      Please verify your email ({user.email}) to unlock your <strong>100 Free Welcome Coins</strong> and participate in live community chat.
+                      {lang === 'hi' ? (
+                        <>
+                          अपने <strong>100 निःशुल्क स्वागत कॉइन</strong> अनलॉक करने और लाइव सत्संग चैट में भाग लेने के लिए कृपया अपना ईमेल ({user.email}) सत्यापित करें।
+                        </>
+                      ) : (
+                        <>
+                          Please verify your email ({user.email}) to unlock your <strong>100 Free Welcome Coins</strong> and participate in live community chat.
+                        </>
+                      )}
                     </span>
                   </div>
                 </div>
@@ -708,7 +832,7 @@ export default function AccountPage() {
                   onClick={handleResendVerify}
                   className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-stone-950 font-bold text-xs transition shadow shrink-0"
                 >
-                  Resend Verification Email
+                  {L('Resend Verification Email', 'सत्यापन ईमेल पुनः भेजें')}
                 </button>
               </div>
             )}
@@ -717,25 +841,25 @@ export default function AccountPage() {
             <div className="bg-obsidian-soft border border-gold/15 rounded-3xl p-6 sm:p-8 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <User className="w-5 h-5 text-orange-700 dark:text-orange-400" /> Account Overview
+                <User className="w-5 h-5 text-orange-700 dark:text-orange-400" /> {L('Account Overview', 'खाता सारांश')}
               </h2>
               {/* Role Badge */}
               <div>
                 {isAdmin && isApprovedPandit ? (
                   <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-3 py-1 rounded-full border border-amber-300 dark:border-amber-500/30">
-                    <Shield className="w-3.5 h-3.5" /> Admin · Verified Vedic Pandit Ji
+                    <Shield className="w-3.5 h-3.5" /> {L('Admin · Verified Vedic Pandit Ji', 'एडमिन · सत्यापित वैदिक पंडित जी')}
                   </span>
                 ) : isAdmin ? (
                   <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-3 py-1 rounded-full border border-amber-300 dark:border-amber-500/30">
-                    <Shield className="w-3.5 h-3.5" /> Platform Administrator
+                    <Shield className="w-3.5 h-3.5" /> {L('Platform Administrator', 'प्लेटफ़ॉर्म व्यवस्थापक')}
                   </span>
                 ) : isApprovedPandit ? (
                   <span className="inline-flex items-center gap-1.5 text-xs font-bold text-orange-800 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/60 px-3 py-1 rounded-full border border-orange-300 dark:border-orange-500/30">
-                    <VerifiedPanditBadge size={16} /> Verified Vedic Pandit Ji
+                    <VerifiedPanditBadge size={16} /> {L('Verified Vedic Pandit Ji', 'सत्यापित वैदिक पंडित जी')}
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 text-xs font-semibold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-950 px-3 py-1 rounded-full border border-stone-200 dark:border-stone-800">
-                    Devotee Account
+                    {L('Devotee Account', 'भक्त खाता')}
                   </span>
                 )}
               </div>
@@ -745,7 +869,7 @@ export default function AccountPage() {
               {/* Full Name with inline edit */}
               <div className="p-4 bg-stone-50 dark:bg-stone-950 rounded-2xl border border-stone-200 dark:border-stone-800/80">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-stone-600 dark:text-stone-400">Full Name</span>
+                  <span className="text-xs text-stone-600 dark:text-stone-400">{L('Full Name', 'पूरा नाम')}</span>
                   {!isEditingName && (
                     <button
                       onClick={() => {
@@ -754,7 +878,7 @@ export default function AccountPage() {
                       }}
                       className="text-[11px] text-orange-700 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-300 font-semibold flex items-center gap-1"
                     >
-                      <Edit2 className="w-3 h-3" /> Edit Name
+                      <Edit2 className="w-3 h-3" /> {L('Edit Name', 'नाम बदलें')}
                     </button>
                   )}
                 </div>
@@ -765,14 +889,14 @@ export default function AccountPage() {
                       required
                       value={nameInput}
                       onChange={(e) => setNameInput(e.target.value)}
-                      placeholder="Enter name"
+                      placeholder={L('Enter name', 'नाम दर्ज करें')}
                       className="px-2.5 py-1 bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-lg text-sm text-stone-900 dark:text-white focus:outline-none focus:border-orange-500 flex-1"
                     />
                     <button
                       type="submit"
                       disabled={nameSaving}
                       className="p-1.5 bg-orange-700 hover:bg-orange-600 text-white rounded-lg transition disabled:opacity-50"
-                      title="Save Name"
+                      title={L('Save Name', 'नाम सहेजें')}
                     >
                       <Check className="w-3.5 h-3.5" />
                     </button>
@@ -780,7 +904,7 @@ export default function AccountPage() {
                       type="button"
                       onClick={() => setIsEditingName(false)}
                       className="p-1.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 rounded-lg transition border border-stone-200 dark:border-transparent"
-                      title="Cancel"
+                      title={L('Cancel', 'रद्द करें')}
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -792,19 +916,19 @@ export default function AccountPage() {
               </div>
 
               <div className="p-4 bg-stone-50 dark:bg-stone-950 rounded-2xl border border-stone-200 dark:border-stone-800/80">
-                <span className="text-xs text-stone-600 dark:text-stone-400 block mb-1">Email Address</span>
+                <span className="text-xs text-stone-600 dark:text-stone-400 block mb-1">{L('Email Address', 'ईमेल पता')}</span>
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-semibold text-stone-900 dark:text-white truncate">{user?.email}</span>
                   {user?.isEmailVerified ? (
                     <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-500/30 shrink-0">
-                      <CheckCircle2 className="w-3 h-3" /> Verified
+                      <CheckCircle2 className="w-3 h-3" /> {L('Verified', 'सत्यापित')}
                     </span>
                   ) : (
                     <button
                       onClick={handleResendVerify}
                       className="text-[11px] font-bold text-amber-800 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 dark:hover:bg-amber-900/60 px-2 py-0.5 rounded-full border border-amber-300 dark:border-amber-500/30 transition shrink-0"
                     >
-                      Verify Email
+                      {L('Verify Email', 'ईमेल सत्यापित करें')}
                     </button>
                   )}
                 </div>
@@ -819,19 +943,23 @@ export default function AccountPage() {
                   <CoinIcon size={20} />
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-stone-900 dark:text-foreground block">Sacred Coin Wallet</span>
-                  <span className="text-xs text-stone-600 dark:text-stone-400">View transaction history or recharge coins</span>
+                  <span className="text-xs font-bold text-stone-900 dark:text-foreground block">
+                    {L('Sacred Coin Wallet', 'पावन कॉइन वॉलेट')}
+                  </span>
+                  <span className="text-xs text-stone-600 dark:text-stone-400">
+                    {L('View transaction history or recharge coins', 'लेन-देन इतिहास देखें या कॉइन रिचार्ज करें')}
+                  </span>
                 </div>
               </div>
               <Link
                 href="/wallet/history"
                 className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 dark:text-gold-pale hover:text-amber-800 dark:hover:text-gold transition"
               >
-                View Ledger <ArrowRight className="w-3.5 h-3.5" />
+                {L('View Ledger', 'खाता बही देखें')} <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            {/* Email Alerts Preference & Role Shortcuts */}
+            {/* Preferences Row: Email Alerts & Display Language */}
             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800/80 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
@@ -840,16 +968,17 @@ export default function AccountPage() {
                   </div>
                   <div className="min-w-0">
                     <span className="text-xs font-bold text-stone-900 dark:text-white block">
-                      Email Notifications
+                      {L('Email Notifications', 'ईमेल सूचनाएँ')}
                     </span>
                     <span className="text-[11px] text-stone-600 dark:text-stone-400 block">
-                      Live darshan alerts and account security emails
+                      {L('Live darshan alerts and account security emails', 'लाइव दर्शन अलर्ट व खाता सुरक्षा ईमेल')}
                     </span>
                   </div>
                 </div>
                 <button
                   type="button"
                   role="switch"
+                  aria-label={L('Toggle email notifications', 'ईमेल सूचनाएँ चालू या बंद करें')}
                   aria-checked={user?.emailNotification !== false}
                   disabled={prefSaving}
                   onClick={handleToggleEmailNotification}
@@ -867,54 +996,95 @@ export default function AccountPage() {
                 </button>
               </div>
 
-              <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800/80 flex flex-wrap items-center gap-2">
-                {isAdmin && (
-                  <Link
-                    href="/admin"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 text-xs font-bold text-amber-900 dark:text-amber-300 transition"
+              <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800/80 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-2 rounded-xl bg-amber-500/10 dark:bg-gold/10 text-amber-700 dark:text-gold shrink-0">
+                    <Languages className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs font-bold text-stone-900 dark:text-white block">
+                      {L('Display Language', 'प्रदर्शन भाषा')}
+                    </span>
+                    <span className="text-[11px] text-stone-600 dark:text-stone-400 block">
+                      {L('Saved to your profile across devices', 'आपके प्रोफ़ाइल में सभी डिवाइस हेतु सहेजी जाती है')}
+                    </span>
+                  </div>
+                </div>
+                <div className="inline-flex rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 p-0.5 shrink-0" role="group" aria-label={L('Select display language', 'प्रदर्शन भाषा चुनें')}>
+                  <button
+                    type="button"
+                    onClick={() => setLang('en')}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${
+                      lang === 'en'
+                        ? 'bg-gold text-obsidian shadow-sm'
+                        : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
+                    }`}
                   >
-                    <Shield className="w-3.5 h-3.5" /> Admin Console
-                  </Link>
-                )}
-                {isApprovedPandit && (
-                  <>
-                    <Link
-                      href="/studio/create"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/30 text-xs font-bold text-stone-900 dark:text-gold-pale transition"
-                    >
-                      <Video className="w-3.5 h-3.5 text-gold" /> Go Live Studio
-                    </Link>
-                    <Link
-                      href="/studio/streams"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-stone-300 dark:border-stone-700 hover:border-gold text-xs font-semibold text-stone-800 dark:text-stone-200 transition"
-                    >
-                      My Broadcasts
-                    </Link>
-                    <Link
-                      href="/streamer/earnings"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-stone-300 dark:border-stone-700 hover:border-gold text-xs font-semibold text-stone-800 dark:text-stone-200 transition"
-                    >
-                      Earnings &amp; Dakshina
-                    </Link>
-                  </>
-                )}
-                {isViewer && (
-                  <>
-                    <Link
-                      href="/streamer/apply"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/30 text-xs font-bold text-stone-900 dark:text-gold-pale transition"
-                    >
-                      <DiyaIcon size={14} /> Become a Pandit Ji
-                    </Link>
-                    <Link
-                      href="/streamer/status"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-stone-300 dark:border-stone-700 hover:border-gold text-xs font-semibold text-stone-800 dark:text-stone-200 transition"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> KYC Status
-                    </Link>
-                  </>
-                )}
+                    English
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLang('hi')}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${
+                      lang === 'hi'
+                        ? 'bg-gold text-obsidian shadow-sm'
+                        : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
+                    }`}
+                  >
+                    हिन्दी
+                  </button>
+                </div>
               </div>
+            </div>
+
+            {/* Role Shortcuts */}
+            <div className="mt-3 p-4 rounded-2xl bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800/80 flex flex-wrap items-center gap-2">
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 text-xs font-bold text-amber-900 dark:text-amber-300 transition"
+                >
+                  <Shield className="w-3.5 h-3.5" /> {L('Admin Console', 'एडमिन कंसोल')}
+                </Link>
+              )}
+              {isApprovedPandit && (
+                <>
+                  <Link
+                    href="/studio/create"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/30 text-xs font-bold text-stone-900 dark:text-gold-pale transition"
+                  >
+                    <Video className="w-3.5 h-3.5 text-gold" /> {L('Go Live Studio', 'लाइव स्टूडियो शुरू करें')}
+                  </Link>
+                  <Link
+                    href="/studio/streams"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-stone-300 dark:border-stone-700 hover:border-gold text-xs font-semibold text-stone-800 dark:text-stone-200 transition"
+                  >
+                    {L('My Broadcasts', 'मेरे प्रसारण')}
+                  </Link>
+                  <Link
+                    href="/streamer/earnings"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-stone-300 dark:border-stone-700 hover:border-gold text-xs font-semibold text-stone-800 dark:text-stone-200 transition"
+                  >
+                    {L('Earnings & Dakshina', 'आय व दक्षिणा')}
+                  </Link>
+                </>
+              )}
+              {isViewer && (
+                <>
+                  <Link
+                    href="/streamer/apply"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/30 text-xs font-bold text-stone-900 dark:text-gold-pale transition"
+                  >
+                    <DiyaIcon size={14} /> {L('Become a Pandit Ji', 'पंडित जी बनें')}
+                  </Link>
+                  <Link
+                    href="/streamer/status"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-stone-300 dark:border-stone-700 hover:border-gold text-xs font-semibold text-stone-800 dark:text-stone-200 transition"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> {L('KYC Status', 'KYC स्थिति')}
+                  </Link>
+                </>
+              )}
             </div>
           </div>
 
@@ -924,13 +1094,16 @@ export default function AccountPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-gold/15">
               <div>
                 <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.24em] text-gold-soft mb-1">
-                  <DiyaIcon size={12} /> Live Devotee Requests
+                  <DiyaIcon size={12} /> {L('Live Devotee Requests', 'भक्तों के लाइव अनुरोध')}
                 </span>
                 <h2 className="font-serif text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-                  My Booked Poojas &amp; Sankalps
+                  {L('My Booked Poojas & Sankalps', 'मेरी बुक की गई पूजा व संकल्प')}
                 </h2>
                 <p className="text-xs text-stone-400 mt-0.5">
-                  Live status tracking for your personalized Vedic rituals, kathas, and astrological consultations
+                  {L(
+                    'Live status tracking for your personalized Vedic rituals, kathas, and astrological consultations',
+                    'आपके व्यक्तिगत वैदिक अनुष्ठानों, कथाओं और ज्योतिष परामर्श की लाइव स्थिति',
+                  )}
                 </p>
               </div>
 
@@ -943,13 +1116,13 @@ export default function AccountPage() {
                   className="px-4 py-2.5 rounded-full bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-gold/20 hover:scale-[1.02]"
                 >
                   <DiyaIcon size={14} />
-                  <span>Book a Live Pooja</span>
+                  <span>{L('Book a Live Pooja', 'लाइव पूजा बुक करें')}</span>
                 </button>
                 <Link
                   href="/pooja"
                   className="px-4 py-2.5 rounded-full border border-stone-300 dark:border-gold/30 hover:border-amber-500 dark:hover:border-gold text-stone-700 dark:text-gold-pale text-xs font-semibold transition flex items-center gap-1 bg-white dark:bg-obsidian shadow-sm"
                 >
-                  <span>Catalog</span>
+                  <span>{L('Catalog', 'सूची')}</span>
                   <ChevronRight className="w-3 h-3" />
                 </Link>
               </div>
@@ -963,6 +1136,7 @@ export default function AccountPage() {
                     ? bookings.length
                     : bookings.filter((b) => b.status === filter).length;
                 const isSelected = bookingFilter === filter;
+                const meta = DEVOTEE_FILTERS[filter];
                 return (
                   <button
                     key={filter}
@@ -973,24 +1147,8 @@ export default function AccountPage() {
                         : 'bg-stone-100 dark:bg-obsidian border border-stone-200 dark:border-gold/15 text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
                     }`}
                   >
-                    {filter === 'PENDING' && (
-                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                    )}
-                    {filter === 'APPROVED' && (
-                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                    )}
-                    {filter === 'DECLINED' && (
-                      <span className="w-2 h-2 rounded-full bg-red-400" />
-                    )}
-                    <span>
-                      {filter === 'ALL'
-                        ? 'All Bookings'
-                        : filter === 'PENDING'
-                        ? 'Pending Confirmation'
-                        : filter === 'APPROVED'
-                        ? 'Confirmed / Approved'
-                        : 'Pandit Ji Unavailable'}
-                    </span>
+                    {meta.dotClass && <span className={`w-2 h-2 rounded-full ${meta.dotClass}`} />}
+                    <span>{L(meta.en, meta.hi)}</span>
                     <span
                       className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full transition-colors ${
                         isSelected
@@ -1013,10 +1171,13 @@ export default function AccountPage() {
                     <DiyaIcon size={22} />
                   </div>
                   <p className="text-sm font-serif font-bold text-white">
-                    No {bookingFilter === 'ALL' ? '' : bookingFilter.toLowerCase()} pooja requests found
+                    {L(DEVOTEE_FILTERS[bookingFilter].emptyEn, DEVOTEE_FILTERS[bookingFilter].emptyHi)}
                   </p>
                   <p className="text-xs text-stone-400 max-w-sm mx-auto">
-                    Select a personalized Vedic pooja or 1-on-1 horoscope consultation to receive sacred live darshan.
+                    {L(
+                      'Select a personalized Vedic pooja or 1-on-1 horoscope consultation to receive sacred live darshan.',
+                      'पावन लाइव दर्शन प्राप्त करने के लिए व्यक्तिगत वैदिक पूजा या 1-ऑन-1 कुंडली परामर्श चुनें।',
+                    )}
                   </p>
                   <button
                     onClick={() => {
@@ -1026,7 +1187,7 @@ export default function AccountPage() {
                     className="px-5 py-2.5 rounded-full bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold transition inline-flex items-center gap-1.5 shadow"
                   >
                     <DiyaIcon size={14} />
-                    <span>Book a Live Pooja Now</span>
+                    <span>{L('Book a Live Pooja Now', 'अभी लाइव पूजा बुक करें')}</span>
                   </button>
                 </div>
               ) : (
@@ -1053,17 +1214,17 @@ export default function AccountPage() {
                           <div className="flex items-center gap-2">
                             {isPending && (
                               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-500/40">
-                                <Clock className="w-3.5 h-3.5 animate-spin" /> Awaiting Pandit Ji Confirmation
+                                <Clock className="w-3.5 h-3.5 animate-spin" /> {L('Awaiting Pandit Ji Confirmation', 'पंडित जी की पुष्टि लंबित')}
                               </span>
                             )}
                             {isApproved && (
                               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/40">
-                                <CheckCircle2 className="w-3.5 h-3.5" /> Consecrated &amp; Approved by Pandit Ji
+                                <CheckCircle2 className="w-3.5 h-3.5" /> {L('Consecrated & Approved by Pandit Ji', 'पंडित जी द्वारा संकल्पित एवं स्वीकृत')}
                               </span>
                             )}
                             {isDeclined && (
                               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-100 dark:bg-red-950/80 text-red-900 dark:text-red-300 border border-red-300 dark:border-red-500/40">
-                                <AlertTriangle className="w-3.5 h-3.5" /> Pandit Ji Unavailable for Slot
+                                <AlertTriangle className="w-3.5 h-3.5" /> {L('Pandit Ji Unavailable for Slot', 'इस समय हेतु पंडित जी अनुपलब्ध')}
                               </span>
                             )}
                             <span className="font-mono text-xs text-stone-600 dark:text-stone-400 bg-stone-100 dark:bg-obsidian-soft px-2.5 py-0.5 rounded border border-stone-200 dark:border-stone-800">
@@ -1072,7 +1233,7 @@ export default function AccountPage() {
                           </div>
 
                           <div className="text-[11px] text-stone-600 dark:text-stone-400">
-                            Requested on: {new Date(b.createdAt || Date.now()).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                            {L('Requested on:', 'अनुरोध तिथि:')} {formatLocaleDate(b.createdAt || Date.now(), lang)}
                           </div>
                         </div>
 
@@ -1082,7 +1243,7 @@ export default function AccountPage() {
                           <div className="lg:col-span-7 space-y-2">
                             <div>
                               <span className="text-[10px] font-bold uppercase tracking-wider text-gold-pale bg-gold/10 px-2 py-0.5 rounded-full border border-gold/25 inline-block mb-1">
-                                {b.category || 'Vedic Ritual'}
+                                {translateCategoryLabel(b.category || 'Vedic Ritual', lang)}
                               </span>
                               <h3 className="font-serif text-lg sm:text-xl font-bold text-white leading-snug">
                                 {b.poojaName}
@@ -1092,19 +1253,19 @@ export default function AccountPage() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
                               <div className="flex items-center gap-1.5 text-stone-300">
                                 <Calendar className="w-3.5 h-3.5 text-gold-soft shrink-0" />
-                                <span><strong>Date:</strong> {b.scheduledDate}</span>
+                                <span><strong>{L('Date:', 'तिथि:')}</strong> {b.scheduledDate}</span>
                               </div>
                               <div className="flex items-center gap-1.5 text-stone-300">
                                 <Clock className="w-3.5 h-3.5 text-gold-soft shrink-0" />
-                                <span><strong>Slot:</strong> {b.timeSlot}</span>
+                                <span><strong>{L('Slot:', 'समय:')}</strong> {b.timeSlot}</span>
                               </div>
                               <div className="flex items-center gap-1.5 text-stone-300">
                                 <OmIcon size={14} className="text-gold shrink-0" />
-                                <span><strong>Yajman:</strong> {b.devoteeName} ({b.devoteeGotra} Gotra)</span>
+                                <span><strong>{L('Yajman:', 'यजमान:')}</strong> {b.devoteeName} ({b.devoteeGotra} {L('Gotra', 'गोत्र')})</span>
                               </div>
                               <div className="flex items-center gap-1.5 text-stone-300">
                                 <Sparkles className="w-3.5 h-3.5 text-gold shrink-0" />
-                                <span className="truncate"><strong>Sankalp:</strong> {b.sankalpIntent}</span>
+                                <span className="truncate"><strong>{L('Sankalp:', 'संकल्प:')}</strong> {b.sankalpIntent}</span>
                               </div>
                             </div>
                           </div>
@@ -1132,9 +1293,9 @@ export default function AccountPage() {
                             </div>
 
                             <div className="text-right shrink-0">
-                              <span className="text-[10px] text-stone-400 block font-semibold">Dakshina</span>
+                              <span className="text-[10px] text-stone-400 block font-semibold">{L('Dakshina', 'दक्षिणा')}</span>
                               <span className="font-mono font-bold text-gold-pale text-xs sm:text-sm flex items-center gap-1 justify-end">
-                                <CoinIcon size={13} /> {b.dakshinaCoins} Coins
+                                <CoinIcon size={13} /> {formatCoins(b.dakshinaCoins, lang)}
                               </span>
                             </div>
                           </div>
@@ -1147,14 +1308,20 @@ export default function AccountPage() {
                             {isPending && (
                               <p className="text-amber-800 dark:text-amber-300/90 flex items-center gap-1.5 font-medium">
                                 <Clock className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400 shrink-0" />
-                                <span>Pandit Ji is verifying his sanctum altar schedule. You will be notified once confirmed.</span>
+                                <span>
+                                  {L(
+                                    'Pandit Ji is verifying his sanctum altar schedule. You will be notified once confirmed.',
+                                    'पंडित जी अपने पूजा समय की जाँच कर रहे हैं। पुष्टि होने पर आपको सूचित किया जाएगा।',
+                                  )}
+                                </span>
                               </p>
                             )}
                             {isApproved && (
                               <p className="text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 font-medium">
                                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400 shrink-0" />
                                 <span>
-                                  <strong>Slot Confirmed!</strong> Join the private sanctum room at your scheduled time.
+                                  <strong>{L('Slot Confirmed!', 'समय पुष्ट हुआ!')}</strong>{' '}
+                                  {L('Join the private sanctum room at your scheduled time.', 'निर्धारित समय पर निजी पूजा कक्ष से जुड़ें।')}
                                 </span>
                               </p>
                             )}
@@ -1162,7 +1329,11 @@ export default function AccountPage() {
                               <p className="text-red-800 dark:text-red-300/90 flex items-center gap-1.5 font-medium">
                                 <AlertTriangle className="w-3.5 h-3.5 text-red-700 dark:text-red-400 shrink-0" />
                                 <span>
-                                  {b.declineReason || 'Pandit Ji had a conflicting sanctum duty for this specific slot.'}
+                                  {b.declineReason ||
+                                    L(
+                                      'Pandit Ji had a conflicting sanctum duty for this specific slot.',
+                                      'इस समय पंडित जी अन्य मंदिर अनुष्ठान में व्यस्त थे।',
+                                    )}
                                 </span>
                               </p>
                             )}
@@ -1178,7 +1349,7 @@ export default function AccountPage() {
                                 <button
                                   onClick={() => handleDeleteBooking(b.id)}
                                   className="p-1.5 text-stone-600 dark:text-stone-400 hover:text-red-600 dark:hover:text-red-400 transition"
-                                  title="Cancel Request"
+                                  title={L('Cancel Request', 'अनुरोध रद्द करें')}
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </button>
@@ -1192,13 +1363,20 @@ export default function AccountPage() {
                                   className="px-5 py-2 rounded-full bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold transition flex items-center gap-1.5 shadow-[0_0_18px_rgba(245,158,11,0.35)] hover:scale-105"
                                 >
                                   <Video className="w-3.5 h-3.5" />
-                                  <span>Join Sacred Room (Live HD)</span>
+                                  <span>{L('Join Sacred Room (Live HD)', 'पावन कक्ष से जुड़ें (लाइव HD)')}</span>
                                 </Link>
                                 <button
-                                  onClick={() => toast.success(`Sankalp Slip for ${b.refCode}: Yajman ${b.devoteeName}, ${b.devoteeGotra} Gotra registered.`)}
+                                  onClick={() =>
+                                    toast.success(
+                                      L(
+                                        `Sankalp Slip for ${b.refCode}: Yajman ${b.devoteeName}, ${b.devoteeGotra} Gotra registered.`,
+                                        `${b.refCode} की संकल्प पर्ची: यजमान ${b.devoteeName}, ${b.devoteeGotra} गोत्र पंजीकृत।`,
+                                      ),
+                                    )
+                                  }
                                   className="px-3 py-1.5 rounded-full border border-gold/30 hover:border-gold text-gold-pale text-xs font-semibold transition"
                                 >
-                                  Gotra Slip
+                                  {L('Gotra Slip', 'गोत्र पर्ची')}
                                 </button>
                               </>
                             )}
@@ -1210,12 +1388,12 @@ export default function AccountPage() {
                                   className="px-4 py-1.5 rounded-full bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold transition flex items-center gap-1.5 shadow-md"
                                 >
                                   <RefreshCw className="w-3 h-3" />
-                                  <span>Choose Another Pandit Ji</span>
+                                  <span>{L('Choose Another Pandit Ji', 'अन्य पंडित जी चुनें')}</span>
                                 </button>
                                 <button
                                   onClick={() => handleDeleteBooking(b.id)}
                                   className="p-1.5 text-stone-600 dark:text-stone-400 hover:text-red-600 dark:hover:text-red-400 transition"
-                                  title="Dismiss Record"
+                                  title={L('Dismiss Record', 'रिकॉर्ड हटाएँ')}
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </button>
@@ -1240,13 +1418,16 @@ export default function AccountPage() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-gold/15">
                 <div>
                   <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.24em] text-gold-soft mb-1">
-                    <DiyaIcon size={12} /> Devotee Bookings &amp; Sankalp Queue
+                    <DiyaIcon size={12} /> {L('Devotee Bookings & Sankalp Queue', 'भक्त बुकिंग व संकल्प कतार')}
                   </span>
                   <h2 className="font-serif text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-                    Pooja Requests &amp; Approvals
+                    {L('Pooja Requests & Approvals', 'पूजा अनुरोध व स्वीकृति')}
                   </h2>
                   <p className="text-xs text-stone-400 mt-0.5">
-                    Review incoming devotee pooja requests and confirm or decline slots in real time
+                    {L(
+                      'Review incoming devotee pooja requests and confirm or decline slots in real time',
+                      'आने वाले भक्त पूजा अनुरोधों की समीक्षा करें और वास्तविक समय में समय स्वीकृत या अस्वीकृत करें',
+                    )}
                   </p>
                 </div>
 
@@ -1257,14 +1438,14 @@ export default function AccountPage() {
                     className="px-3.5 py-2 rounded-full border border-stone-300 dark:border-gold/30 hover:border-amber-500 dark:hover:border-gold text-stone-700 dark:text-gold-pale text-xs font-semibold transition flex items-center gap-1.5 bg-white dark:bg-obsidian shadow-sm"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
-                    <span>Refresh</span>
+                    <span>{L('Refresh', 'रिफ़्रेश करें')}</span>
                   </button>
                   <Link
                     href="/studio/create"
                     className="px-4 py-2 rounded-full bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold transition flex items-center gap-1.5 shadow-md"
                   >
                     <Video className="w-3.5 h-3.5" />
-                    <span>Go Live Studio</span>
+                    <span>{L('Go Live Studio', 'लाइव स्टूडियो शुरू करें')}</span>
                   </Link>
                 </div>
               </div>
@@ -1277,6 +1458,7 @@ export default function AccountPage() {
                       ? panditRequests.length
                       : panditRequests.filter((r) => r.status === filter).length;
                   const isSelected = panditFilter === filter;
+                  const meta = PANDIT_FILTERS[filter];
                   return (
                     <button
                       key={filter}
@@ -1287,15 +1469,7 @@ export default function AccountPage() {
                           : 'bg-stone-100 dark:bg-obsidian border border-stone-200 dark:border-gold/15 text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
                       }`}
                     >
-                      <span>
-                        {filter === 'ALL'
-                          ? 'All Requests'
-                          : filter === 'PENDING'
-                          ? 'Pending Approval'
-                          : filter === 'APPROVED'
-                          ? 'Approved'
-                          : 'Declined'}
-                      </span>
+                      <span>{L(meta.en, meta.hi)}</span>
                       <span
                         className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full transition-colors ${
                           isSelected
@@ -1318,10 +1492,13 @@ export default function AccountPage() {
                       <Calendar className="w-5 h-5" />
                     </div>
                     <p className="text-sm font-serif font-bold text-white">
-                      No {panditFilter === 'ALL' ? '' : panditFilter.toLowerCase()} devotee requests yet
+                      {L(PANDIT_FILTERS[panditFilter].emptyEn, PANDIT_FILTERS[panditFilter].emptyHi)}
                     </p>
                     <p className="text-xs text-stone-400 max-w-md mx-auto">
-                      When devotees submit personalized 1-on-1 Vedic pooja requests for your sanctum schedule, they will appear here for your approval.
+                      {L(
+                        'When devotees submit personalized 1-on-1 Vedic pooja requests for your sanctum schedule, they will appear here for your approval.',
+                        'जब भक्त आपके पूजा समय के लिए व्यक्तिगत 1-ऑन-1 वैदिक पूजा का अनुरोध भेजेंगे, तो वे आपकी स्वीकृति हेतु यहाँ दिखेंगे।',
+                      )}
                     </p>
                   </div>
                 ) : (
@@ -1356,17 +1533,17 @@ export default function AccountPage() {
                                 }`}
                               >
                                 {isPending
-                                  ? 'Pending Your Approval'
+                                  ? L('Pending Your Approval', 'आपकी स्वीकृति लंबित')
                                   : isApproved
-                                  ? 'Approved by You'
-                                  : 'Declined'}
+                                  ? L('Approved by You', 'आपके द्वारा स्वीकृत')
+                                  : L('Declined', 'अस्वीकृत')}
                               </span>
                               <span className="font-mono text-xs text-stone-600 dark:text-stone-400 bg-stone-100 dark:bg-obsidian-soft px-2.5 py-0.5 rounded border border-stone-200 dark:border-stone-800">
                                 {r.refCode}
                               </span>
                             </div>
                             <span className="font-mono font-bold text-gold-pale text-xs sm:text-sm flex items-center gap-1">
-                              <CoinIcon size={13} /> {r.dakshinaCoins} Coins Dakshina
+                              <CoinIcon size={13} /> {formatCoins(r.dakshinaCoins, lang)} {L('Dakshina', 'दक्षिणा')}
                             </span>
                           </div>
 
@@ -1374,13 +1551,13 @@ export default function AccountPage() {
                             <div className="flex flex-wrap items-center justify-between gap-2">
                               <h3 className="font-serif text-lg font-bold text-white">{r.poojaName}</h3>
                               <span className="text-[11px] text-stone-400">
-                                Requested {new Date(r.createdAt || Date.now()).toLocaleDateString()}
+                                {L('Requested', 'अनुरोध तिथि:')} {formatLocaleDate(r.createdAt || Date.now(), lang)}
                               </span>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-stone-300">
-                              <div><strong>Devotee:</strong> {r.devoteeName} ({r.devoteeGotra || 'Kashyap'} Gotra)</div>
-                              <div><strong>Preferred Slot:</strong> {r.scheduledDate} · {r.timeSlot}</div>
-                              <div className="sm:col-span-2"><strong>Sankalp Intent:</strong> {r.sankalpIntent}</div>
+                              <div><strong>{L('Devotee:', 'भक्त:')}</strong> {r.devoteeName} ({r.devoteeGotra || L('Kashyap', 'कश्यप')} {L('Gotra', 'गोत्र')})</div>
+                              <div><strong>{L('Preferred Slot:', 'पसंदीदा समय:')}</strong> {r.scheduledDate} · {r.timeSlot}</div>
+                              <div className="sm:col-span-2"><strong>{L('Sankalp Intent:', 'संकल्प उद्देश्य:')}</strong> {r.sankalpIntent}</div>
                             </div>
                           </div>
 
@@ -1392,7 +1569,10 @@ export default function AccountPage() {
                                     type="text"
                                     value={declineReasonInput}
                                     onChange={(e) => setDeclineReasonInput(e.target.value)}
-                                    placeholder="Optional note for devotee (e.g. temple duty at this hour)"
+                                    placeholder={L(
+                                      'Optional note for devotee (e.g. temple duty at this hour)',
+                                      'भक्त के लिए वैकल्पिक टिप्पणी (जैसे उस समय मंदिर अनुष्ठान)',
+                                    )}
                                     className="flex-1 px-3 py-1.5 rounded-xl bg-white dark:bg-obsidian border border-red-300 dark:border-red-700/60 text-xs text-stone-900 dark:text-white focus:outline-none"
                                   />
                                   <div className="flex items-center gap-2">
@@ -1402,7 +1582,7 @@ export default function AccountPage() {
                                       onClick={() => handleRespondToRequest(r.id, 'DECLINED')}
                                       className="px-3.5 py-1.5 rounded-full bg-red-700 hover:bg-red-600 text-white text-xs font-bold transition disabled:opacity-50"
                                     >
-                                      {busy ? 'Saving...' : 'Confirm Decline'}
+                                      {busy ? L('Saving...', 'सहेजा जा रहा है...') : L('Confirm Decline', 'अस्वीकृति की पुष्टि करें')}
                                     </button>
                                     <button
                                       type="button"
@@ -1412,7 +1592,7 @@ export default function AccountPage() {
                                       }}
                                       className="px-3 py-1.5 rounded-full bg-stone-200 dark:bg-stone-800 text-stone-800 dark:text-stone-300 text-xs font-semibold"
                                     >
-                                      Cancel
+                                      {L('Cancel', 'रद्द करें')}
                                     </button>
                                   </div>
                                 </div>
@@ -1424,7 +1604,7 @@ export default function AccountPage() {
                                     onChange={(e) =>
                                       setApproveTimeInput((prev) => ({ ...prev, [r.id]: e.target.value }))
                                     }
-                                    placeholder="Optional confirmed time/note"
+                                    placeholder={L('Optional confirmed time/note', 'वैकल्पिक पुष्ट समय / टिप्पणी')}
                                     className="flex-1 max-w-xs px-3 py-1.5 rounded-xl bg-white dark:bg-obsidian border border-stone-300 dark:border-gold/25 text-xs text-stone-900 dark:text-white focus:outline-none focus:border-gold"
                                   />
                                   <div className="flex items-center gap-2">
@@ -1434,7 +1614,7 @@ export default function AccountPage() {
                                       onClick={() => handleRespondToRequest(r.id, 'APPROVED')}
                                       className="px-4 py-1.5 rounded-full bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold transition disabled:opacity-50"
                                     >
-                                      {busy ? 'Updating...' : 'Approve Slot'}
+                                      {busy ? L('Updating...', 'अपडेट हो रहा है...') : L('Approve Slot', 'समय स्वीकृत करें')}
                                     </button>
                                     <button
                                       type="button"
@@ -1445,7 +1625,7 @@ export default function AccountPage() {
                                       }}
                                       className="px-3.5 py-1.5 rounded-full border border-red-400/60 text-red-700 dark:text-red-300 hover:bg-red-500/10 text-xs font-semibold transition disabled:opacity-50"
                                     >
-                                      Decline
+                                      {L('Decline', 'अस्वीकृत करें')}
                                     </button>
                                   </div>
                                 </>
@@ -1453,18 +1633,18 @@ export default function AccountPage() {
                             ) : isApproved ? (
                               <>
                                 <span className="text-xs text-emerald-800 dark:text-emerald-300 font-medium">
-                                  Confirmed for: {r.confirmedTime || `${r.scheduledDate} · ${r.timeSlot}`}
+                                  {L('Confirmed for:', 'पुष्ट समय:')} {r.confirmedTime || `${r.scheduledDate} · ${r.timeSlot}`}
                                 </span>
                                 <Link
                                   href="/studio/create"
                                   className="px-4 py-1.5 rounded-full bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold transition inline-flex items-center gap-1.5"
                                 >
-                                  <Video className="w-3.5 h-3.5" /> Open Broadcast Studio
+                                  <Video className="w-3.5 h-3.5" /> {L('Open Broadcast Studio', 'ब्रॉडकास्ट स्टूडियो खोलें')}
                                 </Link>
                               </>
                             ) : (
                               <span className="text-xs text-red-800 dark:text-red-300">
-                                {r.declineReason || 'Marked unavailable for this slot'}
+                                {r.declineReason || L('Marked unavailable for this slot', 'इस समय हेतु अनुपलब्ध चिह्नित')}
                               </span>
                             )}
                           </div>
@@ -1481,12 +1661,18 @@ export default function AccountPage() {
             <div className="flex items-center justify-between gap-4 mb-4">
               <div>
                 <h2 className="text-lg font-bold text-stone-900 dark:text-white flex items-center gap-2">
-                  <Lock className="w-5 h-5 text-amber-700 dark:text-gold" /> Password &amp; Sign-In Security
+                  <Lock className="w-5 h-5 text-amber-700 dark:text-gold" /> {L('Password & Sign-In Security', 'पासवर्ड व साइन-इन सुरक्षा')}
                 </h2>
                 <p className="text-xs text-stone-600 dark:text-stone-400 mt-0.5">
                   {user?.hasPassword === false
-                    ? 'You signed in with Google. Optionally set a direct account password below.'
-                    : 'Update your password regularly or sign out other active devices.'}
+                    ? L(
+                        'You signed in with Google. Optionally set a direct account password below.',
+                        'आपने Google से साइन इन किया है। चाहें तो नीचे सीधा खाता पासवर्ड सेट कर सकते हैं।',
+                      )
+                    : L(
+                        'Update your password regularly or sign out other active devices.',
+                        'नियमित रूप से अपना पासवर्ड अपडेट करें या अन्य सक्रिय डिवाइस से साइन आउट करें।',
+                      )}
                 </p>
               </div>
             </div>
@@ -1506,21 +1692,23 @@ export default function AccountPage() {
               {user?.hasPassword !== false && (
                 <div>
                   <label className="block text-[11px] font-semibold text-stone-600 dark:text-stone-400 mb-1">
-                    Current Password
+                    {L('Current Password', 'वर्तमान पासवर्ड')}
                   </label>
                   <input
                     type="password"
                     required
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="Enter current password"
+                    placeholder={L('Enter current password', 'वर्तमान पासवर्ड दर्ज करें')}
                     className="w-full px-3 py-2 bg-white dark:bg-obsidian border border-stone-300 dark:border-gold/25 rounded-xl text-xs text-stone-900 dark:text-white focus:outline-none focus:border-gold"
                   />
                 </div>
               )}
               <div>
                 <label className="block text-[11px] font-semibold text-stone-600 dark:text-stone-400 mb-1">
-                  {user?.hasPassword === false ? 'New Password (min 8 chars)' : 'New Password'}
+                  {user?.hasPassword === false
+                    ? L('New Password (min 8 chars)', 'नया पासवर्ड (कम से कम 8 अक्षर)')
+                    : L('New Password', 'नया पासवर्ड')}
                 </label>
                 <input
                   type="password"
@@ -1528,13 +1716,13 @@ export default function AccountPage() {
                   minLength={8}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="At least 8 characters"
+                  placeholder={L('At least 8 characters', 'कम से कम 8 अक्षर')}
                   className="w-full px-3 py-2 bg-white dark:bg-obsidian border border-stone-300 dark:border-gold/25 rounded-xl text-xs text-stone-900 dark:text-white focus:outline-none focus:border-gold"
                 />
               </div>
               <div>
                 <label className="block text-[11px] font-semibold text-stone-600 dark:text-stone-400 mb-1">
-                  Confirm New Password
+                  {L('Confirm New Password', 'नया पासवर्ड दोहराएँ')}
                 </label>
                 <input
                   type="password"
@@ -1542,7 +1730,7 @@ export default function AccountPage() {
                   minLength={8}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Repeat new password"
+                  placeholder={L('Repeat new password', 'नया पासवर्ड पुनः लिखें')}
                   className="w-full px-3 py-2 bg-white dark:bg-obsidian border border-stone-300 dark:border-gold/25 rounded-xl text-xs text-stone-900 dark:text-white focus:outline-none focus:border-gold"
                 />
               </div>
@@ -1553,10 +1741,10 @@ export default function AccountPage() {
                   className="px-4 py-2 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-xl text-xs transition disabled:opacity-50 shadow-sm"
                 >
                   {pwSaving
-                    ? 'Updating...'
+                    ? L('Updating...', 'अपडेट हो रहा है...')
                     : user?.hasPassword === false
-                    ? 'Set Account Password'
-                    : 'Update Password'}
+                    ? L('Set Account Password', 'खाता पासवर्ड सेट करें')
+                    : L('Update Password', 'पासवर्ड अपडेट करें')}
                 </button>
                 <button
                   type="button"
@@ -1564,7 +1752,9 @@ export default function AccountPage() {
                   onClick={handleSendPasswordReset}
                   className="px-4 py-2 bg-stone-100 hover:bg-stone-200 dark:bg-stone-900 dark:hover:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200 font-semibold rounded-xl text-xs transition disabled:opacity-50"
                 >
-                  {resetEmailSending ? 'Sending...' : 'Send Password Reset Link'}
+                  {resetEmailSending
+                    ? L('Sending...', 'भेजा जा रहा है...')
+                    : L('Send Password Reset Link', 'पासवर्ड रीसेट लिंक भेजें')}
                 </button>
                 <button
                   type="button"
@@ -1573,7 +1763,11 @@ export default function AccountPage() {
                   className="px-4 py-2 bg-stone-100 hover:bg-stone-200 dark:bg-stone-900 dark:hover:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200 font-semibold rounded-xl text-xs transition inline-flex items-center gap-1.5 disabled:opacity-50"
                 >
                   <LogOut className="w-3.5 h-3.5" />
-                  <span>{logoutAllLoading ? 'Signing out...' : 'Log Out All Other Devices'}</span>
+                  <span>
+                    {logoutAllLoading
+                      ? L('Signing out...', 'साइन आउट हो रहा है...')
+                      : L('Log Out All Other Devices', 'अन्य सभी डिवाइस से लॉग आउट करें')}
+                  </span>
                 </button>
               </div>
             </form>
@@ -1591,15 +1785,18 @@ export default function AccountPage() {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-lg font-bold text-stone-900 dark:text-white flex items-center gap-2">
-                    <Shield className="w-5 h-5 text-emerald-700 dark:text-emerald-400" /> Two-Factor Authentication (2FA)
+                    <Shield className="w-5 h-5 text-emerald-700 dark:text-emerald-400" /> {L('Two-Factor Authentication (2FA)', 'दो-चरणीय प्रमाणीकरण (2FA)')}
                   </h2>
                   <p className="text-xs text-stone-400 mt-0.5">
-                    Add a strong cryptographic layer to safeguard your sacred account
+                    {L(
+                      'Add a strong cryptographic layer to safeguard your sacred account',
+                      'अपने खाते की सुरक्षा के लिए मज़बूत क्रिप्टोग्राफ़िक सुरक्षा परत जोड़ें',
+                    )}
                   </p>
                 </div>
                 {user?.isTwoFactorEnabled && (
                   <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-300 dark:border-emerald-500/30">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Active
+                    <CheckCircle2 className="w-3.5 h-3.5" /> {L('Active', 'सक्रिय')}
                   </span>
                 )}
               </div>
@@ -1608,7 +1805,11 @@ export default function AccountPage() {
                 <div className="p-3.5 mb-4 bg-amber-500/15 border border-amber-500/40 rounded-xl text-xs text-amber-900 dark:text-amber-200 flex items-center gap-2">
                   <Shield className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0" />
                   <span>
-                    <strong>Platform Administrator Requirement:</strong> Two-factor authentication (2FA) is mandatory to access the Admin Console. Click below to scan and activate your authenticator.
+                    <strong>{L('Platform Administrator Requirement:', 'प्लेटफ़ॉर्म व्यवस्थापक अनिवार्यता:')}</strong>{' '}
+                    {L(
+                      'Two-factor authentication (2FA) is mandatory to access the Admin Console. Click below to scan and activate your authenticator.',
+                      'एडमिन कंसोल उपयोग के लिए दो-चरणीय प्रमाणीकरण (2FA) अनिवार्य है। अपना ऑथेंटिकेटर स्कैन करके सक्रिय करने हेतु नीचे क्लिक करें।',
+                    )}
                   </span>
                 </div>
               )}
@@ -1631,7 +1832,9 @@ export default function AccountPage() {
                   disabled={twoFaLoading}
                   className="px-5 py-2.5 bg-gold/15 hover:bg-gold/25 text-gold-pale border border-gold/30 font-semibold rounded-xl text-xs transition"
                 >
-                  {twoFaLoading ? 'Generating QR...' : 'Enable Two-Factor Authentication'}
+                  {twoFaLoading
+                    ? L('Generating QR...', 'QR कोड बन रहा है...')
+                    : L('Enable Two-Factor Authentication', 'दो-चरणीय प्रमाणीकरण (2FA) सक्रिय करें')}
                 </button>
               )}
 
@@ -1647,7 +1850,7 @@ export default function AccountPage() {
                       }}
                       className="px-4 py-2 bg-gold/15 hover:bg-gold/25 text-stone-900 dark:text-gold-pale border border-gold/30 font-semibold rounded-xl text-xs transition"
                     >
-                      Rotate / Re-enroll Authenticator
+                      {L('Rotate / Re-enroll Authenticator', 'ऑथेंटिकेटर बदलें / पुनः जोड़ें')}
                     </button>
                     {!isAdmin && (
                       <button
@@ -1659,21 +1862,27 @@ export default function AccountPage() {
                         }}
                         className="px-4 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/50 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/60 font-semibold rounded-xl text-xs transition"
                       >
-                        Disable 2FA
+                        {L('Disable 2FA', '2FA निष्क्रिय करें')}
                       </button>
                     )}
                   </div>
 
                   {isAdmin && (
                     <p className="text-[11px] text-stone-600 dark:text-stone-400">
-                      Two-factor authentication is mandatory for Administrators and cannot be disabled; you may rotate it to a new authenticator device above.
+                      {L(
+                        'Two-factor authentication is mandatory for Administrators and cannot be disabled; you may rotate it to a new authenticator device above.',
+                        'व्यवस्थापकों (Admins) के लिए दो-चरणीय प्रमाणीकरण अनिवार्य है और इसे बंद नहीं किया जा सकता; आप ऊपर नए ऑथेंटिकेटर डिवाइस पर बदल सकते हैं।',
+                      )}
                     </p>
                   )}
 
                   {rotateOpen && (
                     <form onSubmit={handleRotate2FA} className="p-4 bg-stone-50 dark:bg-obsidian rounded-2xl border border-stone-200 dark:border-gold/20 space-y-3 max-w-md">
                       <p className="text-xs font-semibold text-stone-800 dark:text-stone-200">
-                        Verify your current 6-digit authenticator code (or a backup code) to generate a new QR secret:
+                        {L(
+                          'Verify your current 6-digit authenticator code (or a backup code) to generate a new QR secret:',
+                          'नया QR कोड बनाने के लिए अपना वर्तमान 6-अंकीय ऑथेंटिकेटर कोड (या बैकअप कोड) सत्यापित करें:',
+                        )}
                       </p>
                       <div className="flex gap-2">
                         <input
@@ -1681,7 +1890,7 @@ export default function AccountPage() {
                           required
                           value={rotateCurrentToken}
                           onChange={(e) => setRotateCurrentToken(e.target.value)}
-                          placeholder="Current 6-digit or backup code"
+                          placeholder={L('Current 6-digit or backup code', 'वर्तमान 6-अंकीय या बैकअप कोड')}
                           className="flex-1 px-3 py-2 bg-white dark:bg-obsidian-soft border border-stone-300 dark:border-gold/25 rounded-xl text-xs text-stone-900 dark:text-white font-mono focus:outline-none focus:border-gold"
                         />
                         <button
@@ -1689,7 +1898,7 @@ export default function AccountPage() {
                           disabled={twoFaLoading || !rotateCurrentToken.trim()}
                           className="px-4 py-2 bg-gold hover:bg-gold-deep text-obsidian rounded-xl text-xs font-bold transition disabled:opacity-50"
                         >
-                          {twoFaLoading ? 'Checking...' : 'Continue'}
+                          {twoFaLoading ? L('Checking...', 'जाँचा जा रहा है...') : L('Continue', 'आगे बढ़ें')}
                         </button>
                       </div>
                     </form>
@@ -1698,7 +1907,15 @@ export default function AccountPage() {
                   {disable2faOpen && !isAdmin && (
                     <form onSubmit={handleDisable2FA} className="p-4 bg-red-50/70 dark:bg-red-950/30 rounded-2xl border border-red-200 dark:border-red-800/50 space-y-3 max-w-md">
                       <p className="text-xs font-semibold text-red-800 dark:text-red-300">
-                        Confirm your current 2FA code {user?.hasPassword === false ? '' : 'and password '}to disable two-factor authentication:
+                        {user?.hasPassword === false
+                          ? L(
+                              'Confirm your current 2FA code to disable two-factor authentication:',
+                              'दो-चरणीय प्रमाणीकरण बंद करने के लिए अपना वर्तमान 2FA कोड दर्ज करें:',
+                            )
+                          : L(
+                              'Confirm your current 2FA code and password to disable two-factor authentication:',
+                              'दो-चरणीय प्रमाणीकरण बंद करने के लिए अपना वर्तमान 2FA कोड व पासवर्ड दर्ज करें:',
+                            )}
                       </p>
                       {user?.hasPassword !== false && (
                         <input
@@ -1706,7 +1923,7 @@ export default function AccountPage() {
                           required
                           value={disable2faPassword}
                           onChange={(e) => setDisable2faPassword(e.target.value)}
-                          placeholder="Current account password"
+                          placeholder={L('Current account password', 'वर्तमान खाता पासवर्ड')}
                           className="w-full px-3 py-2 bg-white dark:bg-obsidian border border-red-200 dark:border-red-800/60 rounded-xl text-xs text-stone-900 dark:text-white focus:outline-none"
                         />
                       )}
@@ -1716,7 +1933,7 @@ export default function AccountPage() {
                           required
                           value={disable2faToken}
                           onChange={(e) => setDisable2faToken(e.target.value)}
-                          placeholder="Current 6-digit or backup code"
+                          placeholder={L('Current 6-digit or backup code', 'वर्तमान 6-अंकीय या बैकअप कोड')}
                           className="flex-1 px-3 py-2 bg-white dark:bg-obsidian border border-red-200 dark:border-red-800/60 rounded-xl text-xs text-stone-900 dark:text-white font-mono focus:outline-none"
                         />
                         <button
@@ -1724,7 +1941,7 @@ export default function AccountPage() {
                           disabled={twoFaLoading || !disable2faToken.trim()}
                           className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-xl text-xs font-bold transition disabled:opacity-50"
                         >
-                          {twoFaLoading ? 'Disabling...' : 'Confirm Disable'}
+                          {twoFaLoading ? L('Disabling...', 'निष्क्रिय किया जा रहा है...') : L('Confirm Disable', 'निष्क्रिय करने की पुष्टि करें')}
                         </button>
                       </div>
                     </form>
@@ -1736,19 +1953,22 @@ export default function AccountPage() {
                 <div className="mt-4 p-5 bg-obsidian rounded-2xl border border-gold/25 space-y-4">
                   {user?.isTwoFactorEnabled && (
                     <p className="text-xs text-amber-700 dark:text-amber-300 font-medium">
-                      Finish Step 2 right away by verifying a code from your newly scanned device so your authenticator stays synced.
+                      {L(
+                        'Finish Step 2 right away by verifying a code from your newly scanned device so your authenticator stays synced.',
+                        'नए स्कैन किए गए डिवाइस से प्राप्त कोड तुरंत सत्यापित करके चरण 2 पूरा करें ताकि आपका ऑथेंटिकेटर सिंक रहे।',
+                      )}
                     </p>
                   )}
                   <div className="flex flex-col sm:flex-row items-center gap-6">
                     <img
                       src={twoFaData.qrCode}
-                      alt="2FA QR Code"
+                      alt={L('2FA QR Code', '2FA QR कोड')}
                       className="w-40 h-40 rounded-xl border border-stone-700 bg-white p-2"
                     />
                     <div className="space-y-2 text-xs text-stone-300">
-                      <p className="font-semibold text-stone-900 dark:text-white">Step 1: Scan with Authenticator</p>
-                      <p>Scan this QR code using Google Authenticator, 1Password, or Microsoft Authenticator.</p>
-                      <p className="font-semibold text-stone-900 dark:text-white pt-2">Emergency Backup Codes:</p>
+                      <p className="font-semibold text-stone-900 dark:text-white">{L('Step 1: Scan with Authenticator', 'चरण 1: ऑथेंटिकेटर ऐप से स्कैन करें')}</p>
+                      <p>{L('Scan this QR code using Google Authenticator, 1Password, or Microsoft Authenticator.', 'Google Authenticator, 1Password या Microsoft Authenticator से यह QR कोड स्कैन करें।')}</p>
+                      <p className="font-semibold text-stone-900 dark:text-white pt-2">{L('Emergency Backup Codes:', 'आपातकालीन बैकअप कोड:')}</p>
                       <div className="grid grid-cols-2 gap-1.5 font-mono text-[11px] text-gold-pale bg-obsidian-soft p-2 rounded-lg border border-gold/20">
                         {twoFaData.backupCodes.map((c, i) => (
                           <span key={i}>{c}</span>
@@ -1764,7 +1984,7 @@ export default function AccountPage() {
                       maxLength={6}
                       value={totpInput}
                       onChange={(e) => setTotpInput(e.target.value)}
-                      placeholder="Enter 6-digit code"
+                      placeholder={L('Enter 6-digit code', '6-अंकीय कोड दर्ज करें')}
                       className="flex-1 min-w-[160px] px-3 py-2 bg-obsidian border border-gold/25 rounded-xl text-sm text-foreground font-mono tracking-widest focus:outline-none focus:border-gold"
                     />
                     <button
@@ -1772,7 +1992,7 @@ export default function AccountPage() {
                       disabled={twoFaLoading || totpInput.length !== 6}
                       className="px-4 py-2 bg-gold hover:bg-gold-deep text-obsidian rounded-xl text-xs font-bold transition disabled:opacity-50"
                     >
-                      {twoFaLoading ? 'Verifying...' : 'Activate 2FA'}
+                      {twoFaLoading ? L('Verifying...', 'सत्यापन हो रहा है...') : L('Activate 2FA', '2FA सक्रिय करें')}
                     </button>
                     <button
                       type="button"
@@ -1782,7 +2002,7 @@ export default function AccountPage() {
                       }}
                       className="px-3.5 py-2 bg-stone-200 hover:bg-stone-300 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-300 rounded-xl text-xs font-semibold transition"
                     >
-                      Cancel
+                      {L('Cancel', 'रद्द करें')}
                     </button>
                   </form>
                 </div>
@@ -1792,17 +2012,24 @@ export default function AccountPage() {
             {/* DPDP Act 2023 Compliance & Data Deletion */}
             <div className="bg-obsidian-soft border border-red-500/30 rounded-3xl p-6 sm:p-8 shadow-xl">
               <h2 className="text-lg font-bold text-red-700 dark:text-red-400 flex items-center gap-2 mb-1">
-                <Trash2 className="w-5 h-5" /> Data Privacy & Account Erasure
+                <Trash2 className="w-5 h-5" /> {L('Data Privacy & Account Erasure', 'डेटा गोपनीयता व खाता विलोपन')}
               </h2>
               <p className="text-xs text-stone-600 dark:text-stone-400 mb-4">
-                Under Section 12(3) of the Digital Personal Data Protection Act (DPDP Act, 2023), you have the absolute statutory right to request erasure of your personal data and account records.
+                {L(
+                  'Under Section 12(3) of the Digital Personal Data Protection Act (DPDP Act, 2023), you have the absolute statutory right to request erasure of your personal data and account records.',
+                  'डिजिटल व्यक्तिगत डेटा संरक्षण अधिनियम (DPDP Act, 2023) की धारा 12(3) के अंतर्गत आपको अपने व्यक्तिगत डेटा और खाता रिकॉर्ड को हटाने का वैधानिक अधिकार प्राप्त है।',
+                )}
               </p>
 
               {user?.isLastAdmin && (
                 <div className="p-3.5 mb-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-500/30 rounded-xl text-xs text-amber-900 dark:text-amber-200 flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0" />
                   <span>
-                    <strong>Last Platform Administrator Notice:</strong> You are currently the sole active Platform Administrator. Assign another Administrator before deleting this account.
+                    <strong>{L('Last Platform Administrator Notice:', 'अंतिम प्लेटफ़ॉर्म व्यवस्थापक सूचना:')}</strong>{' '}
+                    {L(
+                      'You are currently the sole active Platform Administrator. Assign another Administrator before deleting this account.',
+                      'आप वर्तमान में एकमात्र सक्रिय प्लेटफ़ॉर्म व्यवस्थापक हैं। इस खाते को हटाने से पहले किसी अन्य व्यवस्थापक को नियुक्त करें।',
+                    )}
                   </span>
                 </div>
               )}
@@ -1811,25 +2038,31 @@ export default function AccountPage() {
                 <div className="p-4 sm:p-5 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-500/30 rounded-2xl space-y-4">
                   <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-red-700 dark:text-red-400">
                     <AlertTriangle className="w-4 h-4 shrink-0" />
-                    <span>Confirm Permanent Account &amp; Personal Data Erasure</span>
+                    <span>{L('Confirm Permanent Account & Personal Data Erasure', 'स्थायी खाता व व्यक्तिगत डेटा विलोपन की पुष्टि करें')}</span>
                   </div>
                   <p className="text-[11px] text-stone-700 dark:text-stone-300 leading-relaxed">
-                    Under Section 12(3) of the DPDP Act 2023, this action will immediately revoke all access, permanently anonymize your profile records, and forfeit any remaining wallet or top-up coins (top-up coins are strictly non-refundable normally and after deletion). For verified Pandit accounts, your deletion request enters Administrator approval until any pending earned payouts are settled.
+                    {L(
+                      'Under Section 12(3) of the DPDP Act 2023, this action will immediately revoke all access, permanently anonymize your profile records, and forfeit any remaining wallet or top-up coins (top-up coins are strictly non-refundable normally and after deletion). For verified Pandit accounts, your deletion request enters Administrator approval until any pending earned payouts are settled.',
+                      'DPDP अधिनियम 2023 की धारा 12(3) के तहत यह कार्रवाई तुरंत सभी पहुँच समाप्त कर देगी, आपकी प्रोफ़ाइल जानकारी स्थायी रूप से अनाम कर देगी और बचे हुए वॉलेट व टॉप-अप कॉइन समाप्त हो जाएँगे (टॉप-अप कॉइन सामान्य रूप से भी और विलोपन के बाद भी पूर्णतः नॉन-रिफंडेबल हैं)। सत्यापित पंडित खातों के लिए, लंबित अर्जित भुगतान निपटने तक विलोपन अनुरोध व्यवस्थापक की स्वीकृति में रहेगा।',
+                    )}
                   </p>
                   {user?.hasPassword === false ? (
                     <p className="text-[11px] text-stone-700 dark:text-stone-300">
-                      You signed in with Google, so no password is needed. Press the button below to confirm.
+                      {L(
+                        'You signed in with Google, so no password is needed. Press the button below to confirm.',
+                        'आपने Google से साइन इन किया है, इसलिए पासवर्ड की आवश्यकता नहीं है। पुष्टि करने के लिए नीचे बटन दबाएँ।',
+                      )}
                     </p>
                   ) : (
                   <div>
                     <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1.5">
-                      Enter Account Password to Confirm Deletion:
+                      {L('Enter Account Password to Confirm Deletion:', 'विलोपन की पुष्टि हेतु खाता पासवर्ड दर्ज करें:')}
                     </label>
                     <input
                       type="password"
                       value={deletePassword}
                       onChange={(e) => setDeletePassword(e.target.value)}
-                      placeholder="Enter your current password"
+                      placeholder={L('Enter your current password', 'अपना वर्तमान पासवर्ड दर्ज करें')}
                       className="w-full max-w-sm px-3.5 py-2 bg-white dark:bg-obsidian border border-red-300 dark:border-red-800/80 rounded-xl text-xs text-stone-900 dark:text-white focus:outline-none focus:border-red-500 transition"
                     />
                   </div>
@@ -1840,7 +2073,7 @@ export default function AccountPage() {
                       disabled={deleteLoading}
                       className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-xl text-xs font-bold transition shadow"
                     >
-                      {deleteLoading ? 'Erasing...' : 'Confirm Permanent Deletion'}
+                      {deleteLoading ? L('Erasing...', 'मिटाया जा रहा है...') : L('Confirm Permanent Deletion', 'स्थायी विलोपन की पुष्टि करें')}
                     </button>
                     <button
                       onClick={() => {
@@ -1849,7 +2082,7 @@ export default function AccountPage() {
                       }}
                       className="px-4 py-2 bg-stone-200 hover:bg-stone-300 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-300 rounded-xl text-xs font-semibold transition"
                     >
-                      Cancel
+                      {L('Cancel', 'रद्द करें')}
                     </button>
                   </div>
                 </div>
@@ -1859,7 +2092,7 @@ export default function AccountPage() {
                   disabled={Boolean(user?.isLastAdmin)}
                   className="px-4 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/60 dark:hover:bg-red-900/60 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/60 rounded-xl text-xs font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Request Account Deletion (DPDP Act)
+                  {L('Request Account Deletion (DPDP Act)', 'खाता विलोपन का अनुरोध करें (DPDP Act)')}
                 </button>
               )}
             </div>

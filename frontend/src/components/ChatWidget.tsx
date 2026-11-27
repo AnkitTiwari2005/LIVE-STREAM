@@ -7,6 +7,7 @@ import { OmIcon, DiyaIcon, PranamIcon, CoinIcon } from '@/components/icons/Spiri
 import { KickedScreen } from '@/components/KickedScreen';
 import { KickViewerModal } from '@/components/KickViewerModal';
 import { decodeJwtClaims } from '@/lib/auth-session';
+import { useLang } from '@/lib/i18n/context';
 
 interface ChatMessage {
   id: string;
@@ -30,6 +31,8 @@ interface ChatWidgetProps {
 }
 
 export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionId }: ChatWidgetProps) {
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [pinnedMessage, setPinnedMessage] = useState<ChatMessage | null>(null);
   const [input, setInput] = useState('');
@@ -82,7 +85,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
     // code dereferences msg.user.* (one null user used to crash the chat for everyone joining).
     const safe = (m: ChatMessage): ChatMessage => ({
       ...m,
-      user: m.user ?? { id: '', name: 'Devotee', role: 'VIEWER' },
+      user: m.user ?? { id: '', name: L('Devotee', 'भक्त'), role: 'VIEWER' },
     });
 
     socket.on('chat:history', (rawHistory: ChatMessage[]) => {
@@ -108,7 +111,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
         id: data.messageId,
         message: data.message,
         createdAt: new Date().toISOString(),
-        user: { id: '', name: 'Pandit', role: 'STREAMER' },
+        user: { id: '', name: L('Pandit', 'पंडित जी'), role: 'STREAMER' },
         isPinned: true,
       });
     });
@@ -123,7 +126,11 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
 
     // G7: chat:user_muted is now sent only to the target's identity room (not the whole stream room)
     socket.on('chat:user_muted', (data: { userId: string; durationMinutes: number }) => {
-      setMuteBanner(`You have been muted for ${data.durationMinutes} minute(s).`);
+      setMuteBanner(
+        lang === 'hi'
+          ? `आपको ${data.durationMinutes} मिनट के लिए म्यूट किया गया है।`
+          : `You have been muted for ${data.durationMinutes} minute(s).`,
+      );
       setIsMuted(true);
       // Auto-clear mute banner after duration
       setTimeout(() => {
@@ -143,7 +150,10 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
         ...prev,
         {
           id: `dakshina_${Date.now()}_${Math.random()}`,
-          message: `Offered ${coinAmount} Coins Sacred Dakshina${dakshina.prayerMessage ? `: "${dakshina.prayerMessage}"` : ''}`,
+          message:
+            lang === 'hi'
+              ? `${coinAmount} कॉइन पवित्र दक्षिणा अर्पित की${dakshina.prayerMessage ? `: "${dakshina.prayerMessage}"` : ''}`
+              : `Offered ${coinAmount} Coins Sacred Dakshina${dakshina.prayerMessage ? `: "${dakshina.prayerMessage}"` : ''}`,
           createdAt: new Date().toISOString(),
           user: {
             id: '',
@@ -197,13 +207,13 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
 
     // G8: allow guests with sessionId to send without being logged in
     if (!resolvedUser && !sessionId) {
-      setErrorBanner('Please sign in to participate in sacred live chat.');
+      setErrorBanner(L('Please sign in to participate in sacred live chat.', 'पवित्र लाइव चैट में भाग लेने के लिए कृपया साइन इन करें।'));
       setTimeout(() => setErrorBanner(null), 4000);
       return;
     }
 
     if (!socket || !socket.connected) {
-      setErrorBanner('Chat server reconnecting. Please wait a moment...');
+      setErrorBanner(L('Chat server reconnecting. Please wait a moment...', 'चैट सर्वर पुनः जुड़ रहा है। कृपया प्रतीक्षा करें...'));
       setTimeout(() => setErrorBanner(null), 3000);
       return;
     }
@@ -214,7 +224,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
     socket.emit('chat:send', {
       streamId,
       message: trimmed,
-      guestName: resolvedUser?.name || 'Devotee',
+      guestName: resolvedUser?.name || L('Devotee', 'भक्त'),
       token: storedToken,
     });
 
@@ -245,7 +255,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
   const handleReportMessage = async (msg: ChatMessage) => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('pooja_token') : null;
     if (!token) {
-      setErrorBanner('Please sign in to report a message');
+      setErrorBanner(L('Please sign in to report a message', 'संदेश की रिपोर्ट करने के लिए कृपया साइन इन करें'));
       setTimeout(() => setErrorBanner(null), 3000);
       return;
     }
@@ -273,14 +283,14 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         const m = Array.isArray(body?.message) ? body.message[0] : body?.message;
-        setErrorBanner(res.status === 401 ? 'Please sign in to report a message' : m || 'Could not submit the report');
+        setErrorBanner(res.status === 401 ? L('Please sign in to report a message', 'संदेश की रिपोर्ट करने के लिए कृपया साइन इन करें') : m || L('Could not submit the report', 'रिपोर्ट सबमिट नहीं हो सकी'));
         setTimeout(() => setErrorBanner(null), 4000);
         return;
       }
-      setErrorBanner('Report submitted for moderation 🙏');
+      setErrorBanner(L('Report submitted for moderation 🙏', 'मॉडरेशन हेतु रिपोर्ट सबमिट की गई 🙏'));
       setTimeout(() => setErrorBanner(null), 3000);
     } catch {
-      setErrorBanner('Failed to submit report');
+      setErrorBanner(L('Failed to submit report', 'रिपोर्ट सबमिट करने में त्रुटि'));
       setTimeout(() => setErrorBanner(null), 3000);
     }
   };
@@ -298,9 +308,9 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
       <div className="p-4 border-b border-stone-200 dark:border-stone-800 bg-stone-50/80 dark:bg-stone-950/60 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <OmIcon size={20} className="text-amber-700 dark:text-amber-400" />
-          <h2 className="text-sm font-bold text-stone-900 dark:text-white tracking-tight">Sacred Live Chat</h2>
+          <h2 className="text-sm font-bold text-stone-900 dark:text-white tracking-tight">{L('Sacred Live Chat', 'पवित्र लाइव चैट')}</h2>
         </div>
-        <span className="text-[10px] text-stone-600 dark:text-stone-400 font-medium">Max 500 chars</span>
+        <span className="text-[10px] text-stone-600 dark:text-stone-400 font-medium">{L('Max 500 chars', 'अधिकतम 500 अक्षर')}</span>
       </div>
 
       {/* Pinned Message Banner */}
@@ -310,7 +320,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
             <Pin className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5 fill-amber-600 dark:fill-amber-400" />
             <div>
               <span className="font-bold text-amber-800 dark:text-amber-300 block text-[10px] uppercase tracking-wider">
-                Pinned by Pandit Ji
+                {L('Pinned by Pandit Ji', 'पंडित जी द्वारा पिन किया गया')}
               </span>
               <p className="line-clamp-2 text-stone-800 dark:text-stone-200">{pinnedMessage.message}</p>
             </div>
@@ -320,7 +330,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
               onClick={() => setPinnedMessage(null)}
               className="text-amber-700 dark:text-amber-400/80 hover:text-amber-950 dark:hover:text-white text-[10px] font-semibold"
             >
-              Dismiss
+              {L('Dismiss', 'हटाएँ')}
             </button>
           )}
         </div>
@@ -347,7 +357,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
         {messages.length === 0 && (
           <div className="h-full flex flex-col items-center justify-center text-stone-600 dark:text-stone-400 text-center px-4 py-8">
             <DiyaIcon size={36} className="mb-2 text-amber-700 dark:text-amber-400 shrink-0" />
-            <span className="text-xs">No messages yet. Send a prayer or chant to start the conversation!</span>
+            <span className="text-xs">{L('No messages yet. Send a prayer or chant to start the conversation!', 'अभी तक कोई संदेश नहीं है। संवाद शुरू करने के लिए प्रार्थना या मंत्र लिखें!')}</span>
           </div>
         )}
 
@@ -363,7 +373,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
                   <span>{msg.message}</span>
                   {msg.createdAt && (
                     <span className="text-[9px] text-amber-700/70 dark:text-amber-400/60 font-mono ml-1">
-                      {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(msg.createdAt).toLocaleTimeString(lang === 'hi' ? 'hi-IN' : 'en-IN', { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   )}
                 </div>
@@ -384,7 +394,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
                   </div>
                   {msg.createdAt && (
                     <span className="text-[9px] text-stone-600 dark:text-stone-400 font-mono">
-                      {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(msg.createdAt).toLocaleTimeString(lang === 'hi' ? 'hi-IN' : 'en-IN', { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   )}
                 </div>
@@ -417,7 +427,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
                 <span className="text-stone-900 dark:text-stone-100 break-words">{msg.message}</span>
                 {msg.createdAt && (
                   <span className="text-[9px] text-stone-600 dark:text-stone-400 ml-1.5 font-mono select-none">
-                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {new Date(msg.createdAt).toLocaleTimeString(lang === 'hi' ? 'hi-IN' : 'en-IN', { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 )}
               </div>
@@ -428,7 +438,8 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
                   <>
                     <button
                       onClick={() => handlePin(msg.id)}
-                      title="Pin message"
+                      title={L('Pin message', 'संदेश पिन करें')}
+                      aria-label={L('Pin message', 'संदेश पिन करें')}
                       className="p-1 rounded text-stone-500 hover:text-amber-700 dark:text-stone-400 dark:hover:text-amber-400 hover:bg-stone-200 dark:hover:bg-stone-800 transition"
                     >
                       <Pin className="w-3 h-3" />
@@ -436,7 +447,8 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
                     {msg.user.id && (
                       <button
                         onClick={() => handleMute(msg.user.id)}
-                        title="Mute user for 15 mins"
+                        title={L('Mute user for 15 mins', '15 मिनट के लिए म्यूट करें')}
+                        aria-label={L('Mute user for 15 mins', '15 मिनट के लिए म्यूट करें')}
                         className="p-1 rounded text-stone-500 hover:text-orange-700 dark:text-stone-400 dark:hover:text-orange-400 hover:bg-stone-200 dark:hover:bg-stone-800 transition"
                       >
                         <VolumeX className="w-3 h-3" />
@@ -446,7 +458,8 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
                     {msg.user.id && (
                       <button
                         onClick={() => handleKick(msg.user.id, msg.user.name)}
-                        title="Remove viewer"
+                        title={L('Remove viewer', 'दर्शक हटाएँ')}
+                        aria-label={L('Remove viewer', 'दर्शक हटाएँ')}
                         className="p-1 rounded text-stone-500 hover:text-red-700 dark:text-stone-400 dark:hover:text-red-400 hover:bg-stone-200 dark:hover:bg-stone-800 transition"
                       >
                         <UserX className="w-3 h-3" />
@@ -454,7 +467,8 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
                     )}
                     <button
                       onClick={() => handleDelete(msg.id)}
-                      title="Delete message"
+                      title={L('Delete message', 'संदेश हटाएँ')}
+                      aria-label={L('Delete message', 'संदेश हटाएँ')}
                       className="p-1 rounded text-stone-500 hover:text-red-700 dark:text-stone-400 dark:hover:text-red-400 hover:bg-stone-200 dark:hover:bg-stone-800 transition"
                     >
                       <Trash2 className="w-3 h-3" />
@@ -464,7 +478,8 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
                 {/* Report button for all participants */}
                 <button
                   onClick={() => handleReportMessage(msg)}
-                  title="Report inappropriate message"
+                  title={L('Report inappropriate message', 'अनुचित संदेश की रिपोर्ट करें')}
+                  aria-label={L('Report inappropriate message', 'अनुचित संदेश की रिपोर्ट करें')}
                   className="p-1 rounded text-stone-500 hover:text-amber-700 dark:text-stone-400 dark:hover:text-amber-400 hover:bg-stone-200 dark:hover:bg-stone-800 transition"
                 >
                   <Flag className="w-3 h-3" />
@@ -483,7 +498,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Chant Har Har Mahadev, Jai Shri Ram..."
+              placeholder={L('Chant Har Har Mahadev, Jai Shri Ram...', 'हर हर महादेव, जय श्री राम लिखें...')}
               maxLength={500}
               disabled={isMuted}
               className="flex-1 px-3.5 py-2 bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-800 rounded-xl text-xs text-stone-900 dark:text-white placeholder-stone-500 dark:placeholder-stone-400 focus:outline-none focus:border-amber-600 dark:focus:border-orange-500 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
@@ -492,7 +507,8 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
               type="submit"
               disabled={isMuted}
               className="bg-orange-700 hover:bg-orange-600 text-white p-2.5 rounded-xl transition-colors shadow-md shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-              title={isMuted ? 'You are muted' : 'Send Message'}
+              title={isMuted ? L('You are muted', 'आप म्यूट हैं') : L('Send Message', 'संदेश भेजें')}
+              aria-label={isMuted ? L('You are muted', 'आप म्यूट हैं') : L('Send Message', 'संदेश भेजें')}
             >
               <Send className="w-4 h-4" />
             </button>
@@ -500,7 +516,7 @@ export function ChatWidget({ socket, streamId, isStreamer, currentUser, sessionI
         ) : (
           <div className="text-center py-1">
             <a href="/login" className="chat-signin-link text-xs hover:underline font-bold inline-flex items-center gap-1.5">
-              <span className="font-bold">Sign in to participate in sacred live chat</span>
+              <span className="font-bold">{L('Sign in to participate in sacred live chat', 'पवित्र लाइव चैट में भाग लेने के लिए लॉगिन करें')}</span>
               <PranamIcon size={14} className="text-amber-700 dark:text-amber-400" />
             </a>
           </div>

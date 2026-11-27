@@ -30,6 +30,8 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiFetch } from '@/lib/api';
 import { decodeJwtClaims, purgeClientSession } from '@/lib/auth-session';
 import { useToast } from '@/components/Toast';
+import { useLang } from '@/lib/i18n/context';
+import { formatCoins } from '@/lib/i18n/format';
 import {
   Camera,
   Mic,
@@ -70,6 +72,7 @@ export default function StudioClient() {
   const { id: paramId } = useParams() as { id: string };
   const router = useRouter();
   const toast = useToast();
+  const { lang, t: L } = useLang();
 
   const [streamId, setStreamId] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -206,7 +209,7 @@ export default function StudioClient() {
           headers: { Authorization: `Bearer ${storedToken}` },
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Stream not found');
+        if (!res.ok) throw new Error(data.message || L('Stream not found', 'प्रसारण नहीं मिला'));
         if (!isDisposed) {
           setStream(data);
           if (typeof data.peakViewers === 'number') {
@@ -355,7 +358,12 @@ export default function StudioClient() {
     for (const r of videoRequests) {
       if (!seenReqsRef.current.has(r.identity)) {
         seenReqsRef.current.add(r.identity);
-        toast.info(`${r.name} would like to show their video. Open Viewers to allow.`);
+        toast.info(
+          L(
+            `${r.name} would like to show their video. Open Viewers to allow.`,
+            `${r.name} अपना वीडियो दिखाना चाहते हैं। अनुमति देने के लिए "दर्शक" खोलें।`,
+          ),
+        );
       }
     }
     const live = new Set(videoRequests.map((r) => r.identity));
@@ -375,9 +383,11 @@ export default function StudioClient() {
         body: JSON.stringify({ replace }),
       });
       setVideoGuest({ identity, name: r?.guest?.name || name });
-      toast.success(`${name} can now turn on their video.`);
+      toast.success(
+        L(`${name} can now turn on their video.`, `${name} अब अपना वीडियो चालू कर सकते हैं।`),
+      );
     } catch (err: any) {
-      toast.error(err?.message || 'Could not give video access.');
+      toast.error(err?.message || L('Could not give video access.', 'वीडियो अनुमति नहीं दी जा सकी।'));
     } finally {
       setGuestBusy(null);
     }
@@ -389,9 +399,9 @@ export default function StudioClient() {
     try {
       await apiFetch(`/streams/${streamId}/video-guest/${encodeURIComponent(identity)}/revoke`, { method: 'POST' });
       setVideoGuest((cur) => (cur && cur.identity === identity ? null : cur));
-      toast.success('Video access taken back.');
+      toast.success(L('Video access taken back.', 'वीडियो अनुमति वापस ली गई।'));
     } catch (err: any) {
-      toast.error(err?.message || 'Could not take back video access.');
+      toast.error(err?.message || L('Could not take back video access.', 'वीडियो अनुमति वापस नहीं ली जा सकी।'));
     } finally {
       setGuestBusy(null);
     }
@@ -404,7 +414,7 @@ export default function StudioClient() {
         body: JSON.stringify({ source }),
       });
     } catch (err: any) {
-      toast.error(err?.message || 'Could not change their audio/video.');
+      toast.error(err?.message || L('Could not change their audio/video.', 'उनका ऑडियो/वीडियो बदला नहीं जा सका।'));
     }
   };
 
@@ -502,7 +512,7 @@ export default function StudioClient() {
         if (data.message && data.message.includes('already have another live broadcast')) {
           setActiveConflict(true);
         }
-        throw new Error(data.message || 'Could not start live stream');
+        throw new Error(data.message || L('Could not start live stream', 'लाइव प्रसारण शुरू नहीं हो सका'));
       }
 
       // Stop local preview tracks so LiveKit can capture the device
@@ -530,10 +540,10 @@ export default function StudioClient() {
       setIsLive(false);
       setToken(null);
       setConfirmEndOpen(false);
-      toast.success('Pooja session concluded successfully.');
+      toast.success(L('Pooja session concluded successfully.', 'पूजा सत्र सफलतापूर्वक समाप्त हुआ।'));
       router.push('/');
     } catch (err: any) {
-      toast.error(err.message || 'Failed to end stream');
+      toast.error(err.message || L('Failed to end stream', 'प्रसारण समाप्त नहीं हो सका'));
     } finally {
       setEndingStream(false);
     }
@@ -552,11 +562,18 @@ export default function StudioClient() {
           </div>
           <div>
             <h1 className="text-lg font-bold text-stone-900 dark:text-white flex items-center gap-2">
-              {stream?.title || 'Pandit Live Studio'}
-              {isLive && <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-full font-bold">LIVE ON AIR</span>}
+              {stream?.title || L('Pandit Live Studio', 'पंडित लाइव स्टूडियो')}
+              {isLive && (
+                <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-full font-bold">
+                  {L('LIVE ON AIR', 'लाइव ऑन एयर')}
+                </span>
+              )}
             </h1>
             <p className="text-xs text-stone-600 dark:text-stone-400">
-              {stream?.visibility === 'PRIVATE' ? 'Private Sacred Consultation' : 'Public Live Darshan'} • Quality: {stream?.videoQuality || '480p'}
+              {stream?.visibility === 'PRIVATE'
+                ? L('Private Sacred Consultation', 'निजी पावन परामर्श')
+                : L('Public Live Darshan', 'सार्वजनिक लाइव दर्शन')}{' '}
+              • {L('Quality:', 'गुणवत्ता:')} {stream?.videoQuality || '480p'}
             </p>
           </div>
         </div>
@@ -566,18 +583,25 @@ export default function StudioClient() {
           {(() => {
             const earned = streamCoins ?? 0;
             const breakdown = calculateStreamerNetCoinsInr(earned);
-            const tooltipText = `Gross: ₹${formatInrAmount(breakdown.grossInr)} • Your 85% Net Share: ₹${formatInrAmount(breakdown.netInr)} (150 coins = ₹100)`;
+            const tooltipText =
+              lang === 'hi'
+                ? `सकल: ₹${formatInrAmount(breakdown.grossInr)} • आपका 85% शुद्ध हिस्सा: ₹${formatInrAmount(breakdown.netInr)} (150 कॉइन = ₹100)`
+                : `Gross: ₹${formatInrAmount(breakdown.grossInr)} • Your 85% Net Share: ₹${formatInrAmount(breakdown.netInr)} (150 coins = ₹100)`;
             return (
               <Link
                 href="/streamer/earnings"
                 title={tooltipText}
-                aria-label={`${earned} Coins Earned in this stream. ${tooltipText}`}
+                aria-label={
+                  lang === 'hi'
+                    ? `इस प्रसारण में ${earned} कॉइन अर्जित। ${tooltipText}`
+                    : `${earned} Coins Earned in this stream. ${tooltipText}`
+                }
                 className="relative inline-flex items-center gap-1.5 rounded-full border border-amber-400/60 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900/60 px-3.5 py-2 text-xs font-extrabold text-amber-950 dark:text-gold-pale shadow-sm transition-all"
               >
                 <CoinIcon size={16} />
-                <span>{earned.toLocaleString('en-IN')} Coins</span>
+                <span>{formatCoins(earned, lang)}</span>
                 <span className="text-[10px] font-semibold text-amber-800 dark:text-stone-300 hidden sm:inline">
-                  (≈ ₹{formatInrAmount(breakdown.netInr)} net)
+                  (≈ ₹{formatInrAmount(breakdown.netInr)} {L('net', 'शुद्ध')})
                 </span>
                 {lastDelta !== null && (
                   <span className="ml-1 px-1.5 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-black animate-bounce shadow">
@@ -591,16 +615,22 @@ export default function StudioClient() {
           {/* Live Viewer Count Pill */}
           {isLive && (
             <div
-              title={`Active Devotees: ${viewerCount} • Peak: ${peakViewers}`}
+              title={
+                lang === 'hi'
+                  ? `सक्रिय भक्त: ${viewerCount} • अधिकतम: ${peakViewers}`
+                  : `Active Devotees: ${viewerCount} • Peak: ${peakViewers}`
+              }
               className="relative inline-flex items-center gap-2 rounded-full border border-emerald-300 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 px-3.5 py-2 text-xs font-bold text-emerald-800 dark:text-emerald-400 shadow-sm"
             >
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 <Eye className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
-                <span>{viewerCount} Live</span>
+                <span>{viewerCount} {L('Live', 'लाइव')}</span>
               </div>
               <span className="text-stone-400 dark:text-stone-600">•</span>
-              <span className="text-[10px] text-stone-600 dark:text-stone-400 font-medium">Peak: {peakViewers}</span>
+              <span className="text-[10px] text-stone-600 dark:text-stone-400 font-medium">
+                {L('Peak:', 'अधिकतम:')} {peakViewers}
+              </span>
             </div>
           )}
 
@@ -621,9 +651,12 @@ export default function StudioClient() {
                   : 'bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 border border-stone-300 dark:border-stone-700'
               }`}
             >
-              <Users className="w-4 h-4 text-amber-700 dark:text-amber-400" /> Viewers ({viewerCount})
+              <Users className="w-4 h-4 text-amber-700 dark:text-amber-400" /> {L('Viewers', 'दर्शक')} ({viewerCount})
               {isPublicStream && pendingRequests.length > 0 && (
-                <span className="ml-1 inline-flex items-center gap-0.5 rounded-full bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 animate-pulse" title="Video requests">
+                <span
+                  className="ml-1 inline-flex items-center gap-0.5 rounded-full bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 animate-pulse"
+                  title={L('Video requests', 'वीडियो अनुरोध')}
+                >
                   <Hand className="w-3 h-3" />{pendingRequests.length}
                 </span>
               )}
@@ -635,7 +668,7 @@ export default function StudioClient() {
               onClick={() => setShareModalOpen(true)}
               className="flex items-center gap-1.5 bg-green-700 hover:bg-green-600 text-white text-xs font-semibold py-2 px-3.5 rounded-xl transition-colors shadow-md"
             >
-              <Share2 className="w-4 h-4" /> WhatsApp Invite Link
+              <Share2 className="w-4 h-4" /> {L('WhatsApp Invite Link', 'WhatsApp आमंत्रण लिंक')}
             </button>
           )}
 
@@ -644,7 +677,7 @@ export default function StudioClient() {
               onClick={handleEndStream}
               className="flex items-center gap-1.5 bg-red-700 hover:bg-red-600 text-white text-xs font-semibold py-2 px-3.5 rounded-xl transition-colors shadow-md"
             >
-              <StopCircle className="w-4 h-4" /> End Live Stream
+              <StopCircle className="w-4 h-4" /> {L('End Live Stream', 'लाइव प्रसारण समाप्त करें')}
             </button>
           )}
         </div>
@@ -662,8 +695,15 @@ export default function StudioClient() {
           <div className="flex items-center gap-2.5">
             <AlertCircle className="w-5 h-5 text-amber-800 dark:text-amber-400 shrink-0" />
             <div>
-              <span className="font-bold text-amber-950 dark:text-amber-300 block text-sm">Previous Live Session Still Active</span>
-              <span className="text-amber-900 dark:text-amber-200 font-medium">You have another live broadcast running. Would you like to end the previous broadcast and go live with this session now?</span>
+              <span className="font-bold text-amber-950 dark:text-amber-300 block text-sm">
+                {L('Previous Live Session Still Active', 'पिछला लाइव सत्र अभी भी सक्रिय है')}
+              </span>
+              <span className="text-amber-900 dark:text-amber-200 font-medium">
+                {L(
+                  'You have another live broadcast running. Would you like to end the previous broadcast and go live with this session now?',
+                  'आपका एक अन्य लाइव प्रसारण चल रहा है। क्या आप पिछला प्रसारण समाप्त करके अभी इस सत्र को लाइव करना चाहते हैं?',
+                )}
+              </span>
             </div>
           </div>
           <button
@@ -671,7 +711,7 @@ export default function StudioClient() {
             disabled={loading}
             className="px-4 py-2 bg-gradient-to-r from-orange-700 to-amber-700 hover:from-orange-600 hover:to-amber-600 text-white font-bold rounded-xl text-xs transition shadow-md shrink-0"
           >
-            {loading ? 'Starting...' : 'End Previous & Start Live Now'}
+            {loading ? L('Starting...', 'शुरू हो रहा है...') : L('End Previous & Start Live Now', 'पिछला समाप्त करें व अभी लाइव हों')}
           </button>
         </div>
       )}
@@ -681,15 +721,22 @@ export default function StudioClient() {
           <div className="flex items-center gap-3">
             <DiyaIcon size={24} className="text-amber-800 dark:text-amber-400 shrink-0" />
             <div>
-              <span className="font-bold text-amber-950 dark:text-amber-300 block text-sm">Previous Live Broadcast Concluded</span>
-              <span className="text-amber-900 dark:text-amber-200 font-medium">This sacred ritual session has ended. To go live again, configure a fresh broadcast.</span>
+              <span className="font-bold text-amber-950 dark:text-amber-300 block text-sm">
+                {L('Previous Live Broadcast Concluded', 'पिछला लाइव प्रसारण समाप्त हो चुका है')}
+              </span>
+              <span className="text-amber-900 dark:text-amber-200 font-medium">
+                {L(
+                  'This sacred ritual session has ended. To go live again, configure a fresh broadcast.',
+                  'यह पावन अनुष्ठान सत्र समाप्त हो चुका है। फिर से लाइव जाने के लिए नया प्रसारण सेटअप करें।',
+                )}
+              </span>
             </div>
           </div>
           <Link
             href="/studio/create"
             className="px-4 py-2 bg-orange-700 hover:bg-orange-600 text-white font-bold rounded-xl text-xs transition-colors shrink-0 shadow-md text-center"
           >
-            Setup New Broadcast
+            {L('Setup New Broadcast', 'नया प्रसारण सेटअप करें')}
           </Link>
         </div>
       )}
@@ -704,13 +751,13 @@ export default function StudioClient() {
               <div className="video-overlay relative w-full h-full flex items-center justify-center bg-stone-950">
                 <div ref={previewRef} className="w-full h-full object-cover" />
                 <div className="absolute top-4 left-4 bg-amber-400 text-stone-950 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow z-10">
-                  STUDIO PREVIEW (OFF AIR)
+                  {L('STUDIO PREVIEW (OFF AIR)', 'स्टूडियो पूर्वावलोकन (ऑफ़ एयर)')}
                 </div>
                 {!previewTracks.video && (
                   <div className="video-overlay absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 bg-black/80">
                     <Camera className="w-10 h-10 text-amber-400 mb-3 animate-pulse" />
                     <p className="text-stone-200 text-xs sm:text-sm font-semibold mb-3">
-                      Camera preview initializing or access needed
+                      {L('Camera preview initializing or access needed', 'कैमरा पूर्वावलोकन शुरू हो रहा है या अनुमति आवश्यक है')}
                     </p>
                     <button
                       type="button"
@@ -726,12 +773,17 @@ export default function StudioClient() {
                           if (v.length > 0) setSelectedVideo(v[0].deviceId);
                           if (a.length > 0) setSelectedAudio(a[0].deviceId);
                         } catch (e: any) {
-                          setError('Please allow camera and mic permissions in your browser address bar.');
+                          setError(
+                            L(
+                              'Please allow camera and mic permissions in your browser address bar.',
+                              'कृपया अपने ब्राउज़र एड्रेस बार में कैमरा व माइक की अनुमति दें।',
+                            ),
+                          );
                         }
                       }}
                       className="px-4 py-2 bg-gold hover:bg-gold-deep text-obsidian font-bold text-xs rounded-xl shadow-lg transition"
                     >
-                      Connect Camera &amp; Mic
+                      {L('Connect Camera & Mic', 'कैमरा व माइक जोड़ें')}
                     </button>
                   </div>
                 )}
@@ -762,7 +814,7 @@ export default function StudioClient() {
                   onRemove={(identity, displayName) => setKickTarget({ identity, displayName })}
                 />
                 <div className="absolute top-4 right-4 z-30">
-                  <StartAudio label="Unmute Remote Devotee Audio" />
+                  <StartAudio label={L('Unmute Remote Devotee Audio', 'भक्तों का ऑडियो अनम्यूट करें')} />
                 </div>
               </LiveKitRoom>
             )}
@@ -774,7 +826,7 @@ export default function StudioClient() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs text-stone-400 font-semibold flex items-center gap-1.5 mb-1.5">
-                    <Camera className="w-3.5 h-3.5 text-orange-400" /> Select Camera
+                    <Camera className="w-3.5 h-3.5 text-orange-400" /> {L('Select Camera', 'कैमरा चुनें')}
                   </label>
                   <select
                     value={selectedVideo}
@@ -783,7 +835,7 @@ export default function StudioClient() {
                   >
                     {videoDevices.map((d) => (
                       <option key={d.deviceId} value={d.deviceId}>
-                        {d.label || `Camera ${d.deviceId.slice(0, 5)}`}
+                        {d.label || L(`Camera ${d.deviceId.slice(0, 5)}`, `कैमरा ${d.deviceId.slice(0, 5)}`)}
                       </option>
                     ))}
                   </select>
@@ -791,7 +843,7 @@ export default function StudioClient() {
 
                 <div>
                   <label className="text-xs text-stone-400 font-semibold flex items-center gap-1.5 mb-1.5">
-                    <Mic className="w-3.5 h-3.5 text-orange-400" /> Select Microphone
+                    <Mic className="w-3.5 h-3.5 text-orange-400" /> {L('Select Microphone', 'माइक्रोफ़ोन चुनें')}
                   </label>
                   <select
                     value={selectedAudio}
@@ -800,7 +852,7 @@ export default function StudioClient() {
                   >
                     {audioDevices.map((d) => (
                       <option key={d.deviceId} value={d.deviceId}>
-                        {d.label || `Mic ${d.deviceId.slice(0, 5)}`}
+                        {d.label || L(`Mic ${d.deviceId.slice(0, 5)}`, `माइक ${d.deviceId.slice(0, 5)}`)}
                       </option>
                     ))}
                   </select>
@@ -809,7 +861,9 @@ export default function StudioClient() {
 
               {videoDevices.length === 0 && (
                 <div className="p-3 rounded-xl bg-stone-950 border border-stone-800 flex items-center justify-between gap-2">
-                  <span className="text-xs text-stone-400">Camera / mic devices not yet detected</span>
+                  <span className="text-xs text-stone-400">
+                    {L('Camera / mic devices not yet detected', 'कैमरा / माइक उपकरण अभी पहचाने नहीं गए हैं')}
+                  </span>
                   <button
                     type="button"
                     onClick={async () => {
@@ -824,12 +878,17 @@ export default function StudioClient() {
                         if (vInputs.length > 0) setSelectedVideo(vInputs[0].deviceId);
                         if (aInputs.length > 0) setSelectedAudio(aInputs[0].deviceId);
                       } catch (err: any) {
-                        setError('Please grant camera and microphone permissions in your browser to broadcast.');
+                        setError(
+                          L(
+                            'Please grant camera and microphone permissions in your browser to broadcast.',
+                            'प्रसारण के लिए कृपया अपने ब्राउज़र में कैमरा व माइक्रोफ़ोन की अनुमति दें।',
+                          ),
+                        );
                       }
                     }}
                     className="px-3 py-1.5 bg-orange-100 hover:bg-orange-200 dark:bg-orange-600/30 dark:hover:bg-orange-600/50 text-orange-950 dark:text-orange-300 border border-orange-300 dark:border-orange-500/30 font-semibold text-xs rounded-lg transition-colors"
                   >
-                    Grant Camera & Mic Access
+                    {L('Grant Camera & Mic Access', 'कैमरा व माइक की अनुमति दें')}
                   </button>
                 </div>
               )}
@@ -840,7 +899,7 @@ export default function StudioClient() {
                   className="w-full py-3.5 bg-gradient-to-r from-orange-700 via-amber-700 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-extrabold rounded-xl text-base shadow-xl transition-all flex items-center justify-center gap-2 text-center"
                 >
                   <Sparkles className="w-5 h-5" />
-                  <span>Setup New Broadcast</span>
+                  <span>{L('Setup New Broadcast', 'नया प्रसारण सेटअप करें')}</span>
                 </Link>
               ) : (
                 <button
@@ -849,7 +908,13 @@ export default function StudioClient() {
                   className="w-full py-3.5 bg-gradient-to-r from-orange-700 via-red-700 to-amber-700 hover:from-orange-600 hover:to-amber-600 text-white font-extrabold rounded-xl text-base shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <Radio className="w-5 h-5 animate-pulse" />
-                  {loading ? 'Starting Broadcast Engine...' : (<span className="flex items-center gap-1.5">START LIVE BROADCAST NOW <PranamIcon size={18} /></span>)}
+                  {loading ? (
+                    L('Starting Broadcast Engine...', 'प्रसारण इंजन शुरू हो रहा है...')
+                  ) : (
+                    <span className="flex items-center gap-1.5">
+                      {L('START LIVE BROADCAST NOW', 'अभी लाइव प्रसारण शुरू करें')} <PranamIcon size={18} />
+                    </span>
+                  )}
                 </button>
               )}
             </div>
@@ -858,9 +923,9 @@ export default function StudioClient() {
               <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl flex items-center justify-between text-xs text-stone-800 dark:text-stone-300 shadow-sm">
                 <span className="flex items-center gap-2 font-medium">
                   <span className="w-2 h-2 rounded-full bg-green-500 animate-ping" />
-                  Audio & Video Broadcasting via Single-port UDP (7882)
+                  {L('Audio & Video Broadcasting via Single-port UDP (7882)', 'सिंगल-पोर्ट UDP (7882) द्वारा ऑडियो व वीडियो प्रसारण')}
                 </span>
-                <span className="text-stone-500 dark:text-stone-400 font-mono">Simulcast Active</span>
+                <span className="text-stone-500 dark:text-stone-400 font-mono">{L('Simulcast Active', 'Simulcast सक्रिय')}</span>
               </div>
 
 
@@ -871,11 +936,18 @@ export default function StudioClient() {
                     <div className="flex items-center gap-2 min-w-0">
                       <VideoGuestIcon className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0" />
                       <div className="min-w-0">
-                        <p className="font-bold text-stone-900 dark:text-white">Video guest (one devotee at a time)</p>
+                        <p className="font-bold text-stone-900 dark:text-white">
+                          {L('Video guest (one devotee at a time)', 'वीडियो अतिथि (एक समय में एक भक्त)')}
+                        </p>
                         <p className="text-stone-500 dark:text-stone-400 truncate">
                           {videoGuest
-                            ? `${videoGuest.name || 'A devotee'} can show video and speak. Ends when they leave or this stream ends.`
-                            : 'No one has the video slot. Open Viewers and tap "Give video" next to a devotee.'}
+                            ? lang === 'hi'
+                              ? `${videoGuest.name || 'एक भक्त'} वीडियो दिखा सकते हैं व बोल सकते हैं। उनके जाने या प्रसारण समाप्त होने पर बंद होगा।`
+                              : `${videoGuest.name || 'A devotee'} can show video and speak. Ends when they leave or this stream ends.`
+                            : L(
+                                'No one has the video slot. Open Viewers and tap "Give video" next to a devotee.',
+                                'अभी किसी के पास वीडियो स्लॉट नहीं है। "दर्शक" खोलें और किसी भक्त के सामने "वीडियो दें" चुनें।',
+                              )}
                         </p>
                       </div>
                     </div>
@@ -886,7 +958,7 @@ export default function StudioClient() {
                         onClick={() => stopVideoGuest(videoGuest.identity)}
                         className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-60 text-white font-bold"
                       >
-                        <VideoOff className="w-3.5 h-3.5" /> Stop video
+                        <VideoOff className="w-3.5 h-3.5" /> {L('Stop video', 'वीडियो बंद करें')}
                       </button>
                     )}
                   </div>
@@ -899,7 +971,9 @@ export default function StudioClient() {
                   <div className="flex items-center justify-between border-b border-stone-200 dark:border-stone-800 pb-2">
                     <div className="flex items-center gap-2">
                       <Users className="w-4 h-4 text-amber-700 dark:text-amber-400" />
-                      <h3 className="text-sm font-bold text-stone-900 dark:text-white">Active Devotees ({viewers.length})</h3>
+                      <h3 className="text-sm font-bold text-stone-900 dark:text-white">
+                        {L('Active Devotees', 'सक्रिय भक्त')} ({viewers.length})
+                      </h3>
                     </div>
                     <button
                       type="button"
@@ -908,13 +982,15 @@ export default function StudioClient() {
                       }}
                       className="text-[11px] text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 font-semibold transition"
                     >
-                      Refresh List
+                      {L('Refresh List', 'सूची ताज़ा करें')}
                     </button>
                   </div>
 
                   {isPublicStream && pendingRequests.length > 0 && (
                     <div className="rounded-xl border border-amber-300 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-950/30 p-2.5 space-y-2" data-testid="video-requests">
-                      <p className="text-[11px] font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1"><Hand className="w-3.5 h-3.5" /> Asking to show video</p>
+                      <p className="text-[11px] font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1">
+                        <Hand className="w-3.5 h-3.5" /> {L('Asking to show video', 'वीडियो दिखाने का अनुरोध')}
+                      </p>
                       {pendingRequests.map((r) => (
                         <div key={r.identity} className="flex items-center justify-between gap-2 text-xs">
                           <span className="font-semibold truncate">{r.name}</span>
@@ -925,14 +1001,16 @@ export default function StudioClient() {
                               onClick={() => grantVideo(r.identity, r.name)}
                               className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold"
                             >
-                              {videoGuest && videoGuest.identity !== r.identity ? 'Replace current' : 'Allow'}
+                              {videoGuest && videoGuest.identity !== r.identity
+                                ? L('Replace current', 'वर्तमान को बदलें')
+                                : L('Allow', 'अनुमति दें')}
                             </button>
                             <button
                               type="button"
                               onClick={() => setDismissedReqs((prev) => new Set(prev).add(r.identity))}
                               className="px-2.5 py-1 rounded-lg border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300 font-semibold"
                             >
-                              Dismiss
+                              {L('Dismiss', 'खारिज करें')}
                             </button>
                           </span>
                         </div>
@@ -941,7 +1019,9 @@ export default function StudioClient() {
                   )}
 
                   {viewers.length === 0 ? (
-                    <p className="text-xs text-stone-500 dark:text-stone-400 py-3 text-center">No other devotees currently connected in video room.</p>
+                    <p className="text-xs text-stone-500 dark:text-stone-400 py-3 text-center">
+                      {L('No other devotees currently connected in video room.', 'अभी वीडियो कक्ष में कोई अन्य भक्त जुड़ा नहीं है।')}
+                    </p>
                   ) : (
                     <div className="max-h-56 overflow-y-auto space-y-2 pr-1">
                       {viewers.map((v) => (
@@ -953,7 +1033,7 @@ export default function StudioClient() {
                             <span className="font-semibold text-stone-900 dark:text-white">{v.displayName}</span>
                             {v.isGuest && (
                               <span className="px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-400 border border-amber-300 dark:border-amber-800/60 text-[10px] font-medium">
-                                Guest
+                                {L('Guest', 'अतिथि')}
                               </span>
                             )}
                           </div>
@@ -966,7 +1046,7 @@ export default function StudioClient() {
                                 onClick={() => stopVideoGuest(v.identity)}
                                 className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-60 text-white text-xs font-semibold"
                               >
-                                <VideoOff className="w-3.5 h-3.5" /> Stop video
+                                <VideoOff className="w-3.5 h-3.5" /> {L('Stop video', 'वीडियो बंद करें')}
                               </button>
                             ) : (
                               <button
@@ -975,7 +1055,8 @@ export default function StudioClient() {
                                 onClick={() => grantVideo(v.identity, v.displayName)}
                                 className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900 disabled:opacity-60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 text-xs font-semibold"
                               >
-                                <VideoGuestIcon className="w-3.5 h-3.5" /> {videoGuest ? 'Replace with this' : 'Give video'}
+                                <VideoGuestIcon className="w-3.5 h-3.5" />{' '}
+                                {videoGuest ? L('Replace with this', 'इनसे बदलें') : L('Give video', 'वीडियो दें')}
                               </button>
                             )
                           )}
@@ -984,7 +1065,7 @@ export default function StudioClient() {
                             onClick={() => setKickTarget({ identity: v.identity, displayName: v.displayName })}
                             className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 dark:bg-red-950/60 dark:hover:bg-red-900 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/60 text-xs transition font-semibold"
                           >
-                            <UserX className="w-3.5 h-3.5" /> Remove
+                            <UserX className="w-3.5 h-3.5" /> {L('Remove', 'हटाएँ')}
                           </button>
                           </div>
                         </div>
@@ -1013,17 +1094,20 @@ export default function StudioClient() {
         <WhatsAppShareModal
           isOpen={shareModalOpen}
           onClose={() => setShareModalOpen(false)}
-          streamTitle={stream?.title || 'Private Pooja Session'}
+          streamTitle={stream?.title || L('Private Pooja Session', 'निजी पूजा सत्र')}
           joinUrl={privateLinkData.joinUrl}
         />
       )}
 
       <ConfirmDialog
         isOpen={confirmEndOpen}
-        title="Conclude Live Pooja Session"
-        description="Are you sure you wish to conclude this live pooja session? Connected devotees will see the broadcast conclusion screen."
-        confirmLabel="Yes, End Broadcast"
-        cancelLabel="Stay Live"
+        title={L('Conclude Live Pooja Session', 'लाइव पूजा सत्र समाप्त करें')}
+        description={L(
+          'Are you sure you wish to conclude this live pooja session? Connected devotees will see the broadcast conclusion screen.',
+          'क्या आप वाकई इस लाइव पूजा सत्र को समाप्त करना चाहते हैं? जुड़े हुए भक्तों को प्रसारण समाप्ति स्क्रीन दिखाई देगी।',
+        )}
+        confirmLabel={L('Yes, End Broadcast', 'हाँ, प्रसारण समाप्त करें')}
+        cancelLabel={L('Stay Live', 'लाइव बने रहें')}
         variant="danger"
         loading={endingStream}
         onConfirm={confirmEndStream}
@@ -1064,6 +1148,7 @@ function PublisherTrackRenderer({
   const tracks = useTracks([Track.Source.Camera, Track.Source.Microphone], { onlySubscribed: false });
   const { cameraTrack, localParticipant, isMicrophoneEnabled, isCameraEnabled } = useLocalParticipant();
   const toast = useToast();
+  const { lang, t: L } = useLang();
   const [busy, setBusy] = useState(false);
 
   const toggleMic = async () => {
@@ -1072,7 +1157,7 @@ function PublisherTrackRenderer({
     try {
       await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
     } catch (err: any) {
-      toast.error(friendlyMediaError(err));
+      toast.error(friendlyMediaError(err, lang));
     } finally {
       setBusy(false);
     }
@@ -1084,7 +1169,7 @@ function PublisherTrackRenderer({
     try {
       await localParticipant.setCameraEnabled(!isCameraEnabled);
     } catch (err: any) {
-      toast.error(friendlyMediaError(err));
+      toast.error(friendlyMediaError(err, lang));
     } finally {
       setBusy(false);
     }
@@ -1119,7 +1204,9 @@ function PublisherTrackRenderer({
             <VideoOff className="w-8 h-8 mb-3 text-stone-400" />
           )}
           <span className="text-xs font-semibold text-stone-200">
-            {isCameraEnabled ? 'Starting camera…' : 'Your camera is off. Devotees hear you but cannot see you.'}
+            {isCameraEnabled
+              ? L('Starting camera…', 'कैमरा शुरू हो रहा है…')
+              : L('Your camera is off. Devotees hear you but cannot see you.', 'आपका कैमरा बंद है। भक्त आपकी आवाज़ सुन सकते हैं, पर आपको देख नहीं सकते।')}
           </span>
         </div>
       )}
@@ -1129,7 +1216,7 @@ function PublisherTrackRenderer({
         <div className="video-overlay absolute top-14 right-3 z-30 flex flex-col gap-2 max-h-[75%] overflow-y-auto">
           {shown.slice(0, 4).map((p) => {
             const guest = isVideoGuest(p);
-            const name = (p.name || '').trim() || 'Devotee';
+            const name = (p.name || '').trim() || L('Devotee', 'भक्त');
             return (
               <ParticipantTile
                 key={p.identity}
@@ -1137,13 +1224,13 @@ function PublisherTrackRenderer({
                 cameraRef={camOf(p.identity)}
                 micMuted={micMutedOf(p.identity)}
                 label={name}
-                badge={guest ? 'Video guest' : undefined}
+                badge={guest ? L('Video guest', 'वीडियो अतिथि') : undefined}
                 className="w-40 sm:w-56 aspect-video shadow-2xl !border-orange-500/70"
               >
                 <div className="absolute top-1 right-1 flex gap-1">
                   <button
                     type="button"
-                    title="Mute their microphone"
+                    title={L('Mute their microphone', 'उनका माइक्रोफ़ोन म्यूट करें')}
                     onClick={() => onMute(p.identity, 'microphone')}
                     className="w-6 h-6 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center"
                   >
@@ -1151,7 +1238,7 @@ function PublisherTrackRenderer({
                   </button>
                   <button
                     type="button"
-                    title="Turn off their camera"
+                    title={L('Turn off their camera', 'उनका कैमरा बंद करें')}
                     onClick={() => onMute(p.identity, 'camera')}
                     className="w-6 h-6 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center"
                   >
@@ -1160,16 +1247,16 @@ function PublisherTrackRenderer({
                   {guest ? (
                     <button
                       type="button"
-                      title="Take back video access"
+                      title={L('Take back video access', 'वीडियो अनुमति वापस लें')}
                       onClick={() => onStopGuest(p.identity)}
                       className="px-1.5 h-6 rounded-full bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold"
                     >
-                      Stop
+                      {L('Stop', 'रोकें')}
                     </button>
                   ) : (
                     <button
                       type="button"
-                      title="Remove from session"
+                      title={L('Remove from session', 'सत्र से हटाएँ')}
                       onClick={() => onRemove(p.identity, name)}
                       className="w-6 h-6 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center"
                     >
@@ -1181,7 +1268,9 @@ function PublisherTrackRenderer({
             );
           })}
           {shown.length > 4 && (
-            <span className="text-[10px] font-bold text-white bg-black/70 rounded px-2 py-0.5 self-end">+{shown.length - 4} more</span>
+            <span className="text-[10px] font-bold text-white bg-black/70 rounded px-2 py-0.5 self-end">
+              +{shown.length - 4} {L('more', 'अन्य')}
+            </span>
           )}
         </div>
       )}
@@ -1190,7 +1279,7 @@ function PublisherTrackRenderer({
       <div className="absolute top-4 left-4 flex items-center gap-2 z-20">
         <span className="bg-red-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-lg animate-pulse">
           <span className="w-2 h-2 rounded-full bg-white" />
-          LIVE ON AIR
+          {L('LIVE ON AIR', 'लाइव ऑन एयर')}
         </span>
         <button
           onClick={toggleMic}
@@ -1200,10 +1289,10 @@ function PublisherTrackRenderer({
               ? 'bg-emerald-700/95 hover:bg-emerald-600 text-white'
               : 'bg-red-700/95 hover:bg-red-600 text-white animate-bounce'
           }`}
-          title="Click to toggle microphone"
+          title={L('Click to toggle microphone', 'माइक्रोफ़ोन चालू/बंद करने के लिए क्लिक करें')}
         >
           <Mic className="w-3 h-3" />
-          {isMicrophoneEnabled ? 'Mic: ON (Broadcasting)' : 'Mic: MUTED'}
+          {isMicrophoneEnabled ? L('Mic: ON (Broadcasting)', 'माइक: चालू (प्रसारण जारी)') : L('Mic: MUTED', 'माइक: म्यूट')}
         </button>
         <button
           onClick={toggleCamera}
@@ -1211,10 +1300,10 @@ function PublisherTrackRenderer({
           className={`text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-lg transition-colors backdrop-blur-md ${
             isCameraEnabled ? 'bg-stone-800/90 hover:bg-stone-700 text-white' : 'bg-red-700/95 hover:bg-red-600 text-white'
           }`}
-          title="Click to toggle camera"
+          title={L('Click to toggle camera', 'कैमरा चालू/बंद करने के लिए क्लिक करें')}
         >
           {isCameraEnabled ? <VideoGuestIcon className="w-3 h-3" /> : <VideoOff className="w-3 h-3" />}
-          {isCameraEnabled ? 'Camera: ON' : 'Camera: OFF'}
+          {isCameraEnabled ? L('Camera: ON', 'कैमरा: चालू') : L('Camera: OFF', 'कैमरा: बंद')}
         </button>
       </div>
     </div>

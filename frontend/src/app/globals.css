@@ -171,3 +171,7 @@ html[lang="hi"] h3 {
 html[lang="hi"] .uppercase {
   text-transform: none;
 }
+html[lang="hi"] em,
+html[lang="hi"] .italic {
+  font-style: normal;
+}

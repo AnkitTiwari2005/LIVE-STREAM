@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { X } from 'lucide-react';
 import { DiyaIcon } from '@/components/icons/SpiritualIcons';
+import { useLang } from '@/lib/i18n/context';
 
 export interface BannerConfig {
   enabled: boolean;
@@ -17,6 +18,8 @@ export interface BannerConfig {
 }
 
 export function FestivalBanner() {
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
   const [banner, setBanner] = useState<BannerConfig | null>(null);
   const [dismissed, setDismissed] = useState(false);
 
@@ -84,16 +87,16 @@ export function FestivalBanner() {
       ? 'bg-gradient-to-r from-red-700 via-rose-600 to-amber-700 dark:from-[#360909] dark:via-[#5c1111] dark:to-[#381207]'
       : 'bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 dark:from-[#2a0707] dark:via-[#5b1210] dark:to-[#7c2d12]';
 
-  const occasion = banner.occasion || 'Special Occasion';
-  const fullMessage = banner.message || 'Join sacred rituals and live poojas with verified Vedic Pandit Jis';
+  const occasion = banner.occasion || L('Special Occasion', 'विशेष पर्व');
+  const fullMessage = banner.message || L('Join sacred rituals and live poojas with verified Vedic Pandit Jis', 'सत्यापित वैदिक पंडित जी के साथ पवित्र अनुष्ठानों एवं लाइव पूजा में जुड़ें');
   const shortMessage = banner.mobileMessage || fullMessage;
-  const ctaText = banner.ctaText || 'Watch Live';
+  const ctaText = banner.ctaText || L('Watch Live', 'लाइव देखें');
   const ctaLink = banner.ctaLink || '/#live-section';
 
   return (
     <div
       role="region"
-      aria-label="Festival announcement"
+      aria-label={L('Festival announcement', 'पर्व एवं उत्सव सूचना')}
       className={`relative z-50 flex items-center justify-between sm:justify-center gap-2 sm:gap-4 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm !text-white shadow-md border-b border-amber-600/30 ${gradientClass} pr-8 sm:pr-10 animate-in fade-in duration-200 w-full max-w-full overflow-hidden`}
     >
       <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 sm:flex-initial">
@@ -120,7 +123,7 @@ export function FestivalBanner() {
       <button
         type="button"
         onClick={handleDismiss}
-        aria-label="Dismiss announcement"
+        aria-label={L('Dismiss announcement', 'सूचना बंद करें')}
         className="absolute right-2 sm:right-3.5 top-1/2 -translate-y-1/2 p-1 !text-white/80 hover:!text-white hover:bg-white/20 rounded-full transition-colors"
       >
         <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />

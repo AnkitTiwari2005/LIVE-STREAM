@@ -4,11 +4,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Search, ChevronRight, X, Radio } from 'lucide-react';
+import { useLang } from '@/lib/i18n/context';
 
 interface SearchItem {
   title: string;
+  titleHi?: string;
   subtitle: string;
+  subtitleHi?: string;
   category: string;
+  categoryHi?: string;
   url: string;
   image: string;
   keywords: string;
@@ -20,7 +24,9 @@ const STATIC_DIRECTORY: SearchItem[] = [
   {
     title: 'पंडित रोहित तिवारी (ज्योतिषाचार्य)',
     subtitle: 'Matrimonial advisor & Astrologer (Founder)',
+    subtitleHi: 'वैवाहिक परामर्शदाता एवं ज्योतिषाचार्य (संस्थापक)',
     category: 'Pandit',
+    categoryHi: 'पंडित जी',
     url: '/pandit/rohit-tiwari',
     image: '/images/pandits/pandit-rohit-tiwari.webp',
     keywords: 'pandit rohit tiwari matrimonial advisor astrologer jyotishacharya founder vivah kundli milan',
@@ -28,7 +34,9 @@ const STATIC_DIRECTORY: SearchItem[] = [
   {
     title: 'पंडित संतोष कुमार शास्त्री',
     subtitle: 'ज्योतिष एवं वास्तु विशेषज्ञ (Co-Founder)',
+    subtitleHi: 'ज्योतिष एवं वास्तु विशेषज्ञ (सह-संस्थापक)',
     category: 'Pandit',
+    categoryHi: 'पंडित जी',
     url: '/pandit/santosh-shastri',
     image: '/images/pandits/pandit-santosh-shastri.webp',
     keywords: 'pandit santosh kumar shastri vastu shastra jyotish co-founder grievance officer astrology grah shanti',
@@ -37,6 +45,7 @@ const STATIC_DIRECTORY: SearchItem[] = [
     title: 'पंडित रवि पाठक',
     subtitle: 'कर्मकाण्ड विशेषज्ञ',
     category: 'Pandit',
+    categoryHi: 'पंडित जी',
     url: '/pandit/ravi-pathak',
     image: '/images/pandits/pandit-ravi-pathak.webp',
     keywords: 'pandit ravi pathak karmakand ganesh pujan maha yagya vedic anushthan',
@@ -45,6 +54,7 @@ const STATIC_DIRECTORY: SearchItem[] = [
     title: 'पंडित नितिन शर्मा',
     subtitle: 'कर्मकाण्ड, सुंदरकांड विशेषज्ञ',
     category: 'Pandit',
+    categoryHi: 'पंडित जी',
     url: '/pandit/nitin-sharma',
     image: '/images/pandits/pandit-nitin-sharma.webp',
     keywords: 'pandit nitin sharma karmakand sunderkand sundarkand hanuman chalisa vedic path',
@@ -53,6 +63,7 @@ const STATIC_DIRECTORY: SearchItem[] = [
     title: 'पंडित उमेश शास्त्री',
     subtitle: 'रुद्राभिषेक एवं देवी पूजा',
     category: 'Pandit',
+    categoryHi: 'पंडित जी',
     url: '/pandit/umesh-shastri',
     image: '/images/pandits/pandit-umesh-shastri.webp',
     keywords: 'pandit umesh shastri rudrabhishek devi pooja durga saptashati chandi path',
@@ -61,6 +72,7 @@ const STATIC_DIRECTORY: SearchItem[] = [
     title: 'आचार्य कुबेर दत्त त्रिपाठी',
     subtitle: 'ज्योतिष कर्मकाण्ड विशेषज्ञ',
     category: 'Pandit',
+    categoryHi: 'पंडित जी',
     url: '/pandit/kuber-tripathi',
     image: '/images/pandits/acharya-kuber-tripathi.webp',
     keywords: 'acharya kuber dutt tripathi jyotish karmakand bhajan sankalp seva',
@@ -69,6 +81,7 @@ const STATIC_DIRECTORY: SearchItem[] = [
     title: 'पंडित सुभाष शास्त्री',
     subtitle: 'सत्य नारायण पूजा, दुर्गासप्तशती पाठ, नवग्रहपूजन, रुद्राभिषेक',
     category: 'Pandit',
+    categoryHi: 'पंडित जी',
     url: '/pandit/subhash-shastri',
     image: '/images/pandits/pandit-subhash-shastri.webp',
     keywords: 'pandit subhash shastri satyanarayan pooja durga saptashati navgrah poojan rudrabhishek',
@@ -77,6 +90,7 @@ const STATIC_DIRECTORY: SearchItem[] = [
     title: 'पंडित सुमित शास्त्री (कर्मकांड,ज्योतिष)',
     subtitle: 'कर्मकांड एवं ज्योतिष विशेषज्ञ',
     category: 'Pandit',
+    categoryHi: 'पंडित जी',
     url: '/pandit/sumit-shastri',
     image: '/images/pandits/pandit-sumit-shastri.webp',
     keywords: 'pandit sumit shastri karmakand jyotish astrology pooja vidhi',
@@ -85,54 +99,73 @@ const STATIC_DIRECTORY: SearchItem[] = [
     title: 'पंडित नंदकिशोर त्रिपाठी (कर्मकांड,ज्योतिष)',
     subtitle: 'कर्मकांड एवं ज्योतिष विशेषज्ञ',
     category: 'Pandit',
+    categoryHi: 'पंडित जी',
     url: '/pandit/nandkishor-tripathi',
     image: '/images/pandits/pandit-nandkishor-tripathi.webp',
     keywords: 'pandit nandkishor tripathi karmakand jyotish astrology graha shanti anushthan',
   },
   {
     title: 'Sacred Coin Wallet',
+    titleHi: 'पवित्र कॉइन वॉलेट',
     subtitle: 'Top-up coin packages & review history',
+    subtitleHi: 'कॉइन पैक रिचार्ज करें और इतिहास देखें',
     category: 'Wallet',
+    categoryHi: 'वॉलेट',
     url: '/wallet/topup',
     image: '/images/photo-1741358706805-a5935a200a5c.webp',
     keywords: 'coins wallet recharge payment balance topup pack upi',
   },
   {
     title: 'Become a Verified Pandit Ji',
+    titleHi: 'सत्यापित पंडित जी बनें',
     subtitle: 'Apply for KYC & Pandit broadcast verification',
+    subtitleHi: 'KYC और पंडित प्रसारण सत्यापन के लिए आवेदन करें',
     category: 'Streamer',
+    categoryHi: 'प्रसारक',
     url: '/streamer/apply',
     image: '/images/pandits/pandit-rohit-tiwari.webp',
     keywords: 'apply pandit become acharya priest verification onboard kyc',
   },
   {
     title: 'Pandit Ji Broadcaster Studio',
+    titleHi: 'पंडित जी प्रसारक स्टूडियो',
     subtitle: 'For verified Pandit Jis to go live & stream pooja',
+    subtitleHi: 'सत्यापित पंडित जी के लिए लाइव पूजा प्रसारण हेतु',
     category: 'Streamer',
+    categoryHi: 'प्रसारक',
     url: '/studio/create',
     image: '/images/photo-1791727868124-c6ba8c28449a.webp',
     keywords: 'studio broadcast pandit go live camera microphone acharya',
   },
   {
     title: 'Devotee Help & FAQ',
+    titleHi: 'भक्त सहायता एवं FAQ',
     subtitle: 'Coins, billing, verification & streaming guide',
+    subtitleHi: 'कॉइन, बिलिंग, सत्यापन एवं स्ट्रीमिंग मार्गदर्शिका',
     category: 'Help',
+    categoryHi: 'सहायता',
     url: '/faq',
     image: '/images/photo-1544186196-6908a9d76ab3.webp',
     keywords: 'faq help questions support refund meter verification',
   },
   {
     title: 'About Param Darshan',
+    titleHi: 'परम दर्शन के बारे में',
     subtitle: 'Our sacred lineage & mission',
+    subtitleHi: 'हमारी पवित्र परंपरा एवं उद्देश्य',
     category: 'About',
+    categoryHi: 'परिचय',
     url: '/about',
     image: '/images/hero-bg-v2.webp',
     keywords: 'about mission company team pandit kyc heritage',
   },
   {
     title: 'Free Kundli',
+    titleHi: 'निःशुल्क कुंडली',
     subtitle: 'Janam kundali, moon sign, dasha & avakhada',
+    subtitleHi: 'जन्म कुंडली, चंद्र राशि, दशा एवं अवकहड़ा',
     category: 'Astrology',
+    categoryHi: 'ज्योतिष',
     url: '/kundli',
     image: '/images/hero-bg-v2.webp',
     keywords: 'kundli kundali janam birth chart horoscope rashi nakshatra dasha lagna astrology jyotish',
@@ -147,6 +180,7 @@ export function SearchPalette({
   onClose: () => void;
 }) {
   const router = useRouter();
+  const { t } = useLang();
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -166,7 +200,9 @@ export function SearchPalette({
           .map((s) => ({
             title: s.title || 'Live Pooja Broadcast',
             subtitle: `${s.status === 'LIVE' ? '🔴 LIVE now' : '🗓 Scheduled'} · ${s.streamer?.name || 'Verified Pandit'}`,
+            subtitleHi: `${s.status === 'LIVE' ? '🔴 अभी लाइव' : '🗓 निर्धारित'} · ${s.streamer?.name || 'सत्यापित पंडित जी'}`,
             category: s.status === 'LIVE' ? 'Live' : 'Scheduled',
+            categoryHi: s.status === 'LIVE' ? 'लाइव' : 'निर्धारित',
             url: `/stream/${s.id}`,
             image: s.thumbnailUrl || '/images/hero-bg-v2.webp',
             keywords: `${s.title} ${s.streamer?.name || ''} live stream aarti pooja`,
@@ -245,7 +281,7 @@ export function SearchPalette({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Search Param Darshan"
+      aria-label={t('Search Param Darshan', 'परम दर्शन में खोजें')}
       className="fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-20 px-4 bg-black/60 backdrop-blur-sm"
       onClick={onClose}
     >
@@ -265,12 +301,13 @@ export function SearchPalette({
               setSelectedIndex(0);
             }}
             onKeyDown={handleKeyDown}
-            placeholder="Search aarti, pooja, pandit, temple, or coins..."
+            placeholder={t('Search aarti, pooja, pandit, temple, or coins...', 'आरती, पूजा, पंडित जी, मंदिर या कॉइन खोजें…')}
             className="w-full bg-transparent text-sm sm:text-base text-stone-900 dark:text-white placeholder-stone-400 dark:placeholder-stone-500 focus:outline-none"
           />
           {query && (
             <button
               onClick={() => setQuery('')}
+              aria-label={t('Clear search', 'खोज साफ़ करें')}
               className="p-1 text-stone-400 hover:text-stone-900 dark:hover:text-white rounded-full transition"
             >
               <X className="w-4 h-4" />
@@ -283,15 +320,17 @@ export function SearchPalette({
           <span>
             {liveStreamItems.length > 0 && !query.trim() && (
               <span className="inline-flex items-center gap-1 text-red-600 dark:text-red-400 font-bold mr-2">
-                <Radio className="w-3 h-3 animate-pulse" /> {liveStreamItems.length} Live
+                <Radio className="w-3 h-3 animate-pulse" /> {liveStreamItems.length} {t('Live', 'लाइव')}
               </span>
             )}
-            {query.trim() ? `${filteredItems.length} results found` : 'Popular sanctums & sevas'}
+            {query.trim()
+              ? t(`${filteredItems.length} results found`, `${filteredItems.length} परिणाम मिले`)
+              : t('Popular sanctums & sevas', 'लोकप्रिय मंदिर एवं सेवाएँ')}
           </span>
           <span className="hidden sm:inline-flex items-center gap-1.5 font-mono text-[10px]">
-            <kbd className="px-1.5 py-0.5 rounded border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300">↑↓</kbd> navigate
-            <kbd className="px-1.5 py-0.5 rounded border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300">↵</kbd> select
-            <kbd className="px-1.5 py-0.5 rounded border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300">esc</kbd> close
+            <kbd className="px-1.5 py-0.5 rounded border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300">↑↓</kbd> {t('navigate', 'चुनें')}
+            <kbd className="px-1.5 py-0.5 rounded border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300">↵</kbd> {t('select', 'खोलें')}
+            <kbd className="px-1.5 py-0.5 rounded border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300">esc</kbd> {t('close', 'बंद करें')}
           </span>
         </div>
 
@@ -299,13 +338,18 @@ export function SearchPalette({
         <div className="max-h-[380px] overflow-y-auto p-2 space-y-1">
           {filteredItems.length === 0 ? (
             <div className="py-8 text-center text-xs text-stone-500 dark:text-stone-400 space-y-1">
-              <p className="font-bold text-stone-900 dark:text-white text-sm">No rituals found for &ldquo;{query}&rdquo;</p>
-              <p>Try searching &ldquo;aarti&rdquo;, &ldquo;kashi&rdquo;, &ldquo;pandit&rdquo;, or &ldquo;coins&rdquo;.</p>
+              <p className="font-bold text-stone-900 dark:text-white text-sm">
+                {t(`No rituals found for "${query}"`, `"${query}" के लिए कोई परिणाम नहीं मिला`)}
+              </p>
+              <p>{t('Try searching "aarti", "kashi", "pandit", or "coins".', '"आरती", "काशी", "पंडित" या "कॉइन" खोजकर देखें।')}</p>
             </div>
           ) : (
             filteredItems.map((item, index) => {
               const isSelected = index === selectedIndex;
               const isLive = item.category === 'Live';
+              const displayTitle = t(item.title, item.titleHi || item.title);
+              const displaySubtitle = t(item.subtitle, item.subtitleHi || item.subtitle);
+              const displayCategory = t(item.category, item.categoryHi || item.category);
               return (
                 <div
                   key={item.title + item.url}
@@ -320,7 +364,7 @@ export function SearchPalette({
                   <div className="relative shrink-0">
                     <img
                       src={item.image}
-                      alt={item.title}
+                      alt={displayTitle}
                       className="w-11 h-11 rounded-lg object-cover border border-stone-200 dark:border-gold/20"
                     />
                     {isLive && (
@@ -330,18 +374,18 @@ export function SearchPalette({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-xs sm:text-sm truncate text-stone-900 dark:text-white">
-                        {item.title}
+                        {displayTitle}
                       </span>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${
                         isLive
                           ? 'text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800'
                           : 'text-amber-800 dark:text-gold-pale bg-amber-50 dark:bg-gold/10 border-amber-200 dark:border-gold/20'
                       }`}>
-                        {item.category}
+                        {displayCategory}
                       </span>
                     </div>
                     <p className="text-[11px] text-stone-500 dark:text-stone-400 truncate mt-0.5">
-                      {item.subtitle}
+                      {displaySubtitle}
                     </p>
                   </div>
                   <ChevronRight
@@ -357,7 +401,10 @@ export function SearchPalette({
 
         {/* Footer */}
         <div className="px-4 py-2.5 bg-stone-50 dark:bg-stone-950/80 border-t border-stone-200 dark:border-gold/20 text-center text-[11px] text-stone-600 dark:text-stone-400">
-          Real-time devotional broadcasts &amp; KYC-verified pandits worldwide
+          {t(
+            'Real-time devotional broadcasts & KYC-verified pandits worldwide',
+            'देश-विदेश में रियल-टाइम भक्ति प्रसारण एवं KYC-सत्यापित पंडित जी',
+          )}
         </div>
       </div>
     </div>

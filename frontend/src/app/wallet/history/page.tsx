@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { ArrowUpRight, ArrowDownLeft, Sparkles, RefreshCw, PlusCircle, Clock, ShieldCheck } from 'lucide-react';
 import { OmIcon, CoinIcon, DiyaIcon } from '@/components/icons/SpiritualIcons';
 import { syncLocalWalletBalance } from '@/lib/economy';
+import { useLang } from '@/lib/i18n/context';
+import { formatCoins, formatLocaleDateTime, formatSignedCoins } from '@/lib/i18n/format';
 
 interface Transaction {
   id: string;
@@ -19,6 +21,8 @@ interface Transaction {
 }
 
 export default function WalletHistoryPage() {
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [balance, setBalance] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -60,13 +64,13 @@ export default function WalletHistoryPage() {
   const formatCategory = (cat: string) => {
     switch (cat) {
       case 'JOINING_BONUS':
-        return 'Welcome Darshan Bonus';
+        return L('Welcome Darshan Bonus', 'स्वागत दर्शन बोनस');
       case 'TOPUP_PURCHASE':
-        return 'Sacred Coin Recharge';
+        return L('Sacred Coin Recharge', 'पवित्र कॉइन रिचार्ज');
       case 'STREAM_METERED_VIEW':
-        return 'Live Darshan Watch Time';
+        return L('Live Darshan Watch Time', 'लाइव दर्शन समय शुल्क');
       case 'DAKSHINA_OFFERING':
-        return 'Dakshina Offering';
+        return L('Dakshina Offering', 'दक्षिणा अर्पण');
       default:
         return cat.replace(/_/g, ' ');
     }
@@ -81,13 +85,13 @@ export default function WalletHistoryPage() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-gold/15">
           <div>
             <p className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3.5 py-1 text-xs font-bold uppercase tracking-[0.24em] text-gold-pale mb-2">
-              <CoinIcon size={14} /> Sacred Coin Ledger
+              <CoinIcon size={14} /> {L('Sacred Coin Ledger', 'पवित्र कॉइन बही-खाता')}
             </p>
             <h1 className="font-serif text-3xl sm:text-4xl font-bold text-white flex items-center gap-3">
-              Transaction history
+              {L('Transaction history', 'लेन-देन इतिहास')}
             </h1>
             <p className="text-stone-400 text-xs sm:text-sm mt-1">
-              Transparent, tamper-proof record of all blessings, coin top-ups, and live darshan viewing minutes.
+              {L('Transparent, tamper-proof record of all blessings, coin top-ups, and live darshan viewing minutes.', 'सभी बोनस, कॉइन रिचार्ज और लाइव दर्शन मिनटों का पारदर्शी व सुरक्षित विवरण।')}
             </p>
           </div>
 
@@ -95,7 +99,7 @@ export default function WalletHistoryPage() {
             <button
               onClick={loadData}
               className="p-2.5 bg-obsidian-soft hover:bg-stone-800 border border-gold/20 rounded-full text-stone-300 transition"
-              title="Refresh Ledger"
+              title={L('Refresh Ledger', 'बही-खाता रीफ़्रेश करें')}
             >
               <RefreshCw className={`w-4 h-4 text-gold ${loading ? 'animate-spin' : ''}`} />
             </button>
@@ -104,7 +108,7 @@ export default function WalletHistoryPage() {
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs shadow-lg shadow-gold/20 transition"
             >
               <PlusCircle className="w-4 h-4" />
-              Recharge Coins
+              {L('Recharge Coins', 'कॉइन रिचार्ज करें')}
             </Link>
           </div>
         </div>
@@ -113,32 +117,32 @@ export default function WalletHistoryPage() {
         {balance && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
             <div className="bg-obsidian-soft border border-gold/20 p-5 rounded-2xl shadow-lg">
-              <span className="text-xs font-semibold text-stone-400 block">Available Sacred Balance</span>
+              <span className="text-xs font-semibold text-stone-400 block">{L('Available Sacred Balance', 'उपलब्ध पवित्र शेष')}</span>
               <div className="flex items-center gap-2 mt-2">
                 <CoinIcon size={26} />
-                <span className="font-serif text-3xl font-bold text-gold">{balance.balanceCoins} Coins</span>
+                <span className="font-serif text-3xl font-bold text-gold">{formatCoins(balance.balanceCoins, lang)}</span>
               </div>
               <span className="text-[11px] text-stone-400 mt-1 block">
-                ≈ {balance.availableMinutes} mins live darshan
+                {L(`≈ ${balance.availableMinutes} mins live darshan`, `≈ ${balance.availableMinutes} मिनट लाइव दर्शन`)}
               </span>
             </div>
 
             <div className="bg-obsidian-soft border border-gold/15 p-5 rounded-2xl shadow-lg">
-              <span className="text-xs font-semibold text-stone-400 block">Lifetime Coins Received</span>
+              <span className="text-xs font-semibold text-stone-400 block">{L('Lifetime Coins Received', 'कुल प्राप्त कॉइन')}</span>
               <div className="flex items-center gap-2 mt-2">
                 <ArrowDownLeft className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
-                <span className="font-serif text-3xl font-bold text-emerald-700 dark:text-emerald-400">{balance.lifetimeEarned} Coins</span>
+                <span className="font-serif text-3xl font-bold text-emerald-700 dark:text-emerald-400">{formatCoins(balance.lifetimeEarned, lang)}</span>
               </div>
-              <span className="text-[11px] text-stone-400 mt-1 block">Through signup &amp; recharges</span>
+              <span className="text-[11px] text-stone-400 mt-1 block">{L('Through signup & recharges', 'साइन-अप एवं रिचार्ज से')}</span>
             </div>
 
             <div className="bg-obsidian-soft border border-gold/15 p-5 rounded-2xl shadow-lg">
-              <span className="text-xs font-semibold text-stone-400 block">Lifetime Coins Spent</span>
+              <span className="text-xs font-semibold text-stone-400 block">{L('Lifetime Coins Spent', 'कुल व्यय किए गए कॉइन')}</span>
               <div className="flex items-center gap-2 mt-2">
                 <ArrowUpRight className="w-5 h-5 text-gold-soft" />
-                <span className="font-serif text-3xl font-bold text-gold-pale">{balance.lifetimeSpent} Coins</span>
+                <span className="font-serif text-3xl font-bold text-gold-pale">{formatCoins(balance.lifetimeSpent, lang)}</span>
               </div>
-              <span className="text-[11px] text-stone-400 mt-1 block">Live aartis &amp; dakshina</span>
+              <span className="text-[11px] text-stone-400 mt-1 block">{L('Live aartis & dakshina', 'लाइव आरती एवं दक्षिणा में')}</span>
             </div>
           </div>
         )}
@@ -148,31 +152,31 @@ export default function WalletHistoryPage() {
           <div className="p-5 border-b border-stone-800/80 flex items-center justify-between">
             <h2 className="font-serif text-xl font-bold text-white flex items-center gap-2">
               <Clock className="w-5 h-5 text-gold" />
-              <span>Ledger Entries</span>
+              <span>{L('Ledger Entries', 'खाता प्रविष्टियाँ')}</span>
             </h2>
             <div className="flex items-center gap-2 text-[11px] text-stone-400">
               <ShieldCheck className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
-              <span>Double-entry cryptographic ledger</span>
+              <span>{L('Double-entry cryptographic ledger', 'सुरक्षित दोहरी-प्रविष्टि बही-खाता')}</span>
             </div>
           </div>
 
           {loading ? (
             <div className="p-12 text-center text-stone-400">
               <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-gold mx-auto mb-3" />
-              <p className="text-xs">Fetching ledger entries from blockchain-style store...</p>
+              <p className="text-xs">{L('Fetching ledger entries...', 'खाता विवरण लोड हो रहा है...')}</p>
             </div>
           ) : transactions.length === 0 ? (
             <div className="p-12 text-center text-stone-400 text-xs sm:text-sm">
               <DiyaIcon size={40} className="mx-auto mb-3 opacity-60 text-gold" />
-              <p className="font-medium text-white mb-1">No transactions recorded yet</p>
+              <p className="font-medium text-white mb-1">{L('No transactions recorded yet', 'अभी तक कोई लेन-देन दर्ज नहीं है')}</p>
               <p className="text-stone-400 text-xs max-w-sm mx-auto mb-4">
-                When you watch live darshans or recharge your wallet, your ledger will update instantly here.
+                {L('When you watch live darshans or recharge your wallet, your ledger will update instantly here.', 'जब आप लाइव दर्शन देखेंगे या वॉलेट रिचार्ज करेंगे, तो यहाँ तुरंत विवरण अपडेट होगा।')}
               </p>
               <Link
                 href="/"
                 className="inline-flex items-center gap-2 text-xs font-bold text-gold hover:text-gold-pale underline"
               >
-                Watch a live darshan now &rarr;
+                {L('Watch a live darshan now →', 'अभी लाइव दर्शन देखें →')}
               </Link>
             </div>
           ) : (
@@ -180,10 +184,10 @@ export default function WalletHistoryPage() {
               <table className="w-full text-left text-xs">
                 <thead className="bg-stone-100 dark:bg-obsidian border-b border-stone-200 dark:border-stone-800/80 text-stone-600 dark:text-stone-400 font-bold uppercase tracking-wider text-[10px]">
                   <tr>
-                    <th className="py-3.5 px-5">Date &amp; Time</th>
-                    <th className="py-3.5 px-4">Transaction Details</th>
-                    <th className="py-3.5 px-4 text-right">Amount</th>
-                    <th className="py-3.5 px-4 text-right">Balance After</th>
+                    <th className="py-3.5 px-5">{L('Date & Time', 'तिथि एवं समय')}</th>
+                    <th className="py-3.5 px-4">{L('Transaction Details', 'लेन-देन विवरण')}</th>
+                    <th className="py-3.5 px-4 text-right">{L('Amount', 'राशि')}</th>
+                    <th className="py-3.5 px-4 text-right">{L('Balance After', 'अंतिम शेष')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-200 dark:divide-stone-800/60 text-stone-700 dark:text-stone-300">
@@ -192,10 +196,7 @@ export default function WalletHistoryPage() {
                     return (
                       <tr key={tx.id} className="hover:bg-stone-50 dark:hover:bg-stone-900/40 transition">
                         <td className="py-4 px-5 whitespace-nowrap text-stone-600 dark:text-stone-400">
-                          {new Date(tx.createdAt).toLocaleString([], {
-                            dateStyle: 'medium',
-                            timeStyle: 'short',
-                          })}
+                          {formatLocaleDateTime(tx.createdAt, lang)}
                         </td>
                         <td className="py-4 px-4">
                           <div className="flex items-center gap-2.5">
@@ -223,7 +224,7 @@ export default function WalletHistoryPage() {
                               )}
                               {tx.referenceId && (
                                 <span className="text-[10px] text-stone-600 dark:text-stone-400 font-mono">
-                                  Ref: {tx.referenceId}
+                                  {L('Ref:', 'संदर्भ:')} {tx.referenceId}
                                 </span>
                               )}
                             </div>
@@ -235,12 +236,11 @@ export default function WalletHistoryPage() {
                               isCredit ? 'text-emerald-700 dark:text-emerald-400' : 'text-stone-300'
                             }`}
                           >
-                            {isCredit ? '+' : '-'}
-                            {tx.amountCoins} Coins
+                            {formatSignedCoins(tx.amountCoins, isCredit, lang)}
                           </span>
                         </td>
                         <td className="py-4 px-4 text-right whitespace-nowrap font-bold text-gold-pale font-serif text-sm">
-                          {tx.balanceAfter} Coins
+                          {formatCoins(tx.balanceAfter, lang)}
                         </td>
                       </tr>
                     );

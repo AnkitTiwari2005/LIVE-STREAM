@@ -52,9 +52,13 @@ import {
   CoinIcon,
   VerifiedPanditBadge,
 } from '@/components/icons/SpiritualIcons';
+import { useLang } from '@/lib/i18n/context';
+import { formatCoins } from '@/lib/i18n/format';
 
 export default function JoinPrivateStreamClient() {
   const toast = useToast();
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
   const { tokenSlug: paramSlug } = useParams() as { tokenSlug: string };
   const [tokenSlug, setTokenSlug] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -131,7 +135,7 @@ export default function JoinPrivateStreamClient() {
       try {
         const res = await fetch(`${apiUrl}/private-links/inspect/${tokenSlug}`);
         const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Invalid or expired link');
+        if (!res.ok) throw new Error(data.message || L('Invalid or expired link', 'अमान्य या समाप्त लिंक'));
         setMetadata(data);
         if (data.streamId) {
           setStreamId(data.streamId);
@@ -214,7 +218,7 @@ export default function JoinPrivateStreamClient() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Access denied');
+      if (!res.ok) throw new Error(data.message || L('Access denied', 'प्रवेश अस्वीकृत'));
 
       setToken(data.token);
       setServerUrl(data.serverUrl);
@@ -234,13 +238,13 @@ export default function JoinPrivateStreamClient() {
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: metadata?.streamTitle || 'Private Pooja Session',
-        text: `Join private sacred pooja: ${metadata?.streamTitle}`,
+        title: metadata?.streamTitle || L('Private Pooja Session', 'निजी पूजा सत्र'),
+        text: L(`Join private sacred pooja: ${metadata?.streamTitle}`, `निजी पवित्र पूजा में जुड़ें: ${metadata?.streamTitle}`),
         url: window.location.href,
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
-      toast.success('Private session link copied to clipboard!');
+      toast.success(L('Private session link copied to clipboard!', 'निजी सत्र का लिंक कॉपी हो गया!'));
     }
   };
 
@@ -252,7 +256,7 @@ export default function JoinPrivateStreamClient() {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center text-stone-400 gap-3">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-orange-500" />
-        <span className="text-xs uppercase tracking-wider font-semibold">Validating Sacred Join Link...</span>
+        <span className="text-xs uppercase tracking-wider font-semibold">{L('Validating Sacred Join Link...', 'पवित्र जुड़ने के लिंक की जांच हो रही है...')}</span>
       </div>
     );
   }
@@ -261,9 +265,9 @@ export default function JoinPrivateStreamClient() {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <MediaLobby
-          title={metadata?.streamTitle ? `Join: ${metadata.streamTitle}` : 'Join private session'}
-          subtitle="This is a two-way session. The pandit can see and hear you if you turn your camera and microphone on."
-          joinLabel="Join session"
+          title={metadata?.streamTitle ? L(`Join: ${metadata.streamTitle}`, `जुड़ें: ${metadata.streamTitle}`) : L('Join private session', 'निजी सत्र से जुड़ें')}
+          subtitle={L('This is a two-way session. The pandit can see and hear you if you turn your camera and microphone on.', 'यह द्वि-तरफ़ा सत्र है। कैमरा और माइक्रोफ़ोन चालू करने पर पंडित जी आपको देख और सुन सकते हैं।')}
+          joinLabel={L('Join session', 'सत्र से जुड़ें')}
           onJoin={setChoice}
           onCancel={() => setToken(null)}
         />
@@ -287,7 +291,7 @@ export default function JoinPrivateStreamClient() {
                 options={ROOM_OPTIONS}
                 video={choice.video ? (choice.videoDeviceId ? { deviceId: choice.videoDeviceId } : true) : false}
                 audio={choice.audio ? (choice.audioDeviceId ? { deviceId: choice.audioDeviceId } : true) : false}
-                onMediaDeviceFailure={(_f, kind) => toast.error(kind === 'videoinput' ? 'Could not start your camera.' : 'Could not start your microphone.')}
+                onMediaDeviceFailure={(_f, kind) => toast.error(kind === 'videoinput' ? L('Could not start your camera.', 'आपका कैमरा शुरू नहीं हो सका।') : L('Could not start your microphone.', 'आपका माइक्रोफ़ोन शुरू नहीं हो सका।'))}
                 onDisconnected={() => {
                   if (kickedRef.current) return;
                   setToken(null);
@@ -310,11 +314,11 @@ export default function JoinPrivateStreamClient() {
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-gradient-to-r from-amber-500 via-yellow-400 to-orange-500 text-stone-950 px-4 py-2 rounded-2xl shadow-2xl flex items-center gap-2.5 animate-bounce border-2 border-yellow-200">
                   <DiyaIcon size={22} />
                   <div className="text-xs">
-                    <span className="font-extrabold">{latestDakshina.devoteeName}</span> offered{' '}
+                    <span className="font-extrabold">{latestDakshina.devoteeName}</span> {L('offered', 'ने अर्पित किए')}{' '}
                     <span className="font-black inline-flex items-center gap-1">
-                      <CoinIcon size={13} /> {latestDakshina.coins ?? latestDakshina.amount} Coins
+                      <CoinIcon size={13} /> {formatCoins(Number(latestDakshina.coins ?? latestDakshina.amount), lang)}
                     </span>{' '}
-                    Dakshina!
+                    {L('Dakshina!', 'दक्षिणा!')}
                     {latestDakshina.prayerMessage && (
                       <div className="text-[10px] font-semibold opacity-90 truncate max-w-xs">
                         &ldquo;{latestDakshina.prayerMessage}&rdquo;
@@ -343,19 +347,19 @@ export default function JoinPrivateStreamClient() {
                   <div className="flex items-center gap-2 mb-2">
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-950 text-red-400 border border-red-800">
                       <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                      LIVE
+                      {L('LIVE', 'लाइव')}
                     </span>
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-950/80 text-orange-400 border border-orange-800">
-                      <Lock className="w-3 h-3 text-orange-400" /> Private Consultation
+                      <Lock className="w-3 h-3 text-orange-400" /> {L('Private Consultation', 'निजी परामर्श')}
                     </span>
                     {typeof viewerCount === 'number' && viewerCount > 0 && (
                       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gold/10 text-gold-pale border border-gold/30">
-                        <Eye className="w-3 h-3 text-amber-400" /> {viewerCount} Connected
+                        <Eye className="w-3 h-3 text-amber-400" /> {viewerCount} {L('Connected', 'जुड़े हुए')}
                       </span>
                     )}
                   </div>
                   <h1 className="text-xl font-bold text-white tracking-tight">
-                    {metadata?.streamTitle || 'Private Pooja Consultation'}
+                    {metadata?.streamTitle || L('Private Pooja Consultation', 'निजी पूजा परामर्श')}
                   </h1>
                   {metadata?.streamDescription && (
                     <p className="text-xs text-stone-400 mt-1 line-clamp-2">{metadata.streamDescription}</p>
@@ -368,13 +372,13 @@ export default function JoinPrivateStreamClient() {
                     className="flex items-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-stone-950 text-xs font-bold rounded-xl transition-all shadow-md shadow-orange-950/40"
                   >
                     <DiyaIcon size={16} />
-                    <span>Arpan Dakshina</span>
+                    <span>{L('Arpan Dakshina', 'दक्षिणा अर्पण')}</span>
                   </button>
                   <button
                     onClick={handleShare}
                     className="flex items-center gap-2 px-3.5 py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold rounded-xl transition-all shadow"
                   >
-                    <Share2 className="w-4 h-4" /> Share
+                    <Share2 className="w-4 h-4" /> {L('Share', 'साझा करें')}
                   </button>
                 </div>
               </div>
@@ -382,14 +386,14 @@ export default function JoinPrivateStreamClient() {
               <div className="mt-4 pt-4 border-t border-stone-800 flex items-center justify-between text-xs text-stone-300">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-stone-100 text-sm flex items-center gap-1.5">
-                    <PranamIcon size={16} /> {metadata?.streamerName || 'Acharya Devrat Sharma'}
+                    <PranamIcon size={16} /> {metadata?.streamerName || L('Acharya Devrat Sharma', 'आचार्य देवरत शर्मा')}
                   </span>
-                  <span className="text-orange-400 font-bold flex items-center gap-1" title="Verified Vedic Pandit">
-                    <VerifiedPanditBadge size={14} /> Verified Pandit
+                  <span className="text-orange-400 font-bold flex items-center gap-1" title={L('Verified Vedic Pandit', 'सत्यापित वैदिक पंडित')}>
+                    <VerifiedPanditBadge size={14} /> {L('Verified Pandit', 'सत्यापित पंडित')}
                   </span>
                 </div>
                 <span className="text-stone-400 font-medium">
-                  Devotee: <span className="text-white font-semibold">{currentUser?.name || guestName}</span>
+                  {L('Devotee:', 'भक्त:')} <span className="text-white font-semibold">{currentUser?.name || guestName}</span>
                 </span>
               </div>
             </div>
@@ -407,7 +411,7 @@ export default function JoinPrivateStreamClient() {
               />
             ) : (
               <div className="w-full h-full bg-obsidian-soft border border-gold/20 rounded-2xl flex items-center justify-center text-stone-400 text-xs">
-                Connecting to sacred pooja chat...
+                {L('Connecting to sacred pooja chat...', 'पवित्र पूजा चैट से जुड़ रहा है...')}
               </div>
             )}
           </div>
@@ -418,7 +422,7 @@ export default function JoinPrivateStreamClient() {
               isOpen={dakshinaModalOpen}
               onClose={() => setDakshinaModalOpen(false)}
               streamId={streamId}
-              streamerName={metadata?.streamerName || 'Acharya Devrat Sharma'}
+              streamerName={metadata?.streamerName || L('Acharya Devrat Sharma', 'आचार्य देवरत शर्मा')}
               currentUser={currentUser}
               walletBalance={walletBalance}
               onOpenTopup={() => {
@@ -456,9 +460,9 @@ export default function JoinPrivateStreamClient() {
             <div className="flex justify-center mb-3 text-gold">
               <OmIcon size={44} />
             </div>
-            <h2 className="text-xl font-bold text-stone-900 dark:text-foreground tracking-tight">Private Pooja Consultation</h2>
+            <h2 className="text-xl font-bold text-stone-900 dark:text-foreground tracking-tight">{L('Private Pooja Consultation', 'निजी पूजा परामर्श')}</h2>
             <p className="text-xs text-stone-600 dark:text-stone-400 mt-1">
-              {metadata?.streamTitle ? `"${metadata.streamTitle}" by ${metadata.streamerName}` : 'Enter your details to join'}
+              {metadata?.streamTitle ? `"${metadata.streamTitle}" ${L('by', 'द्वारा')} ${metadata.streamerName}` : L('Enter your details to join', 'जुड़ने के लिए अपना विवरण दर्ज करें')}
             </p>
           </div>
 
@@ -474,7 +478,7 @@ export default function JoinPrivateStreamClient() {
                   className="mt-1 text-center py-2 px-3 bg-gold hover:bg-gold-deep text-obsidian font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5"
                 >
                   <PranamIcon size={16} />
-                  <span>Sign In to Devotee Account</span>
+                  <span>{L('Sign In to Devotee Account', 'भक्त खाते में लॉगिन करें')}</span>
                 </a>
               )}
             </div>
@@ -483,7 +487,7 @@ export default function JoinPrivateStreamClient() {
           <form onSubmit={handleClaim} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1.5">
-                Your Devotee Name *
+                {L('Your Devotee Name *', 'आपका नाम *')}
               </label>
               <div className="relative">
                 <User className="w-4 h-4 text-stone-600 dark:text-stone-400 absolute left-3 top-3" />
@@ -492,7 +496,7 @@ export default function JoinPrivateStreamClient() {
                   required
                   value={guestName}
                   onChange={(e) => setGuestName(e.target.value)}
-                  placeholder="Rahul Sharma"
+                  placeholder={L('Rahul Sharma', 'राहुल शर्मा')}
                   className="w-full pl-9 pr-3 py-2.5 bg-stone-50 dark:bg-obsidian border border-stone-200 dark:border-gold/25 rounded-xl text-sm text-stone-900 dark:text-foreground focus:outline-none focus:border-gold"
                 />
               </div>
@@ -501,7 +505,7 @@ export default function JoinPrivateStreamClient() {
             {metadata?.requiresPassword && (
               <div>
                 <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1.5">
-                  Secret Session Password *
+                  {L('Secret Session Password *', 'सत्र का गुप्त पासवर्ड *')}
                 </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-stone-600 dark:text-stone-400 absolute left-3 top-3" />
@@ -510,7 +514,7 @@ export default function JoinPrivateStreamClient() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter password provided by Pandit"
+                    placeholder={L('Enter password provided by Pandit', 'पंडित जी द्वारा दिया गया पासवर्ड दर्ज करें')}
                     className="w-full pl-9 pr-3 py-2.5 bg-stone-50 dark:bg-obsidian border border-stone-200 dark:border-gold/25 rounded-xl text-sm text-stone-900 dark:text-foreground focus:outline-none focus:border-gold"
                   />
                 </div>
@@ -523,7 +527,7 @@ export default function JoinPrivateStreamClient() {
               className="w-full mt-2 py-3 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-xl text-sm shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <Play className="w-4 h-4" />
-              {loading ? 'Validating Token...' : 'Enter Sacred Pooja Room'}
+              {loading ? L('Validating Token...', 'टोकन की जांच हो रही है...') : L('Enter Sacred Pooja Room', 'पवित्र पूजा कक्ष में प्रवेश करें')}
             </button>
           </form>
         </div>
@@ -548,6 +552,8 @@ function PrivateTwoWayConsultationRenderer({
   selfName?: string;
 }) {
   const toast = useToast();
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
   const room = useRoomContext();
   const participants = useParticipants();
   const tracks = useTracks([Track.Source.Camera, Track.Source.Microphone], { onlySubscribed: false });
@@ -571,19 +577,19 @@ function PrivateTwoWayConsultationRenderer({
   // Device problems after joining (unplugged mic, permission pulled, camera taken by another app).
   useEffect(() => {
     if (!room) return;
-    const onErr = (err: Error) => toast.error(friendlyMediaError(err));
+    const onErr = (err: Error) => toast.error(friendlyMediaError(err, lang));
     room.on(RoomEvent.MediaDevicesError, onErr);
     return () => {
       room.off(RoomEvent.MediaDevicesError, onErr);
     };
-  }, [room, toast]);
+  }, [room, toast, lang]);
 
   // The pandit can mute a participant; tell them instead of leaving them confused.
   useEffect(() => {
     if (!socket) return;
     const onMuted = (d: { streamId?: string; source?: string }) => {
       if (d?.streamId && d.streamId !== streamId) return;
-      toast.info(d?.source === 'camera' ? 'The pandit turned your camera off.' : 'The pandit muted your microphone.');
+      toast.info(d?.source === 'camera' ? L('The pandit turned your camera off.', 'पंडित जी ने आपका कैमरा बंद कर दिया।') : L('The pandit muted your microphone.', 'पंडित जी ने आपका माइक्रोफ़ोन म्यूट कर दिया।'));
     };
     socket.on('video:muted_by_host', onMuted);
     return () => {
@@ -620,7 +626,7 @@ function PrivateTwoWayConsultationRenderer({
       if (kind === 'mic') await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
       else await localParticipant.setCameraEnabled(!isCameraEnabled);
     } catch (err: any) {
-      toast.error(friendlyMediaError(err));
+      toast.error(friendlyMediaError(err, lang));
     } finally {
       setBusy(null);
     }
@@ -635,7 +641,7 @@ function PrivateTwoWayConsultationRenderer({
       await (pub?.videoTrack as any)?.restartTrack({ facingMode: next });
       facingRef.current = next;
     } catch (err: any) {
-      toast.error(friendlyMediaError(err));
+      toast.error(friendlyMediaError(err, lang));
     } finally {
       setBusy(null);
     }
@@ -665,7 +671,7 @@ function PrivateTwoWayConsultationRenderer({
           className="absolute top-4 left-4 z-40 px-4 py-2.5 bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-400 text-stone-950 font-extrabold text-xs rounded-2xl shadow-2xl flex items-center gap-2 animate-bounce border-2 border-yellow-200"
         >
           <Volume2 className="w-4 h-4" />
-          <span>Tap to Hear Pandit 🙏</span>
+          <span>{L('Tap to Hear Pandit 🙏', 'पंडित जी की आवाज़ सुनने के लिए टैप करें 🙏')}</span>
         </button>
       )}
 
@@ -675,15 +681,15 @@ function PrivateTwoWayConsultationRenderer({
           participant={pandit}
           cameraRef={camOf(pandit.identity)}
           micMuted={micMutedOf(pandit.identity)}
-          label={nameOf(pandit, streamerName || 'Pandit')}
-          badge="Pandit"
+          label={nameOf(pandit, streamerName || L('Pandit', 'पंडित जी'))}
+          badge={L('Pandit', 'पंडित जी')}
           fit="contain"
           className="!rounded-none !border-0 w-full h-full"
         />
       ) : (
         <div className="video-overlay w-full h-full flex flex-col items-center justify-center text-stone-200 bg-stone-950">
           <DiyaIcon size={44} className="mb-2" />
-          <span className="text-sm font-medium text-stone-200">Waiting for the Pandit to join…</span>
+          <span className="text-sm font-medium text-stone-200">{L('Waiting for the Pandit to join…', 'पंडित जी के जुड़ने की प्रतीक्षा है…')}</span>
         </div>
       )}
 
@@ -696,12 +702,12 @@ function PrivateTwoWayConsultationRenderer({
               participant={p}
               cameraRef={camOf(p.identity)}
               micMuted={micMutedOf(p.identity)}
-              label={nameOf(p, 'Devotee')}
+              label={nameOf(p, L('Devotee', 'भक्त'))}
               className="w-24 sm:w-32 aspect-video"
             />
           ))}
           {otherDevotees.length > 3 && (
-            <span className="text-[10px] font-bold text-white bg-black/70 rounded px-2 py-0.5 self-start">+{otherDevotees.length - 3} more</span>
+            <span className="text-[10px] font-bold text-white bg-black/70 rounded px-2 py-0.5 self-start">{L(`+${otherDevotees.length - 3} more`, `+${otherDevotees.length - 3} और`)}</span>
           )}
         </div>
       )}
@@ -712,7 +718,7 @@ function PrivateTwoWayConsultationRenderer({
           participant={localParticipant}
           cameraRef={camOf(localParticipant.identity)}
           micMuted={!isMicrophoneEnabled}
-          label="You"
+          label={L('You', 'आप')}
           mirror={facingRef.current === 'user'}
           className="absolute top-3 right-3 w-28 sm:w-36 aspect-video z-20 !border-orange-500/70 shadow-2xl"
         />
@@ -726,7 +732,8 @@ function PrivateTwoWayConsultationRenderer({
           onClick={() => toggle('mic')}
           disabled={busy !== null}
           aria-pressed={isMicrophoneEnabled}
-          title={isMicrophoneEnabled ? 'Mute mic' : 'Unmute mic (speak to Pandit)'}
+          aria-label={isMicrophoneEnabled ? L('Mute mic', 'माइक म्यूट करें') : L('Unmute mic (speak to Pandit)', 'माइक अनम्यूट करें (पंडित जी से बात करें)')}
+          title={isMicrophoneEnabled ? L('Mute mic', 'माइक म्यूट करें') : L('Unmute mic (speak to Pandit)', 'माइक अनम्यूट करें (पंडित जी से बात करें)')}
           className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg disabled:opacity-60 ${
             isMicrophoneEnabled ? 'bg-emerald-700 hover:bg-emerald-600 text-white' : 'bg-stone-800/90 hover:bg-stone-700 text-stone-200'
           }`}
@@ -738,7 +745,8 @@ function PrivateTwoWayConsultationRenderer({
           onClick={() => toggle('cam')}
           disabled={busy !== null}
           aria-pressed={isCameraEnabled}
-          title={isCameraEnabled ? 'Turn off camera' : 'Turn on camera'}
+          aria-label={isCameraEnabled ? L('Turn off camera', 'कैमरा बंद करें') : L('Turn on camera', 'कैमरा चालू करें')}
+          title={isCameraEnabled ? L('Turn off camera', 'कैमरा बंद करें') : L('Turn on camera', 'कैमरा चालू करें')}
           className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg disabled:opacity-60 ${
             isCameraEnabled ? 'bg-emerald-700 hover:bg-emerald-600 text-white' : 'bg-stone-800/90 hover:bg-stone-700 text-stone-200'
           }`}
@@ -750,7 +758,8 @@ function PrivateTwoWayConsultationRenderer({
           <button
             onClick={flipCamera}
             disabled={busy !== null}
-            title="Switch camera"
+            aria-label={L('Switch camera', 'कैमरा बदलें')}
+            title={L('Switch camera', 'कैमरा बदलें')}
             className="w-9 h-9 rounded-full flex items-center justify-center bg-stone-800/90 hover:bg-stone-700 text-stone-200 shadow-lg disabled:opacity-60"
           >
             <SwitchCamera className="w-4 h-4" />
@@ -760,7 +769,8 @@ function PrivateTwoWayConsultationRenderer({
         {!isAudioPlaybackAllowed && (
           <button
             onClick={unlockAudio}
-            title="Unmute speaker"
+            aria-label={L('Unmute speaker', 'स्पीकर अनम्यूट करें')}
+            title={L('Unmute speaker', 'स्पीकर अनम्यूट करें')}
             className="w-9 h-9 rounded-full flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-stone-950 transition-all shadow-lg animate-pulse"
           >
             <Volume2 className="w-4 h-4" />
@@ -771,11 +781,12 @@ function PrivateTwoWayConsultationRenderer({
 
         <button
           onClick={onLeave}
-          title="Leave session"
+          aria-label={L('Leave session', 'सत्र छोड़ें')}
+          title={L('Leave session', 'सत्र छोड़ें')}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-red-700/90 hover:bg-red-600 text-white border border-red-600 transition-all shadow-lg"
         >
           <PhoneOff className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Leave</span>
+          <span className="hidden sm:inline">{L('Leave', 'छोड़ें')}</span>
         </button>
       </div>
     </div>

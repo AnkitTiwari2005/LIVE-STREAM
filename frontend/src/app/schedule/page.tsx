@@ -15,6 +15,8 @@ import {
 import { VerifiedPanditBadge, DiyaIcon, CoinIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
 import SevaBookingModal from '@/components/SevaBookingModal';
 import { useToast } from '@/components/Toast';
+import { useLang } from '@/lib/i18n/context';
+import { formatLocaleDateTime, translateCategoryLabel } from '@/lib/i18n/format';
 
 interface StreamItem {
   id: string;
@@ -38,6 +40,7 @@ interface StreamItem {
 
 export default function SchedulePage() {
   const toast = useToast();
+  const { lang, t } = useLang();
   // R-04: Initialize with empty array instead of fake FALLBACK_SCHEDULE
   const [streams, setStreams] = useState<StreamItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,7 +79,7 @@ export default function SchedulePage() {
   const handleRemindMe = async (streamId: string) => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('pooja_token') : null;
     if (!token) {
-      toast.info('Please sign in to set email reminders.');
+      toast.info(t('Please sign in to set email reminders.', 'ईमेल रिमाइंडर सेट करने के लिए कृपया साइन इन करें।'));
       window.location.href = '/login?redirect=/schedule';
       return;
     }
@@ -94,9 +97,13 @@ export default function SchedulePage() {
       }
       const data = await res.json();
       setRemindStatus((prev) => ({ ...prev, [streamId]: true }));
-      toast.success(data.message || 'Email reminder scheduled successfully!');
+      toast.success(
+        lang === 'hi'
+          ? 'ईमेल रिमाइंडर सफलतापूर्वक सेट हो गया!'
+          : data.message || 'Email reminder scheduled successfully!',
+      );
     } catch {
-      toast.error('Failed to set reminder.');
+      toast.error(t('Failed to set reminder.', 'रिमाइंडर सेट नहीं हो सका।'));
     }
   };
 
@@ -112,16 +119,19 @@ export default function SchedulePage() {
         <div className="mandala-bg absolute inset-0 opacity-25 pointer-events-none" />
         <div className="relative z-10 max-w-5xl mx-auto text-center space-y-4">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-b from-amber-500/10 to-transparent border border-gold/30 flex items-center justify-center mx-auto mb-2 shadow-[0_0_30px_rgba(245,158,11,0.25)]">
-            <img src="/logo.webp" alt="Param Darshan" className="w-11 h-11 object-contain drop-shadow" />
+            <img src="/logo.webp" alt={t('Param Darshan', 'परम दर्शन')} className="w-11 h-11 object-contain drop-shadow" />
           </div>
           <p className="text-xs font-bold uppercase tracking-[0.28em] text-gold-soft">
-            Sacred Pooja Calendar
+            {t('Sacred Pooja Calendar', 'पवित्र पूजा कैलेंडर')}
           </p>
           <h1 className="font-serif text-3xl sm:text-5xl font-bold text-white tracking-tight">
-            Upcoming Vedic Broadcasts &amp; Darshans
+            {t('Upcoming Vedic Broadcasts & Darshans', 'आगामी वैदिक प्रसारण एवं दर्शन')}
           </h1>
           <p className="text-xs sm:text-base text-stone-300 max-w-2xl mx-auto leading-relaxed">
-            KYC-verified Vedic Pandit Jis schedule sacred poojas, havans, and spiritual counseling in real time. Set email reminders for upcoming broadcasts.
+            {t(
+              'KYC-verified Vedic Pandit Jis schedule sacred poojas, havans, and spiritual counseling in real time. Set email reminders for upcoming broadcasts.',
+              'KYC-सत्यापित वैदिक पंडित जी लाइव पूजा, हवन और आध्यात्मिक परामर्श निर्धारित करते हैं। आगामी प्रसारण के लिए ईमेल रिमाइंडर सेट करें।',
+            )}
           </p>
 
           <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
@@ -130,13 +140,13 @@ export default function SchedulePage() {
               className="px-6 py-2.5 rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold text-xs shadow-lg transition flex items-center gap-1.5"
             >
               <DiyaIcon size={15} />
-              <span>Book a Personal Pooja Session</span>
+              <span>{t('Book a Personal Pooja Session', 'व्यक्तिगत पूजा सत्र बुक करें')}</span>
             </button>
             <Link
               href="/#pandits"
               className="px-5 py-2.5 rounded-full bg-obsidian-soft border border-gold/25 hover:border-gold/50 text-gold-pale font-semibold text-xs transition"
             >
-              View Verified Pandit Jis
+              {t('View Verified Pandit Jis', 'सत्यापित पंडित जी देखें')}
             </Link>
           </div>
         </div>
@@ -156,7 +166,9 @@ export default function SchedulePage() {
                   : 'bg-obsidian-soft text-stone-300 border border-gold/15 hover:border-gold/40 hover:text-gold-pale'
               }`}
             >
-              {cat === 'ALL' ? 'All Scheduled Broadcasts' : cat}
+              {cat === 'ALL'
+                ? t('All Scheduled Broadcasts', 'सभी निर्धारित प्रसारण')
+                : translateCategoryLabel(cat, lang)}
             </button>
           ))}
         </div>
@@ -169,30 +181,31 @@ export default function SchedulePage() {
               <div className="p-5 rounded-3xl bg-gold/10 border border-gold/25 shadow-lg">
                 <Calendar className="w-10 h-10 text-gold-soft" />
               </div>
-              <h3 className="font-serif text-2xl font-bold text-white">No Broadcasts Scheduled Yet</h3>
+              <h3 className="font-serif text-2xl font-bold text-white">
+                {t('No Broadcasts Scheduled Yet', 'अभी कोई प्रसारण निर्धारित नहीं है')}
+              </h3>
               <p className="text-stone-400 text-sm max-w-sm leading-relaxed">
-                Our KYC-verified Pandit Jis are preparing upcoming live poojas and darshans.
-                Check back soon for new scheduled broadcasts.
+                {t(
+                  'Our KYC-verified Pandit Jis are preparing upcoming live poojas and darshans. Check back soon for new scheduled broadcasts.',
+                  'हमारे KYC-सत्यापित पंडित जी आगामी लाइव पूजा और दर्शन तैयार कर रहे हैं। नए निर्धारित प्रसारणों के लिए शीघ्र देखें।',
+                )}
               </p>
               <button
                 onClick={() => setBookingModalOpen(true)}
                 className="mt-2 px-6 py-2.5 rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold text-xs shadow-lg transition flex items-center gap-1.5"
               >
-                <span>Book a Private Pooja</span>
+                <span>{t('Book a Private Pooja', 'निजी पूजा बुक करें')}</span>
               </button>
             </div>
           )}
           {filteredStreams.map((stream) => {
             const isReminded = remindStatus[stream.id];
-            const dateStr = stream.scheduledAt
-              ? new Date(stream.scheduledAt).toLocaleString([], {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })
-              : 'Upcoming';
+            const dateStr = formatLocaleDateTime(
+              stream.scheduledAt,
+              lang,
+              'Upcoming',
+              'आगामी',
+            );
 
             return (
               <div
@@ -230,10 +243,10 @@ export default function SchedulePage() {
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-2">
                       <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-700 dark:text-gold-soft">
-                        {stream.category?.name || 'Vedic Pooja'}
+                        {translateCategoryLabel(stream.category?.name || 'Vedic Pooja', lang)}
                       </span>
                       <span className="text-[10px] font-bold text-amber-900 dark:text-gold-pale bg-amber-500/10 dark:bg-gold/10 border border-amber-500/25 dark:border-gold/20 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <CoinIcon size={12} /> 5 C/min
+                        <CoinIcon size={12} /> {t('5 C/min', '5 कॉइन/मिनट')}
                       </span>
                     </div>
 
@@ -249,7 +262,9 @@ export default function SchedulePage() {
                     <div className="flex items-center justify-between text-xs text-stone-600 dark:text-stone-300">
                       <div className="flex items-center gap-1.5 font-medium">
                         <PranamIcon size={16} />
-                        <span className="text-stone-800 dark:text-stone-200 font-semibold">{stream.streamer?.name || 'Vedic Pandit Ji'}</span>
+                        <span className="text-stone-800 dark:text-stone-200 font-semibold">
+                          {stream.streamer?.name || t('Vedic Pandit Ji', 'वैदिक पंडित जी')}
+                        </span>
                         <VerifiedPanditBadge size={14} />
                       </div>
                     </div>
@@ -264,7 +279,7 @@ export default function SchedulePage() {
                         }`}
                       >
                         <Bell className="w-3.5 h-3.5 text-amber-600 dark:text-gold" />
-                        <span>{isReminded ? 'Reminder Set' : 'Remind Me'}</span>
+                        <span>{isReminded ? t('Reminder Set', 'रिमाइंडर सेट') : t('Remind Me', 'मुझे याद दिलाएँ')}</span>
                       </button>
 
                       <button
@@ -272,7 +287,7 @@ export default function SchedulePage() {
                         className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-full bg-gold hover:bg-gold-deep text-obsidian transition shadow"
                       >
                         <DiyaIcon size={14} />
-                        <span>Book Sankalp</span>
+                        <span>{t('Book Sankalp', 'संकल्प बुक करें')}</span>
                       </button>
                     </div>
                   </div>

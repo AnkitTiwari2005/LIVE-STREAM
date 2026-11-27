@@ -384,7 +384,7 @@ export default function KundliPage() {
               }`}
             >
               <Orbit className="w-4 h-4" />
-              <span>Janam Kundli</span>
+              <span>{L('Janam Kundli', 'जन्म कुंडली')}</span>
             </button>
             <button
               onClick={() => handleTabChange('matching')}
@@ -395,23 +395,28 @@ export default function KundliPage() {
               }`}
             >
               <HeartHandshake className="w-4 h-4" />
-              <span>Kundli Matching</span>
+              <span>{L('Kundli Matching', 'कुंडली मिलान')}</span>
             </button>
           </div>
 
           {activeTab === 'janam' ? (
             <>
-              <h1 className="font-serif text-3xl sm:text-5xl font-bold text-white">Your Vedic Birth Chart</h1>
+              <h1 className="font-serif text-3xl sm:text-5xl font-bold text-white">{L('Your Vedic Birth Chart', 'आपकी वैदिक जन्म पत्रिका')}</h1>
               <p className="text-stone-400 text-sm sm:text-base mt-3 leading-relaxed">
-                Lagna, moon sign, nakshatra, planetary positions, avakhada and running dasha, calculated for your exact
-                birth time and place.
+                {L(
+                  'Lagna, moon sign, nakshatra, planetary positions, avakhada and running dasha, calculated for your exact birth time and place.',
+                  'लग्न, चंद्र राशि, नक्षत्र, ग्रह स्थिति, अवकहड़ा और वर्तमान दशा — आपके सटीक जन्म समय और स्थान के अनुसार गणना।',
+                )}
               </p>
             </>
           ) : (
             <>
-              <h1 className="font-serif text-3xl sm:text-5xl font-bold text-white">Vedic Kundli Matching</h1>
+              <h1 className="font-serif text-3xl sm:text-5xl font-bold text-white">{L('Vedic Kundli Matching', 'वैदिक कुंडली मिलान')}</h1>
               <p className="text-stone-400 text-sm sm:text-base mt-3 leading-relaxed">
-                Ashtakoot Guna Milan (36 points), Nadi &amp; Bhakoot dosha evaluation, and astrological compatibility for marriage.
+                {L(
+                  'Ashtakoot Guna Milan (36 points), Nadi & Bhakoot dosha evaluation, and astrological compatibility for marriage.',
+                  'अष्टकूट गुण मिलान (36 अंक), नाड़ी एवं भकूट दोष की जाँच और विवाह हेतु ज्योतिषीय अनुकूलता।',
+                )}
               </p>
             </>
           )}
@@ -421,7 +426,7 @@ export default function KundliPage() {
         <div className="max-w-3xl mx-auto">
           {auth === 'checking' && (
             <div className={`${cardClass} text-center text-sm text-stone-400`} aria-busy="true">
-              Loading sacred calculations…
+              {L('Loading sacred calculations…', 'पवित्र गणनाएँ लोड हो रही हैं…')}
             </div>
           )}
 
@@ -429,23 +434,26 @@ export default function KundliPage() {
             <div className={`${cardClass} text-center`}>
               <OmIcon size={36} className="mx-auto mb-3" />
               <h2 className="font-serif text-xl font-bold text-white mb-1">
-                {activeTab === 'matching' ? 'Sign in for Kundli Matching' : 'Sign in to see your kundli'}
+                {activeTab === 'matching' ? L('Sign in for Kundli Matching', 'कुंडली मिलान के लिए साइन इन करें') : L('Sign in to see your kundli', 'अपनी कुंडली देखने के लिए साइन इन करें')}
               </h2>
               <p className="text-xs sm:text-sm text-stone-400 mb-5">
-                It is free for every devotee. Sign in or create an account to access Vedic calculations.
+                {L(
+                  'It is free for every devotee. Sign in or create an account to access Vedic calculations.',
+                  'यह हर भक्त के लिए निःशुल्क है। वैदिक गणना के लिए साइन इन करें या खाता बनाएँ।',
+                )}
               </p>
               <div className="flex flex-wrap items-center justify-center gap-3">
                 <Link
                   href={`/login?redirect=${encodeURIComponent(activeTab === 'matching' ? '/kundli?tab=matching' : '/kundli/')}`}
                   className="px-6 py-2.5 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs shadow-lg shadow-gold/20 transition"
                 >
-                  Sign in
+                  {L('Sign in', 'साइन इन')}
                 </Link>
                 <Link
                   href={`/register?redirect=${encodeURIComponent(activeTab === 'matching' ? '/kundli?tab=matching' : '/kundli/')}`}
                   className="px-6 py-2.5 border border-gold/40 bg-obsidian-soft hover:bg-gold/10 text-gold-pale font-bold rounded-full text-xs transition"
                 >
-                  Create account
+                  {L('Create account', 'खाता बनाएँ')}
                 </Link>
               </div>
             </div>
@@ -454,9 +462,9 @@ export default function KundliPage() {
           {auth === 'in' && enabled === false && (
             <div className={`${cardClass} text-center`}>
               <AlertCircle className="w-8 h-8 text-gold mx-auto mb-2" />
-              <h2 className="font-serif text-xl font-bold text-white mb-1">Astrology Engine Offline</h2>
+              <h2 className="font-serif text-xl font-bold text-white mb-1">{L('Astrology Engine Offline', 'ज्योतिष इंजन अभी बंद है')}</h2>
               <p className="text-xs sm:text-sm text-stone-400">
-                This service is currently being updated. Please check back soon.
+                {L('This service is currently being updated. Please check back soon.', 'यह सेवा अभी अपडेट हो रही है। कृपया कुछ देर बाद देखें।')}
               </p>
             </div>
           )}
@@ -477,7 +485,7 @@ export default function KundliPage() {
             >
               <div>
                 <label htmlFor="kd-name" className={labelClass}>
-                  Name <span className="text-stone-500 font-normal">(optional, shown on your chart only)</span>
+                  {L('Name', 'नाम')} <span className="text-stone-500 font-normal">{L('(optional, shown on your chart only)', '(वैकल्पिक, केवल आपकी कुंडली पर दिखेगा)')}</span>
                 </label>
                 <input
                   id="kd-name"
@@ -485,7 +493,7 @@ export default function KundliPage() {
                   value={name}
                   maxLength={60}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Devotee name"
+                  placeholder={L('Devotee name', 'भक्त का नाम')}
                   autoComplete="name"
                   className={inputClass}
                 />
@@ -495,7 +503,7 @@ export default function KundliPage() {
                 <div>
                   <label htmlFor="kd-date" className={labelClass}>
                     <Calendar className="inline w-3.5 h-3.5 mr-1 -mt-0.5 text-gold" />
-                    Date of birth <span className="text-red-400">*</span>
+                    {L('Date of birth', 'जन्म तिथि')} <span className="text-red-400">*</span>
                   </label>
                   <input
                     id="kd-date"
@@ -511,7 +519,7 @@ export default function KundliPage() {
                 <div>
                   <label htmlFor="kd-time" className={labelClass}>
                     <Clock className="inline w-3.5 h-3.5 mr-1 -mt-0.5 text-gold" />
-                    Time of birth <span className="text-red-400">*</span>
+                    {L('Time of birth', 'जन्म समय')} <span className="text-red-400">*</span>
                   </label>
                   <input
                     id="kd-time"
@@ -528,7 +536,7 @@ export default function KundliPage() {
                       onChange={(e) => setUnknownTime(e.target.checked)}
                       className="accent-amber-500"
                     />
-                    I don&apos;t know my birth time
+                    {L("I don't know my birth time", 'मुझे जन्म समय ज्ञात नहीं')}
                   </label>
                 </div>
               </div>
@@ -536,7 +544,7 @@ export default function KundliPage() {
               <div>
                 <label htmlFor="kd-place" className={labelClass}>
                   <MapPin className="inline w-3.5 h-3.5 mr-1 -mt-0.5 text-gold" />
-                  Place of birth <span className="text-red-400">*</span>
+                  {L('Place of birth', 'जन्म स्थान')} <span className="text-red-400">*</span>
                 </label>
                 <input
                   id="kd-place"
@@ -548,7 +556,7 @@ export default function KundliPage() {
                     setPlaceId(null);
                     setCandidates(null);
                   }}
-                  placeholder="City, state (e.g. Varanasi, Uttar Pradesh)"
+                  placeholder={L('City, state (e.g. Varanasi, Uttar Pradesh)', 'शहर, राज्य (जैसे वाराणसी, उत्तर प्रदेश)')}
                   autoComplete="off"
                   className={inputClass}
                 />
@@ -566,7 +574,7 @@ export default function KundliPage() {
 
               {candidates && (
                 <div className="rounded-xl border border-gold/25 bg-gold/5 p-3 space-y-2">
-                  <p className="text-xs font-semibold text-gold-pale">Choose your birth place</p>
+                  <p className="text-xs font-semibold text-gold-pale">{L('Choose your birth place', 'अपना जन्म स्थान चुनें')}</p>
                   {candidates.map((c) => (
                     <button
                       key={c.placeId}
@@ -591,27 +599,30 @@ export default function KundliPage() {
               >
                 {loading ? (
                   <>
-                    <RefreshCw className="w-4 h-4 animate-spin" /> Calculating your chart…
+                    <RefreshCw className="w-4 h-4 animate-spin" /> {L('Calculating your chart…', 'आपकी कुंडली बन रही है…')}
                   </>
                 ) : (
                   <>
-                    <Orbit className="w-4 h-4" /> Generate my kundli
+                    <Orbit className="w-4 h-4" /> {L('Generate my kundli', 'मेरी कुंडली बनाएँ')}
                   </>
                 )}
               </button>
 
               <p className="text-[11px] text-stone-500 leading-relaxed text-center">
-                Your birth details are sent to our astrology calculation engine only to compute this chart.
+                {L(
+                  'Your birth details are sent to our astrology calculation engine only to compute this chart.',
+                  'आपका जन्म विवरण केवल इस कुंडली की गणना के लिए हमारे ज्योतिष गणना इंजन को भेजा जाता है।',
+                )}
               </p>
             </form>
 
             {!result && (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-10">
                 {[
-                  ['Lagna & Rashi', 'Your ascendant, moon sign and birth nakshatra'],
-                  ['Birth chart', 'North or South Indian style, with Navamsa (D9)'],
-                  ['Vimshottari dasha', 'The mahadasha and antardasha running today'],
-                  ['Avakhada', 'Varna, vashya, yoni, gana and nadi'],
+                  [L('Lagna & Rashi', 'लग्न एवं राशि'), L('Your ascendant, moon sign and birth nakshatra', 'आपका लग्न, चंद्र राशि और जन्म नक्षत्र')],
+                  [L('Birth chart', 'जन्म कुंडली चित्र'), L('North or South Indian style, with Navamsa (D9)', 'उत्तर या दक्षिण भारतीय शैली, नवांश (D9) सहित')],
+                  [L('Vimshottari dasha', 'विंशोत्तरी दशा'), L('The mahadasha and antardasha running today', 'आज चल रही महादशा और अंतर्दशा')],
+                  [L('Avakhada', 'अवकहड़ा'), L('Varna, vashya, yoni, gana and nadi', 'वर्ण, वश्य, योनि, गण और नाड़ी')],
                 ].map(([t, d]) => (
                   <div key={t} className={cardClass}>
                     <DiyaIcon size={20} className="mb-2" />
@@ -851,28 +862,28 @@ export default function KundliPage() {
                 <div className="p-4 rounded-xl border border-gold/20 bg-stone-900/40 space-y-3.5">
                   <div className="flex items-center gap-2 border-b border-gold/15 pb-2.5">
                     <span className="w-6 h-6 rounded-full bg-gold/20 text-gold flex items-center justify-center text-xs font-bold">1</span>
-                    <h3 className="font-serif text-base font-bold text-gold-pale">Partner 1 (Groom / First Person)</h3>
+                    <h3 className="font-serif text-base font-bold text-gold-pale">{L('Partner 1 (Groom / First Person)', 'व्यक्ति 1 (वर / प्रथम व्यक्ति)')}</h3>
                   </div>
 
                   <div>
-                    <label className={labelClass}>Full Name <span className="text-stone-500 font-normal">(optional)</span></label>
+                    <label className={labelClass}>{L('Full Name', 'पूरा नाम')} <span className="text-stone-500 font-normal">({L('optional', 'वैकल्पिक')})</span></label>
                     <input
                       type="text"
                       value={nameA}
                       maxLength={60}
                       onChange={(e) => setNameA(e.target.value)}
-                      placeholder="e.g. Rahul Sharma"
-                      aria-label="Partner 1 full name"
+                      placeholder={L('e.g. Rahul Sharma', 'उदा. राहुल शर्मा')}
+                      aria-label={L('Partner 1 full name', 'व्यक्ति 1 का पूरा नाम')}
                       className={inputClass}
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className={labelClass}>Date of birth <span className="text-red-400">*</span></label>
+                      <label className={labelClass}>{L('Date of birth', 'जन्म तिथि')} <span className="text-red-400">*</span></label>
                       <input
                         type="date"
-                        aria-label="Partner 1 date of birth"
+                        aria-label={L('Partner 1 date of birth', 'व्यक्ति 1 की जन्म तिथि')}
                         value={dateA}
                         min="1900-01-01"
                         max={todayLocal()}
@@ -882,10 +893,10 @@ export default function KundliPage() {
                       />
                     </div>
                     <div>
-                      <label className={labelClass}>Time of birth</label>
+                      <label className={labelClass}>{L('Time of birth', 'जन्म समय')}</label>
                       <input
                         type="time"
-                        aria-label="Partner 1 time of birth"
+                        aria-label={L('Partner 1 time of birth', 'व्यक्ति 1 का जन्म समय')}
                         value={timeA}
                         disabled={unknownTimeA}
                         onChange={(e) => setTimeA(e.target.value)}
@@ -898,13 +909,13 @@ export default function KundliPage() {
                           onChange={(e) => setUnknownTimeA(e.target.checked)}
                           className="accent-amber-500"
                         />
-                        Time not known
+                        {L('Time not known', 'जन्म समय ज्ञात नहीं')}
                       </label>
                     </div>
                   </div>
 
                   <div>
-                    <label className={labelClass}>Place of birth <span className="text-red-400">*</span></label>
+                    <label className={labelClass}>{L('Place of birth', 'जन्म स्थान')} <span className="text-red-400">*</span></label>
                     <input
                       type="text"
                       value={placeA}
@@ -914,15 +925,15 @@ export default function KundliPage() {
                         setPlaceIdA(null);
                         setCandidatesA(null);
                       }}
-                      placeholder="City, State (e.g. Delhi, India)"
-                      aria-label="Partner 1 place of birth"
+                      placeholder={L('City, State (e.g. Delhi, India)', 'शहर, राज्य (उदा. दिल्ली, भारत)')}
+                      aria-label={L('Partner 1 place of birth', 'व्यक्ति 1 का जन्म स्थान')}
                       className={inputClass}
                     />
                   </div>
 
                   {candidatesA && (
                     <div className="rounded-xl border border-gold/25 bg-gold/5 p-2.5 space-y-1.5">
-                      <p className="text-xs font-semibold text-gold-pale">Select Partner 1 location:</p>
+                      <p className="text-xs font-semibold text-gold-pale">{L('Select Partner 1 location:', 'व्यक्ति 1 का स्थान चुनें:')}</p>
                       {candidatesA.map((c) => (
                         <button
                           key={c.placeId}
@@ -946,28 +957,28 @@ export default function KundliPage() {
                 <div className="p-4 rounded-xl border border-gold/20 bg-stone-900/40 space-y-3.5">
                   <div className="flex items-center gap-2 border-b border-gold/15 pb-2.5">
                     <span className="w-6 h-6 rounded-full bg-gold/20 text-gold flex items-center justify-center text-xs font-bold">2</span>
-                    <h3 className="font-serif text-base font-bold text-gold-pale">Partner 2 (Bride / Second Person)</h3>
+                    <h3 className="font-serif text-base font-bold text-gold-pale">{L('Partner 2 (Bride / Second Person)', 'व्यक्ति 2 (वधू / द्वितीय व्यक्ति)')}</h3>
                   </div>
 
                   <div>
-                    <label className={labelClass}>Full Name <span className="text-stone-500 font-normal">(optional)</span></label>
+                    <label className={labelClass}>{L('Full Name', 'पूरा नाम')} <span className="text-stone-500 font-normal">({L('optional', 'वैकल्पिक')})</span></label>
                     <input
                       type="text"
                       value={nameB}
                       maxLength={60}
                       onChange={(e) => setNameB(e.target.value)}
-                      placeholder="e.g. Priya Verma"
-                      aria-label="Partner 2 full name"
+                      placeholder={L('e.g. Priya Verma', 'उदा. प्रिया वर्मा')}
+                      aria-label={L('Partner 2 full name', 'व्यक्ति 2 का पूरा नाम')}
                       className={inputClass}
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className={labelClass}>Date of birth <span className="text-red-400">*</span></label>
+                      <label className={labelClass}>{L('Date of birth', 'जन्म तिथि')} <span className="text-red-400">*</span></label>
                       <input
                         type="date"
-                        aria-label="Partner 2 date of birth"
+                        aria-label={L('Partner 2 date of birth', 'व्यक्ति 2 की जन्म तिथि')}
                         value={dateB}
                         min="1900-01-01"
                         max={todayLocal()}
@@ -977,10 +988,10 @@ export default function KundliPage() {
                       />
                     </div>
                     <div>
-                      <label className={labelClass}>Time of birth</label>
+                      <label className={labelClass}>{L('Time of birth', 'जन्म समय')}</label>
                       <input
                         type="time"
-                        aria-label="Partner 2 time of birth"
+                        aria-label={L('Partner 2 time of birth', 'व्यक्ति 2 का जन्म समय')}
                         value={timeB}
                         disabled={unknownTimeB}
                         onChange={(e) => setTimeB(e.target.value)}
@@ -993,13 +1004,13 @@ export default function KundliPage() {
                           onChange={(e) => setUnknownTimeB(e.target.checked)}
                           className="accent-amber-500"
                         />
-                        Time not known
+                        {L('Time not known', 'जन्म समय ज्ञात नहीं')}
                       </label>
                     </div>
                   </div>
 
                   <div>
-                    <label className={labelClass}>Place of birth <span className="text-red-400">*</span></label>
+                    <label className={labelClass}>{L('Place of birth', 'जन्म स्थान')} <span className="text-red-400">*</span></label>
                     <input
                       type="text"
                       value={placeB}
@@ -1009,15 +1020,15 @@ export default function KundliPage() {
                         setPlaceIdB(null);
                         setCandidatesB(null);
                       }}
-                      placeholder="City, State (e.g. Mumbai, Maharashtra)"
-                      aria-label="Partner 2 place of birth"
+                      placeholder={L('City, State (e.g. Mumbai, Maharashtra)', 'शहर, राज्य (उदा. मुंबई, महाराष्ट्र)')}
+                      aria-label={L('Partner 2 place of birth', 'व्यक्ति 2 का जन्म स्थान')}
                       className={inputClass}
                     />
                   </div>
 
                   {candidatesB && (
                     <div className="rounded-xl border border-gold/25 bg-gold/5 p-2.5 space-y-1.5">
-                      <p className="text-xs font-semibold text-gold-pale">Select Partner 2 location:</p>
+                      <p className="text-xs font-semibold text-gold-pale">{L('Select Partner 2 location:', 'व्यक्ति 2 का स्थान चुनें:')}</p>
                       {candidatesB.map((c) => (
                         <button
                           key={c.placeId}
@@ -1058,11 +1069,11 @@ export default function KundliPage() {
                 >
                   {matchLoading ? (
                     <>
-                      <RefreshCw className="w-4 h-4 animate-spin" /> Calculating Ashtakoot Milan…
+                      <RefreshCw className="w-4 h-4 animate-spin" /> {L('Calculating Ashtakoot Milan…', 'अष्टकूट मिलान की गणना हो रही है…')}
                     </>
                   ) : (
                     <>
-                      <HeartHandshake className="w-4 h-4" /> Match Kundlis (Calculate Milan)
+                      <HeartHandshake className="w-4 h-4" /> {L('Match Kundlis (Calculate Milan)', 'कुंडली मिलान करें (गुण मिलान)')}
                     </>
                   )}
                 </button>
@@ -1073,15 +1084,15 @@ export default function KundliPage() {
             {!matchResult && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-8">
                 {[
-                  ['36 Gunas System', 'Classical Vedic Ashtakoot score evaluating 8 critical harmony dimensions'],
-                  ['Nadi Dosha Check', 'Verification of genetic & physiological compatibility according to Ayurveda'],
-                  ['Bhakoot Harmony', 'Moon sign placement analysis ensuring mutual emotional & familial welfare'],
-                  ['Dosha Remedies', 'Immediate guidance & consultation options if major doshas are detected'],
-                ].map(([t, d]) => (
-                  <div key={t} className={cardClass}>
+                  [L('36 Gunas System', '36 गुण प्रणाली'), L('Classical Vedic Ashtakoot score evaluating 8 critical harmony dimensions', '8 प्रमुख जीवन आयामों पर आधारित शास्त्रीय वैदिक अष्टकूट गणना')],
+                  [L('Nadi Dosha Check', 'नाड़ी दोष जांच'), L('Verification of genetic & physiological compatibility according to Ayurveda', 'आयुर्वेद एवं वैदिक सिद्धांत के अनुसार आनुवंशिक व शारीरिक अनुकूलता')],
+                  [L('Bhakoot Harmony', 'भकूट सामंजस्य'), L('Moon sign placement analysis ensuring mutual emotional & familial welfare', 'भावनात्मक एवं पारिवारिक सुख-समृद्धि हेतु चंद्र राशि स्थिति विश्लेषण')],
+                  [L('Dosha Remedies', 'दोष निवारण उपाय'), L('Immediate guidance & consultation options if major doshas are detected', 'प्रमुख दोष पाए जाने पर त्वरित मार्गदर्शन और आचार्य परामर्श विकल्प')],
+                ].map(([title, desc]) => (
+                  <div key={title} className={cardClass}>
                     <DiyaIcon size={20} className="mb-2" />
-                    <h3 className="font-serif text-sm font-bold text-gold-pale">{t}</h3>
-                    <p className="text-[11px] text-stone-400 mt-1 leading-relaxed">{d}</p>
+                    <h3 className="font-serif text-sm font-bold text-gold-pale">{title}</h3>
+                    <p className="text-[11px] text-stone-400 mt-1 leading-relaxed">{desc}</p>
                   </div>
                 ))}
               </div>

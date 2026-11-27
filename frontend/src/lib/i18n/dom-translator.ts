@@ -13,12 +13,21 @@ const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'CODE', 'PRE', 'TEXTAR
 const SKIP_SELECTOR = '[data-no-translate],[translate="no"],[contenteditable="true"]';
 const ATTRS = ['placeholder', 'title', 'aria-label', 'alt'] as const;
 
-const norm = (s: string) => s.replace(/\s+/g, ' ').trim();
+const norm = (s: string) =>
+  s
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const HI_EXACT_NORMALIZED = new Map<string, string>(
+  Object.entries(HI_EXACT).map(([k, v]) => [norm(k), v])
+);
 
 export function translateText(raw: string): string | null {
   const key = norm(raw);
   if (!key) return null;
-  const hit = HI_EXACT[key];
+  const hit = HI_EXACT[key] ?? HI_EXACT_NORMALIZED.get(key);
   if (hit !== undefined) return hit;
   for (const [re, fn] of HI_PATTERNS) {
     const m = re.exec(key);
@@ -90,8 +99,21 @@ export function attachDomTranslator(root: HTMLElement): () => void {
     }
     if (el instanceof HTMLInputElement && (el.type === 'submit' || el.type === 'button')) {
       const cur = el.value;
-      const hi = translateText(cur);
-      if (hi !== null) el.value = hi;
+      const st = map?.get('__value');
+      if (!st || cur !== st.hi) {
+        const hi = translateText(cur);
+        if (hi === null) {
+          map?.delete('__value');
+        } else {
+          if (!map) {
+            map = new Map();
+            attrState.set(el, map);
+          }
+          map.set('__value', { en: cur, hi });
+          touchedEls.add(el);
+          el.value = hi;
+        }
+      }
     }
   };
 
@@ -171,20 +193,31 @@ export function attachDomTranslator(root: HTMLElement): () => void {
     });
     touchedEls.forEach((el) => {
       attrState.get(el)?.forEach((st, a) => {
-        if (el.getAttribute(a) === st.hi) el.setAttribute(a, st.en);
+        if (a === '__value') {
+          if (el instanceof HTMLInputElement && el.value === st.hi) el.value = st.en;
+        } else if (el.getAttribute(a) === st.hi) {
+          el.setAttribute(a, st.en);
+        }
       });
     });
     if (titleEn !== null) document.title = titleEn;
   };
 }
 
-function translateTitle(title: string): string | null {
+export function translateTitle(title: string): string | null {
   const exact = translateText(title);
   if (exact !== null) return exact;
+  const enSuffix = ' | Param Darshan';
+  const hiSuffix = HI_TITLE_SUFFIX.startsWith(' | ') ? HI_TITLE_SUFFIX : ` | ${HI_TITLE_SUFFIX}`;
+  if (title.endsWith(enSuffix)) {
+    const rawHead = title.slice(0, -enSuffix.length);
+    const hiHead = translateText(rawHead);
+    return `${hiHead ?? rawHead}${hiSuffix}`;
+  }
   const i = title.lastIndexOf(' | ');
   if (i > 0) {
     const head = translateText(title.slice(0, i));
-    if (head !== null) return `${head} | ${HI_TITLE_SUFFIX}`;
+    if (head !== null) return `${head}${hiSuffix}`;
   }
   return null;
 }

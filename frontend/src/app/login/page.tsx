@@ -8,9 +8,12 @@ import { OmIcon, DiyaIcon, PranamIcon } from '@/components/icons/SpiritualIcons'
 
 import { getSafeRedirect } from '@/lib/api';
 import { isJwtTokenExpired, purgeClientSession, setClientSession } from '@/lib/auth-session';
+import { useLang } from '@/lib/i18n/context';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [totpToken, setTotpToken] = useState('');
@@ -35,7 +38,7 @@ export default function LoginPage() {
         setRedirectUrl(red);
       }
       if (params.get('expired') === '1' || params.get('expired') === 'true') {
-        setError('Your previous session has expired. Please sign in again.');
+        setError(L('Your previous session has expired. Please sign in again.', 'आपका पिछला सत्र समाप्त हो गया है। कृपया पुनः साइन इन करें।'));
       }
     }
   }, [router]);
@@ -56,7 +59,7 @@ export default function LoginPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || 'Login failed. Please check credentials.');
+        throw new Error(data.message || L('Login failed. Please check credentials.', 'लॉगिन असफल रहा। कृपया अपना ईमेल और पासवर्ड जांचें।'));
       }
 
       if (data.requires2FA) {
@@ -105,7 +108,7 @@ export default function LoginPage() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Invalid 2FA code');
+      if (!res.ok) throw new Error(data.message || L('Invalid 2FA code', 'अमान्य 2FA कोड'));
 
       // SD-SEC-2026-004: Purge all prior session state and write new session
       purgeClientSession();
@@ -139,16 +142,16 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-3">
             <span className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-gold/40 bg-gradient-to-b from-[#2a1e12] to-obsidian shadow-[0_0_20px_rgba(245,158,11,0.25)]">
-              <img src="/logo.webp" alt="Param Darshan" className="w-10 h-10 object-contain drop-shadow" />
+              <img src="/logo.webp" alt={L('Param Darshan', 'परम दर्शन')} className="w-10 h-10 object-contain drop-shadow" />
             </span>
           </div>
           <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white tracking-tight">
-            {tempToken ? 'Two-Factor Authentication' : 'Welcome to Param Darshan'}
+            {tempToken ? L('Two-Factor Authentication', 'द्वि-स्तरीय सुरक्षा (2FA)') : L('Welcome to Param Darshan', 'परम दर्शन में आपका स्वागत है')}
           </h2>
           <p className="text-stone-400 text-xs mt-1.5 leading-relaxed">
             {tempToken
-              ? 'Enter the 6-digit code from your Authenticator app'
-              : 'Sign in to participate in sacred poojas, live darshan, and chat'}
+              ? L('Enter the 6-digit code from your Authenticator app', 'अपने ऑथेंटिकेटर ऐप से 6-अंकीय कोड दर्ज करें')
+              : L('Sign in to participate in sacred poojas, live darshan, and chat', 'पवित्र पूजा, लाइव दर्शन और भक्ति चैट में शामिल होने के लिए लॉगिन करें')}
           </p>
         </div>
 
@@ -163,7 +166,7 @@ export default function LoginPage() {
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-stone-300 mb-1.5">
-                Email Address
+                {L('Email Address', 'ईमेल पता')}
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-gold-soft absolute left-3.5 top-3.5" />
@@ -181,13 +184,13 @@ export default function LoginPage() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-xs font-semibold text-stone-300">
-                  Password
+                  {L('Password', 'पासवर्ड')}
                 </label>
                 <Link
                   href="/forgot-password"
                   className="text-xs text-gold hover:text-gold-pale transition"
                 >
-                  Forgot Password?
+                  {L('Forgot Password?', 'पासवर्ड भूल गए?')}
                 </Link>
               </div>
               <div className="relative">
@@ -208,14 +211,14 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full mt-2 py-3 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs sm:text-sm shadow-lg shadow-gold/20 transition-all disabled:opacity-50"
             >
-              {loading ? 'Authenticating...' : 'Sign In'}
+              {loading ? L('Authenticating...', 'प्रमाणीकरण हो रहा है...') : L('Sign In', 'साइन इन करें')}
             </button>
           </form>
         ) : (
           <form onSubmit={handleTotpVerify} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-stone-300 mb-1.5">
-                6-Digit Security Code
+                {L('6-Digit Security Code', '6-अंकीय सुरक्षा कोड')}
               </label>
               <div className="relative">
                 <KeyRound className="w-4 h-4 text-gold-soft absolute left-3.5 top-3.5" />
@@ -236,7 +239,7 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full py-3 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs sm:text-sm shadow-lg shadow-gold/20 transition-all disabled:opacity-50"
             >
-              {loading ? 'Verifying...' : 'Verify 2FA'}
+              {loading ? L('Verifying...', 'सत्यापन हो रहा है...') : L('Verify 2FA', '2FA सत्यापित करें')}
             </button>
 
             <button
@@ -248,18 +251,18 @@ export default function LoginPage() {
               }}
               className="w-full py-2.5 rounded-full border border-stone-700 hover:border-gold/40 text-stone-300 hover:text-white text-xs font-semibold transition"
             >
-              Back to Sign In
+              {L('Back to Sign In', 'साइन इन पर वापस जाएँ')}
             </button>
           </form>
         )}
 
         <div className="mt-6 text-center text-xs text-stone-400">
-          Do not have an account?{' '}
+          {L('Do not have an account?', 'क्या आपका खाता नहीं है?')}{' '}
           <Link
             href={redirectUrl ? `/register?redirect=${encodeURIComponent(redirectUrl)}` : "/register"}
             className="text-gold hover:underline font-bold"
           >
-            Register Free (+100 Coins)
+            {L('Register Free (+100 Coins)', 'निःशुल्क रजिस्टर करें (+100 कॉइन)')}
           </Link>
         </div>
       </div>

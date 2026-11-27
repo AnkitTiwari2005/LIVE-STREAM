@@ -6,9 +6,12 @@ import Link from 'next/link';
 import { Video, Calendar, AlertCircle, LogIn, Sparkles, UserCheck, Lock } from 'lucide-react';
 import { OmIcon, DiyaIcon, PranamIcon } from '@/components/icons/SpiritualIcons';
 import { decodeJwtClaims, purgeClientSession } from '@/lib/auth-session';
+import { useLang } from '@/lib/i18n/context';
+import { translateCategoryLabel } from '@/lib/i18n/format';
 
 export default function CreateStreamPage() {
   const router = useRouter();
+  const { lang, t: L } = useLang();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [categoryId, setCategoryId] = useState('');
@@ -21,6 +24,7 @@ export default function CreateStreamPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [needsSignIn, setNeedsSignIn] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isViewerRole, setIsViewerRole] = useState(false);
   const [activeLiveStream, setActiveLiveStream] = useState<any>(null);
@@ -33,7 +37,13 @@ export default function CreateStreamPage() {
       const storedToken = localStorage.getItem('pooja_token');
 
       if (!storedToken) {
-        setError('Please sign in to your verified Pandit Ji account to setup a live broadcast.');
+        setNeedsSignIn(true);
+        setError(
+          L(
+            'Please sign in to your verified Pandit Ji account to setup a live broadcast.',
+            'लाइव प्रसारण शुरू करने के लिए कृपया अपने सत्यापित पंडित जी खाते से साइन इन करें।',
+          ),
+        );
         return;
       }
 
@@ -111,9 +121,10 @@ export default function CreateStreamPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setNeedsSignIn(false);
 
     if (scheduledAt && new Date(scheduledAt).getTime() < Date.now()) {
-      setError('Scheduled time must be in the future.');
+      setError(L('Scheduled time must be in the future.', 'निर्धारित समय भविष्य का होना चाहिए।'));
       return;
     }
 
@@ -147,15 +158,21 @@ export default function CreateStreamPage() {
       const data = await res.json();
       if (!res.ok) {
         if (res.status === 401) {
-          setError('Your session has expired. Please sign in again.');
+          setNeedsSignIn(true);
+          setError(L('Your session has expired. Please sign in again.', 'आपका सत्र समाप्त हो गया है। कृपया पुनः साइन इन करें।'));
           return;
         }
         if (res.status === 403) {
-          setError('Access denied: Broadcaster privileges are reserved for verified Pandits and Acharyas.');
+          setError(
+            L(
+              'Access denied: Broadcaster privileges are reserved for verified Pandits and Acharyas.',
+              'प्रवेश अस्वीकृत: प्रसारण अधिकार केवल सत्यापित पंडितों और आचार्यों के लिए आरक्षित हैं।',
+            ),
+          );
           setIsViewerRole(true);
           return;
         }
-        throw new Error(data.message || 'Failed to create broadcast');
+        throw new Error(data.message || L('Failed to create broadcast', 'प्रसारण बनाया नहीं जा सका'));
       }
 
       if (visibility === 'PRIVATE') {
@@ -175,7 +192,13 @@ export default function CreateStreamPage() {
 
         if (!linkRes.ok) {
           const linkErr = await linkRes.json().catch(() => ({}));
-          throw new Error(linkErr.message || 'Broadcast created, but failed to configure private access link settings');
+          throw new Error(
+            linkErr.message ||
+              L(
+                'Broadcast created, but failed to configure private access link settings',
+                'प्रसारण बन गया, किंतु निजी एक्सेस लिंक सेटिंग्स सहेजी नहीं जा सकीं',
+              ),
+          );
         }
       }
 
@@ -198,8 +221,12 @@ export default function CreateStreamPage() {
               <Video className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="font-serif text-2xl sm:text-3xl font-bold text-white tracking-tight">Setup Live Broadcast</h1>
-              <p className="text-xs text-stone-400">Configure ritual details before entering studio preview</p>
+              <h1 className="font-serif text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                {L('Setup Live Broadcast', 'लाइव प्रसारण सेटअप करें')}
+              </h1>
+              <p className="text-xs text-stone-400">
+                {L('Configure ritual details before entering studio preview', 'स्टूडियो पूर्वावलोकन में प्रवेश से पहले अनुष्ठान विवरण भरें')}
+              </p>
             </div>
           </div>
 
@@ -210,9 +237,14 @@ export default function CreateStreamPage() {
               <DiyaIcon size={24} className="text-amber-400 shrink-0" />
               <div>
                 <span className="font-bold text-amber-300 block text-sm">
-                  Active Live Stream Running: &ldquo;{activeLiveStream.title}&rdquo;
+                  {L('Active Live Stream Running:', 'सक्रिय लाइव प्रसारण जारी है:')} &ldquo;{activeLiveStream.title}&rdquo;
                 </span>
-                <span>You already have an ongoing broadcast. Resume it directly or conclude it to start a new pooja session.</span>
+                <span>
+                  {L(
+                    'You already have an ongoing broadcast. Resume it directly or conclude it to start a new pooja session.',
+                    'आपका एक प्रसारण पहले से जारी है। इसे सीधे जारी रखें या नया पूजा सत्र शुरू करने के लिए इसे समाप्त करें।',
+                  )}
+                </span>
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -220,7 +252,7 @@ export default function CreateStreamPage() {
                 href={`/studio/${activeLiveStream.id}`}
                 className="px-4 py-2 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-xl text-xs transition shadow-md"
               >
-                Resume Broadcast
+                {L('Resume Broadcast', 'प्रसारण जारी रखें')}
               </Link>
               <button
                 type="button"
@@ -228,7 +260,7 @@ export default function CreateStreamPage() {
                 disabled={endingActive}
                 className="px-3.5 py-2 bg-stone-900 border border-amber-600/60 hover:bg-red-950/60 text-stone-200 hover:text-red-300 font-semibold rounded-xl text-xs transition"
               >
-                {endingActive ? 'Ending...' : 'End Previous Stream'}
+                {endingActive ? L('Ending...', 'समाप्त हो रहा है...') : L('End Previous Stream', 'पिछला प्रसारण समाप्त करें')}
               </button>
             </div>
           </div>
@@ -240,9 +272,19 @@ export default function CreateStreamPage() {
             <div className="flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold text-amber-300 block mb-0.5">Devotee Account Detected</span>
+                <span className="font-bold text-amber-300 block mb-0.5">
+                  {L('Devotee Account Detected', 'भक्त खाता पहचाना गया')}
+                </span>
                 <span>
-                  You are currently signed in as <strong>{currentUser?.name || 'Devotee'}</strong> (Devotee Account). Broadcasting is exclusively available for verified Pandit Jis and Acharyas.
+                  {lang === 'hi' ? (
+                    <>
+                      आप वर्तमान में <strong>{currentUser?.name || 'भक्त'}</strong> (भक्त खाता) के रूप में साइन इन हैं। प्रसारण सुविधा केवल सत्यापित पंडित जी व आचार्यों के लिए उपलब्ध है।
+                    </>
+                  ) : (
+                    <>
+                      You are currently signed in as <strong>{currentUser?.name || 'Devotee'}</strong> (Devotee Account). Broadcasting is exclusively available for verified Pandit Jis and Acharyas.
+                    </>
+                  )}
                 </span>
               </div>
             </div>
@@ -251,14 +293,14 @@ export default function CreateStreamPage() {
                 href="/streamer/apply"
                 className="px-3 py-1.5 bg-orange-700 hover:bg-orange-600 text-white font-semibold rounded-lg text-xs transition-colors inline-flex items-center gap-1"
               >
-                <Sparkles className="w-3.5 h-3.5" /> Apply as Pandit Ji
+                <Sparkles className="w-3.5 h-3.5" /> {L('Apply as Pandit Ji', 'पंडित जी के रूप में आवेदन करें')}
               </Link>
               <button
                 type="button"
                 onClick={handleSwitchAccount}
                 className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 border border-stone-300 dark:border-stone-700 font-semibold rounded-lg text-xs transition-colors inline-flex items-center gap-1"
               >
-                <LogIn className="w-3.5 h-3.5" /> Sign in as Pandit Ji
+                <LogIn className="w-3.5 h-3.5" /> {L('Sign in as Pandit Ji', 'पंडित जी खाते से साइन इन करें')}
               </button>
             </div>
           </div>
@@ -270,13 +312,13 @@ export default function CreateStreamPage() {
               <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
               <span>{error}</span>
             </div>
-            {error.includes('sign in') && (
+            {needsSignIn && (
               <button
                 type="button"
                 onClick={handleSwitchAccount}
                 className="mt-1 self-start px-3 py-1.5 bg-orange-700 hover:bg-orange-600 text-white font-semibold rounded-lg text-xs transition-colors inline-flex items-center gap-1"
               >
-                <LogIn className="w-3.5 h-3.5" /> Sign In to Pandit Ji Account
+                <LogIn className="w-3.5 h-3.5" /> {L('Sign In to Pandit Ji Account', 'पंडित जी खाते में साइन इन करें')}
               </button>
             )}
           </div>
@@ -285,7 +327,7 @@ export default function CreateStreamPage() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-xs font-semibold text-stone-300 mb-1.5">
-              Stream / Pooja Title *
+              {L('Stream / Pooja Title *', 'प्रसारण / पूजा का शीर्षक *')}
             </label>
             <input
               type="text"
@@ -293,20 +335,23 @@ export default function CreateStreamPage() {
               maxLength={200}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Rudrabhishek Pooja & Vedic Chanting Live"
+              placeholder={L('e.g., Rudrabhishek Pooja & Vedic Chanting Live', 'जैसे: रुद्राभिषेक पूजा व वैदिक मंत्रोच्चार लाइव')}
               className="w-full px-4 py-2.5 bg-stone-950 border border-stone-800 rounded-xl text-sm text-white focus:outline-none focus:border-orange-500"
             />
           </div>
 
           <div>
             <label className="block text-xs font-semibold text-stone-300 mb-1.5">
-              Description & Sankalp
+              {L('Description & Sankalp', 'विवरण व संकल्प')}
             </label>
             <textarea
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Explain the significance of this pooja, mantras being recited, or how devotees should participate..."
+              placeholder={L(
+                'Explain the significance of this pooja, mantras being recited, or how devotees should participate...',
+                'इस पूजा का महत्व, पढ़े जाने वाले मंत्र या भक्त कैसे जुड़ें, यह लिखें...',
+              )}
               className="w-full px-4 py-2 bg-stone-950 border border-stone-800 rounded-xl text-sm text-white focus:outline-none focus:border-orange-500"
             />
           </div>
@@ -314,7 +359,7 @@ export default function CreateStreamPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-stone-300 mb-1.5">
-                Sacred Category *
+                {L('Sacred Category *', 'पावन श्रेणी *')}
               </label>
               <select
                 value={categoryId}
@@ -323,7 +368,7 @@ export default function CreateStreamPage() {
               >
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name}
+                    {translateCategoryLabel(c.name, lang)}
                   </option>
                 ))}
               </select>
@@ -331,15 +376,15 @@ export default function CreateStreamPage() {
 
             <div>
               <label className="block text-xs font-semibold text-stone-300 mb-1.5">
-                Video Quality (FR-L4)
+                {L('Video Quality (FR-L4)', 'वीडियो गुणवत्ता (FR-L4)')}
               </label>
               <select
                 value={videoQuality}
                 onChange={(e) => setVideoQuality(e.target.value as any)}
                 className="w-full px-3 py-2.5 bg-stone-950 border border-stone-800 rounded-xl text-sm text-white focus:outline-none focus:border-orange-500"
               >
-                <option value="480p">480p SD (Data Saver, Recommended)</option>
-                <option value="720p">720p HD (High Definition)</option>
+                <option value="480p">{L('480p SD (Data Saver, Recommended)', '480p SD (डेटा बचत, अनुशंसित)')}</option>
+                <option value="720p">{L('720p HD (High Definition)', '720p HD (उच्च गुणवत्ता)')}</option>
               </select>
             </div>
           </div>
@@ -347,7 +392,7 @@ export default function CreateStreamPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-stone-300 mb-1.5">
-                Visibility
+                {L('Visibility', 'दृश्यता')}
               </label>
               <div className="flex gap-2">
                 <button
@@ -359,7 +404,7 @@ export default function CreateStreamPage() {
                       : 'bg-stone-100 dark:bg-stone-950 text-stone-700 dark:text-stone-400 border-stone-300 dark:border-stone-800'
                   }`}
                 >
-                  Public Darshan
+                  {L('Public Darshan', 'सार्वजनिक दर्शन')}
                 </button>
                 <button
                   type="button"
@@ -370,14 +415,14 @@ export default function CreateStreamPage() {
                       : 'bg-stone-100 dark:bg-stone-950 text-stone-700 dark:text-stone-400 border-stone-300 dark:border-stone-800'
                   }`}
                 >
-                  Private (Secret Link)
+                  {L('Private (Secret Link)', 'निजी (गुप्त लिंक)')}
                 </button>
               </div>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-stone-300 mb-1.5">
-                Schedule for Later (Optional)
+                {L('Schedule for Later (Optional)', 'बाद के लिए निर्धारित करें (वैकल्पिक)')}
               </label>
               <input
                 type="datetime-local"
@@ -393,34 +438,34 @@ export default function CreateStreamPage() {
           {visibility === 'PRIVATE' && (
             <div className="p-4 bg-obsidian border border-gold/20 rounded-2xl space-y-3">
               <span className="text-xs font-bold text-gold flex items-center gap-1.5 uppercase tracking-wider">
-                <Lock className="w-3.5 h-3.5" /> Private Session Security Controls
+                <Lock className="w-3.5 h-3.5" /> {L('Private Session Security Controls', 'निजी सत्र सुरक्षा नियंत्रण')}
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div>
                   <label className="block text-stone-300 font-semibold mb-1">
-                    Access Password (Optional)
+                    {L('Access Password (Optional)', 'प्रवेश पासवर्ड (वैकल्पिक)')}
                   </label>
                   <input
                     type="text"
                     value={privatePassword}
                     onChange={(e) => setPrivatePassword(e.target.value)}
-                    placeholder="e.g. Sankalp2026"
+                    placeholder={L('e.g. Sankalp2026', 'जैसे: Sankalp2026')}
                     className="w-full px-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white focus:outline-none focus:border-gold"
                   />
                 </div>
                 <div>
                   <label className="block text-stone-300 font-semibold mb-1">
-                    Max Devotees Cap
+                    {L('Max Devotees Cap', 'अधिकतम भक्त सीमा')}
                   </label>
                   <select
                     value={maxViewers}
                     onChange={(e) => setMaxViewers(Number(e.target.value))}
                     className="w-full px-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white focus:outline-none focus:border-gold"
                   >
-                    <option value={10}>10 Devotees</option>
-                    <option value={25}>25 Devotees</option>
-                    <option value={50}>50 Devotees</option>
-                    <option value={100}>100 Devotees</option>
+                    <option value={10}>{L('10 Devotees', '10 भक्त')}</option>
+                    <option value={25}>{L('25 Devotees', '25 भक्त')}</option>
+                    <option value={50}>{L('50 Devotees', '50 भक्त')}</option>
+                    <option value={100}>{L('100 Devotees', '100 भक्त')}</option>
                   </select>
                 </div>
               </div>
@@ -431,7 +476,7 @@ export default function CreateStreamPage() {
                   onChange={(e) => setRequireLogin(e.target.checked)}
                   className="rounded border-stone-800 text-gold focus:ring-gold"
                 />
-                <span>Enforce Devotee Account Sign-In (Prevents anonymous access)</span>
+                <span>{L('Enforce Devotee Account Sign-In (Prevents anonymous access)', 'भक्त खाता साइन-इन अनिवार्य करें (अज्ञात प्रवेश रोकता है)')}</span>
               </label>
             </div>
           )}
@@ -442,7 +487,11 @@ export default function CreateStreamPage() {
             className="w-full mt-4 py-3.5 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs sm:text-sm shadow-xl shadow-gold/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
             <DiyaIcon size={18} />
-            <span>{loading ? 'Entering Studio...' : 'Proceed to Camera & Mic Studio Preview'}</span>
+            <span>
+              {loading
+                ? L('Entering Studio...', 'स्टूडियो में प्रवेश हो रहा है...')
+                : L('Proceed to Camera & Mic Studio Preview', 'कैमरा व माइक स्टूडियो पूर्वावलोकन पर जाएँ')}
+            </span>
           </button>
         </form>
       </div>

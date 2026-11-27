@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { VerifiedPanditBadge } from '@/components/icons/SpiritualIcons';
 import { apiFetch } from '@/lib/api';
+import { useLang } from '@/lib/i18n/context';
 
 // ─── Predefined Lists ───────────────────────────────────────────────────────
 
@@ -28,6 +29,32 @@ const LANGUAGE_OPTIONS = [
   'Assamese', 'Urdu', 'Maithili', 'Konkani', 'Dogri', 'Kashmiri',
   'Manipuri', 'Sindhi', 'Nepali', 'Bodo', 'Santhali',
 ];
+
+const LANGUAGE_HI: Record<string, string> = {
+  Hindi: 'हिन्दी',
+  Sanskrit: 'संस्कृत',
+  English: 'अंग्रेज़ी',
+  Tamil: 'तमिल',
+  Telugu: 'तेलुगु',
+  Kannada: 'कन्नड़',
+  Malayalam: 'मलयालम',
+  Bengali: 'बांग्ला',
+  Marathi: 'मराठी',
+  Punjabi: 'पंजाबी',
+  Gujarati: 'गुजराती',
+  Odia: 'ओडिया',
+  Assamese: 'असमिया',
+  Urdu: 'उर्दू',
+  Maithili: 'मैथिली',
+  Konkani: 'कोंकणी',
+  Dogri: 'डोगरी',
+  Kashmiri: 'कश्मीरी',
+  Manipuri: 'मणिपुरी',
+  Sindhi: 'सिंधी',
+  Nepali: 'नेपाली',
+  Bodo: 'बोडो',
+  Santhali: 'संथाली',
+};
 
 const SPECIALTY_OPTIONS = [
   'Vedic Pooja', 'Kundli Matching / Astrology', 'Vastu Consultation',
@@ -39,12 +66,37 @@ const SPECIALTY_OPTIONS = [
   'Tarot & Prashna Jyotish',
 ];
 
+const SPECIALTY_HI: Record<string, string> = {
+  'Vedic Pooja': 'वैदिक पूजा',
+  'Kundli Matching / Astrology': 'कुंडली मिलान / ज्योतिष',
+  'Vastu Consultation': 'वास्तु परामर्श',
+  'Havan & Yagya': 'हवन व यज्ञ',
+  'Marriage Rituals': 'विवाह संस्कार',
+  'Satyanarayan Katha': 'सत्यनारायण कथा',
+  Rudrabhishek: 'रुद्राभिषेक',
+  'Navagraha Puja': 'नवग्रह पूजा',
+  'Griha Pravesh': 'गृह प्रवेश',
+  'Naming Ceremony (Naamkaran)': 'नामकरण संस्कार',
+  'Pitru Paksha Rituals': 'पितृ पक्ष अनुष्ठान',
+  'Ganesh Puja': 'गणेश पूजा',
+  'Lakshmi Puja': 'लक्ष्मी पूजा',
+  'Durga Puja': 'दुर्गा पूजा',
+  'Shiv Puja': 'शिव पूजा',
+  'Surya Puja': 'सूर्य पूजा',
+  'Planetary Remedies': 'ग्रह शांति उपाय',
+  Numerology: 'अंक ज्योतिष',
+  Palmistry: 'हस्तरेखा विज्ञान',
+  'Tarot & Prashna Jyotish': 'टैरो व प्रश्न ज्योतिष',
+};
+
 // ─── Upload slot definition ──────────────────────────────────────────────────
 
 interface UploadSlot {
   id: string;
   label: string;
+  labelHi: string;
   hint: string;
+  hintHi: string;
   required: boolean;
   documentType: string;
   accept: string;
@@ -54,7 +106,9 @@ const UPLOAD_SLOTS: UploadSlot[] = [
   {
     id: 'photograph',
     label: 'Upload Your Photograph',
+    labelHi: 'अपनी फ़ोटो अपलोड करें',
     hint: 'Clear recent passport-size photo (JPG/PNG)',
+    hintHi: 'स्पष्ट नवीनतम पासपोर्ट-आकार की फ़ोटो (JPG/PNG)',
     required: true,
     documentType: 'PAN_OR_CERTIFICATE',
     accept: 'image/*',
@@ -62,7 +116,9 @@ const UPLOAD_SLOTS: UploadSlot[] = [
   {
     id: 'pan',
     label: 'Upload Your PAN Card',
+    labelHi: 'अपना PAN कार्ड अपलोड करें',
     hint: 'Government-issued PAN Card (optional - for TDS/tax records)',
+    hintHi: 'सरकार द्वारा जारी PAN कार्ड (वैकल्पिक — TDS/कर रिकॉर्ड हेतु)',
     required: false,
     documentType: 'PAN_CARD',
     accept: 'image/*,application/pdf',
@@ -70,7 +126,9 @@ const UPLOAD_SLOTS: UploadSlot[] = [
   {
     id: 'id',
     label: 'Upload Aadhaar / Any Other Legal ID Proof',
+    labelHi: 'आधार / कोई अन्य वैध पहचान पत्र अपलोड करें',
     hint: 'Mask your Aadhaar number. Passport or Voter ID also accepted.',
+    hintHi: 'अपना आधार नंबर मास्क्ड रखें। पासपोर्ट या मतदाता पहचान पत्र भी मान्य हैं।',
     required: true,
     documentType: 'AADHAAR',
     accept: 'image/*,application/pdf',
@@ -78,7 +136,9 @@ const UPLOAD_SLOTS: UploadSlot[] = [
   {
     id: 'degree',
     label: 'Upload Degree / Qualification Certificate',
+    labelHi: 'उपाधि / योग्यता प्रमाणपत्र अपलोड करें',
     hint: 'Vedic academy degree or certified astrology diploma (optional)',
+    hintHi: 'वैदिक गुरुकुल उपाधि या प्रमाणित ज्योतिष डिप्लोमा (वैकल्पिक)',
     required: false,
     documentType: 'DEGREE_CERTIFICATE',
     accept: 'image/*,application/pdf',
@@ -92,14 +152,17 @@ function PillSelect({
   selected,
   onChange,
   label,
+  getLabel,
   required,
 }: {
   options: string[];
   selected: string[];
   onChange: (val: string[]) => void;
   label: string;
+  getLabel: (opt: string) => string;
   required?: boolean;
 }) {
+  const { t: L } = useLang();
   const toggle = (opt: string) => {
     if (selected.includes(opt)) {
       onChange(selected.filter((s) => s !== opt));
@@ -120,10 +183,11 @@ function PillSelect({
               key={s}
               className="flex items-center gap-1 px-2.5 py-1 bg-gold/20 border border-gold/40 rounded-full text-[11px] font-semibold text-gold-pale"
             >
-              {s}
+              {getLabel(s)}
               <button
                 type="button"
                 onClick={() => toggle(s)}
+                aria-label={L(`Remove ${s}`, `${getLabel(s)} हटाएँ`)}
                 className="ml-0.5 text-gold/60 hover:text-gold transition"
               >
                 <XIcon className="w-3 h-3" />
@@ -142,15 +206,15 @@ function PillSelect({
               onClick={() => toggle(opt)}
               className="px-2.5 py-1 rounded-full border border-stone-700 bg-obsidian-soft text-stone-300 hover:border-gold/50 hover:text-gold-pale text-[11px] transition"
             >
-              {opt}
+              {getLabel(opt)}
             </button>
           ))}
         {options.filter((o) => !selected.includes(o)).length === 0 && (
-          <span className="text-[11px] text-stone-500 italic">All options selected</span>
+          <span className="text-[11px] text-stone-500 italic">{L('All options selected', 'सभी विकल्प चुने गए हैं')}</span>
         )}
       </div>
       {selected.length === 0 && required && (
-        <p className="mt-1 text-[10px] text-stone-500">Select at least one option</p>
+        <p className="mt-1 text-[10px] text-stone-500">{L('Select at least one option', 'कम से कम एक विकल्प चुनें')}</p>
       )}
     </div>
   );
@@ -169,20 +233,21 @@ function UploadZone({
   uploading: boolean;
   onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
+  const { lang, t: L } = useLang();
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold text-stone-300">
-          {slot.label}
+          {lang === 'hi' ? slot.labelHi : slot.label}
           {slot.required ? (
             <span className="text-gold ml-1">*</span>
           ) : (
-            <span className="text-stone-500 ml-1 font-normal">(optional)</span>
+            <span className="text-stone-500 ml-1 font-normal">{L('(optional)', '(वैकल्पिक)')}</span>
           )}
         </span>
         {storageKey && (
           <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3" /> Attached
+            <CheckCircle2 className="w-3 h-3" /> {L('Attached', 'संलग्न')}
           </span>
         )}
       </div>
@@ -200,9 +265,11 @@ function UploadZone({
         )}
         <span className="text-xs text-stone-300">
           {uploading
-            ? 'Uploading securely...'
+            ? L('Uploading securely...', 'सुरक्षित रूप से अपलोड हो रहा है...')
             : storageKey
-            ? 'Uploaded — click to replace'
+            ? L('Uploaded — click to replace', 'अपलोड हो गया — बदलने के लिए क्लिक करें')
+            : lang === 'hi'
+            ? slot.hintHi
             : slot.hint}
         </span>
         <input
@@ -221,6 +288,7 @@ function UploadZone({
 
 export default function StreamerApplyPage() {
   const router = useRouter();
+  const { lang, t: L } = useLang();
   const [bio, setBio] = useState('');
   const [phone, setPhone] = useState('');
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['Hindi', 'Sanskrit', 'English']);
@@ -254,7 +322,12 @@ export default function StreamerApplyPage() {
 
       if (!token) {
         setIsSignedIn(false);
-        setError('Please sign in to submit your Pandit verification application.');
+        setError(
+          L(
+            'Please sign in to submit your Pandit verification application.',
+            'अपना पंडित सत्यापन आवेदन जमा करने के लिए कृपया साइन इन करें।',
+          ),
+        );
         setCheckingExisting(false);
         return;
       }
@@ -301,7 +374,7 @@ export default function StreamerApplyPage() {
 
     const token = localStorage.getItem('pooja_token');
     if (!token) {
-      setError('Please sign in before uploading verification documents');
+      setError(L('Please sign in before uploading verification documents', 'सत्यापन दस्तावेज़ अपलोड करने से पहले कृपया साइन इन करें'));
       setUploadingSlot(null);
       return;
     }
@@ -323,18 +396,18 @@ export default function StreamerApplyPage() {
       });
 
       const preData = await preRes.json();
-      if (!preRes.ok) throw new Error(preData.message || 'Failed to obtain upload token');
+      if (!preRes.ok) throw new Error(preData.message || L('Failed to obtain upload token', 'अपलोड टोकन प्राप्त नहीं हो सका'));
 
       const upRes = await fetch(preData.uploadUrl, {
         method: 'PUT',
         body: file,
       });
 
-      if (!upRes.ok) throw new Error('Failed to upload document');
+      if (!upRes.ok) throw new Error(L('Failed to upload document', 'दस्तावेज़ अपलोड नहीं हो सका'));
 
       setUploadKeys((prev) => ({ ...prev, [slotId]: preData.storageKey }));
     } catch (err: any) {
-      setError(err.message || 'File upload failed');
+      setError(err.message || L('File upload failed', 'फ़ाइल अपलोड विफल रहा'));
     } finally {
       setUploadingSlot(null);
     }
@@ -345,18 +418,20 @@ export default function StreamerApplyPage() {
     setError(null);
 
     if (selectedLanguages.length === 0) {
-      setError('Please select at least one language');
+      setError(L('Please select at least one language', 'कृपया कम से कम एक भाषा चुनें'));
       return;
     }
     if (selectedSpecialties.length === 0) {
-      setError('Please select at least one sacred specialty');
+      setError(L('Please select at least one sacred specialty', 'कृपया कम से कम एक वैदिक विशेषज्ञता चुनें'));
       return;
     }
 
     const requiredSlots = UPLOAD_SLOTS.filter((s) => s.required);
     for (const slot of requiredSlots) {
       if (!uploadKeys[slot.id]) {
-        setError(`Please upload: ${slot.label}`);
+        setError(
+          lang === 'hi' ? `कृपया अपलोड करें: ${slot.labelHi}` : `Please upload: ${slot.label}`,
+        );
         return;
       }
     }
@@ -396,7 +471,7 @@ export default function StreamerApplyPage() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Application failed');
+      if (!res.ok) throw new Error(data.message || L('Application failed', 'आवेदन जमा नहीं हो सका'));
 
       setSuccess(true);
       setTimeout(() => {
@@ -418,7 +493,9 @@ export default function StreamerApplyPage() {
           {checkingExisting ? (
             <div className="py-16 text-center space-y-3">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-gold mb-2" />
-              <p className="text-xs text-stone-400">Verifying spiritual credentials...</p>
+              <p className="text-xs text-stone-400">
+                {L('Verifying spiritual credentials...', 'आध्यात्मिक प्रमाणपत्र जाँचे जा रहे हैं...')}
+              </p>
             </div>
           ) : existingRole === 'STREAMER' ? (
             <div className="text-center p-6 sm:p-8 space-y-4">
@@ -426,23 +503,26 @@ export default function StreamerApplyPage() {
                 <VerifiedPanditBadge size={44} />
               </div>
               <h1 className="font-serif text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                You are Already a Verified Vedic Pandit
+                {L('You are Already a Verified Vedic Pandit', 'आप पहले से सत्यापित वैदिक पंडित हैं')}
               </h1>
               <p className="text-xs sm:text-sm text-stone-300 max-w-md mx-auto leading-relaxed">
-                Your account is already KYC verified and holds full live broadcasting privileges on Param Darshan.
+                {L(
+                  'Your account is already KYC verified and holds full live broadcasting privileges on Param Darshan.',
+                  'आपका खाता पहले से KYC सत्यापित है और परम दर्शन पर पूर्ण लाइव प्रसारण अधिकार रखता है।',
+                )}
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
                 <Link
                   href="/studio/create"
                   className="w-full sm:w-auto py-2.5 px-6 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs transition shadow-md flex items-center justify-center gap-2"
                 >
-                  <Video className="w-4 h-4" /> Go Live in Studio
+                  <Video className="w-4 h-4" /> {L('Go Live in Studio', 'स्टूडियो में लाइव जाएँ')}
                 </Link>
                 <Link
                   href="/studio/streams"
                   className="w-full sm:w-auto py-2.5 px-6 bg-stone-900 hover:bg-stone-800 text-stone-200 font-bold rounded-full text-xs transition border border-stone-700 flex items-center justify-center gap-2"
                 >
-                  <Sparkles className="w-4 h-4 text-gold" /> My Sacred Broadcasts
+                  <Sparkles className="w-4 h-4 text-gold" /> {L('My Sacred Broadcasts', 'मेरे पावन प्रसारण')}
                 </Link>
               </div>
             </div>
@@ -452,17 +532,20 @@ export default function StreamerApplyPage() {
                 <ShieldCheck className="w-8 h-8" />
               </div>
               <h1 className="font-serif text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                Platform Administrator Account
+                {L('Platform Administrator Account', 'प्लेटफ़ॉर्म व्यवस्थापक खाता')}
               </h1>
               <p className="text-xs sm:text-sm text-stone-300 max-w-md mx-auto leading-relaxed">
-                You are signed in as an administrator. Admin accounts manage incoming Pandit verification applications from the Admin Console.
+                {L(
+                  'You are signed in as an administrator. Admin accounts manage incoming Pandit verification applications from the Admin Console.',
+                  'आप व्यवस्थापक के रूप में साइन इन हैं। व्यवस्थापक खाते एडमिन कंसोल से आने वाले पंडित सत्यापन आवेदनों का प्रबंधन करते हैं।',
+                )}
               </p>
               <div className="pt-3">
                 <Link
                   href="/admin"
                   className="inline-flex items-center gap-2 py-2.5 px-6 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs transition shadow"
                 >
-                  <span>Open Admin Console</span>
+                  <span>{L('Open Admin Console', 'एडमिन कंसोल खोलें')}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
@@ -473,17 +556,20 @@ export default function StreamerApplyPage() {
                 <Clock className="w-8 h-8" />
               </div>
               <h1 className="font-serif text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                Application Under Active Review
+                {L('Application Under Active Review', 'आवेदन सक्रिय समीक्षाधीन है')}
               </h1>
               <p className="text-xs sm:text-sm text-stone-300 max-w-md mx-auto leading-relaxed">
-                Your Pandit verification application has already been submitted and is currently being reviewed by our platform verification team.
+                {L(
+                  'Your Pandit verification application has already been submitted and is currently being reviewed by our platform verification team.',
+                  'आपका पंडित सत्यापन आवेदन पहले ही जमा हो चुका है और हमारी सत्यापन टीम द्वारा इसकी समीक्षा की जा रही है।',
+                )}
               </p>
               <div className="pt-3">
                 <Link
                   href="/streamer/status"
                   className="inline-flex items-center gap-2 py-2.5 px-6 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs transition shadow"
                 >
-                  <span>View Application Status & Updates</span>
+                  <span>{L('View Application Status & Updates', 'आवेदन स्थिति व अपडेट देखें')}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
@@ -494,17 +580,20 @@ export default function StreamerApplyPage() {
                 <AlertCircle className="w-8 h-8" />
               </div>
               <h1 className="font-serif text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                Additional Information Requested
+                {L('Additional Information Requested', 'अतिरिक्त जानकारी अनुरोधित')}
               </h1>
               <p className="text-xs sm:text-sm text-stone-300 max-w-md mx-auto leading-relaxed">
-                Our moderator team has requested clarification or supplementary documents for your Pandit application.
+                {L(
+                  'Our moderator team has requested clarification or supplementary documents for your Pandit application.',
+                  'हमारी मॉडरेटर टीम ने आपके पंडित आवेदन के लिए स्पष्टीकरण या अतिरिक्त दस्तावेज़ मांगे हैं।',
+                )}
               </p>
               <div className="pt-3">
                 <Link
                   href="/streamer/status"
                   className="inline-flex items-center gap-2 py-2.5 px-6 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs transition shadow"
                 >
-                  <span>View Moderator Feedback</span>
+                  <span>{L('View Moderator Feedback', 'मॉडरेटर प्रतिक्रिया देखें')}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
@@ -517,10 +606,13 @@ export default function StreamerApplyPage() {
                 </div>
                 <div>
                   <h1 className="font-serif text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                    Apply as Verified Pandit
+                    {L('Apply as Verified Pandit', 'सत्यापित पंडित के रूप में आवेदन करें')}
                   </h1>
                   <p className="text-xs text-stone-400">
-                    Join our sacred circle of certified Pandit Jis and Vedic scholars
+                    {L(
+                      'Join our sacred circle of certified Pandit Jis and Vedic scholars',
+                      'प्रमाणित पंडित जी व वैदिक विद्वानों के हमारे पावन मंडल से जुड़ें',
+                    )}
                   </p>
                 </div>
               </div>
@@ -536,7 +628,7 @@ export default function StreamerApplyPage() {
                       href="/login?redirect=/streamer/apply"
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gold hover:bg-gold-deep text-obsidian rounded-full font-bold shrink-0 text-xs shadow"
                     >
-                      <LogIn className="w-3.5 h-3.5" /> Sign In Now
+                      <LogIn className="w-3.5 h-3.5" /> {L('Sign In Now', 'अभी साइन इन करें')}
                     </Link>
                   )}
                 </div>
@@ -546,10 +638,13 @@ export default function StreamerApplyPage() {
                 <div className="text-center p-8 bg-obsidian border border-gold/20 rounded-2xl">
                   <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
                   <h2 className="font-serif text-xl font-bold text-white mb-2">
-                    Application Submitted for Review
+                    {L('Application Submitted for Review', 'आवेदन समीक्षा के लिए जमा हो गया')}
                   </h2>
                   <p className="text-xs text-stone-300 leading-relaxed mb-6">
-                    Our platform verification team will review your spiritual credentials and certificates. Once approved, you will receive the Verified Streamer badge and unlock the Pandit Studio. Redirecting to application tracking...
+                    {L(
+                      'Our platform verification team will review your spiritual credentials and certificates. Once approved, you will receive the Verified Streamer badge and unlock the Pandit Studio. Redirecting to application tracking...',
+                      'हमारी सत्यापन टीम आपके आध्यात्मिक प्रमाणपत्रों व दस्तावेज़ों की समीक्षा करेगी। स्वीकृति मिलने पर आपको सत्यापित प्रसारक बैज और पंडित स्टूडियो प्राप्त होगा। आवेदन स्थिति पृष्ठ पर भेजा जा रहा है...',
+                    )}
                   </p>
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                     <Link
@@ -557,13 +652,13 @@ export default function StreamerApplyPage() {
                       className="w-full sm:w-auto py-2.5 px-6 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs transition-colors shadow flex items-center justify-center gap-2"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
-                      View Application Status & Updates
+                      {L('View Application Status & Updates', 'आवेदन स्थिति व अपडेट देखें')}
                     </Link>
                     <Link
                       href="/"
                       className="w-full sm:w-auto py-2.5 px-6 bg-stone-900 hover:bg-stone-800 text-stone-300 font-bold rounded-full text-xs transition-colors border border-stone-700"
                     >
-                      Return to Home
+                      {L('Return to Home', 'मुख्य पृष्ठ पर लौटें')}
                     </Link>
                   </div>
                 </div>
@@ -573,14 +668,17 @@ export default function StreamerApplyPage() {
                   {/* Vedic Bio */}
                   <div>
                     <label className="block text-xs font-semibold text-stone-300 mb-1.5">
-                      Vedic Bio & Lineage <span className="text-gold">*</span>
+                      {L('Vedic Bio & Lineage', 'वैदिक परिचय व परंपरा')} <span className="text-gold">*</span>
                     </label>
                     <textarea
                       required
                       rows={4}
                       value={bio}
                       onChange={(e) => setBio(e.target.value)}
-                      placeholder="Share your spiritual education, temples associated with, or astrology experience..."
+                      placeholder={L(
+                        'Share your spiritual education, temples associated with, or astrology experience...',
+                        'अपनी आध्यात्मिक शिक्षा, जुड़े हुए मंदिरों या ज्योतिष अनुभव का विवरण साझा करें...',
+                      )}
                       className="w-full px-4 py-2.5 bg-obsidian border border-gold/20 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-gold transition"
                     />
                   </div>
@@ -588,7 +686,7 @@ export default function StreamerApplyPage() {
                   {/* Phone Number */}
                   <div>
                     <label className="block text-xs font-semibold text-stone-300 mb-1.5">
-                      WhatsApp / Contact Number <span className="text-gold">*</span>
+                      {L('WhatsApp / Contact Number', 'WhatsApp / संपर्क नंबर')} <span className="text-gold">*</span>
                     </label>
                     <div className="flex items-center bg-obsidian border border-gold/20 rounded-xl overflow-hidden focus-within:border-gold transition">
                       <span className="px-3 py-2 text-xs text-stone-400 border-r border-gold/20 shrink-0 bg-obsidian-soft">+91</span>
@@ -597,20 +695,22 @@ export default function StreamerApplyPage() {
                         required
                         value={phone}
                         onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                        placeholder="10-digit mobile number"
+                        placeholder={L('10-digit mobile number', '10-अंकीय मोबाइल नंबर')}
                         pattern="[6-9][0-9]{9}"
-                        title="Enter a valid 10-digit Indian mobile number"
+                        title={L('Enter a valid 10-digit Indian mobile number', 'मान्य 10-अंकीय भारतीय मोबाइल नंबर दर्ज करें')}
                         className="flex-1 px-3 py-2 bg-transparent text-xs sm:text-sm text-white focus:outline-none"
                       />
                     </div>
-                    <p className="mt-1 text-[10px] text-stone-500">We will contact you on WhatsApp for verification</p>
+                    <p className="mt-1 text-[10px] text-stone-500">
+                      {L('We will contact you on WhatsApp for verification', 'सत्यापन के लिए हम आपसे WhatsApp पर संपर्क करेंगे')}
+                    </p>
                   </div>
 
                   {/* Experience Slider + Number Input */}
                   <div>
                     <label className="block text-xs font-semibold text-stone-300 mb-3 flex items-center gap-2">
                       <SlidersHorizontal className="w-3.5 h-3.5 text-gold-soft" />
-                      Years of Experience
+                      {L('Years of Experience', 'अनुभव (वर्षों में)')}
                     </label>
                     <div className="flex items-start gap-3">
                       <div className="flex-1">
@@ -632,9 +732,9 @@ export default function StreamerApplyPage() {
                           />
                         </div>
                         <div className="flex justify-between text-[10px] text-stone-500 -mt-0.5">
-                          <span>1 yr</span>
-                          <span>15 yrs</span>
-                          <span>30 yrs</span>
+                          <span>{L('1 yr', '1 वर्ष')}</span>
+                          <span>{L('15 yrs', '15 वर्ष')}</span>
+                          <span>{L('30 yrs', '30 वर्ष')}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0 h-8">
@@ -655,38 +755,45 @@ export default function StreamerApplyPage() {
                           }}
                           className="w-14 text-center px-2 py-1 bg-obsidian border border-gold/30 rounded-lg text-sm font-bold text-gold focus:outline-none focus:border-gold"
                         />
-                        <span className="text-xs text-stone-400">yr{experienceYears !== 1 ? 's' : ''}</span>
+                        <span className="text-xs text-stone-400">
+                          {lang === 'hi' ? 'वर्ष' : `yr${experienceYears !== 1 ? 's' : ''}`}
+                        </span>
                       </div>
                     </div>
                   </div>
 
                   {/* Languages Multi-select */}
                   <PillSelect
-                    label="Languages Spoken"
+                    label={L('Languages Spoken', 'बोली जाने वाली भाषाएँ')}
                     options={LANGUAGE_OPTIONS}
                     selected={selectedLanguages}
                     onChange={setSelectedLanguages}
+                    getLabel={(opt) => (lang === 'hi' ? LANGUAGE_HI[opt] || opt : opt)}
                     required
                   />
 
                   {/* Specialties Multi-select */}
                   <PillSelect
-                    label="Sacred Specialties"
+                    label={L('Sacred Specialties', 'वैदिक विशेषज्ञताएँ')}
                     options={SPECIALTY_OPTIONS}
                     selected={selectedSpecialties}
                     onChange={setSelectedSpecialties}
+                    getLabel={(opt) => (lang === 'hi' ? SPECIALTY_HI[opt] || opt : opt)}
                     required
                   />
 
                   {/* Document Uploads */}
                   <div className="p-4 bg-obsidian border border-gold/15 rounded-2xl space-y-4">
                     <span className="text-xs font-semibold text-stone-300 flex items-center gap-1.5">
-                      <ShieldCheck className="w-4 h-4 text-gold" /> Identity & Document Verification
+                      <ShieldCheck className="w-4 h-4 text-gold" /> {L('Identity & Document Verification', 'पहचान व दस्तावेज़ सत्यापन')}
                     </span>
                     <p className="text-[11px] text-stone-400 leading-relaxed -mt-2">
-                      Upload clear copies of the documents below.{' '}
+                      {L('Upload clear copies of the documents below.', 'नीचे दिए गए दस्तावेज़ों की स्पष्ट प्रतियाँ अपलोड करें।')}{' '}
                       <span className="text-gold-soft font-medium">
-                        Important: Do NOT upload unmasked Aadhaar cards. All documents are deleted within 30 days of verification.
+                        {L(
+                          'Important: Do NOT upload unmasked Aadhaar cards. All documents are deleted within 30 days of verification.',
+                          'महत्वपूर्ण: बिना मास्क किया हुआ आधार कार्ड अपलोड न करें। सत्यापन के 30 दिनों के भीतर सभी दस्तावेज़ हटा दिए जाते हैं।',
+                        )}
                       </span>
                     </p>
 
@@ -706,7 +813,9 @@ export default function StreamerApplyPage() {
                     disabled={loading || uploadingSlot !== null}
                     className="w-full py-3 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs sm:text-sm shadow-xl shadow-gold/20 transition-all disabled:opacity-50"
                   >
-                    {loading ? 'Submitting Application...' : 'Submit Verification Profile'}
+                    {loading
+                      ? L('Submitting Application...', 'आवेदन जमा हो रहा है...')
+                      : L('Submit Verification Profile', 'सत्यापन प्रोफ़ाइल जमा करें')}
                   </button>
                 </form>
               )}

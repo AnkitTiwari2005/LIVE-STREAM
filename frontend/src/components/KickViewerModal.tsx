@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, UserX } from 'lucide-react';
 import type { Socket } from 'socket.io-client';
+import { useLang } from '@/lib/i18n/context';
 
 interface KickViewerModalProps {
   streamId: string;
@@ -19,6 +20,8 @@ export function KickViewerModal({
   onClose,
   socket,
 }: KickViewerModalProps) {
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState<'kick' | 'block' | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +50,7 @@ export function KickViewerModal({
       );
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data?.message || `Request failed (${res.status})`);
+        throw new Error(data?.message || L(`Request failed (${res.status})`, `अनुरोध असफल (${res.status})`));
       }
       // Refresh viewer list in studio
       if (socket) {
@@ -55,7 +58,7 @@ export function KickViewerModal({
       }
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Something went wrong');
+      setError(err.message || L('Something went wrong', 'कुछ गड़बड़ हो गई'));
     } finally {
       setLoading(null);
     }
@@ -78,7 +81,7 @@ export function KickViewerModal({
           type="button"
           onClick={onClose}
           disabled={!!loading}
-          aria-label="Close"
+          aria-label={L('Close', 'बंद करें')}
           className="absolute top-4 right-4 p-1.5 rounded-full text-stone-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition disabled:opacity-50"
         >
           <X className="w-4 h-4" />
@@ -91,7 +94,7 @@ export function KickViewerModal({
           </div>
           <div>
             <h3 id="kick-modal-title" className="font-bold text-stone-900 dark:text-white text-base">
-              Remove Viewer
+              {L('Remove Viewer', 'दर्शक हटाएँ')}
             </h3>
             <p className="text-xs text-stone-600 dark:text-stone-400 mt-0.5">
               {displayName}
@@ -105,14 +108,14 @@ export function KickViewerModal({
             htmlFor="kick-reason"
             className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1.5"
           >
-            Reason (optional)
+            {L('Reason (optional)', 'कारण (वैकल्पिक)')}
           </label>
           <input
             id="kick-reason"
             type="text"
             value={reason}
             onChange={(e) => setReason(e.target.value.slice(0, 255))}
-            placeholder="Disruptive behaviour…"
+            placeholder={L('Disruptive behaviour…', 'अनुचित व्यवहार…')}
             disabled={!!loading}
             className="w-full rounded-lg bg-stone-50 dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-900 dark:text-white placeholder-stone-400 dark:placeholder-stone-500 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-600 disabled:opacity-50"
           />
@@ -132,7 +135,7 @@ export function KickViewerModal({
             disabled={!!loading}
             className="w-full py-2.5 rounded-xl bg-amber-700 hover:bg-amber-600 text-white text-sm font-semibold transition disabled:opacity-50 shadow-sm"
           >
-            {loading === 'kick' ? 'Removing…' : 'Remove (can rejoin)'}
+            {loading === 'kick' ? L('Removing…', 'हटाया जा रहा है…') : L('Remove (can rejoin)', 'हटाएँ (पुनः जुड़ सकते हैं)')}
           </button>
           <button
             type="button"
@@ -140,7 +143,7 @@ export function KickViewerModal({
             disabled={!!loading}
             className="w-full py-2.5 rounded-xl bg-red-700 hover:bg-red-600 text-white text-sm font-semibold transition disabled:opacity-50 shadow-sm"
           >
-            {loading === 'block' ? 'Blocking…' : 'Remove & Block'}
+            {loading === 'block' ? L('Blocking…', 'ब्लॉक हो रहा है…') : L('Remove & Block', 'हटाएँ एवं ब्लॉक करें')}
           </button>
           <button
             type="button"
@@ -148,7 +151,7 @@ export function KickViewerModal({
             disabled={!!loading}
             className="w-full py-2 rounded-xl border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-white text-sm transition disabled:opacity-50"
           >
-            Cancel
+            {L('Cancel', 'रद्द करें')}
           </button>
         </div>
       </div>

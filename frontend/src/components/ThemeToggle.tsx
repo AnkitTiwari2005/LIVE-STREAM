@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useLang } from '@/lib/i18n/context';
 
 interface ThemeToggleProps {
   className?: string;
 }
 
 export function ThemeToggle({ className = '' }: ThemeToggleProps) {
+  const { t: L } = useLang();
   const [theme, setTheme] = useState<'dark' | 'light'>('light');
 
   useEffect(() => {
@@ -46,8 +48,16 @@ export function ThemeToggle({ className = '' }: ThemeToggleProps) {
       type="button"
       onClick={toggleTheme}
       className={`sd-theme shrink-0 ${className}`}
-      aria-label={theme === 'dark' ? 'Switch to Surya Day Mode' : 'Switch to Sacred Night Mode'}
-      title={theme === 'dark' ? 'Switch to Surya Day Mode' : 'Switch to Sacred Night Mode'}
+      aria-label={
+        theme === 'dark'
+          ? L('Switch to Surya Day Mode', 'सूर्य दिवस मोड पर बदलें')
+          : L('Switch to Sacred Night Mode', 'पवित्र रात्रि मोड पर बदलें')
+      }
+      title={
+        theme === 'dark'
+          ? L('Switch to Surya Day Mode', 'सूर्य दिवस मोड पर बदलें')
+          : L('Switch to Sacred Night Mode', 'पवित्र रात्रि मोड पर बदलें')
+      }
     >
       <svg
         className="moon"

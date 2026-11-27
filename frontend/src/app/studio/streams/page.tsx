@@ -21,6 +21,15 @@ import { OmIcon, DiyaIcon, PranamIcon } from '@/components/icons/SpiritualIcons'
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { useLang } from '@/lib/i18n/context';
+import { formatLocaleDate, formatLocaleDateTime, formatMins, translateCategoryLabel } from '@/lib/i18n/format';
+
+const STREAM_STATUS_HI: Record<string, string> = {
+  LIVE: 'लाइव',
+  SCHEDULED: 'निर्धारित',
+  ENDED: 'समाप्त',
+  CANCELLED: 'रद्द',
+};
 
 const toLocalDatetimeInputValue = (dateInput: string | Date): string => {
   const d = new Date(dateInput);
@@ -37,6 +46,7 @@ const toLocalDatetimeInputValue = (dateInput: string | Date): string => {
 export default function MyStreamsPage() {
   const router = useRouter();
   const toast = useToast();
+  const { lang, t: L } = useLang();
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
   const [myStreams, setMyStreams] = useState<any[]>([]);
   const [pastStreams, setPastStreams] = useState<any[]>([]);
@@ -64,7 +74,7 @@ export default function MyStreamsPage() {
       setMyStreams(mine);
       setPastStreams(past);
     } catch (err: any) {
-      setError(err.message || 'Failed to load broadcasts');
+      setError(err.message || L('Failed to load broadcasts', 'प्रसारण लोड नहीं हो सके'));
     } finally {
       setLoading(false);
     }
@@ -83,11 +93,11 @@ export default function MyStreamsPage() {
     setCancelling(true);
     try {
       await apiFetch(`/streams/${cancelTargetId}`, { method: 'DELETE' });
-      toast.success('Scheduled broadcast cancelled successfully.');
+      toast.success(L('Scheduled broadcast cancelled successfully.', 'निर्धारित प्रसारण सफलतापूर्वक रद्द किया गया।'));
       setCancelTargetId(null);
       loadStreams();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to cancel broadcast');
+      toast.error(err.message || L('Failed to cancel broadcast', 'प्रसारण रद्द नहीं किया जा सका'));
     } finally {
       setCancelling(false);
     }
@@ -120,14 +130,16 @@ export default function MyStreamsPage() {
         body: JSON.stringify(payload),
       });
       setEditStream(null);
-      toast.success('Broadcast details updated successfully.');
+      toast.success(L('Broadcast details updated successfully.', 'प्रसारण विवरण सफलतापूर्वक अपडेट किया गया।'));
       loadStreams();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to update broadcast');
+      toast.error(err.message || L('Failed to update broadcast', 'प्रसारण अपडेट नहीं हो सका'));
     } finally {
       setSavingEdit(false);
     }
   };
+
+  const statusLabel = (s: string) => (lang === 'hi' ? STREAM_STATUS_HI[s] || s : s);
 
   return (
     <div className="min-h-screen bg-obsidian text-foreground py-8 relative overflow-hidden">
@@ -142,10 +154,13 @@ export default function MyStreamsPage() {
             </div>
             <div>
               <h1 className="font-serif text-2xl font-bold text-white tracking-tight">
-                My Sacred Broadcasts
+                {L('My Sacred Broadcasts', 'मेरे पावन प्रसारण')}
               </h1>
               <p className="text-xs text-stone-400">
-                Manage your live pujas, scheduled ceremonies, and darshan history.
+                {L(
+                  'Manage your live pujas, scheduled ceremonies, and darshan history.',
+                  'अपनी लाइव पूजाओं, निर्धारित अनुष्ठानों और दर्शन इतिहास का प्रबंधन करें।',
+                )}
               </p>
             </div>
           </div>
@@ -155,7 +170,7 @@ export default function MyStreamsPage() {
             className="flex items-center gap-1.5 px-4 py-2.5 bg-gold hover:bg-gold-deep text-obsidian text-xs font-bold rounded-full transition shadow-lg shadow-gold/20 self-start sm:self-auto"
           >
             <Plus className="w-4 h-4" />
-            <span>Create New Broadcast</span>
+            <span>{L('Create New Broadcast', 'नया प्रसारण बनाएँ')}</span>
           </Link>
         </div>
 
@@ -176,7 +191,7 @@ export default function MyStreamsPage() {
                 : 'text-stone-400 hover:text-stone-200'
             }`}
           >
-            Scheduled &amp; Active ({myStreams.length})
+            {L('Scheduled & Active', 'निर्धारित व सक्रिय')} ({myStreams.length})
           </button>
           <button
             onClick={() => setActiveTab('past')}
@@ -186,28 +201,35 @@ export default function MyStreamsPage() {
                 : 'text-stone-400 hover:text-stone-200'
             }`}
           >
-            Concluded History ({pastStreams.length})
+            {L('Concluded History', 'पूर्ण हुए प्रसारण')} ({pastStreams.length})
           </button>
         </div>
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-stone-600 dark:text-stone-400 gap-3">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-gold" />
-            <span className="text-xs uppercase tracking-wider font-semibold">Loading broadcasts...</span>
+            <span className="text-xs uppercase tracking-wider font-semibold">
+              {L('Loading broadcasts...', 'प्रसारण लोड हो रहे हैं...')}
+            </span>
           </div>
         ) : activeTab === 'upcoming' ? (
           myStreams.length === 0 ? (
             <div className="bg-obsidian-soft border border-gold/15 rounded-3xl p-12 text-center text-stone-400 space-y-4">
               <DiyaIcon size={40} className="mx-auto" />
-              <h3 className="text-base font-bold text-white">No Active or Scheduled Broadcasts</h3>
+              <h3 className="text-base font-bold text-white">
+                {L('No Active or Scheduled Broadcasts', 'कोई सक्रिय या निर्धारित प्रसारण नहीं है')}
+              </h3>
               <p className="text-xs max-w-md mx-auto text-stone-400">
-                You have not scheduled any upcoming poojas. Create a new broadcast to share blessings with devotees worldwide.
+                {L(
+                  'You have not scheduled any upcoming poojas. Create a new broadcast to share blessings with devotees worldwide.',
+                  'आपने अभी तक कोई आगामी पूजा निर्धारित नहीं की है। विश्वभर के भक्तों के साथ आशीर्वाद साझा करने के लिए नया प्रसारण बनाएँ।',
+                )}
               </p>
               <Link
                 href="/studio/create"
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-gold text-obsidian text-xs font-bold rounded-full shadow-lg hover:bg-gold-deep transition"
               >
-                <Plus className="w-4 h-4" /> Start Broadcast
+                <Plus className="w-4 h-4" /> {L('Start Broadcast', 'प्रसारण शुरू करें')}
               </Link>
             </div>
           ) : (
@@ -222,15 +244,15 @@ export default function MyStreamsPage() {
                       <div className="flex items-center gap-2">
                         {st.status === 'LIVE' ? (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-950 text-red-400 border border-red-800 animate-pulse flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> LIVE
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> {L('LIVE', 'लाइव')}
                           </span>
                         ) : (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gold/15 text-gold border border-gold/30">
-                            {st.status}
+                            {statusLabel(st.status)}
                           </span>
                         )}
                         <span className="text-[10px] uppercase font-bold text-gold-soft">
-                          {st.category?.name || 'Vedic Pooja'}
+                          {translateCategoryLabel(st.category?.name || 'Vedic Pooja', lang)}
                         </span>
                       </div>
                       <span className="text-[10px] text-stone-400 font-mono">
@@ -246,7 +268,7 @@ export default function MyStreamsPage() {
                     {st.scheduledAt && (
                       <div className="flex items-center gap-1.5 text-xs text-gold-soft font-semibold">
                         <Calendar className="w-3.5 h-3.5" />
-                        <span>Scheduled: {new Date(st.scheduledAt).toLocaleString()}</span>
+                        <span>{L('Scheduled:', 'निर्धारित:')} {formatLocaleDateTime(st.scheduledAt, lang)}</span>
                       </div>
                     )}
                   </div>
@@ -257,7 +279,7 @@ export default function MyStreamsPage() {
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-gold/20 hover:bg-gold/30 text-gold-pale border border-gold/40 rounded-xl text-xs font-bold transition"
                     >
                       <Play className="w-3.5 h-3.5 text-gold" />
-                      <span>Enter Studio</span>
+                      <span>{L('Enter Studio', 'स्टूडियो में प्रवेश करें')}</span>
                     </Link>
 
                     {st.status !== 'LIVE' && (
@@ -265,14 +287,14 @@ export default function MyStreamsPage() {
                         <button
                           onClick={() => openEditModal(st)}
                           className="p-1.5 hover:bg-stone-800 text-stone-300 hover:text-white rounded-lg transition"
-                          title="Edit Details"
+                          title={L('Edit Details', 'विवरण संपादित करें')}
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleCancelStream(st.id)}
                           className="p-1.5 hover:bg-red-950/60 text-red-400 hover:text-red-300 rounded-lg transition"
-                          title="Cancel Broadcast"
+                          title={L('Cancel Broadcast', 'प्रसारण रद्द करें')}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -286,7 +308,7 @@ export default function MyStreamsPage() {
         ) : (
           pastStreams.length === 0 ? (
             <div className="bg-obsidian-soft border border-gold/15 rounded-3xl p-12 text-center text-stone-400">
-              <p className="text-xs">No concluded broadcasts recorded yet.</p>
+              <p className="text-xs">{L('No concluded broadcasts recorded yet.', 'अभी तक कोई पूर्ण प्रसारण दर्ज नहीं है।')}</p>
             </div>
           ) : (
             <div className="bg-obsidian-soft border border-gold/15 rounded-2xl overflow-hidden shadow-lg">
@@ -294,28 +316,30 @@ export default function MyStreamsPage() {
                 <table className="w-full text-left text-xs">
                   <thead className="bg-stone-950/80 border-b border-gold/15 text-stone-400 uppercase tracking-wider font-semibold">
                     <tr>
-                      <th className="p-3.5 pl-4">Broadcast Title</th>
-                      <th className="p-3.5">Category</th>
-                      <th className="p-3.5">Status</th>
-                      <th className="p-3.5">Ended At</th>
-                      <th className="p-3.5 pr-4">Duration</th>
+                      <th className="p-3.5 pl-4">{L('Broadcast Title', 'प्रसारण शीर्षक')}</th>
+                      <th className="p-3.5">{L('Category', 'श्रेणी')}</th>
+                      <th className="p-3.5">{L('Status', 'स्थिति')}</th>
+                      <th className="p-3.5">{L('Ended At', 'समाप्ति तिथि')}</th>
+                      <th className="p-3.5 pr-4">{L('Duration', 'अवधि')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gold/10 text-stone-300">
                     {pastStreams.map((st) => (
                       <tr key={st.id} className="hover:bg-gold/5 transition">
                         <td className="p-3.5 pl-4 font-semibold text-white">{st.title}</td>
-                        <td className="p-3.5 text-stone-400">{st.category?.name || 'Pooja'}</td>
+                        <td className="p-3.5 text-stone-400">
+                          {translateCategoryLabel(st.category?.name || 'Pooja', lang)}
+                        </td>
                         <td className="p-3.5">
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-stone-900 border border-stone-800">
-                            {st.status}
+                            {statusLabel(st.status)}
                           </span>
                         </td>
                         <td className="p-3.5 font-mono text-stone-400">
-                          {st.endedAt ? new Date(st.endedAt).toLocaleDateString() : 'N/A'}
+                          {st.endedAt ? formatLocaleDate(st.endedAt, lang) : L('N/A', 'उपलब्ध नहीं')}
                         </td>
                         <td className="p-3.5 pr-4 font-mono text-stone-400">
-                          {st.durationSeconds ? `${Math.round(st.durationSeconds / 60)} mins` : '-'}
+                          {st.durationSeconds ? formatMins(Math.round(st.durationSeconds / 60), lang) : '-'}
                         </td>
                       </tr>
                     ))}
@@ -333,18 +357,21 @@ export default function MyStreamsPage() {
           <div className="bg-white dark:bg-[#1c140d] border border-stone-200 dark:border-gold/30 rounded-3xl p-6 max-w-lg w-full shadow-2xl relative text-xs">
             <button
               onClick={() => setEditStream(null)}
+              aria-label={L('Close modal', 'मोडल बंद करें')}
               className="absolute top-4 right-4 text-stone-400 hover:text-stone-700 dark:hover:text-white p-1 transition"
             >
               <X className="w-4 h-4" />
             </button>
 
             <h3 className="text-base font-bold text-stone-900 dark:text-white mb-4 flex items-center gap-2">
-              <Edit className="w-4 h-4 text-amber-600 dark:text-gold" /> Edit Broadcast Details
+              <Edit className="w-4 h-4 text-amber-600 dark:text-gold" /> {L('Edit Broadcast Details', 'प्रसारण विवरण संपादित करें')}
             </h3>
 
             <form onSubmit={handleSaveEdit} className="space-y-4">
               <div>
-                <label className="block font-semibold text-stone-700 dark:text-stone-200 mb-1.5">Broadcast Title</label>
+                <label className="block font-semibold text-stone-700 dark:text-stone-200 mb-1.5">
+                  {L('Broadcast Title', 'प्रसारण शीर्षक')}
+                </label>
                 <input
                   type="text"
                   required
@@ -355,7 +382,9 @@ export default function MyStreamsPage() {
               </div>
 
               <div>
-                <label className="block font-semibold text-stone-700 dark:text-stone-200 mb-1.5">Description (Optional)</label>
+                <label className="block font-semibold text-stone-700 dark:text-stone-200 mb-1.5">
+                  {L('Description (Optional)', 'विवरण (वैकल्पिक)')}
+                </label>
                 <textarea
                   rows={3}
                   value={editDescription}
@@ -365,7 +394,9 @@ export default function MyStreamsPage() {
               </div>
 
               <div>
-                <label className="block font-semibold text-stone-700 dark:text-stone-200 mb-1.5">Scheduled Time</label>
+                <label className="block font-semibold text-stone-700 dark:text-stone-200 mb-1.5">
+                  {L('Scheduled Time', 'निर्धारित समय')}
+                </label>
                 <input
                   type="datetime-local"
                   value={editScheduledAt}
@@ -380,14 +411,14 @@ export default function MyStreamsPage() {
                   onClick={() => setEditStream(null)}
                   className="px-4 py-2 rounded-xl border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 font-semibold transition"
                 >
-                  Cancel
+                  {L('Cancel', 'रद्द करें')}
                 </button>
                 <button
                   type="submit"
                   disabled={savingEdit}
                   className="px-4 py-2 rounded-xl bg-gold hover:bg-gold-deep text-obsidian font-bold disabled:opacity-50 transition shadow-md"
                 >
-                  {savingEdit ? 'Saving...' : 'Save Changes'}
+                  {savingEdit ? L('Saving...', 'सहेजा जा रहा है...') : L('Save Changes', 'परिवर्तन सहेजें')}
                 </button>
               </div>
             </form>
@@ -397,10 +428,13 @@ export default function MyStreamsPage() {
 
       <ConfirmDialog
         isOpen={Boolean(cancelTargetId)}
-        title="Cancel Scheduled Broadcast"
-        description="Are you sure you want to cancel this scheduled darshan broadcast? Devotees will no longer be able to view or set reminders for this session."
-        confirmLabel="Yes, Cancel Broadcast"
-        cancelLabel="Keep Scheduled"
+        title={L('Cancel Scheduled Broadcast', 'निर्धारित प्रसारण रद्द करें')}
+        description={L(
+          'Are you sure you want to cancel this scheduled darshan broadcast? Devotees will no longer be able to view or set reminders for this session.',
+          'क्या आप वाकई इस निर्धारित दर्शन प्रसारण को रद्द करना चाहते हैं? इसके बाद भक्त इस सत्र को देख या रिमाइंडर सेट नहीं कर सकेंगे।',
+        )}
+        confirmLabel={L('Yes, Cancel Broadcast', 'हाँ, प्रसारण रद्द करें')}
+        cancelLabel={L('Keep Scheduled', 'निर्धारित रखें')}
         variant="danger"
         loading={cancelling}
         onConfirm={confirmCancelStream}

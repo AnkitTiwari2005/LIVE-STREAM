@@ -8,9 +8,12 @@ import { OmIcon, CoinIcon, PranamIcon } from '@/components/icons/SpiritualIcons'
 
 import { getSafeRedirect } from '@/lib/api';
 import { isJwtTokenExpired } from '@/lib/auth-session';
+import { useLang } from '@/lib/i18n/context';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -44,7 +47,7 @@ export default function RegisterPage() {
     setSuccess(null);
 
     if (!isAgeConfirmed18Plus) {
-      setError('You must confirm you are 18 years of age or older in accordance with the DPDP Act, 2023.');
+      setError(L('You must confirm you are 18 years of age or older in accordance with the DPDP Act, 2023.', 'DPDP अधिनियम, 2023 के अनुसार आपको यह पुष्टि करनी होगी कि आपकी आयु 18 वर्ष या उससे अधिक है।'));
       return;
     }
 
@@ -65,10 +68,15 @@ export default function RegisterPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || 'Registration failed.');
+        throw new Error(data.message || L('Registration failed.', 'पंजीकरण असफल रहा।'));
       }
 
-      setSuccess('Account created! We have sent a sacred activation link to your email. Please click the link in your inbox to verify your account and claim your 100 Free Welcome Coins.');
+      setSuccess(
+        L(
+          'Account created! We have sent a sacred activation link to your email. Please click the link in your inbox to verify your account and claim your 100 Free Welcome Coins.',
+          'खाता बन गया! हमने आपके ईमेल पर एक सक्रियण लिंक भेजा है। कृपया अपने इनबॉक्स में जाकर लिंक पर क्लिक करें और अपने 100 मुफ़्त स्वागत कॉइन प्राप्त करें।',
+        ),
+      );
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -84,16 +92,16 @@ export default function RegisterPage() {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-3">
             <span className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-gold/40 bg-gradient-to-b from-[#2a1e12] to-obsidian shadow-[0_0_20px_rgba(245,158,11,0.25)]">
-              <img src="/logo.webp" alt="Param Darshan" className="w-10 h-10 object-contain drop-shadow" />
+              <img src="/logo.webp" alt={L('Param Darshan', 'परम दर्शन')} className="w-10 h-10 object-contain drop-shadow" />
             </span>
           </div>
-          <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white tracking-tight">Create Devotee Account</h2>
+          <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white tracking-tight">{L('Create Devotee Account', 'भक्त खाता बनाएँ')}</h2>
           <p className="text-stone-400 text-xs mt-1.5 leading-relaxed">
-            Join thousands receiving daily authentic temple Darshan, Aarti, and blessings
+            {L('Join thousands receiving daily authentic temple Darshan, Aarti, and blessings', 'दैनिक प्रामाणिक मंदिर दर्शन, आरती और आशीर्वाद पाने वाले हज़ारों श्रद्धालुओं से जुड़ें')}
           </p>
           <div className="mt-3.5 inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-gold/10 border border-gold/30 text-gold-pale text-xs font-bold">
             <CoinIcon size={14} />
-            <span>100 Free Darshan Coins (20 mins free) upon registration!</span>
+            <span>{L('100 Free Darshan Coins (20 mins free) upon registration!', 'पंजीकरण पर 100 मुफ़्त दर्शन कॉइन (20 मिनट निःशुल्क)!')}</span>
           </div>
         </div>
 
@@ -107,20 +115,20 @@ export default function RegisterPage() {
         {success ? (
           <div className="text-center p-6 bg-obsidian border border-gold/20 rounded-2xl">
             <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
-            <h3 className="font-serif text-xl font-bold text-white mb-2">Check Your Inbox</h3>
+            <h3 className="font-serif text-xl font-bold text-white mb-2">{L('Check Your Inbox', 'अपना इनबॉक्स देखें')}</h3>
             <p className="text-xs text-stone-300 mb-6 leading-relaxed">{success}</p>
             <Link
               href={redirectUrl ? `/login?redirect=${encodeURIComponent(redirectUrl)}` : "/login"}
               className="inline-block py-2.5 px-6 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs transition-colors shadow"
             >
-              Proceed to Sign In
+              {L('Proceed to Sign In', 'साइन इन पर जाएँ')}
             </Link>
           </div>
         ) : (
           <form onSubmit={handleRegister} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-stone-300 mb-1.5">
-                Full Name
+                {L('Full Name', 'पूरा नाम')}
               </label>
               <div className="relative">
                 <User className="w-4 h-4 text-gold-soft absolute left-3.5 top-3.5" />
@@ -129,7 +137,7 @@ export default function RegisterPage() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Pandit / Devotee Name"
+                  placeholder={L('Pandit / Devotee Name', 'पंडित / भक्त का नाम')}
                   className="w-full pl-10 pr-3 py-2.5 bg-obsidian border border-gold/20 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-gold transition"
                 />
               </div>
@@ -137,7 +145,7 @@ export default function RegisterPage() {
 
             <div>
               <label className="block text-xs font-semibold text-stone-300 mb-1.5">
-                Email Address
+                {L('Email Address', 'ईमेल पता')}
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-gold-soft absolute left-3.5 top-3.5" />
@@ -154,7 +162,7 @@ export default function RegisterPage() {
 
             <div>
               <label className="block text-xs font-semibold text-stone-300 mb-1.5">
-                Password (min 8 chars)
+                {L('Password (min 8 chars)', 'पासवर्ड (न्यूनतम 8 अक्षर)')}
               </label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-gold-soft absolute left-3.5 top-3.5" />
@@ -181,11 +189,23 @@ export default function RegisterPage() {
                   className="mt-0.5 rounded border-stone-700 text-gold focus:ring-gold h-4 w-4 bg-obsidian"
                 />
                 <span className="text-[11px] text-stone-400 leading-tight select-none">
-                  I confirm that <strong>I am 18 years of age or older</strong> and I agree to the{' '}
-                  <Link href="/terms" target="_blank" className="text-gold underline">Terms of Service</Link>{' '}
-                  and{' '}
-                  <Link href="/privacy" target="_blank" className="text-gold underline">Privacy Policy</Link>{' '}
-                  under India&apos;s DPDP Act, 2023.
+                  {lang === 'hi' ? (
+                    <>
+                      मैं पुष्टि करता/करती हूँ कि <strong>मेरी आयु 18 वर्ष या उससे अधिक है</strong> और मैं भारत के DPDP अधिनियम, 2023 के अंतर्गत{' '}
+                      <Link href="/terms" target="_blank" className="text-gold underline">सेवा की शर्तों</Link>{' '}
+                      एवं{' '}
+                      <Link href="/privacy" target="_blank" className="text-gold underline">गोपनीयता नीति</Link>{' '}
+                      से सहमत हूँ।
+                    </>
+                  ) : (
+                    <>
+                      I confirm that <strong>I am 18 years of age or older</strong> and I agree to the{' '}
+                      <Link href="/terms" target="_blank" className="text-gold underline">Terms of Service</Link>{' '}
+                      and{' '}
+                      <Link href="/privacy" target="_blank" className="text-gold underline">Privacy Policy</Link>{' '}
+                      under India&apos;s DPDP Act, 2023.
+                    </>
+                  )}
                 </span>
               </label>
             </div>
@@ -195,18 +215,18 @@ export default function RegisterPage() {
               disabled={loading}
               className="w-full mt-3 py-3 bg-gold hover:bg-gold-deep text-obsidian font-bold rounded-full text-xs sm:text-sm shadow-lg shadow-gold/20 transition-all disabled:opacity-50"
             >
-              {loading ? 'Creating Account...' : 'Create Free Account (+100 Coins)'}
+              {loading ? L('Creating Account...', 'खाता बनाया जा रहा है...') : L('Create Free Account (+100 Coins)', 'निःशुल्क खाता बनाएँ (+100 कॉइन)')}
             </button>
           </form>
         )}
 
         <div className="mt-6 text-center text-xs text-stone-400">
-          Already have an account?{' '}
+          {L('Already have an account?', 'क्या आपका पहले से खाता है?')}{' '}
           <Link
             href={redirectUrl ? `/login?redirect=${encodeURIComponent(redirectUrl)}` : "/login"}
             className="text-gold hover:underline font-bold"
           >
-            Sign In
+            {L('Sign In', 'साइन इन करें')}
           </Link>
         </div>
       </div>

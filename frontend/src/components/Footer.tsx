@@ -4,9 +4,11 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ShieldCheck, Flame, HeartHandshake, Video } from 'lucide-react';
 import { OmIcon, DiyaIcon } from '@/components/icons/SpiritualIcons';
+import { useLang } from '@/lib/i18n/context';
 
 export function Footer() {
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const { t } = useLang();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -30,74 +32,77 @@ export function Footer() {
               <div className="relative flex h-11 w-11 items-center justify-center rounded-full border border-gold/40 bg-gradient-to-b from-[#2a1e12] to-obsidian shadow-[0_0_15px_rgba(245,158,11,0.3)] p-0.5 overflow-hidden">
                 <img
                   src="/logo.webp"
-                  alt="Param Darshan Mandir Logo"
+                  alt={t('Param Darshan Mandir Logo', 'परम दर्शन मंदिर लोगो')}
                   className="h-full w-full object-contain filter drop-shadow group-hover:scale-105 transition-transform"
                 />
               </div>
               <span className="leading-tight">
                 <span className="block font-serif text-2xl font-bold tracking-wide text-gold-pale">
-                  Param Darshan
+                  {t('Param Darshan', 'परम दर्शन')}
                 </span>
                 <span className="block text-[9px] font-bold uppercase tracking-[0.28em] text-gold-soft">
-                  Sacred Darshan Network
+                  {t('Sacred Darshan Network', 'पवित्र दर्शन नेटवर्क')}
                 </span>
               </span>
             </Link>
 
             <p className="text-stone-300 text-xs sm:text-sm leading-relaxed max-w-sm">
-              Connecting devotees worldwide with verified Vedic Pandit Jis and sanctums for live Aarti, Darshan, personalized poojas, and authentic spiritual counseling in real time.
+              {t(
+                'Connecting devotees worldwide with verified Vedic Pandit Jis and sanctums for live Aarti, Darshan, personalized poojas, and authentic spiritual counseling in real time.',
+                'लाइव आरती, दर्शन, व्यक्तिगत पूजा और प्रामाणिक आध्यात्मिक परामर्श के लिए विश्व भर के भक्तों को सत्यापित वैदिक पंडित जी और पवित्र स्थलों से रियल-टाइम में जोड़ना।',
+              )}
             </p>
 
             <div className="flex items-center gap-2 pt-2 text-xs text-stone-400">
               <ShieldCheck className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
-              <span>DPDP Act 2023 &amp; IT Rules 2021 Compliant</span>
+              <span>{t('DPDP Act 2023 & IT Rules 2021 Compliant', 'DPDP अधिनियम 2023 एवं IT नियम 2021 के अनुरूप')}</span>
             </div>
           </div>
 
           {/* Quick Platform Links */}
           <div>
             <h4 className="text-xs font-bold uppercase tracking-[0.24em] text-gold-soft mb-4">
-              Sacred Platform
+              {t('Sacred Platform', 'पवित्र मंच')}
             </h4>
             <ul className="space-y-2.5 text-xs">
               <li>
                 <Link href="/" className="text-stone-400 hover:text-gold-pale transition">
-                  Live Mandir Darshan
+                  {t('Live Mandir Darshan', 'लाइव मंदिर दर्शन')}
                 </Link>
               </li>
               <li>
                 <Link href="/#upcoming" className="text-stone-400 hover:text-gold-pale transition">
-                  Upcoming Pooja Schedule
+                  {t('Upcoming Pooja Schedule', 'आगामी पूजा कार्यक्रम')}
                 </Link>
               </li>
               <li>
                 <Link href="/#pandits" className="text-stone-400 hover:text-gold-pale transition">
-                  Verified Pandit Jis Directory
+                  {t('Verified Pandit Jis Directory', 'सत्यापित पंडित जी निर्देशिका')}
                 </Link>
               </li>
               <li>
                 <Link href="/kundli" className="text-stone-400 hover:text-gold-pale transition">
-                  Free Kundli
+                  {t('Free Kundli', 'निःशुल्क कुंडली')}
                 </Link>
               </li>
               <li>
                 <Link href="/wallet/topup" className="text-stone-400 hover:text-gold-pale transition">
-                  Sacred Coins Top-up
+                  {t('Sacred Coins Top-up', 'पवित्र कॉइन टॉप-अप')}
                 </Link>
               </li>
               <li>
                 <Link href="/wallet/history" className="text-stone-400 hover:text-gold-pale transition">
-                  Wallet Ledger &amp; History
+                  {t('Wallet Ledger & History', 'वॉलेट लेजर एवं इतिहास')}
                 </Link>
               </li>
               <li>
                 <Link href="/about" className="text-stone-400 hover:text-gold-pale transition">
-                  About Our Heritage
+                  {t('About Our Heritage', 'हमारी विरासत के बारे में')}
                 </Link>
               </li>
               <li>
                 <Link href="/faq" className="text-stone-400 hover:text-gold-pale transition">
-                  Devotee FAQ &amp; Support
+                  {t('Devotee FAQ & Support', 'भक्त FAQ एवं सहायता')}
                 </Link>
               </li>
             </ul>
@@ -106,32 +111,32 @@ export function Footer() {
           {/* Streamer & Priesthood */}
           <div>
             <h4 className="text-xs font-bold uppercase tracking-[0.24em] text-gold-soft mb-4">
-              Priesthood &amp; Seva
+              {t('Priesthood & Seva', 'पुरोहित एवं सेवा')}
             </h4>
             <ul className="space-y-2.5 text-xs">
               <li>
                 {currentUser?.role === 'STREAMER' ? (
                   <Link href="/studio/streams" className="text-stone-400 hover:text-gold-pale transition flex items-center gap-1.5">
-                    <DiyaIcon size={14} /> My Sacred Broadcasts
+                    <DiyaIcon size={14} /> {t('My Sacred Broadcasts', 'मेरे पवित्र प्रसारण')}
                   </Link>
                 ) : currentUser?.role === 'ADMIN' ? (
                   <Link href="/admin" className="text-stone-400 hover:text-gold-pale transition flex items-center gap-1.5">
-                    <DiyaIcon size={14} /> Admin Console
+                    <DiyaIcon size={14} /> {t('Admin Console', 'एडमिन कंसोल')}
                   </Link>
                 ) : (
                   <Link href="/streamer/apply" className="text-stone-400 hover:text-gold-pale transition flex items-center gap-1.5">
-                    <DiyaIcon size={14} /> Apply as Pandit Ji
+                    <DiyaIcon size={14} /> {t('Apply as Pandit Ji', 'पंडित जी के रूप में आवेदन करें')}
                   </Link>
                 )}
               </li>
               <li>
                 <Link href="/pandit-guidelines" className="text-stone-400 hover:text-gold-pale transition">
-                  Pandit Code of Ethics
+                  {t('Pandit Code of Ethics', 'पंडित आचार संहिता')}
                 </Link>
               </li>
               <li>
                 <Link href="/studio/create" className="text-stone-400 hover:text-gold-pale transition">
-                  Broadcaster Studio
+                  {t('Broadcaster Studio', 'प्रसारक स्टूडियो')}
                 </Link>
               </li>
             </ul>
@@ -140,32 +145,32 @@ export function Footer() {
           {/* Legal & Compliance */}
           <div>
             <h4 className="text-xs font-bold uppercase tracking-[0.24em] text-gold-soft mb-4">
-              Safety &amp; Legal
+              {t('Safety & Legal', 'सुरक्षा एवं कानूनी')}
             </h4>
             <ul className="space-y-2.5 text-xs">
               <li>
                 <Link href="/terms" className="text-stone-400 hover:text-gold-pale transition">
-                  Terms of Seva
+                  {t('Terms of Seva', 'सेवा की शर्तें')}
                 </Link>
               </li>
               <li>
                 <Link href="/privacy" className="text-stone-400 hover:text-gold-pale transition">
-                  Privacy Policy (DPDP)
+                  {t('Privacy Policy (DPDP)', 'गोपनीयता नीति (DPDP)')}
                 </Link>
               </li>
               <li>
                 <Link href="/refund" className="text-stone-400 hover:text-gold-pale transition">
-                  Refund &amp; Coin Policy
+                  {t('Refund & Coin Policy', 'रिफंड एवं कॉइन नीति')}
                 </Link>
               </li>
               <li>
                 <Link href="/grievance" className="text-stone-400 hover:text-gold-pale transition">
-                  Grievance Redressal
+                  {t('Grievance Redressal', 'शिकायत निवारण')}
                 </Link>
               </li>
               <li>
                 <Link href="/contact" className="text-stone-400 hover:text-gold-pale transition">
-                  Contact Grievance Officer
+                  {t('Contact Grievance Officer', 'शिकायत अधिकारी से संपर्क')}
                 </Link>
               </li>
             </ul>
@@ -175,19 +180,23 @@ export function Footer() {
         {/* Astrological & Spiritual Disclaimer */}
         <div className="pt-8 border-t border-stone-800/80 text-[11px] text-stone-400 leading-relaxed space-y-2">
           <p>
-            <strong className="text-gold-pale">Spiritual &amp; Astrological Disclaimer:</strong> All live temple darshans, aartis, pooja ceremonies, planetary remedies, astrology kundli counseling, and Vedic discourses on Param Darshan are conducted for cultural, religious, and spiritual counseling purposes. Pandit Jis and astrologers broadcast as independent verified practitioners. Param Darshan makes no guarantees or warranties of material, financial, medical, or life outcomes.
+            <strong className="text-gold-pale">{t('Spiritual & Astrological Disclaimer:', 'आध्यात्मिक एवं ज्योतिषीय अस्वीकरण:')}</strong>{' '}
+            {t(
+              'All live temple darshans, aartis, pooja ceremonies, planetary remedies, astrology kundli counseling, and Vedic discourses on Param Darshan are conducted for cultural, religious, and spiritual counseling purposes. Pandit Jis and astrologers broadcast as independent verified practitioners. Param Darshan makes no guarantees or warranties of material, financial, medical, or life outcomes.',
+              'परम दर्शन पर सभी लाइव मंदिर दर्शन, आरती, पूजा अनुष्ठान, ग्रह उपाय, कुंडली परामर्श और वैदिक प्रवचन सांस्कृतिक, धार्मिक और आध्यात्मिक परामर्श के उद्देश्य से किए जाते हैं। पंडित जी और ज्योतिषी स्वतंत्र सत्यापित साधक के रूप में प्रसारण करते हैं। परम दर्शन भौतिक, वित्तीय, चिकित्सीय या जीवन-परिणामों की कोई गारंटी या वारंटी नहीं देता।',
+            )}
           </p>
         </div>
 
         {/* Bottom Bar with Sanskrit Shloka */}
         <div className="mt-8 pt-6 border-t border-stone-800/60 flex flex-col sm:flex-row items-center justify-between text-xs text-stone-400 gap-4">
           {/* M-08: Dynamic year — was hardcoded as 2026 */}
-          <p>© {new Date().getFullYear()} Param Darshan. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} {t('Param Darshan. All rights reserved.', 'परम दर्शन। सर्वाधिकार सुरक्षित।')}</p>
           <p className="font-serif text-sm italic text-gold-soft tracking-wide">
             ॐ असतो मा सद्गमय तमसो मा ज्योतिर्गमय
           </p>
           <p className="text-[11px] text-stone-400">
-            Real-time interactive media powered by LiveKit SFU
+            {t('Real-time interactive media powered by LiveKit SFU', 'LiveKit SFU द्वारा संचालित रियल-टाइम इंटरैक्टिव मीडिया')}
           </p>
         </div>
       </div>

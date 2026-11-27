@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShieldOff, Home } from 'lucide-react';
+import { useLang } from '@/lib/i18n/context';
 
 interface KickedScreenProps {
   reason?: string;
@@ -11,6 +12,8 @@ interface KickedScreenProps {
 
 export function KickedScreen({ reason, blocked }: KickedScreenProps) {
   const router = useRouter();
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
   const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
@@ -37,14 +40,14 @@ export function KickedScreen({ reason, blocked }: KickedScreenProps) {
 
         <div className="space-y-2">
           <h2 className="text-xl font-bold text-stone-900 dark:text-white font-serif">
-            Removed from Session
+            {L('Removed from Session', 'सत्र से हटा दिया गया')}
           </h2>
           <p className="text-sm text-stone-600 dark:text-stone-400 leading-relaxed">
-            You have been respectfully removed from this sacred session.
+            {L('You have been respectfully removed from this sacred session.', 'आपको इस पवित्र सत्र से सम्मानपूर्वक हटा दिया गया है।')}
           </p>
           {reason && (
             <p className="text-xs text-stone-500 italic mt-1">
-              Reason: {reason}
+              {L('Reason:', 'कारण:')} {reason}
             </p>
           )}
         </div>
@@ -52,11 +55,11 @@ export function KickedScreen({ reason, blocked }: KickedScreenProps) {
         <div className="rounded-xl px-4 py-3 border transition-colors bg-red-50 dark:bg-stone-800/80 border-red-200 dark:border-stone-700/50">
           {blocked ? (
             <p className="text-xs text-red-700 dark:text-red-400 font-semibold">
-              You are not permitted to rejoin this session.
+              {L('You are not permitted to rejoin this session.', 'आपको इस सत्र में पुनः जुड़ने की अनुमति नहीं है।')}
             </p>
           ) : (
             <p className="text-xs text-amber-800 dark:text-amber-400 font-semibold">
-              You may rejoin by refreshing the page.
+              {L('You may rejoin by refreshing the page.', 'आप पृष्ठ को रीफ़्रेश करके पुनः जुड़ सकते हैं।')}
             </p>
           )}
         </div>
@@ -68,10 +71,10 @@ export function KickedScreen({ reason, blocked }: KickedScreenProps) {
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-amber-700 hover:bg-amber-600 text-white text-sm font-semibold transition shadow-md"
           >
             <Home className="w-4 h-4" />
-            Return to Home
+            {L('Return to Home', 'होम पेज पर लौटें')}
           </button>
           <p className="text-xs text-stone-500 dark:text-stone-400">
-            Redirecting in {countdown}s…
+            {L(`Redirecting in ${countdown}s…`, `${countdown} सेकंड में पुनर्निर्देशित हो रहा है…`)}
           </p>
         </div>
       </div>

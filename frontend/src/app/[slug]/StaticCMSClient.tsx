@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { ShieldCheck, FileText } from 'lucide-react';
 import DOMPurify from 'dompurify';
+import { useLang } from '@/lib/i18n/context';
 
 function sanitizeHtml(rawHtml: string): string {
   if (!rawHtml) return '';
@@ -20,6 +21,7 @@ function sanitizeHtml(rawHtml: string): string {
 }
 
 export default function StaticCMSClient() {
+  const { t: L } = useLang();
   const { slug: paramSlug } = useParams() as { slug: string };
   const [resolvedSlug, setResolvedSlug] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -66,7 +68,7 @@ export default function StaticCMSClient() {
   if (loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center text-stone-400 text-sm">
-        Loading legal & policy information...
+        {L('Loading legal & policy information...', 'विधिक व नीति जानकारी लोड हो रही है...')}
       </div>
     );
   }
@@ -74,8 +76,8 @@ export default function StaticCMSClient() {
   if (!page) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-16 text-center text-stone-400">
-        <h1 className="text-2xl font-bold text-white mb-2">Page Not Found</h1>
-        <p className="text-sm">The requested document could not be located.</p>
+        <h1 className="text-2xl font-bold text-white mb-2">{L('Page Not Found', 'पृष्ठ नहीं मिला')}</h1>
+        <p className="text-sm">{L('The requested document could not be located.', 'अनुरोधित दस्तावेज़ उपलब्ध नहीं हो सका।')}</p>
       </div>
     );
   }
@@ -85,12 +87,12 @@ export default function StaticCMSClient() {
       <div className="bg-obsidian-soft border border-gold/20 rounded-3xl p-8 sm:p-12 shadow-2xl">
         <div className="flex items-center gap-2 mb-4 text-orange-400 text-xs font-semibold uppercase tracking-wider">
           <FileText className="w-4 h-4" />
-          Official Param Darshan Document
+          {L('Official Param Darshan Document', 'आधिकारिक परम दर्शन दस्तावेज़')}
         </div>
         <h1 className="text-3xl font-extrabold text-white tracking-tight mb-4">{page.title}</h1>
         <div className="flex items-center gap-2 text-stone-400 text-xs mb-8 pb-4 border-b border-stone-800">
           <ShieldCheck className="w-4 h-4 text-green-500" />
-          DPDP Act 2023 & Indian IT Rules 2021 Compliant
+          {L('DPDP Act 2023 & Indian IT Rules 2021 Compliant', 'DPDP अधिनियम 2023 व भारतीय IT नियम 2021 के अनुरूप')}
         </div>
         <div
           className="prose prose-invert max-w-none text-stone-300 text-sm leading-relaxed"

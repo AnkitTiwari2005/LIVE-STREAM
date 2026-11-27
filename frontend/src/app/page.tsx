@@ -42,6 +42,12 @@ import SevaBookingModal from '@/components/SevaBookingModal';
 import { useToast } from '@/components/Toast';
 import { STARTER_PRICE_INR } from '@/lib/economy';
 import { decodeJwtClaims } from '@/lib/auth-session';
+import { useLang } from '@/lib/i18n/context';
+import {
+  formatExperienceLabel,
+  formatLocaleDateTime,
+  translateCategoryLabel,
+} from '@/lib/i18n/format';
 
 interface Stream {
   id: string;
@@ -68,75 +74,107 @@ const CATEGORY_TILES = [
   {
     id: 'rudrabhishek',
     name: 'Maha Rudrabhishek',
+    nameHi: 'महा रुद्राभिषेक',
     desc: 'Panchamrit abhishekam & Rudra Suktam',
+    descHi: 'पंचामृत अभिषेक एवं रुद्र सूक्तम्',
     icon: DiyaIcon,
     tag: 'Shiva Pooja',
+    tagHi: 'शिव पूजा',
     filterKey: 'rudrabhishek',
     priceText: 'From 150 Coins',
+    priceTextHi: '150 कॉइन से प्रारंभ',
   },
   {
     id: 'kundli_matching',
     name: 'Vedic Kundli Matching',
+    nameHi: 'वैदिक कुंडली मिलान',
     desc: '1-on-1 horoscope compatibility',
+    descHi: '1-पर-1 जन्मकुंडली एवं गुण मिलान',
     icon: Compass,
     tag: 'Vedic Jyotish',
+    tagHi: 'वैदिक ज्योतिष',
     filterKey: 'kundli_matching',
     priceText: 'From 100 Coins',
+    priceTextHi: '100 कॉइन से प्रारंभ',
   },
   {
     id: 'satyanarayan_katha',
     name: 'Satyanarayan Maha Katha',
+    nameHi: 'सत्यनारायण महाकथा',
     desc: 'Auspicious katha recital & hawan',
+    descHi: 'शुभ कथा पाठ एवं पवित्र हवन',
     icon: BookOpen,
     tag: 'Family Blessing',
+    tagHi: 'पारिवारिक आशीर्वाद',
     filterKey: 'satyanarayan_katha',
     priceText: 'From 125 Coins',
+    priceTextHi: '125 कॉइन से प्रारंभ',
   },
   {
     id: 'navgrah',
     name: 'Navgrah Dosh Nivaran',
+    nameHi: 'नवग्रह दोष निवारण',
     desc: '9-planetary oblations & peace',
+    descHi: 'नवग्रह आहुति एवं शांति पूजा',
     icon: Flame,
     tag: 'Planetary Shanti',
+    tagHi: 'ग्रह शांति',
     filterKey: 'navgrah',
     priceText: 'From 125 Coins',
+    priceTextHi: '125 कॉइन से प्रारंभ',
   },
   {
     id: 'family_sankalp',
     name: 'Family Gotra Sankalp',
+    nameHi: 'पारिवारिक गोत्र संकल्प',
     desc: 'Gotra-Naam invocation during aarti',
+    descHi: 'आरती में परिवार के गोत्र-नाम का उच्चारण',
     icon: HeartHandshake,
     tag: 'Gotra Chanting',
+    tagHi: 'गोत्र उच्चारण',
     filterKey: 'family_sankalp',
     priceText: 'From 75 Coins',
+    priceTextHi: '75 कॉइन से प्रारंभ',
   },
   {
     id: 'griha_pravesh_vastu',
     name: 'Griha Pravesh & Vastu',
+    nameHi: 'गृह प्रवेश एवं वास्तु',
     desc: 'Purify home energies with Vedic hawan',
+    descHi: 'वैदिक हवन द्वारा घर की ऊर्जा शुद्धि',
     icon: Shield,
     tag: 'Vastu Consecration',
+    tagHi: 'वास्तु शांति',
     filterKey: 'griha_pravesh_vastu',
     priceText: 'From 200 Coins',
+    priceTextHi: '200 कॉइन से प्रारंभ',
   },
   {
     id: 'mahamrityunjaya',
     name: 'Mahamrityunjaya Jaap',
+    nameHi: 'महामृत्युंजय जाप',
     desc: 'Chanting for longevity & health',
+    descHi: 'दीर्घायु एवं उत्तम स्वास्थ्य हेतु मंत्र जाप',
     icon: Sparkles,
     tag: 'Healing Seva',
+    tagHi: 'आरोग्य सेवा',
     filterKey: 'mahamrityunjaya',
     priceText: 'From 150 Coins',
+    priceTextHi: '150 कॉइन से प्रारंभ',
   },
   {
     id: 'more',
     name: 'Explore All 24+ Poojas',
+    nameHi: 'सभी 24+ पूजा देखें',
     desc: 'Kaal Sarp, Yagyas, Vivah & more',
+    descHi: 'कालसर्प, यज्ञ, विवाह एवं अन्य अनुष्ठान',
     icon: ArrowRight,
     tag: 'Full Catalog',
+    tagHi: 'संपूर्ण सूची',
     isMore: true,
     link: '/pooja',
-    priceText: 'View All 24+ &rarr;',
+    priceText: 'View All 24+ →',
+    priceTextHi: 'सभी 24+ देखें →',
   },
 ];
 
@@ -144,33 +182,42 @@ const FALLBACK_SCHEDULED_BROADCASTS = [
   {
     id: 'rudrabhishek-live',
     title: 'Maha Rudrabhishek & Swasti Vachan',
+    titleHi: 'महा रुद्राभिषेक एवं स्वस्ति वाचन',
     description: 'Vedic Panchamrit Abhishek with resonant Rudra Sukta recitation for peace, health, and family prosperity.',
+    descriptionHi: 'शांति, स्वास्थ्य एवं पारिवारिक समृद्धि हेतु रुद्र सूक्त पाठ के साथ वैदिक पंचामृत अभिषेक।',
     category: 'Rudrabhishek',
     streamer: 'पंडित उमेश शास्त्री',
     isVerified: true,
     scheduledText: 'Today, 06:00 PM IST',
+    scheduledTextHi: 'आज, सायं 06:00 IST',
     quality: '1080p',
     thumbnail: '/images/hero-bg-v2.webp',
   },
   {
     id: 'navgrah-shanti',
     title: 'Navgrah Shanti & Vedic Kundli Remedial Pooja',
+    titleHi: 'नवग्रह शांति एवं वैदिक कुंडली निवारण पूजा',
     description: 'Auspicious 9-graha oblations and personalized horoscope dosha nivaran chanting by verified Vedic scholar.',
+    descriptionHi: 'सत्यापित वैदिक आचार्य द्वारा नवग्रह आहुति एवं जन्मकुंडली दोष निवारण मंत्रोच्चार।',
     category: 'Astrology & Kundli',
     streamer: 'पंडित रोहित तिवारी (ज्योतिषाचार्य)',
     isVerified: true,
     scheduledText: 'Tomorrow, 07:30 AM IST',
+    scheduledTextHi: 'कल, प्रातः 07:30 IST',
     quality: '1080p HD',
     thumbnail: '/images/photo-1577083753695-e010191bacb5.webp',
   },
   {
     id: 'sandhya-aarti',
     title: 'Sandhya Deepotsav & Divine Aarti',
+    titleHi: 'संध्या दीपोत्सव एवं दिव्य आरती',
     description: 'Devotional evening lamp invocation with conch shell reverberations and sacred mantra pushpam.',
+    descriptionHi: 'शंखनाद एवं मंत्र पुष्पांजलि के साथ भक्तिमय संध्या दीप आरती।',
     category: 'Aarti & Darshan',
     streamer: 'पंडित संतोष कुमार शास्त्री',
     isVerified: true,
     scheduledText: 'Tomorrow, 06:30 PM IST',
+    scheduledTextHi: 'कल, सायं 06:30 IST',
     quality: '1080p',
     thumbnail: '/images/photo-1678593628844-6ea49dee8ce3.webp',
   },
@@ -189,9 +236,11 @@ const CURATED_PANDITS = [
   {
     slug: 'rohit-tiwari',
     name: 'पंडित रोहित तिवारी (ज्योतिषाचार्य)',
-    title: 'Matrimonial advisor & Astrologer (Founder)',
+    title: 'Matrimonial Advisor & Astrologer (Founder)',
+    titleHi: 'वैवाहिक परामर्शदाता एवं ज्योतिषाचार्य (संस्थापक)',
     experience: '18 Years Seva',
     specialties: ['Matrimonial Advisor', 'Kundli Milan', 'Vedic Astrology', 'Vivah Sanskar'],
+    specialtiesHi: ['वैवाहिक परामर्श', 'कुंडली मिलान', 'वैदिक ज्योतिष', 'विवाह संस्कार'],
     image: '/images/pandits/pandit-rohit-tiwari.webp',
     hasSpecialBadge: true,
     specialBadgeTitle: 'संस्थापक एवं मुख्य ज्योतिषाचार्य',
@@ -199,9 +248,11 @@ const CURATED_PANDITS = [
   {
     slug: 'santosh-shastri',
     name: 'पंडित संतोष कुमार शास्त्री',
-    title: 'ज्योतिष एवं वास्तु विशेषज्ञ (Co-Founder)',
+    title: 'Jyotish & Vastu Acharya (Co-Founder)',
+    titleHi: 'ज्योतिष एवं वास्तु विशेषज्ञ (सह-संस्थापक)',
     experience: '20 Years Seva',
     specialties: ['Vedic Astrology', 'Vastu Shastra', 'Kundli Milan', 'Grah Shanti'],
+    specialtiesHi: ['वैदिक ज्योतिष', 'वास्तु शास्त्र', 'कुंडली मिलान', 'ग्रह शांति'],
     image: '/images/pandits/pandit-santosh-shastri.webp',
     hasSpecialBadge: true,
     specialBadgeTitle: 'सह-संस्थापक एवं वास्तु रत्न',
@@ -209,9 +260,11 @@ const CURATED_PANDITS = [
   {
     slug: 'ravi-pathak',
     name: 'पंडित रवि पाठक',
-    title: 'कर्मकाण्ड विशेषज्ञ',
+    title: 'Karmakand Acharya',
+    titleHi: 'कर्मकाण्ड विशेषज्ञ',
     experience: '12 Years Seva',
     specialties: ['Karmakand', 'Maha Yagya', 'Ganesh Pujan', 'Vedic Anushthan'],
+    specialtiesHi: ['कर्मकाण्ड', 'महायज्ञ', 'गणेश पूजन', 'वैदिक अनुष्ठान'],
     image: '/images/pandits/pandit-ravi-pathak.webp',
     hasSpecialBadge: true,
     specialBadgeTitle: 'कर्मकाण्ड रत्न',
@@ -219,9 +272,11 @@ const CURATED_PANDITS = [
   {
     slug: 'nitin-sharma',
     name: 'पंडित नितिन शर्मा',
-    title: 'कर्मकाण्ड, सुंदरकांड विशेषज्ञ',
+    title: 'Karmakand & Sundarkand Specialist',
+    titleHi: 'कर्मकाण्ड एवं सुंदरकांड विशेषज्ञ',
     experience: '10 Years Seva',
     specialties: ['Karmakand', 'Sundarkand Path', 'Hanuman Aradhana', 'Vedic Path'],
+    specialtiesHi: ['कर्मकाण्ड', 'सुंदरकांड पाठ', 'हनुमान आराधना', 'वैदिक पाठ'],
     image: '/images/pandits/pandit-nitin-sharma.webp',
     hasSpecialBadge: true,
     specialBadgeTitle: 'सुंदरकांड रत्न',
@@ -229,9 +284,11 @@ const CURATED_PANDITS = [
   {
     slug: 'umesh-shastri',
     name: 'पंडित उमेश शास्त्री',
-    title: 'रुद्राभिषेक एवं देवी पूजा',
+    title: 'Rudrabhishek & Devi Pooja Acharya',
+    titleHi: 'रुद्राभिषेक एवं देवी पूजा विशेषज्ञ',
     experience: '16 Years Seva',
     specialties: ['Rudrabhishek', 'Devi Pooja', 'Durga Path', 'Maha Abhishek'],
+    specialtiesHi: ['रुद्राभिषेक', 'देवी पूजा', 'दुर्गा पाठ', 'महाभिषेक'],
     image: '/images/pandits/pandit-umesh-shastri.webp',
     hasSpecialBadge: true,
     specialBadgeTitle: 'रुद्राभिषेक शिरोमणि',
@@ -239,9 +296,11 @@ const CURATED_PANDITS = [
   {
     slug: 'kuber-tripathi',
     name: 'आचार्य कुबेर दत्त त्रिपाठी',
-    title: 'ज्योतिष कर्मकाण्ड विशेषज्ञ',
+    title: 'Jyotish & Karmakand Acharya',
+    titleHi: 'ज्योतिष कर्मकाण्ड विशेषज्ञ',
     experience: '14 Years Seva',
     specialties: ['Jyotish', 'Karmakand', 'Bhajan Sandhya', 'Sankalp Seva'],
+    specialtiesHi: ['ज्योतिष', 'कर्मकाण्ड', 'भजन संध्या', 'संकल्प सेवा'],
     image: '/images/pandits/acharya-kuber-tripathi.webp',
     hasSpecialBadge: true,
     specialBadgeTitle: 'ज्योतिष कर्मकाण्ड भूषण',
@@ -249,9 +308,11 @@ const CURATED_PANDITS = [
   {
     slug: 'subhash-shastri',
     name: 'पंडित सुभाष शास्त्री',
-    title: 'सत्य नारायण पूजा, दुर्गासप्तशती पाठ, नवग्रहपूजन, रुद्राभिषेक',
+    title: 'Satyanarayan Katha, Durga Saptashati, Navgrah & Rudrabhishek Acharya',
+    titleHi: 'सत्यनारायण पूजा, दुर्गासप्तशती पाठ, नवग्रह पूजन, रुद्राभिषेक',
     experience: '15 Years Seva',
     specialties: ['Satyanarayan Pooja', 'Durga Saptashati', 'Navgrah Poojan', 'Rudrabhishek'],
+    specialtiesHi: ['सत्यनारायण पूजा', 'दुर्गा सप्तशती', 'नवग्रह पूजन', 'रुद्राभिषेक'],
     image: '/images/pandits/pandit-subhash-shastri.webp',
     hasSpecialBadge: true,
     specialBadgeTitle: 'वैदिक विद्वान रत्न',
@@ -259,9 +320,11 @@ const CURATED_PANDITS = [
   {
     slug: 'sumit-shastri',
     name: 'पंडित सुमित शास्त्री (कर्मकांड,ज्योतिष)',
-    title: 'कर्मकांड एवं ज्योतिष विशेषज्ञ',
+    title: 'Karmakand & Jyotish Acharya',
+    titleHi: 'कर्मकाण्ड एवं ज्योतिष विशेषज्ञ',
     experience: '11 Years Seva',
     specialties: ['Karmakand', 'Vedic Astrology', 'Pooja Vidhi', 'Kundli Milan'],
+    specialtiesHi: ['कर्मकाण्ड', 'वैदिक ज्योतिष', 'पूजा विधि', 'कुंडली मिलान'],
     image: '/images/pandits/pandit-sumit-shastri.webp',
     hasSpecialBadge: true,
     specialBadgeTitle: 'कर्मकांड एवं ज्योतिष विशेषज्ञ',
@@ -269,9 +332,11 @@ const CURATED_PANDITS = [
   {
     slug: 'nandkishor-tripathi',
     name: 'पंडित नंदकिशोर त्रिपाठी (कर्मकांड,ज्योतिष)',
-    title: 'कर्मकांड एवं ज्योतिष विशेषज्ञ',
+    title: 'Karmakand & Jyotish Acharya',
+    titleHi: 'कर्मकाण्ड एवं ज्योतिष विशेषज्ञ',
     experience: '13 Years Seva',
     specialties: ['Karmakand', 'Vedic Astrology', 'Graha Shanti', 'Anushthan'],
+    specialtiesHi: ['कर्मकाण्ड', 'वैदिक ज्योतिष', 'ग्रह शांति', 'अनुष्ठान'],
     image: '/images/pandits/pandit-nandkishor-tripathi.webp',
     hasSpecialBadge: true,
     specialBadgeTitle: 'कर्मकांड एवं ज्योतिष विशेषज्ञ',
@@ -281,29 +346,46 @@ const CURATED_PANDITS = [
 const DEVOTEE_TESTIMONIALS = [
   {
     name: 'Dr. Ramesh Sundaram',
+    nameHi: 'डॉ. रमेश सुंदरम',
     location: 'London, United Kingdom',
+    locationHi: 'लंदन, यूनाइटेड किंगडम',
     quote:
       'Living in London, participating in Kashi Vishwanath Mangala Aarti live at 4 AM IST with clear real-time audio felt like sitting right inside the temple sanctum. Param Darshan is a divine blessing.',
+    quoteHi:
+      'लंदन में रहते हुए प्रातः 4 बजे IST पर स्पष्ट लाइव ऑडियो के साथ काशी विश्वनाथ मंगला आरती में शामिल होना ऐसा लगा मानो मंदिर के गर्भगृह में ही बैठे हों। परम दर्शन वास्तव में एक दिव्य आशीर्वाद है।',
     ritual: 'Kashi Mangala Aarti',
+    ritualHi: 'काशी मंगला आरती',
   },
   {
     name: 'Meera & Rajesh Patel',
+    nameHi: 'मीरा एवं राजेश पटेल',
     location: 'Fremont, California',
+    locationHi: 'फ़्रेमोंट, कैलिफ़ोर्निया',
     quote:
       'We booked a personalized family Sankalp for our mother’s 70th birthday. The pandit ji chanted our gotra and names with pure Vedic precision. The video quality was crystal clear.',
+    quoteHi:
+      'हमने अपनी माताजी के 70वें जन्मदिन पर व्यक्तिगत पारिवारिक संकल्प कराया। पंडित जी ने शुद्ध वैदिक उच्चारण के साथ हमारे गोत्र व नामों का पाठ किया। वीडियो गुणवत्ता बिल्कुल स्पष्ट थी।',
     ritual: 'Rudrabhishek Sankalp',
+    ritualHi: 'रुद्राभिषेक संकल्प',
   },
   {
     name: 'Ananya Deshmukh',
+    nameHi: 'अनन्या देशमुख',
     location: 'Singapore',
+    locationHi: 'सिंगापुर',
     quote:
       'The transparent 5 coins/min rate and instant Razorpay recharge make it so effortless. No complicated subscriptions, just pure devotion whenever I seek peace after work.',
+    quoteHi:
+      '5 कॉइन/मिनट की पारदर्शी दर और त्वरित Razorpay रिचार्ज इसे बेहद सरल बनाते हैं। कोई जटिल सब्सक्रिप्शन नहीं — जब भी शांति की चाह हो, बस शुद्ध भक्ति।',
     ritual: 'Sandhya Deep Aarti',
+    ritualHi: 'संध्या दीप आरती',
   },
 ];
 
 export default function HomePage() {
   const toast = useToast();
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
   const [streams, setStreams] = useState<Stream[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -441,7 +523,7 @@ export default function HomePage() {
   const handleRemindMe = async (streamId: string) => {
     const token = localStorage.getItem('pooja_token');
     if (!token) {
-      toast.info('Please sign in to set email reminders.');
+      toast.info(L('Please sign in to set email reminders.', 'ईमेल रिमाइंडर सेट करने के लिए कृपया साइन इन करें।'));
       window.location.href = '/login';
       return;
     }
@@ -452,9 +534,9 @@ export default function HomePage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      toast.success(data.message || 'Email reminder scheduled successfully!');
+      toast.success(data.message || L('Email reminder scheduled successfully!', 'ईमेल रिमाइंडर सफलतापूर्वक सेट हो गया!'));
     } catch {
-      toast.error('Failed to set reminder.');
+      toast.error(L('Failed to set reminder.', 'रिमाइंडर सेट नहीं हो सका।'));
     }
   };
 
@@ -473,7 +555,7 @@ export default function HomePage() {
           {/* Sacred Temple Photography Backdrop */}
           <img
             src="/images/hero-bg-v2.webp"
-            alt="Sandhya Ganga Aarti Haridwar Sanctum"
+            alt={L('Sandhya Ganga Aarti Haridwar Sanctum', 'संध्या गंगा आरती हरिद्वार गर्भगृह')}
             className="backdrop-photo h-full w-full object-cover opacity-35 scale-105"
           />
 
@@ -491,23 +573,26 @@ export default function HomePage() {
               {liveStreams.length > 0 ? (
                 <p className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3.5 sm:px-4 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider sm:tracking-[0.24em] text-gold-pale shadow-[0_0_20px_rgba(245,158,11,0.15)] max-w-full truncate">
                   <span className="live-dot shrink-0" />
-                  <span className="truncate">Live Vedic Broadcasts • KYC-Verified Pandit Jis</span>
+                  <span className="truncate">{L('Live Vedic Broadcasts • KYC-Verified Pandit Jis', 'लाइव वैदिक प्रसारण • KYC सत्यापित पंडित जी')}</span>
                 </p>
               ) : (
                 <p className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3.5 sm:px-4 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider sm:tracking-[0.24em] text-gold-pale shadow-[0_0_20px_rgba(245,158,11,0.15)] max-w-full truncate">
                   <DiyaIcon size={14} className="shrink-0" />
-                  <span className="truncate">Live Vedic Broadcasts &bull; KYC-Verified Pandit Jis</span>
+                  <span className="truncate">{L('Live Vedic Broadcasts • KYC-Verified Pandit Jis', 'लाइव वैदिक प्रसारण • KYC सत्यापित पंडित जी')}</span>
                 </p>
               )}
             </div>
 
             <h1 className="mt-5 sm:mt-6 w-full max-w-2xl font-serif text-3xl sm:text-5xl lg:text-7xl font-bold leading-[1.12] sm:leading-[1.08] tracking-tight break-words overflow-hidden text-white">
-              Sacred Vedic rituals, <br />
-              <span className="gold-text italic font-serif">one tap away</span>
+              {L('Sacred Vedic rituals,', 'पवित्र वैदिक अनुष्ठान,')} <br />
+              <span className="gold-text italic font-serif">{L('one tap away', 'बस एक क्लिक दूर')}</span>
             </h1>
 
             <p className="mt-4 sm:mt-6 w-full max-w-xl text-stone-300 text-sm sm:text-lg leading-relaxed">
-              Param Darshan connects you directly with KYC-verified Vedic Pandit Jis for personalized poojas, havans, and spiritual counseling — in live interactive HD, directly to your screen.
+              {L(
+                'Param Darshan connects you directly with KYC-verified Vedic Pandit Jis for personalized poojas, havans, and spiritual counseling — in live interactive HD, directly to your screen.',
+                'परम दर्शन आपको व्यक्तिगत पूजा, हवन और आध्यात्मिक परामर्श के लिए KYC-सत्यापित वैदिक पंडित जी से सीधे जोड़ता है — लाइव इंटरैक्टिव HD में सीधे आपकी स्क्रीन पर।',
+              )}
             </p>
 
             {/* Hero Action Buttons */}
@@ -520,7 +605,7 @@ export default function HomePage() {
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-obsidian/20">
                     <Play className="h-3.5 w-3.5 fill-obsidian text-obsidian ml-0.5" />
                   </span>
-                  <span>Watch Live Darshan</span>
+                  <span>{L('Watch Live Darshan', 'लाइव दर्शन देखें')}</span>
                 </Link>
               ) : (
                 <button
@@ -531,7 +616,7 @@ export default function HomePage() {
                   className="group inline-flex items-center justify-center gap-2.5 rounded-full bg-gold px-7 py-3.5 text-sm font-bold text-obsidian shadow-[0_0_36px_rgba(245,158,11,0.4)] transition hover:bg-gold-deep hover:shadow-[0_0_48px_rgba(245,158,11,0.6)] hover:scale-[1.02] w-full sm:w-auto"
                 >
                   <DiyaIcon size={20} className="transform group-hover:scale-110 transition-transform" />
-                  <span>Book a Live Pooja</span>
+                  <span>{L('Book a Live Pooja', 'लाइव पूजा बुक करें')}</span>
                 </button>
               )}
 
@@ -540,7 +625,7 @@ export default function HomePage() {
                 className="hero-btn-schedule inline-flex items-center justify-center gap-2 rounded-full border px-6 py-3.5 text-sm font-extrabold transition w-full sm:w-auto shadow-sm"
               >
                 <Calendar className="w-4 h-4 shrink-0" />
-                <span className="font-extrabold">Pooja Schedule</span>
+                <span className="font-extrabold">{L('Pooja Schedule', 'पूजा समय-सारिणी')}</span>
               </Link>
 
               {user ? (
@@ -549,7 +634,7 @@ export default function HomePage() {
                   className="hero-btn-secondary inline-flex items-center justify-center gap-2 rounded-full border px-6 py-3.5 text-sm font-extrabold transition hover:border-amber-400 w-full sm:w-auto shadow-sm"
                 >
                   <CoinIcon size={18} />
-                  <span className="font-extrabold">Recharge Coins</span>
+                  <span className="font-extrabold">{L('Recharge Coins', 'कॉइन रिचार्ज करें')}</span>
                 </button>
               ) : (
                 <Link
@@ -557,7 +642,7 @@ export default function HomePage() {
                   className="hero-btn-secondary inline-flex items-center justify-center gap-2 rounded-full border px-6 py-3.5 text-sm font-extrabold transition hover:border-amber-400 w-full sm:w-auto shadow-sm"
                 >
                   <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
-                  <span className="font-extrabold">Claim 100 Free Coins</span>
+                  <span className="font-extrabold">{L('Claim 100 Free Coins', '100 मुफ़्त कॉइन पाएँ')}</span>
                 </Link>
               )}
             </div>
@@ -567,25 +652,25 @@ export default function HomePage() {
               <div>
                 <dd className="font-serif text-2xl sm:text-4xl font-bold text-gold-pale">100%</dd>
                 <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-normal sm:tracking-[0.16em] text-stone-400">
-                  KYC Verified
+                  {L('KYC Verified', 'KYC सत्यापित')}
                 </dt>
               </div>
               <div>
-                <dd className="font-serif text-2xl sm:text-4xl font-bold text-gold-pale">5 Coins</dd>
+                <dd className="font-serif text-2xl sm:text-4xl font-bold text-gold-pale">{L('5 Coins', '5 कॉइन')}</dd>
                 <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-normal sm:tracking-[0.16em] text-stone-400">
-                  Per Minute
+                  {L('Per Minute', 'प्रति मिनट')}
                 </dt>
               </div>
               <div>
-                <dd className="font-serif text-2xl sm:text-4xl font-bold text-gold-pale">100 Coins</dd>
+                <dd className="font-serif text-2xl sm:text-4xl font-bold text-gold-pale">{L('100 Coins', '100 कॉइन')}</dd>
                 <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-normal sm:tracking-[0.16em] text-stone-400">
-                  Welcome Bonus
+                  {L('Welcome Bonus', 'स्वागत बोनस')}
                 </dt>
               </div>
               <div>
                 <dd className="font-serif text-2xl sm:text-4xl font-bold text-gold-pale">HD</dd>
                 <dt className="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-normal sm:tracking-[0.16em] text-stone-400">
-                  Live WebRTC
+                  {L('Live WebRTC', 'लाइव WebRTC')}
                 </dt>
               </div>
             </dl>
@@ -610,22 +695,22 @@ export default function HomePage() {
                   <div className="absolute top-3.5 left-3.5 flex items-center gap-2">
                     <span className="flex items-center gap-1.5 rounded-full bg-vermillion-deep/95 backdrop-blur-md px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-md">
                       <span className="live-dot" style={{ width: '6px', height: '6px' }} />
-                      LIVE
+                      {L('LIVE', 'लाइव')}
                     </span>
                     <span className="rounded-full bg-black/80 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-amber-200 border border-amber-400/30 shadow-md">
-                      Live HD
+                      {L('Live HD', 'लाइव HD')}
                     </span>
                   </div>
 
                   <div className="absolute top-3.5 right-3.5 rounded-full bg-black/80 backdrop-blur-md px-3 py-1 text-[11px] font-semibold text-stone-200 flex items-center gap-1.5 border border-white/20 shadow-md">
                     <Users className="w-3.5 h-3.5 text-amber-400" />
-                    <span>{featuredStream.peakViewers || 1} watching</span>
+                    <span>{featuredStream.peakViewers || 1} {L('watching', 'भक्त दर्शक')}</span>
                   </div>
 
                   {/* Bottom Overlay Title & Join CTA */}
                   <div className="absolute bottom-4 left-4 right-4">
                     <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300 block mb-1">
-                      {featuredStream.category?.name || 'Live Aarti'}
+                      {translateCategoryLabel(featuredStream.category?.name || 'Live Aarti', lang)}
                     </span>
                     <h3 className="font-serif text-xl sm:text-2xl font-bold text-white line-clamp-2 leading-snug">
                       {featuredStream.title}
@@ -634,7 +719,7 @@ export default function HomePage() {
                       <div className="flex items-center gap-2">
                         <PranamIcon size={16} />
                         <span className="text-xs font-semibold text-stone-200">
-                          {featuredStream.streamer?.name || 'Vedic Pandit Ji'}
+                          {featuredStream.streamer?.name || L('Vedic Pandit Ji', 'वैदिक पंडित जी')}
                         </span>
                         <VerifiedPanditBadge size={14} />
                       </div>
@@ -642,7 +727,7 @@ export default function HomePage() {
                         href={`/stream/${featuredStream.id}`}
                         className="rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold px-4 py-2 text-xs shadow-lg transition-transform hover:scale-105 flex items-center gap-1"
                       >
-                        <span>Join Darshan</span>
+                        <span>{L('Join Darshan', 'दर्शन से जुड़ें')}</span>
                       </Link>
                     </div>
                   </div>
@@ -653,7 +738,7 @@ export default function HomePage() {
                 <div className="altar-repose-card relative aspect-[16/10] sm:aspect-[4/3] rounded-2xl overflow-hidden bg-gradient-to-br from-amber-100/80 via-orange-50/70 to-rose-50/50 dark:bg-[#0c0a09] flex flex-col justify-between p-4 sm:p-6 border border-amber-300 dark:border-gold/20 shadow-inner">
                   <img
                     src="/images/hero-bg-v2.webp"
-                    alt="Sanctum Repose"
+                    alt={L('Sanctum Repose', 'पवित्र गर्भगृह')}
                     className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-20 dark:opacity-40 mix-blend-multiply dark:mix-blend-normal"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-white/95 via-white/70 to-transparent dark:from-obsidian dark:via-obsidian/75 dark:to-obsidian/60" />
@@ -662,16 +747,18 @@ export default function HomePage() {
                   <div className="relative z-10 flex items-center justify-between gap-2 overflow-hidden min-w-0">
                     <span className="flex items-center gap-1.5 rounded-full bg-amber-100/95 dark:bg-black/85 backdrop-blur-md px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-400/35 shadow-sm dark:shadow-md">
                       <DiyaIcon size={14} className="text-amber-600 dark:text-amber-400" />
-                      <span>Live Pooja Altar</span>
+                      <span>{L('Live Pooja Altar', 'लाइव पूजा वेदी')}</span>
                     </span>
                     {nextUpcomingStream ? (
                       <span className="flex items-center gap-1.5 rounded-full bg-amber-100/95 dark:bg-black/85 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-amber-900 dark:text-amber-100 border border-amber-300 dark:border-amber-400/35 shadow-sm dark:shadow-md">
                         <Clock className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-                        <span>Next: {new Date(nextUpcomingStream.scheduledAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} IST</span>
+                        <span>
+                          {L('Next:', 'अगला:')} {new Date(nextUpcomingStream.scheduledAt || Date.now()).toLocaleTimeString(lang === 'hi' ? 'hi-IN' : 'en-IN', { hour: '2-digit', minute: '2-digit' })} IST
+                        </span>
                       </span>
                     ) : (
                       <span className="rounded-full bg-amber-100/95 dark:bg-black/85 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-amber-900 dark:text-stone-200 border border-amber-300 dark:border-white/20 shadow-sm dark:shadow-md">
-                        <span>Verified Vedic Acharyas</span>
+                        <span>{L('Verified Vedic Acharyas', 'सत्यापित वैदिक आचार्य')}</span>
                       </span>
                     )}
                   </div>
@@ -679,17 +766,20 @@ export default function HomePage() {
                   {/* Center Sacred Diya & Message */}
                   <div className="relative z-10 text-center py-2 sm:py-3">
                     <div className="w-14 h-14 mx-auto mb-2 rounded-2xl bg-amber-100/70 dark:bg-gradient-to-b dark:from-amber-500/10 dark:to-transparent border border-amber-300 dark:border-gold/30 flex items-center justify-center shadow-sm dark:shadow-[0_0_24px_rgba(245,158,11,0.25)]">
-                      <img src="/logo.webp" alt="Param Darshan" className="w-10 h-10 object-contain drop-shadow" />
+                      <img src="/logo.webp" alt={L('Param Darshan', 'परम दर्शन')} className="w-10 h-10 object-contain drop-shadow" />
                     </div>
                     <h3 className="altar-repose-title font-serif text-xl sm:text-2xl font-bold tracking-tight">
-                      Live Pooja Altar in Repose
+                      {L('Live Pooja Altar in Repose', 'पूजा वेदी विश्राम अवस्था में')}
                     </h3>
                     <p className="altar-repose-desc text-xs mt-1.5 w-full max-w-sm mx-auto leading-relaxed break-words">
-                      Verified Vedic Pandit Jis stream live whenever they conduct sacred rituals, havan poojas, or astrological discourses. Active broadcasts will appear here in real time.
+                      {L(
+                        'Verified Vedic Pandit Jis stream live whenever they conduct sacred rituals, havan poojas, or astrological discourses. Active broadcasts will appear here in real time.',
+                        'जब भी सत्यापित वैदिक पंडित जी पूजा, हवन या ज्योतिषीय प्रवचन करते हैं तो लाइव प्रसारण यहाँ तुरंत दिखाई देता है।',
+                      )}
                     </p>
                     {nextUpcomingStream && (
                       <div className="mt-2.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white dark:bg-black/85 backdrop-blur-md border border-amber-300 dark:border-amber-400/40 text-[11px] shadow-sm dark:shadow-md max-w-full overflow-hidden">
-                        <span className="altar-repose-upcoming-badge font-bold uppercase tracking-wider text-[10px] shrink-0">Upcoming:</span>
+                        <span className="altar-repose-upcoming-badge font-bold uppercase tracking-wider text-[10px] shrink-0">{L('Upcoming:', 'आगामी:')}</span>
                         <span className="altar-repose-upcoming font-bold truncate min-w-0 flex-1">{nextUpcomingStream.title}</span>
                       </div>
                     )}
@@ -700,7 +790,7 @@ export default function HomePage() {
                     <div className="flex items-center gap-1.5 sm:gap-2">
                       <PranamIcon size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
                       <span className="text-xs font-semibold text-stone-700 dark:text-stone-200 whitespace-nowrap">
-                        KYC-Verified Pandit Jis
+                        {L('KYC-Verified Pandit Jis', 'KYC सत्यापित पंडित जी')}
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 sm:gap-2 w-full xs:w-auto justify-end">
@@ -712,14 +802,14 @@ export default function HomePage() {
                         className="rounded-full bg-gold hover:bg-gold-deep text-obsidian font-bold px-3 py-1.5 text-xs shadow-md transition-transform hover:scale-105 flex items-center gap-1.5 shrink-0"
                       >
                         <DiyaIcon size={14} />
-                        <span>Book a Pooja</span>
+                        <span>{L('Book a Pooja', 'पूजा बुक करें')}</span>
                       </button>
                       <Link
                         href="/schedule"
                         className="rounded-full bg-white dark:bg-black/80 hover:bg-stone-50 dark:hover:bg-black backdrop-blur-md border border-stone-300 dark:border-amber-400/35 text-stone-800 dark:text-amber-100 hover:text-stone-950 dark:hover:text-white font-bold px-2.5 py-1.5 text-xs transition flex items-center gap-1 shadow-sm dark:shadow-md shrink-0"
                       >
                         <Calendar className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                        <span>Schedule</span>
+                        <span>{L('Schedule', 'समय-सारिणी')}</span>
                       </Link>
                     </div>
                   </div>
@@ -740,13 +830,16 @@ export default function HomePage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-gold/15">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.24em] text-gold-soft">
-              Sacred Pooja &amp; Seva Booking
+              {L('Sacred Pooja & Seva Booking', 'पवित्र पूजा एवं सेवा बुकिंग')}
             </p>
             <h2 className="mt-1 font-serif text-3xl sm:text-4xl font-bold text-white">
-              Book Personalized Vedic Poojas &amp; Consultations
+              {L('Book Personalized Vedic Poojas & Consultations', 'व्यक्तिगत वैदिक पूजा एवं परामर्श बुक करें')}
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-stone-400 max-w-xl">
-              Select a sacred ritual, choose your preferred KYC-verified Pandit Ji, and book a live personal broadcast.
+              {L(
+                'Select a sacred ritual, choose your preferred KYC-verified Pandit Ji, and book a live personal broadcast.',
+                'अपना पवित्र अनुष्ठान चुनें, KYC-सत्यापित पंडित जी का चयन करें और व्यक्तिगत लाइव प्रसारण बुक करें।',
+              )}
             </p>
           </div>
 
@@ -757,7 +850,7 @@ export default function HomePage() {
               className="catalog-explore-btn inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full border text-xs font-bold transition shrink-0 shadow-sm"
             >
               <DiyaIcon size={14} />
-              <span>Explore All 24+ Poojas &amp; Kathas</span>
+              <span>{L('Explore All 24+ Poojas & Kathas', 'सभी 24+ पूजा एवं कथाएँ देखें')}</span>
               <ArrowRight className="w-3.5 h-3.5 text-amber-500 shrink-0" />
             </Link>
 
@@ -768,7 +861,7 @@ export default function HomePage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search pooja, pandit ji..."
+                placeholder={L('Search pooja, pandit ji...', 'पूजा, पंडित जी खोजें...')}
                 className="w-full pl-10 pr-4 py-2.5 rounded-full bg-obsidian-soft border border-gold/20 text-xs sm:text-sm text-white placeholder-stone-400 focus:outline-none focus:border-gold transition"
               />
             </div>
@@ -780,6 +873,10 @@ export default function HomePage() {
           {CATEGORY_TILES.map((cat) => {
             const Icon = cat.icon;
             const isMoreCard = (cat as any).isMore;
+            const catName = lang === 'hi' ? cat.nameHi : cat.name;
+            const catDesc = lang === 'hi' ? cat.descHi : cat.desc;
+            const catTag = lang === 'hi' ? cat.tagHi : cat.tag;
+            const catPrice = lang === 'hi' ? cat.priceTextHi : cat.priceText;
 
             if (isMoreCard) {
               return (
@@ -794,18 +891,18 @@ export default function HomePage() {
                         <Icon size={18} />
                       </div>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-gold-pale bg-gold/20 px-2 py-0.5 rounded-full border border-gold/30">
-                        {cat.tag}
+                        {catTag}
                       </span>
                     </div>
                     <h3 className="font-serif text-sm sm:text-base font-bold text-white group-hover:text-gold-pale transition-colors">
-                      {cat.name}
+                      {catName}
                     </h3>
                     <p className="text-[11px] text-stone-300 mt-1 line-clamp-1 leading-snug">
-                      {cat.desc}
+                      {catDesc}
                     </p>
                   </div>
                   <div className="mt-3 pt-2 border-t border-gold/20 flex items-center justify-between text-[11px] text-gold font-bold">
-                    <span>View All 24+ Sevas</span>
+                    <span>{L('View All 24+ Sevas', 'सभी 24+ सेवाएँ देखें')}</span>
                     <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1.5 transition-transform" />
                   </div>
                 </Link>
@@ -827,18 +924,18 @@ export default function HomePage() {
                       <Icon size={18} />
                     </div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-gold-pale bg-gold/10 px-2 py-0.5 rounded-full border border-gold/20">
-                      {cat.tag}
+                      {catTag}
                     </span>
                   </div>
                   <h3 className="font-serif text-sm sm:text-base font-bold text-white group-hover:text-gold-pale transition-colors">
-                    {cat.name}
+                    {catName}
                   </h3>
                   <p className="text-[11px] text-stone-400 mt-1 line-clamp-1 leading-snug">
-                    {cat.desc}
+                    {catDesc}
                   </p>
                 </div>
                 <div className="mt-3 pt-2 border-t border-stone-800/60 flex items-center justify-between text-[11px] text-gold-soft font-semibold">
-                  <span>{(cat as any).priceText || 'Book Live Session'}</span>
+                  <span>{catPrice || L('Book Live Session', 'लाइव सत्र बुक करें')}</span>
                   <ChevronRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
@@ -859,7 +956,7 @@ export default function HomePage() {
                 : 'bg-obsidian-soft text-stone-300 border border-gold/15 hover:border-gold/40 hover:text-gold-pale'
             }`}
           >
-            All Sacred Rituals
+            {L('All Sacred Rituals', 'सभी पवित्र अनुष्ठान')}
           </button>
           {categories.map((cat) => (
             <button
@@ -871,7 +968,7 @@ export default function HomePage() {
                   : 'bg-obsidian-soft text-stone-300 border border-gold/15 hover:border-gold/40 hover:text-gold-pale'
               }`}
             >
-              {cat.name}
+              {translateCategoryLabel(cat.name, lang)}
             </button>
           ))}
         </div>
@@ -885,22 +982,22 @@ export default function HomePage() {
               <>
                 <span className="live-dot" />
                 <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white">
-                  Darshan streaming this very moment
+                  {L('Darshan streaming this very moment', 'इसी क्षण चल रहे लाइव दर्शन')}
                 </h2>
               </>
             ) : (
               <>
                 <Calendar className="w-6 h-6 text-gold" />
                 <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white">
-                  Scheduled Vedic Poojas &amp; Darshans
+                  {L('Scheduled Vedic Poojas & Darshans', 'निर्धारित वैदिक पूजा एवं दर्शन')}
                 </h2>
               </>
             )}
           </div>
           <span className="text-xs text-gold-soft/90 font-medium hidden sm:inline">
             {liveStreams.length > 0
-              ? '5 Coins / min metered darshan • Live HD'
-              : 'Upcoming live broadcasts scheduled by KYC-verified Pandit Jis'}
+              ? L('5 Coins / min metered darshan • Live HD', '5 कॉइन / मिनट मीटर्ड दर्शन • लाइव HD')
+              : L('Upcoming live broadcasts scheduled by KYC-verified Pandit Jis', 'KYC-सत्यापित पंडित जी द्वारा निर्धारित आगामी लाइव प्रसारण')}
           </span>
         </div>
 
@@ -928,7 +1025,7 @@ export default function HomePage() {
 
                   {/* LIVE badge */}
                   <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-red-600/90 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
-                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> {L('LIVE', 'लाइव')}
                   </div>
 
                   {/* Quality & Coin Meter */}
@@ -951,10 +1048,10 @@ export default function HomePage() {
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-2">
                       <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-soft">
-                        {stream.category?.name || 'Aarti'}
+                        {translateCategoryLabel(stream.category?.name || 'Aarti', lang)}
                       </span>
                       <span className="text-[10px] font-bold text-gold-pale bg-gold/10 border border-gold/20 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <CoinIcon size={12} /> 5 C/min
+                        <CoinIcon size={12} /> {L('5 C/min', '5 कॉइन/मिनट')}
                       </span>
                     </div>
 
@@ -962,14 +1059,14 @@ export default function HomePage() {
                       {stream.title}
                     </h3>
                     <p className="text-xs text-stone-400 mt-1 line-clamp-2 leading-relaxed">
-                      {stream.description || 'Join live sacred rituals, Vedic chanting, and Aarti.'}
+                      {stream.description || L('Join live sacred rituals, Vedic chanting, and Aarti.', 'लाइव पवित्र अनुष्ठान, वैदिक मंत्रोच्चार एवं आरती में शामिल हों।')}
                     </p>
                   </div>
 
                   <div className="mt-5 pt-3.5 border-t border-stone-800/80 flex items-center justify-between text-xs text-stone-300">
                     <div className="flex items-center gap-1.5 font-medium">
                       <PranamIcon size={16} />
-                      <span className="text-stone-200">{stream.streamer?.name || 'Vedic Pandit Ji'}</span>
+                      <span className="text-stone-200">{stream.streamer?.name || L('Vedic Pandit Ji', 'वैदिक पंडित जी')}</span>
                       {stream.streamer?.streamerProfile?.isVerifiedBadge && (
                         <VerifiedPanditBadge size={14} />
                       )}
@@ -988,16 +1085,12 @@ export default function HomePage() {
           {liveStreams.length === 0 && (upcomingStreams.length > 0 ? upcomingStreams : FALLBACK_SCHEDULED_BROADCASTS).map((item: any, idx: number) => {
             const fallbackImg = FALLBACK_THUMBNAILS[idx % FALLBACK_THUMBNAILS.length];
             const dateStr = item.scheduledAt
-              ? new Date(item.scheduledAt).toLocaleString([], {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })
-              : (item.scheduledText || 'Today Evening');
-            const streamerName = item.streamer?.name || item.streamer || 'Vedic Pandit Ji';
-            const categoryName = item.category?.name || item.category || 'Vedic Pooja';
+              ? formatLocaleDateTime(item.scheduledAt, lang)
+              : (lang === 'hi' && item.scheduledTextHi ? item.scheduledTextHi : (item.scheduledText || L('Today Evening', 'आज सायं')));
+            const streamerName = item.streamer?.name || item.streamer || L('Vedic Pandit Ji', 'वैदिक पंडित जी');
+            const categoryName = translateCategoryLabel(item.category?.name || item.category || 'Vedic Pooja', lang);
+            const itemTitle = lang === 'hi' && item.titleHi ? item.titleHi : item.title;
+            const itemDesc = lang === 'hi' && item.descriptionHi ? item.descriptionHi : item.description;
             const thumbUrl = item.thumbnailUrl || item.thumbnail || fallbackImg;
 
             return (
@@ -1009,7 +1102,7 @@ export default function HomePage() {
                 <div className="relative aspect-video bg-black overflow-hidden on-photo">
                   <img
                     src={thumbUrl}
-                    alt={item.title}
+                    alt={itemTitle}
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = '/images/hero-bg-v2.webp';
                     }}
@@ -1039,15 +1132,15 @@ export default function HomePage() {
                         {categoryName}
                       </span>
                       <span className="text-[10px] font-bold text-amber-900 dark:text-gold-pale bg-amber-500/10 dark:bg-gold/10 border border-amber-500/25 dark:border-gold/20 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <CoinIcon size={12} /> 5 C/min
+                        <CoinIcon size={12} /> {L('5 C/min', '5 कॉइन/मिनट')}
                       </span>
                     </div>
 
                     <h3 className="font-serif text-lg font-bold text-stone-900 dark:text-white line-clamp-1 group-hover:text-amber-700 dark:group-hover:text-gold-pale transition">
-                      {item.title}
+                      {itemTitle}
                     </h3>
                     <p className="text-xs text-stone-600 dark:text-stone-400 mt-1 line-clamp-2 leading-relaxed">
-                      {item.description}
+                      {itemDesc}
                     </p>
                   </div>
 
@@ -1066,7 +1159,7 @@ export default function HomePage() {
                         className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-full border border-amber-300 dark:border-gold/30 bg-amber-50 dark:bg-gold/10 hover:bg-amber-100 dark:hover:bg-gold/20 text-amber-950 dark:text-gold-pale transition shadow-sm"
                       >
                         <Bell className="w-3.5 h-3.5 text-amber-600 dark:text-gold" />
-                        <span>Remind Me</span>
+                        <span>{L('Remind Me', 'याद दिलाएँ')}</span>
                       </button>
 
                       <button
@@ -1077,7 +1170,7 @@ export default function HomePage() {
                         className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-full bg-gold hover:bg-gold-deep text-obsidian transition shadow"
                       >
                         <DiyaIcon size={14} />
-                        <span>Book Sankalp</span>
+                        <span>{L('Book Sankalp', 'संकल्प बुक करें')}</span>
                       </button>
                     </div>
                   </div>
@@ -1093,17 +1186,20 @@ export default function HomePage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <p className="calendar-tag text-xs font-bold uppercase tracking-[0.24em]">
-              Pooja Calendar
+              {L('Pooja Calendar', 'पूजा पंचांग')}
             </p>
             <h2 className="calendar-title mt-1 font-serif text-2xl sm:text-3xl font-bold">
-              Upcoming sacred gatherings
+              {L('Upcoming sacred gatherings', 'आगामी पवित्र अनुष्ठान एवं सभाएँ')}
             </h2>
           </div>
         </div>
 
         {upcomingStreams.length === 0 ? (
           <div className="rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-obsidian-soft p-8 text-center text-stone-600 dark:text-stone-400 text-xs sm:text-sm">
-            All sanctum schedules for the week are currently being synchronized with mandir trusts. Please check back shortly.
+            {L(
+              'All sanctum schedules for the week are currently being synchronized with mandir trusts. Please check back shortly.',
+              'इस सप्ताह के सभी मंदिर कार्यक्रम वर्तमान में समन्वित किए जा रहे हैं। कृपया शीघ्र पुनः जाँचें।',
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1115,22 +1211,19 @@ export default function HomePage() {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="calendar-tag text-[10px] font-bold uppercase tracking-[0.2em]">
-                      {stream.category.name}
+                      {translateCategoryLabel(stream.category.name, lang)}
                     </span>
                     {stream.scheduledAt && (
                       <span className="calendar-date-pill text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm border">
                         <Clock className="w-3 h-3 shrink-0" />
-                        {new Date(stream.scheduledAt).toLocaleString([], {
-                          dateStyle: 'short',
-                          timeStyle: 'short',
-                        })}
+                        {formatLocaleDateTime(stream.scheduledAt, lang)}
                       </span>
                     )}
                   </div>
 
                   <h3 className="calendar-title font-serif text-lg font-bold line-clamp-1">{stream.title}</h3>
                   <p className="text-xs text-stone-600 dark:text-stone-400 mt-1 line-clamp-2 leading-relaxed">
-                    {stream.description || 'Sacred upcoming Vedic pooja and Aarti.'}
+                    {stream.description || L('Sacred upcoming Vedic pooja and Aarti.', 'आगामी पवित्र वैदिक पूजा एवं आरती।')}
                   </p>
 
                   <div className="mt-4 flex items-center gap-1.5 text-xs text-stone-700 dark:text-stone-300 font-semibold">
@@ -1146,10 +1239,10 @@ export default function HomePage() {
                     className="calendar-remind-btn flex items-center gap-1.5 text-xs font-black border px-3.5 py-1.5 rounded-full transition shadow-sm"
                   >
                     <Bell className="w-3.5 h-3.5 shrink-0" />
-                    <span className="font-black">Remind Me</span>
+                    <span className="font-black">{L('Remind Me', 'याद दिलाएँ')}</span>
                   </button>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">
-                    Live HD
+                    {L('Live HD', 'लाइव HD')}
                   </span>
                 </div>
               </div>
@@ -1162,18 +1255,24 @@ export default function HomePage() {
       <section className="mx-auto max-w-7xl px-5 lg:px-8 py-16 border-t border-gold/15 scroll-mt-4" id="pandits">
         <div className="text-center max-w-2xl mx-auto mb-12">
           <p className="text-xs font-bold uppercase tracking-[0.28em] text-gold-soft">
-            Identity &amp; KYC Verification
+            {L('Identity & KYC Verification', 'पहचान एवं KYC सत्यापन')}
           </p>
           <h2 className="mt-2 font-serif text-3xl sm:text-4xl font-bold text-white">
-            Meet the custodians of tradition
+            {L('Meet the custodians of tradition', 'वैदिक परंपरा के संवाहक आचार्यगण')}
           </h2>
           <p className="mt-3 text-stone-400 text-xs sm:text-sm leading-relaxed">
-            Every Pandit Ji on Param Darshan undergoes government identity KYC review and profile verification before being authorized to broadcast.
+            {L(
+              'Every Pandit Ji on Param Darshan undergoes government identity KYC review and profile verification before being authorized to broadcast.',
+              'परम दर्शन पर प्रत्येक पंडित जी को लाइव प्रसारण की अनुमति मिलने से पहले सरकारी पहचान KYC समीक्षा और प्रोफ़ाइल सत्यापन प्रक्रिया से गुज़रना होता है।',
+            )}
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {CURATED_PANDITS.map((p) => (
+          {CURATED_PANDITS.map((p) => {
+            const pTitle = lang === 'hi' ? p.titleHi : p.title;
+            const pSpecs = lang === 'hi' ? p.specialtiesHi : p.specialties;
+            return (
             <div
               key={p.name}
               className="rounded-2xl bg-white dark:bg-obsidian-soft border border-stone-200 dark:border-gold/15 overflow-hidden shadow-lg dark:shadow-xl hover:border-amber-400 dark:hover:border-gold/40 transition group"
@@ -1192,30 +1291,30 @@ export default function HomePage() {
                 )}
                 <div className="absolute top-3 right-3 rounded-full bg-black/80 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-amber-200 flex items-center gap-1 border border-amber-400/40 shadow-md">
                   <VerifiedPanditBadge size={12} />
-                  <span className="text-amber-200">Verified</span>
+                  <span className="text-amber-200">{L('Verified', 'सत्यापित')}</span>
                 </div>
                 <div className="absolute bottom-3 left-3 right-3">
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md border border-amber-400/40 text-amber-200 font-bold text-xs shadow-md">
                     <VerifiedPanditBadge size={14} />
-                    <span className="text-amber-200">KYC Verified</span>
+                    <span className="text-amber-200">{L('KYC Verified', 'KYC सत्यापित')}</span>
                   </div>
                 </div>
               </div>
 
               <div className="p-4 space-y-2">
                 <h3 className="pandit-name font-serif text-lg font-bold">{p.name}</h3>
-                <p className="text-[11px] text-stone-600 dark:text-stone-400 leading-tight">{p.title}</p>
+                <p className="text-[11px] text-stone-600 dark:text-stone-400 leading-tight">{pTitle}</p>
                 {p.hasSpecialBadge && (
                   <div className="pt-1">
                     <SpecialPanditBadge title={p.specialBadgeTitle} size="sm" />
                   </div>
                 )}
                 <div className="pandit-stats flex items-center justify-between text-[11px] pt-1 font-semibold">
-                  <span>{p.experience}</span>
+                  <span>{formatExperienceLabel(p.experience, lang)}</span>
                   {/* R-04: Removed fake review count */}
                 </div>
                 <div className="flex flex-wrap gap-1 pt-2">
-                  {p.specialties.map((s) => (
+                  {pSpecs.map((s) => (
                     <span
                       key={s}
                       className="pandit-specialty-tag text-[9px] font-bold uppercase tracking-wider border px-2 py-0.5 rounded"
@@ -1230,12 +1329,13 @@ export default function HomePage() {
                     href={`/pandit/${p.slug}`}
                     className="pandit-btn-profile flex-1 py-1.5 px-3 border rounded-xl text-center text-xs font-black transition shadow-sm"
                   >
-                    <span className="font-black">View Profile &amp; Sevas</span>
+                    <span className="font-black">{L('View Profile & Sevas', 'प्रोफ़ाइल एवं सेवाएँ देखें')}</span>
                   </Link>
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
@@ -1243,10 +1343,10 @@ export default function HomePage() {
       <section className="mx-auto max-w-7xl px-5 lg:px-8 py-16 border-t border-gold/15">
         <div className="text-center max-w-xl mx-auto mb-12">
           <p className="text-xs font-bold uppercase tracking-[0.28em] text-gold-soft">
-            Seamless Devotional Journey
+            {L('Seamless Devotional Journey', 'सरल एवं दिव्य भक्ति यात्रा')}
           </p>
           <h2 className="mt-2 font-serif text-3xl sm:text-4xl font-bold text-white">
-            Three steps to your sacred live pooja
+            {L('Three steps to your sacred live pooja', 'पवित्र लाइव पूजा के तीन सरल चरण')}
           </h2>
         </div>
 
@@ -1254,30 +1354,39 @@ export default function HomePage() {
           <div className="rounded-2xl bg-obsidian-soft border border-gold/15 p-6 shadow-xl relative">
             <span className="font-serif text-5xl font-black text-amber-700/80 dark:text-amber-500/70 block mb-2 step-num">01</span>
             <h3 className="font-serif text-xl font-bold text-white mb-2">
-              Select Ritual &amp; Verified Pandit Ji
+              {L('Select Ritual & Verified Pandit Ji', 'अनुष्ठान और सत्यापित पंडित जी चुनें')}
             </h3>
             <p className="text-xs sm:text-sm text-stone-400 leading-relaxed">
-              Choose from authentic Vedic rituals — Rudrabhishek, Navgrah Shanti, Kundli guidance, or Family Sankalp. Select your preferred KYC-verified Pandit Ji.
+              {L(
+                'Choose from authentic Vedic rituals — Rudrabhishek, Navgrah Shanti, Kundli guidance, or Family Sankalp. Select your preferred KYC-verified Pandit Ji.',
+                'रुद्राभिषेक, नवग्रह शांति, कुंडली मार्गदर्शन या पारिवारिक संकल्प जैसे प्रामाणिक वैदिक अनुष्ठान चुनें और अपने पसंदीदा KYC-सत्यापित पंडित जी का चयन करें।',
+              )}
             </p>
           </div>
 
           <div className="rounded-2xl bg-obsidian-soft border border-gold/15 p-6 shadow-xl relative">
             <span className="font-serif text-5xl font-black text-amber-700/80 dark:text-amber-500/70 block mb-2 step-num">02</span>
             <h3 className="font-serif text-xl font-bold text-white mb-2">
-              Join Live Consecrated Broadcast
+              {L('Join Live Consecrated Broadcast', 'लाइव पवित्र प्रसारण से जुड़ें')}
             </h3>
             <p className="text-xs sm:text-sm text-stone-400 leading-relaxed">
-              Connect to our live WebRTC stream with crisp sacred audio. Hear authentic Vedic mantras and ritual chants with pure acoustics directly on your screen.
+              {L(
+                'Connect to our live WebRTC stream with crisp sacred audio. Hear authentic Vedic mantras and ritual chants with pure acoustics directly on your screen.',
+                'स्पष्ट ध्वनि के साथ हमारी लाइव WebRTC स्ट्रीम से जुड़ें। सीधे अपनी स्क्रीन पर शुद्ध वैदिक मंत्रोच्चार एवं आरती का श्रवण करें।',
+              )}
             </p>
           </div>
 
           <div className="rounded-2xl bg-obsidian-soft border border-gold/15 p-6 shadow-xl relative">
             <span className="font-serif text-5xl font-black text-amber-700/80 dark:text-amber-500/70 block mb-2 step-num">03</span>
             <h3 className="font-serif text-xl font-bold text-white mb-2">
-              Offer Sankalp &amp; Dakshina
+              {L('Offer Sankalp & Dakshina', 'संकल्प एवं दक्षिणा अर्पित करें')}
             </h3>
             <p className="text-xs sm:text-sm text-stone-400 leading-relaxed">
-              Provide your family Gotra for personal chanting, interact directly in the consecrated chatroom, and offer voluntary Dakshina using your Sacred Coin wallet.
+              {L(
+                'Provide your family Gotra for personal chanting, interact directly in the consecrated chatroom, and offer voluntary Dakshina using your Sacred Coin wallet.',
+                'व्यक्तिगत उच्चारण हेतु अपने परिवार का गोत्र दर्ज करें, लाइव चैट में संवाद करें और अपने पवित्र कॉइन वॉलेट से स्वेच्छिक दक्षिणा अर्पित करें।',
+              )}
             </p>
           </div>
         </div>
@@ -1291,46 +1400,49 @@ export default function HomePage() {
           <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             <div className="lg:col-span-7 space-y-4">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold/10 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-gold-pale">
-                <CoinIcon size={16} /> Transparent Devotional Economy
+                <CoinIcon size={16} /> {L('Transparent Devotional Economy', 'पारदर्शी भक्ति अर्थव्यवस्था')}
               </span>
               <h2 className="font-serif text-3xl sm:text-4xl font-bold text-white">
-                One currency for every seva
+                {L('One currency for every seva', 'हर सेवा के लिए एक ही मुद्रा')}
               </h2>
               <p className="text-stone-300 text-xs sm:text-sm leading-relaxed max-w-xl">
-                No hidden subscriptions or recurring credit card traps. You receive 100 free coins upon signup. Metered Darshan costs a transparent 5 coins per minute, deducted smoothly as you watch. Top up securely anytime via UPI, Cards, or NetBanking.
+                {L(
+                  'No hidden subscriptions or recurring credit card traps. You receive 100 free coins upon signup. Metered Darshan costs a transparent 5 coins per minute, deducted smoothly as you watch. Top up securely anytime via UPI, Cards, or NetBanking.',
+                  'कोई छिपा सब्सक्रिप्शन या स्वचालित शुल्क नहीं। साइन-अप पर आपको 100 मुफ़्त कॉइन मिलते हैं। मीटर्ड दर्शन का शुल्क पारदर्शी रूप से 5 कॉइन प्रति मिनट है। आप UPI, कार्ड या नेटबैंकिंग से कभी भी सुरक्षित टॉप-अप कर सकते हैं।',
+                )}
               </p>
               <div className="flex flex-wrap items-center gap-4 pt-2">
                 <button
                   onClick={() => setTopupModalOpen(true)}
                   className="rounded-full bg-gold px-6 py-3 text-xs font-black text-obsidian shadow-lg hover:bg-gold-deep transition"
                 >
-                  View Coin Packages (from ₹{STARTER_PRICE_INR})
+                  {L(`View Coin Packages (from ₹${STARTER_PRICE_INR})`, `कॉइन पैकेज देखें (₹${STARTER_PRICE_INR} से शुरू)`)}
                 </button>
                 <Link
                   href="/faq"
                   className="text-xs font-semibold text-stone-300 hover:text-gold-pale transition flex items-center gap-1"
                 >
-                  <HelpCircle className="w-3.5 h-3.5" /> How do coins work?
+                  <HelpCircle className="w-3.5 h-3.5" /> {L('How do coins work?', 'कॉइन कैसे काम करते हैं?')}
                 </Link>
               </div>
             </div>
 
             <div className="lg:col-span-5 grid grid-cols-2 gap-3 text-center">
               <div className="p-4 rounded-2xl bg-obsidian border border-gold/15">
-                <span className="font-serif text-2xl font-bold text-gold-pale block">100 Coins</span>
-                <span className="text-[11px] text-stone-400">Free Joining Bonus</span>
+                <span className="font-serif text-2xl font-bold text-gold-pale block">{L('100 Coins', '100 कॉइन')}</span>
+                <span className="text-[11px] text-stone-400">{L('Free Joining Bonus', 'मुफ़्त स्वागत बोनस')}</span>
               </div>
               <div className="p-4 rounded-2xl bg-obsidian border border-gold/15">
-                <span className="font-serif text-2xl font-bold text-gold-pale block">5 Coins/min</span>
-                <span className="text-[11px] text-stone-400">Live Metered Stream</span>
+                <span className="font-serif text-2xl font-bold text-gold-pale block">{L('5 Coins/min', '5 कॉइन/मिनट')}</span>
+                <span className="text-[11px] text-stone-400">{L('Live Metered Stream', 'लाइव मीटर्ड प्रसारण')}</span>
               </div>
               <div className="p-4 rounded-2xl bg-obsidian border border-gold/15">
-                <span className="font-serif text-2xl font-bold text-gold-pale block">100% Secure</span>
-                <span className="text-[11px] text-stone-400">Razorpay Encrypted</span>
+                <span className="font-serif text-2xl font-bold text-gold-pale block">{L('100% Secure', '100% सुरक्षित')}</span>
+                <span className="text-[11px] text-stone-400">{L('Razorpay Encrypted', 'Razorpay एन्क्रिप्टेड')}</span>
               </div>
               <div className="p-4 rounded-2xl bg-obsidian border border-gold/15">
-                <span className="font-serif text-2xl font-bold text-gold-pale block">No Expiry</span>
-                <span className="text-[11px] text-stone-400">Coins Valid Forever</span>
+                <span className="font-serif text-2xl font-bold text-gold-pale block">{L('No Expiry', 'कोई समाप्ति तिथि नहीं')}</span>
+                <span className="text-[11px] text-stone-400">{L('Coins Valid Forever', 'कॉइन सदैव मान्य')}</span>
               </div>
             </div>
           </div>
@@ -1341,10 +1453,10 @@ export default function HomePage() {
       <section className="mx-auto max-w-7xl px-5 lg:px-8 py-16 border-t border-gold/15">
         <div className="text-center max-w-xl mx-auto mb-12">
           <p className="text-xs font-bold uppercase tracking-[0.28em] text-gold-soft">
-            Global Sangha
+            {L('Global Sangha', 'वैश्विक श्रद्धालु संगम')}
           </p>
           <h2 className="mt-2 font-serif text-3xl sm:text-4xl font-bold text-white">
-            Blessings received, across the seas
+            {L('Blessings received, across the seas', 'सात समंदर पार भी पहुँचते आशीर्वाद')}
           </h2>
         </div>
 
@@ -1361,16 +1473,16 @@ export default function HomePage() {
                   ))}
                 </div>
                 <p className="text-xs sm:text-sm text-stone-300 leading-relaxed italic">
-                  &ldquo;{t.quote}&rdquo;
+                  &ldquo;{lang === 'hi' ? t.quoteHi : t.quote}&rdquo;
                 </p>
               </div>
               <div className="mt-6 pt-4 border-t border-stone-800/80 flex items-center justify-between text-xs">
                 <div>
-                  <span className="font-bold text-white block">{t.name}</span>
-                  <span className="text-[10px] text-stone-400">{t.location}</span>
+                  <span className="font-bold text-white block">{lang === 'hi' ? t.nameHi : t.name}</span>
+                  <span className="text-[10px] text-stone-400">{lang === 'hi' ? t.locationHi : t.location}</span>
                 </div>
                 <span className="text-[10px] font-bold text-gold-soft bg-gold/10 px-2 py-0.5 rounded-full border border-gold/20">
-                  {t.ritual}
+                  {lang === 'hi' ? t.ritualHi : t.ritual}
                 </span>
               </div>
             </div>
@@ -1387,15 +1499,18 @@ export default function HomePage() {
             {user ? (
               <>
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-gold-pale">
-                  <Sparkles className="w-4 h-4 text-gold" /> Sanatana Dharma Worldwide • 100% Shastric Integrity
+                  <Sparkles className="w-4 h-4 text-gold" /> {L('Sanatana Dharma Worldwide • 100% Shastric Integrity', 'विश्वव्यापी सनातन धर्म • 100% शास्त्रीय मर्यादा')}
                 </span>
 
                 <h2 className="font-serif text-3xl sm:text-5xl font-bold text-white">
-                  Participate in Sacred Live Darshan
+                  {L('Participate in Sacred Live Darshan', 'पवित्र लाइव दर्शन में सहभागी बनें')}
                 </h2>
 
                 <p className="text-stone-300 text-xs sm:text-base leading-relaxed">
-                  Connect with Bharat’s holy sanctums, receive blessings from verified Vedic Pandit Jis, and book personalized sanctum poojas.
+                  {L(
+                    'Connect with Bharat’s holy sanctums, receive blessings from verified Vedic Pandit Jis, and book personalized sanctum poojas.',
+                    'भारत के पवित्र तीर्थस्थलों से जुड़ें, सत्यापित वैदिक पंडित जी से आशीर्वाद प्राप्त करें और व्यक्तिगत पूजा बुक करें।',
+                  )}
                 </p>
 
                 <div className="pt-2 flex flex-wrap items-center justify-center gap-4">
@@ -1403,7 +1518,7 @@ export default function HomePage() {
                     href="/pooja"
                     className="rounded-full bg-gold px-8 py-3.5 text-sm font-bold text-obsidian shadow-[0_0_36px_rgba(245,158,11,0.4)] hover:bg-gold-deep transition"
                   >
-                    Explore Sanctum Poojas
+                    {L('Explore Sanctum Poojas', 'मंदिर एवं वैदिक पूजा देखें')}
                   </Link>
                   <button
                     onClick={() => {
@@ -1412,22 +1527,25 @@ export default function HomePage() {
                     }}
                     className="rounded-full border border-gold/40 bg-obsidian-soft hover:bg-gold/10 px-6 py-3.5 text-sm font-bold text-gold-pale transition"
                   >
-                    Book a Live Pooja Session
+                    {L('Book a Live Pooja Session', 'लाइव पूजा सत्र बुक करें')}
                   </button>
                 </div>
               </>
             ) : (
               <>
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-gold-pale">
-                  <Sparkles className="w-4 h-4 text-gold" /> 100 Free Coins on Joining
+                  <Sparkles className="w-4 h-4 text-gold" /> {L('100 Free Coins on Joining', 'जुड़ने पर 100 मुफ़्त कॉइन')}
                 </span>
 
                 <h2 className="font-serif text-3xl sm:text-5xl font-bold text-white">
-                  Your first Darshan is on us
+                  {L('Your first Darshan is on us', 'आपका पहला दर्शन हमारी ओर से निःशुल्क')}
                 </h2>
 
                 <p className="text-stone-300 text-xs sm:text-base leading-relaxed">
-                  Experience authentic Vedic rituals and personalized poojas today. Join devotees across the globe receiving live blessings from KYC-verified Pandit Jis.
+                  {L(
+                    'Experience authentic Vedic rituals and personalized poojas today. Join devotees across the globe receiving live blessings from KYC-verified Pandit Jis.',
+                    'आज ही प्रामाणिक वैदिक अनुष्ठानों और व्यक्तिगत पूजा का अनुभव करें। KYC-सत्यापित पंडित जी से लाइव आशीर्वाद पाने वाले विश्वभर के भक्तों से जुड़ें।',
+                  )}
                 </p>
 
                 <div className="pt-2 flex flex-wrap items-center justify-center gap-4">
@@ -1435,7 +1553,7 @@ export default function HomePage() {
                     href="/register"
                     className="rounded-full bg-gold px-8 py-3.5 text-sm font-bold text-obsidian shadow-[0_0_36px_rgba(245,158,11,0.4)] hover:bg-gold-deep transition"
                   >
-                    Join Free &amp; Claim 100 Coins
+                    {L('Join Free & Claim 100 Coins', 'निःशुल्क जुड़ें और 100 कॉइन पाएँ')}
                   </Link>
                   <button
                     onClick={() => {
@@ -1444,7 +1562,7 @@ export default function HomePage() {
                     }}
                     className="rounded-full border border-gold/40 bg-obsidian-soft hover:bg-gold/10 px-6 py-3.5 text-sm font-bold text-gold-pale transition"
                   >
-                    Book a Live Pooja Session
+                    {L('Book a Live Pooja Session', 'लाइव पूजा सत्र बुक करें')}
                   </button>
                 </div>
               </>

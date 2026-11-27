@@ -252,8 +252,8 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             // D-04: When no saved preference exists, honour the visitor's system theme
             // (prefers-color-scheme) instead of always defaulting to light.
-            // A phone in dark mode no longer gets a blinding white page on first visit.
-            __html: `(function(){try{var t=localStorage.getItem("sd-theme");if(t!=="dark"&&t!=="light"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}document.documentElement.setAttribute("data-theme",t);if(t==="dark"){document.documentElement.classList.add("dark");}else{document.documentElement.classList.remove("dark");}}catch(e){document.documentElement.setAttribute("data-theme","light");}})()`,
+            // Also apply stored language attribute pre-paint so Devanagari font applies without flash.
+            __html: `(function(){try{var t=localStorage.getItem("sd-theme");if(t!=="dark"&&t!=="light"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}document.documentElement.setAttribute("data-theme",t);if(t==="dark"){document.documentElement.classList.add("dark");}else{document.documentElement.classList.remove("dark");}if(localStorage.getItem("sd-lang")==="hi"){document.documentElement.lang="hi";}}catch(e){document.documentElement.setAttribute("data-theme","light");}})()`,
           }}
         />
         <script

@@ -26,8 +26,11 @@ import { ThemeToggle } from './ThemeToggle';
 import { LanguageToggle } from './LanguageToggle';
 import { OmIcon, CoinIcon, PranamIcon, DiyaIcon } from '@/components/icons/SpiritualIcons';
 import { decodeJwtClaims, getAccountCapabilities, purgeClientSession } from '@/lib/auth-session';
+import { useLang } from '@/lib/i18n/context';
+import { formatCoins } from '@/lib/i18n/format';
 
 export function Navbar() {
+  const { lang, t } = useLang();
   const [user, setUser] = useState<any>(null);
   const [coinBalance, setCoinBalance] = useState<number | null>(null);
   const [topupModalOpen, setTopupModalOpen] = useState(false);
@@ -258,16 +261,16 @@ export function Navbar() {
             <div className="relative flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-gold/40 bg-gradient-to-b from-[#2a1e12] to-obsidian shadow-[0_0_18px_rgba(245,158,11,0.3)] transition group-hover:border-gold/75 group-hover:shadow-[0_0_22px_rgba(245,158,11,0.5)] p-0.5 overflow-hidden shrink-0">
               <img
                 src="/logo.webp"
-                alt="Param Darshan Mandir Logo"
+                alt={t('Param Darshan Mandir Logo', 'परम दर्शन मंदिर लोगो')}
                 className="h-full w-full object-contain filter drop-shadow group-hover:scale-105 transition-transform duration-300"
               />
             </div>
             <span className="leading-tight min-w-0">
               <span className="block font-serif text-base sm:text-xl font-bold tracking-wide text-gold-pale group-hover:text-gold transition truncate">
-                Param Darshan
+                {t('Param Darshan', 'परम दर्शन')}
               </span>
               <span className="hidden xs:block text-[7px] sm:text-[8.5px] font-bold uppercase tracking-[0.16em] sm:tracking-[0.24em] text-gold-soft/80 truncate">
-                Sacred Darshan Network
+                {t('Sacred Darshan Network', 'पवित्र दर्शन नेटवर्क')}
               </span>
             </span>
           </Link>
@@ -278,7 +281,7 @@ export function Navbar() {
               href="/"
               className="whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition text-gold-pale hover:text-white flex items-center gap-1.5 hover:bg-gold/10"
             >
-              <span>Live Darshan</span>
+              <span>{t('Live Darshan', 'लाइव दर्शन')}</span>
               <span className="live-dot shrink-0" />
             </Link>
             <Link
@@ -286,7 +289,7 @@ export function Navbar() {
               className="whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5 flex items-center gap-1"
             >
               <DiyaIcon size={13} />
-              <span>Book Pooja</span>
+              <span>{t('Book Pooja', 'पूजा बुक करें')}</span>
             </Link>
             {/* Kundli Dropdown — always visible in direct desktop nav */}
             <div className="relative shrink-0" ref={kundliDropdownRef}>
@@ -295,10 +298,10 @@ export function Navbar() {
                 aria-expanded={kundliDropdownOpen}
                 aria-haspopup="menu"
                 className="whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5 flex items-center gap-1 font-semibold text-stone-300"
-                aria-label="Kundli & Astrology"
+                aria-label={t('Kundli & Astrology', 'कुंडली एवं ज्योतिष')}
               >
                 <Orbit className="w-3.5 h-3.5 text-gold-soft" />
-                <span>Kundli</span>
+                <span>{t('Kundli', 'कुंडली')}</span>
                 <ChevronDown className={`w-3 h-3 text-gold-soft transition-transform ${kundliDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
@@ -311,8 +314,8 @@ export function Navbar() {
                   >
                     <Orbit className="w-3.5 h-3.5 text-gold shrink-0" />
                     <div>
-                      <div className="font-semibold">Check Your Horoscope</div>
-                      <div className="text-[10px] text-stone-400">Free Kundli & birth chart analysis</div>
+                      <div className="font-semibold">{t('Check Your Horoscope', 'अपनी जन्म पत्रिका देखें')}</div>
+                      <div className="text-[10px] text-stone-400">{t('Free Kundli & birth chart analysis', 'निःशुल्क कुंडली एवं जन्म पत्रिका विश्लेषण')}</div>
                     </div>
                   </Link>
                   <Link
@@ -322,8 +325,8 @@ export function Navbar() {
                   >
                     <HeartHandshake className="w-3.5 h-3.5 text-gold shrink-0" />
                     <div>
-                      <div className="font-semibold">Kundli Matching</div>
-                      <div className="text-[10px] text-stone-400">Compatibility & Ashtakoota Milan</div>
+                      <div className="font-semibold">{t('Kundli Matching', 'कुंडली मिलान')}</div>
+                      <div className="text-[10px] text-stone-400">{t('Compatibility & Ashtakoota Milan', 'अनुकूलता एवं अष्टकूट मिलान')}</div>
                     </div>
                   </Link>
                   <Link
@@ -333,8 +336,8 @@ export function Navbar() {
                   >
                     <Calendar className="w-3.5 h-3.5 text-gold shrink-0" />
                     <div>
-                      <div className="font-semibold">Book a Personal Astrologer</div>
-                      <div className="text-[10px] text-stone-400">1-on-1 Vedic guidance with a verified Pandit Ji</div>
+                      <div className="font-semibold">{t('Book a Personal Astrologer', 'व्यक्तिगत ज्योतिषी बुक करें')}</div>
+                      <div className="text-[10px] text-stone-400">{t('1-on-1 Vedic guidance with a verified Pandit Ji', 'सत्यापित पंडित जी के साथ 1-ऑन-1 वैदिक मार्गदर्शन')}</div>
                     </div>
                   </Link>
                 </div>
@@ -344,13 +347,13 @@ export function Navbar() {
               href="/#upcoming"
               className="hidden xl:inline-flex whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5"
             >
-              Schedule
+              {t('Schedule', 'कार्यक्रम')}
             </Link>
             <Link
               href="/#pandits"
               className="hidden xl:inline-flex items-center gap-1 whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5"
             >
-              <span className="hidden xl:inline">Verified </span>Pandit Jis
+              {t('Verified Pandit Jis', 'सत्यापित पंडित जी')}
             </Link>
 
             {/* More Dropdown (About, FAQ, Ethics, Support) */}
@@ -360,9 +363,9 @@ export function Navbar() {
                 aria-expanded={moreDropdownOpen}
                 aria-haspopup="menu"
                 className="whitespace-nowrap shrink-0 rounded-full px-2.5 py-1.5 transition hover:text-gold-pale hover:bg-gold/5 flex items-center gap-1 font-semibold text-stone-300"
-                aria-label="More devotional links"
+                aria-label={t('More devotional links', 'और भक्ति-लिंक')}
               >
-                <span>More</span>
+                <span>{t('More', 'और')}</span>
                 <ChevronDown className={`w-3 h-3 text-gold-soft transition-transform ${moreDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
@@ -373,14 +376,14 @@ export function Navbar() {
                     onClick={() => setMoreDropdownOpen(false)}
                     className="xl:hidden flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
                   >
-                    <span>Schedule</span>
+                    <span>{t('Schedule', 'कार्यक्रम')}</span>
                   </Link>
                   <Link
                     href="/#pandits"
                     onClick={() => setMoreDropdownOpen(false)}
                     className="xl:hidden flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
                   >
-                    <span>Verified Pandit Jis</span>
+                    <span>{t('Verified Pandit Jis', 'सत्यापित पंडित जी')}</span>
                   </Link>
                   <Link
                     href="/about"
@@ -388,7 +391,7 @@ export function Navbar() {
                     className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
                   >
                     <OmIcon size={14} className="text-gold shrink-0" />
-                    <span>About Our Heritage</span>
+                    <span>{t('About Our Heritage', 'हमारी विरासत के बारे में')}</span>
                   </Link>
                   <Link
                     href="/faq"
@@ -396,7 +399,7 @@ export function Navbar() {
                     className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
                   >
                     <HelpCircle className="w-3.5 h-3.5 text-gold shrink-0" />
-                    <span>Devotee FAQ</span>
+                    <span>{t('Devotee FAQ', 'भक्त FAQ')}</span>
                   </Link>
                   <Link
                     href="/contact"
@@ -404,7 +407,7 @@ export function Navbar() {
                     className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
                   >
                     <PranamIcon size={14} className="text-gold shrink-0" />
-                    <span>Contact &amp; Support</span>
+                    <span>{t('Contact & Support', 'संपर्क एवं सहायता')}</span>
                   </Link>
                 </div>
               )}
@@ -418,11 +421,11 @@ export function Navbar() {
               type="button"
               onClick={() => setSearchOpen(true)}
               className="flex items-center justify-center 2xl:justify-start gap-1.5 h-8 w-8 2xl:w-auto 2xl:px-2.5 rounded-full border border-stone-200 dark:border-gold/25 bg-white dark:bg-obsidian-soft hover:bg-stone-50 dark:hover:bg-gold/10 text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-gold-pale text-xs font-medium transition shadow-sm"
-              aria-label="Search pooja and aarti"
-              title="Search pooja, pandit, or aarti (/)"
+              aria-label={t('Search pooja and aarti', 'पूजा और आरती खोजें')}
+              title={t('Search pooja, pandit, or aarti (/)', 'पूजा, पंडित जी या आरती खोजें (/)')}
             >
               <Search className="w-3.5 h-3.5 text-amber-700 dark:text-gold-soft shrink-0" />
-              <span className="hidden 2xl:inline text-stone-700 dark:text-stone-300">Search...</span>
+              <span className="hidden 2xl:inline text-stone-700 dark:text-stone-300">{t('Search...', 'खोजें…')}</span>
               <kbd className="hidden 2xl:inline px-1 py-0.5 rounded text-[10px] bg-stone-100 dark:bg-obsidian text-stone-600 dark:text-stone-400 border border-stone-200 dark:border-gold/20 font-mono">/</kbd>
             </button>
 
@@ -435,10 +438,10 @@ export function Navbar() {
               <Link
                 href="/studio/create"
                 className="whitespace-nowrap shrink-0 flex items-center gap-1 rounded-full bg-gold/15 hover:bg-gold/25 border border-gold/30 h-8 px-2.5 text-xs font-bold text-gold-pale transition shadow-sm"
-                title="Open Studio"
+                title={t('Open Studio', 'स्टूडियो खोलें')}
               >
                 <Video className="w-3.5 h-3.5 text-gold shrink-0" />
-                <span className="hidden sm:inline">Studio</span>
+                <span className="hidden sm:inline">{t('Studio', 'स्टूडियो')}</span>
               </Link>
             )}
 
@@ -449,7 +452,7 @@ export function Navbar() {
                 className="whitespace-nowrap shrink-0 flex items-center gap-1 rounded-full border border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-950/60 h-8 px-2.5 text-xs font-bold text-amber-900 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition shadow-sm"
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400 shrink-0" />
-                <span>Admin</span>
+                <span>{t('Admin', 'एडमिन')}</span>
               </Link>
             )}
 
@@ -459,11 +462,11 @@ export function Navbar() {
                 <button
                   onClick={() => setTopupModalOpen(true)}
                   className="whitespace-nowrap shrink-0 group flex items-center gap-1.5 rounded-full border border-amber-300 dark:border-gold/30 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-gold/15 dark:to-gold/5 h-8 px-2.5 text-xs font-bold text-amber-950 dark:text-gold-pale transition hover:border-amber-400 dark:hover:border-gold/60 shadow-sm"
-                  title="Your Sacred Coins (Click to Recharge)"
+                  title={t('Your Sacred Coins (Click to Recharge)', 'आपके पवित्र कॉइन (रिचार्ज के लिए क्लिक करें)')}
                 >
                   <CoinIcon size={14} className="shrink-0 group-hover:scale-110 transition-transform" />
                   <span className="font-extrabold text-amber-900 dark:text-gold">{coinBalance !== null ? coinBalance : (user ? '...' : 100)}</span>
-                  <span className="hidden 2xl:inline text-[10px] text-stone-600 dark:text-stone-300 font-medium">Coins</span>
+                  <span className="hidden 2xl:inline text-[10px] text-stone-600 dark:text-stone-300 font-medium">{t('Coins', 'कॉइन')}</span>
                   <PlusCircle className="w-3 h-3 text-amber-700 dark:text-gold shrink-0 group-hover:text-amber-800 dark:group-hover:text-gold-soft" />
                 </button>
 
@@ -474,7 +477,7 @@ export function Navbar() {
                     aria-expanded={userDropdownOpen}
                     aria-haspopup="menu"
                     className="whitespace-nowrap shrink-0 flex items-center gap-1.5 text-xs font-semibold text-stone-700 dark:text-stone-200 hover:text-stone-950 dark:hover:text-gold-pale transition h-8 px-2.5 rounded-full bg-white dark:bg-obsidian-soft border border-stone-200 dark:border-gold/20 hover:border-amber-400 dark:hover:border-gold/40 max-w-[115px] sm:max-w-[130px] shadow-sm"
-                    title="Devotee & Broadcaster Menu"
+                    title={t('Devotee & Broadcaster Menu', 'भक्त एवं प्रसारक मेनू')}
                   >
                     <PranamIcon size={13} className="text-amber-700 dark:text-gold shrink-0" />
                     <span className="truncate">{user.name?.split(' ')[0] || user.name}</span>
@@ -487,8 +490,16 @@ export function Navbar() {
                       <div className="user-dropdown-header p-3 rounded-xl mb-2 shadow-sm">
                         <div className="user-name font-bold text-stone-900 dark:text-white text-sm truncate">{user.name}</div>
                         <div className="flex items-center justify-between mt-1">
-                          <span className="text-[10px] text-amber-700 dark:text-gold font-bold uppercase tracking-wider">{isApprovedPandit && isAdmin ? 'ADMIN · PANDIT JI' : (user.role || 'DEVOTEE')}</span>
-                          <span className="text-[10px] text-stone-600 dark:text-stone-300 font-medium">{coinBalance !== null ? `${coinBalance} Coins` : ''}</span>
+                          <span className="text-[10px] text-amber-700 dark:text-gold font-bold uppercase tracking-wider">
+                            {isApprovedPandit && isAdmin
+                              ? t('ADMIN · PANDIT JI', 'एडमिन · पंडित जी')
+                              : isAdmin
+                              ? t('ADMIN', 'एडमिन')
+                              : isApprovedPandit
+                              ? t('PANDIT JI', 'पंडित जी')
+                              : t('DEVOTEE', 'भक्त')}
+                          </span>
+                          <span className="text-[10px] text-stone-600 dark:text-stone-300 font-medium">{coinBalance !== null ? formatCoins(coinBalance, lang) : ''}</span>
                         </div>
                       </div>
 
@@ -501,7 +512,7 @@ export function Navbar() {
                               className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
                             >
                               <Video className="w-4 h-4 text-gold shrink-0" />
-                              <span>Go Live (Studio)</span>
+                              <span>{t('Go Live (Studio)', 'लाइव जाएँ (स्टूडियो)')}</span>
                             </Link>
                             <Link
                               href="/studio/streams"
@@ -509,7 +520,7 @@ export function Navbar() {
                               className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
                             >
                               <DiyaIcon size={16} className="text-gold shrink-0" />
-                              <span>My Sacred Broadcasts</span>
+                              <span>{t('My Sacred Broadcasts', 'मेरे पवित्र प्रसारण')}</span>
                             </Link>
                             <Link
                               href="/streamer/earnings"
@@ -517,7 +528,7 @@ export function Navbar() {
                               className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
                             >
                               <CoinIcon size={16} className="text-gold shrink-0" />
-                              <span>Earnings &amp; Dakshina</span>
+                              <span>{t('Earnings & Dakshina', 'कमाई एवं दक्षिणा')}</span>
                             </Link>
                             <Link
                               href="/account#pooja-requests"
@@ -525,7 +536,7 @@ export function Navbar() {
                               className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
                             >
                               <Calendar className="w-4 h-4 text-gold shrink-0" />
-                              <span>Pooja Requests &amp; Approvals</span>
+                              <span>{t('Pooja Requests & Approvals', 'पूजा अनुरोध एवं स्वीकृति')}</span>
                             </Link>
                           </>
                         )}
@@ -536,7 +547,7 @@ export function Navbar() {
                             className="flex items-center gap-2.5 px-3 py-2 text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-xl transition font-medium"
                           >
                             <ShieldCheck className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0" />
-                            <span>Admin Console</span>
+                            <span>{t('Admin Console', 'एडमिन कंसोल')}</span>
                           </Link>
                         )}
                         {isViewer && (
@@ -547,7 +558,7 @@ export function Navbar() {
                               className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
                             >
                               <DiyaIcon size={16} className="text-gold shrink-0" />
-                              <span>Become a Pandit Ji</span>
+                              <span>{t('Become a Pandit Ji', 'पंडित जी बनें')}</span>
                             </Link>
                             <Link
                               href="/streamer/status"
@@ -555,7 +566,7 @@ export function Navbar() {
                               className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
                             >
                               <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" />
-                              <span>Pandit Ji KYC Status</span>
+                              <span>{t('Pandit Ji KYC Status', 'पंडित जी KYC स्थिति')}</span>
                             </Link>
                             <Link
                               href="/account#bookings"
@@ -563,7 +574,7 @@ export function Navbar() {
                               className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
                             >
                               <DiyaIcon size={16} className="text-gold shrink-0" />
-                              <span>My Booked Poojas</span>
+                              <span>{t('My Booked Poojas', 'मेरी बुक की गई पूजाएँ')}</span>
                             </Link>
                           </>
                         )}
@@ -573,7 +584,7 @@ export function Navbar() {
                           className="flex items-center gap-2.5 px-3 py-2 text-stone-200 hover:text-gold hover:bg-gold/15 rounded-xl transition font-medium"
                         >
                           <User className="w-4 h-4 text-stone-400 shrink-0" />
-                          <span>Account Settings</span>
+                          <span>{t('Account Settings', 'खाता सेटिंग्स')}</span>
                         </Link>
                         <button
                           onClick={() => {
@@ -583,7 +594,7 @@ export function Navbar() {
                           className="logout-btn w-full flex items-center gap-2.5 px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition font-medium mt-1.5 pt-2 border-t border-stone-200 dark:border-stone-800/80"
                         >
                           <LogOut className="w-4 h-4 text-red-400 shrink-0" />
-                          <span>Log Out</span>
+                          <span>{t('Log Out', 'लॉग आउट')}</span>
                         </button>
                       </div>
                     </div>
@@ -596,15 +607,15 @@ export function Navbar() {
                   href="/login"
                   className="whitespace-nowrap shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold text-stone-300 hover:text-gold-pale transition"
                 >
-                  Sign In
+                  {t('Sign In', 'साइन इन')}
                 </Link>
                 <Link
                   href="/register"
                   className="nav-join-free-btn whitespace-nowrap shrink-0 group inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition hover:scale-105 active:scale-95 shadow-sm"
                 >
-                  <span>Join Free</span>
+                  <span>{t('Join Free', 'निःशुल्क जुड़ें')}</span>
                   <span className="nav-join-free-badge hidden xs:inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-black shrink-0">
-                    +100 Coins
+                    {t('+100 Coins', '+100 कॉइन')}
                   </span>
                 </Link>
               </div>
@@ -617,7 +628,7 @@ export function Navbar() {
               type="button"
               onClick={() => setSearchOpen(true)}
               className="p-1 sm:p-1.5 text-stone-300 hover:text-white rounded-full hover:bg-white/5 transition"
-              aria-label="Search pooja and darshan"
+              aria-label={t('Search pooja and darshan', 'पूजा और दर्शन खोजें')}
             >
               <Search className="w-4 h-4 text-gold-soft" />
             </button>
@@ -627,8 +638,8 @@ export function Navbar() {
               <button
                 onClick={() => setTopupModalOpen(true)}
                 className="whitespace-nowrap shrink-0 flex items-center gap-1 rounded-full border border-amber-300 dark:border-gold/40 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-gold/20 dark:to-gold/10 h-7 sm:h-8 px-2 text-[11px] sm:text-xs font-bold text-amber-950 dark:text-gold-pale shadow-sm hover:border-amber-400 dark:hover:border-gold transition active:scale-95"
-                title="Your Sacred Coins (Click to Recharge)"
-                aria-label="Recharge Sacred Coins"
+                title={t('Your Sacred Coins (Click to Recharge)', 'आपके पवित्र कॉइन (रिचार्ज के लिए क्लिक करें)')}
+                aria-label={t('Recharge Sacred Coins', 'पवित्र कॉइन रिचार्ज करें')}
               >
                 <CoinIcon size={12} className="shrink-0" />
                 <span className="font-extrabold text-amber-900 dark:text-gold tracking-tight">
@@ -639,7 +650,7 @@ export function Navbar() {
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-1.5 sm:p-2 rounded-full border border-stone-300 dark:border-gold/25 text-stone-900 dark:text-gold-pale hover:bg-stone-100 dark:hover:bg-gold/10 transition"
-              aria-label="Toggle navigation menu"
+              aria-label={t('Toggle navigation menu', 'नेविगेशन मेनू खोलें/बंद करें')}
             >
               {mobileMenuOpen ? <X className="w-5 h-5 text-stone-900 dark:text-gold-pale" /> : <Menu className="w-5 h-5 text-stone-900 dark:text-gold-pale" />}
             </button>
@@ -656,7 +667,7 @@ export function Navbar() {
                 onClick={() => setMobileMenuOpen(false)}
                 className="mobile-nav-link flex items-center justify-between font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
               >
-                <span className="flex items-center gap-2 font-bold">Live Darshan</span>
+                <span className="flex items-center gap-2 font-bold">{t('Live Darshan', 'लाइव दर्शन')}</span>
                 <span className="live-dot" />
               </Link>
               <Link
@@ -665,31 +676,31 @@ export function Navbar() {
                 className="mobile-nav-link flex items-center gap-2 font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
               >
                 <DiyaIcon size={16} className="text-amber-700 dark:text-amber-400" />
-                <span>Book Pooja &amp; Kathas</span>
+                <span>{t('Book Pooja & Kathas', 'पूजा एवं कथा बुक करें')}</span>
               </Link>
               <Link
                 href="/#upcoming"
                 onClick={() => setMobileMenuOpen(false)}
                 className="mobile-nav-link font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
               >
-                Pooja Schedule
+                {t('Pooja Schedule', 'पूजा कार्यक्रम')}
               </Link>
               <Link
                 href="/#pandits"
                 onClick={() => setMobileMenuOpen(false)}
                 className="mobile-nav-link font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
               >
-                Verified Pandit Jis Directory
+                {t('Verified Pandit Jis Directory', 'सत्यापित पंडित जी निर्देशिका')}
               </Link>
               <div className="border-b border-stone-200 dark:border-stone-800/60">
                 <div className="mobile-nav-link font-bold py-1.5 flex items-center gap-2 text-stone-800 dark:text-stone-200">
                   <Orbit className="w-4 h-4 text-amber-700 dark:text-amber-400" />
-                  <span>Kundli & Astrology</span>
+                  <span>{t('Kundli & Astrology', 'कुंडली एवं ज्योतिष')}</span>
                 </div>
                 <div className="ml-6 pb-1 space-y-1">
-                  <Link href="/kundli" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-1.5 text-xs text-stone-600 dark:text-stone-400 hover:text-amber-700 dark:hover:text-gold py-1 transition"><Orbit className="w-3 h-3 text-amber-600 dark:text-gold-soft shrink-0" /><span>Check Your Horoscope</span></Link>
-                  <Link href="/kundli?tab=matching" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-1.5 text-xs text-stone-600 dark:text-stone-400 hover:text-amber-700 dark:hover:text-gold py-1 transition"><HeartHandshake className="w-3 h-3 text-amber-600 dark:text-gold-soft shrink-0" /><span>Kundli Matching</span></Link>
-                  <Link href="/pooja" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-1.5 text-xs text-stone-600 dark:text-stone-400 hover:text-amber-700 dark:hover:text-gold py-1 transition"><Calendar className="w-3 h-3 text-amber-600 dark:text-gold-soft shrink-0" /><span>Book a Personal Astrologer</span></Link>
+                  <Link href="/kundli" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-1.5 text-xs text-stone-600 dark:text-stone-400 hover:text-amber-700 dark:hover:text-gold py-1 transition"><Orbit className="w-3 h-3 text-amber-600 dark:text-gold-soft shrink-0" /><span>{t('Check Your Horoscope', 'अपनी जन्म पत्रिका देखें')}</span></Link>
+                  <Link href="/kundli?tab=matching" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-1.5 text-xs text-stone-600 dark:text-stone-400 hover:text-amber-700 dark:hover:text-gold py-1 transition"><HeartHandshake className="w-3 h-3 text-amber-600 dark:text-gold-soft shrink-0" /><span>{t('Kundli Matching', 'कुंडली मिलान')}</span></Link>
+                  <Link href="/pooja" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-1.5 text-xs text-stone-600 dark:text-stone-400 hover:text-amber-700 dark:hover:text-gold py-1 transition"><Calendar className="w-3 h-3 text-amber-600 dark:text-gold-soft shrink-0" /><span>{t('Book a Personal Astrologer', 'व्यक्तिगत ज्योतिषी बुक करें')}</span></Link>
                 </div>
               </div>
               <Link
@@ -697,14 +708,14 @@ export function Navbar() {
                 onClick={() => setMobileMenuOpen(false)}
                 className="mobile-nav-link font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
               >
-                About Our Heritage
+                {t('About Our Heritage', 'हमारी विरासत के बारे में')}
               </Link>
               <Link
                 href="/faq"
                 onClick={() => setMobileMenuOpen(false)}
                 className="mobile-nav-link font-bold py-1.5 border-b border-stone-200 dark:border-stone-800/60"
               >
-                FAQ &amp; Support
+                {t('FAQ & Support', 'FAQ एवं सहायता')}
               </Link>
 
               {isApprovedPandit && (
@@ -714,28 +725,28 @@ export function Navbar() {
                     onClick={() => setMobileMenuOpen(false)}
                     className="mobile-nav-link font-bold py-1.5 flex items-center gap-2"
                   >
-                    <Video className="w-4 h-4 text-amber-700 dark:text-gold" /> Go Live (Studio)
+                    <Video className="w-4 h-4 text-amber-700 dark:text-gold" /> {t('Go Live (Studio)', 'लाइव जाएँ (स्टूडियो)')}
                   </Link>
                   <Link
                     href="/studio/streams"
                     onClick={() => setMobileMenuOpen(false)}
                     className="mobile-nav-link font-bold py-1.5 flex items-center gap-2"
                   >
-                    <DiyaIcon size={16} /> My Sacred Broadcasts
+                    <DiyaIcon size={16} /> {t('My Sacred Broadcasts', 'मेरे पवित्र प्रसारण')}
                   </Link>
                   <Link
                     href="/streamer/earnings"
                     onClick={() => setMobileMenuOpen(false)}
                     className="mobile-nav-link font-bold py-1.5 flex items-center gap-2"
                   >
-                    <CoinIcon size={16} /> Pandit Ji Earnings &amp; Dakshina
+                    <CoinIcon size={16} /> {t('Pandit Ji Earnings & Dakshina', 'पंडित जी कमाई एवं दक्षिणा')}
                   </Link>
                   <Link
                     href="/account#pooja-requests"
                     onClick={() => setMobileMenuOpen(false)}
                     className="mobile-nav-link font-bold py-1.5 flex items-center gap-2"
                   >
-                    <Calendar className="w-4 h-4 text-amber-700 dark:text-gold" /> Pooja Requests &amp; Approvals
+                    <Calendar className="w-4 h-4 text-amber-700 dark:text-gold" /> {t('Pooja Requests & Approvals', 'पूजा अनुरोध एवं स्वीकृति')}
                   </Link>
                 </>
               )}
@@ -746,7 +757,7 @@ export function Navbar() {
                   onClick={() => setMobileMenuOpen(false)}
                   className="mobile-nav-link font-bold py-1.5 flex items-center gap-2"
                 >
-                  <ShieldCheck className="w-4 h-4 text-amber-700 dark:text-amber-300" /> Admin Console
+                  <ShieldCheck className="w-4 h-4 text-amber-700 dark:text-amber-300" /> {t('Admin Console', 'एडमिन कंसोल')}
                 </Link>
               )}
 
@@ -757,21 +768,21 @@ export function Navbar() {
                     onClick={() => setMobileMenuOpen(false)}
                     className="mobile-nav-link font-semibold py-1.5 flex items-center gap-2"
                   >
-                    <DiyaIcon size={16} /> Become a Pandit Ji
+                    <DiyaIcon size={16} /> {t('Become a Pandit Ji', 'पंडित जी बनें')}
                   </Link>
                   <Link
                     href="/streamer/status"
                     onClick={() => setMobileMenuOpen(false)}
                     className="mobile-nav-link font-semibold py-1.5 flex items-center gap-2"
                   >
-                    <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400" /> Pandit Ji KYC Status
+                    <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400" /> {t('Pandit Ji KYC Status', 'पंडित जी KYC स्थिति')}
                   </Link>
                   <Link
                     href="/account#bookings"
                     onClick={() => setMobileMenuOpen(false)}
                     className="mobile-nav-link font-semibold py-1.5 flex items-center gap-2"
                   >
-                    <DiyaIcon size={16} /> My Booked Poojas
+                    <DiyaIcon size={16} /> {t('My Booked Poojas', 'मेरी बुक की गई पूजाएँ')}
                   </Link>
                 </>
               )}
@@ -784,7 +795,7 @@ export function Navbar() {
                     <span className="font-bold text-stone-950 dark:text-white truncate max-w-[180px]">{user.name}</span>
                     <span className="text-amber-800 dark:text-gold font-bold flex items-center gap-1">
                       <CoinIcon size={14} />
-                      {coinBalance !== null ? coinBalance : (user ? '...' : 100)} Coins
+                      {coinBalance !== null ? formatCoins(coinBalance, lang) : (user ? '...' : formatCoins(100, lang))}
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -795,21 +806,21 @@ export function Navbar() {
                       }}
                       className="hero-btn-schedule px-3 py-2 border text-xs font-bold rounded-xl text-center transition shadow-sm"
                     >
-                      Top Up Coins
+                      {t('Top Up Coins', 'कॉइन टॉप-अप')}
                     </button>
                     <Link
                       href="/account"
                       onClick={() => setMobileMenuOpen(false)}
                       className="hero-btn-secondary px-3 py-2 border text-xs font-bold rounded-xl text-center transition shadow-sm"
                     >
-                      Account Settings
+                      {t('Account Settings', 'खाता सेटिंग्स')}
                     </Link>
                   </div>
                   <button
                     onClick={handleLogout}
                     className="w-full text-center text-xs font-semibold text-red-600 dark:text-red-400 py-2 border border-red-200 dark:border-red-950/40 bg-red-50 dark:bg-red-950/20 rounded-xl transition hover:bg-red-100 dark:hover:bg-red-950/30"
                   >
-                    Log Out
+                    {t('Log Out', 'लॉग आउट')}
                   </button>
                 </div>
               ) : (
@@ -819,14 +830,14 @@ export function Navbar() {
                     onClick={() => setMobileMenuOpen(false)}
                     className="mobile-signin-btn px-4 py-2.5 rounded-xl border text-center text-xs font-extrabold transition shadow-sm"
                   >
-                    Sign In
+                    {t('Sign In', 'साइन इन')}
                   </Link>
                   <Link
                     href="/register"
                     onClick={() => setMobileMenuOpen(false)}
                     className="px-4 py-2.5 rounded-xl bg-gold hover:bg-gold-deep text-center text-xs font-black text-obsidian shadow-sm transition"
                   >
-                    Join Free (+100)
+                    {t('Join Free (+100)', 'निःशुल्क जुड़ें (+100)')}
                   </Link>
                 </div>
               )}

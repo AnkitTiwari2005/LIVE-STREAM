@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
+import { useLang } from '@/lib/i18n/context';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -19,13 +20,16 @@ export function ConfirmDialog({
   isOpen,
   title,
   description,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   variant = 'danger',
   loading = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const { t } = useLang();
+  const resolvedConfirm = confirmLabel ?? t('Confirm', 'पुष्टि करें');
+  const resolvedCancel = cancelLabel ?? t('Cancel', 'रद्द करें');
   useEffect(() => {
     if (!isOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -105,7 +109,7 @@ export function ConfirmDialog({
             autoFocus
             className="px-4 py-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 text-xs sm:text-sm font-semibold transition disabled:opacity-50"
           >
-            {cancelLabel}
+            {resolvedCancel}
           </button>
           <button
             type="button"
@@ -113,7 +117,7 @@ export function ConfirmDialog({
             disabled={loading}
             className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition disabled:opacity-50 ${confirmBtnClasses}`}
           >
-            {loading ? 'Processing...' : confirmLabel}
+            {loading ? t('Processing...', 'प्रक्रिया जारी है…') : resolvedConfirm}
           </button>
         </div>
       </div>

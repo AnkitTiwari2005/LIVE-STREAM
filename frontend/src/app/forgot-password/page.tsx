@@ -4,8 +4,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { OmIcon, DiyaIcon } from '@/components/icons/SpiritualIcons';
+import { useLang } from '@/lib/i18n/context';
 
 export default function ForgotPasswordPage() {
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -26,7 +29,7 @@ export default function ForgotPasswordPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || 'Failed to dispatch reset link');
+        throw new Error(data.message || L('Failed to dispatch reset link', 'रीसेट लिंक भेजने में समस्या हुई'));
       }
 
       setSubmitted(true);
@@ -43,14 +46,14 @@ export default function ForgotPasswordPage() {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-3">
             <span className="p-3 bg-gradient-to-b from-amber-500/10 to-transparent border border-gold/30 rounded-2xl">
-              <img src="/logo.webp" alt="Param Darshan" className="w-10 h-10 object-contain drop-shadow" />
+              <img src="/logo.webp" alt={L('Param Darshan', 'परम दर्शन')} className="w-10 h-10 object-contain drop-shadow" />
             </span>
           </div>
           <h1 className="text-2xl font-serif font-bold text-stone-100 flex items-center justify-center gap-2">
-            Reset Password
+            {L('Reset Password', 'पासवर्ड रीसेट करें')}
           </h1>
           <p className="text-stone-400 text-sm mt-1">
-            Enter your registered email address to receive sacred password reset instructions.
+            {L('Enter your registered email address to receive sacred password reset instructions.', 'पासवर्ड रीसेट निर्देश प्राप्त करने के लिए अपना पंजीकृत ईमेल पता दर्ज करें।')}
           </p>
         </div>
 
@@ -61,9 +64,17 @@ export default function ForgotPasswordPage() {
                 <CheckCircle2 className="w-8 h-8" />
               </span>
             </div>
-            <h3 className="text-lg font-semibold text-stone-100">Instructions Dispatched</h3>
+            <h3 className="text-lg font-semibold text-stone-100">{L('Instructions Dispatched', 'निर्देश भेजे गए')}</h3>
             <p className="text-stone-400 text-sm leading-relaxed">
-              If an account with <strong className="text-stone-200">{email}</strong> exists, a password reset link has been dispatched. Please check your inbox and spam folder.
+              {lang === 'hi' ? (
+                <>
+                  यदि <strong className="text-stone-200">{email}</strong> से कोई खाता पंजीकृत है, तो पासवर्ड रीसेट लिंक भेज दिया गया है। कृपया अपना इनबॉक्स और स्पैम फ़ोल्डर देखें।
+                </>
+              ) : (
+                <>
+                  If an account with <strong className="text-stone-200">{email}</strong> exists, a password reset link has been dispatched. Please check your inbox and spam folder.
+                </>
+              )}
             </p>
             <div className="pt-4">
               <Link
@@ -71,7 +82,7 @@ export default function ForgotPasswordPage() {
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-xl text-sm font-semibold transition"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Return to Sign In
+                {L('Return to Sign In', 'साइन इन पर लौटें')}
               </Link>
             </div>
           </div>
@@ -85,7 +96,7 @@ export default function ForgotPasswordPage() {
 
             <div>
               <label className="block text-xs font-semibold text-stone-300 mb-1.5">
-                Email Address
+                {L('Email Address', 'ईमेल पता')}
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-stone-600 dark:text-stone-400 absolute left-3 top-3" />
@@ -105,7 +116,7 @@ export default function ForgotPasswordPage() {
               disabled={loading}
               className="w-full py-2.5 bg-gradient-to-r from-orange-700 to-amber-700 hover:from-orange-600 hover:to-amber-600 text-white font-semibold rounded-xl text-sm shadow-md transition-all disabled:opacity-50"
             >
-              {loading ? 'Dispatching Link...' : 'Send Reset Link'}
+              {loading ? L('Dispatching Link...', 'लिंक भेजा जा रहा है...') : L('Send Reset Link', 'रीसेट लिंक भेजें')}
             </button>
 
             <div className="text-center pt-2">
@@ -114,7 +125,7 @@ export default function ForgotPasswordPage() {
                 className="inline-flex items-center gap-1.5 text-xs text-stone-400 hover:text-orange-400 transition"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                Back to Sign In
+                {L('Back to Sign In', 'साइन इन पर वापस जाएँ')}
               </Link>
             </div>
           </form>
