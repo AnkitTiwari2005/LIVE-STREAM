@@ -84,7 +84,10 @@ export default function TermsPage() {
                 <strong>Consumption Rate:</strong> Public live streams consume coins at the published rate of <strong>5 coins per minute</strong>.
               </li>
               <li>
-                <strong>Non-Transferable & Non-Withdrawable:</strong> Coins cannot be redeemed for fiat cash, transferred between users, or used for third-party commerce.
+                <strong>Non-Transferable & Non-Withdrawable:</strong> Coins cannot be redeemed for fiat cash, transferred between users, or used for third-party commerce. Pandits may only redeem coins earned from live broadcasts and Dakshina, never initial free/welcome or bonus wallet coins.
+              </li>
+              <li>
+                <strong>No Refunds on Top-Up Coins:</strong> Purchased/top-up coin packs are strictly non-refundable under all normal circumstances and upon account deletion. Automatic reversals apply only if a payment gateway fails to capture or deliver coins for a debited bank transaction.
               </li>
               <li>
                 <strong>Complimentary Bonus:</strong> The 100 free joining bonus coins carry a 30-day promotional validity.

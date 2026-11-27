@@ -1,6 +1,6 @@
 import { finalizeStreamRecord } from '../../common/stream-lifecycle';
 import { calculateCoinEarningsBreakdown } from '../../common/config/economy.constants';
-import { Injectable, NotFoundException, BadRequestException, ConflictException, Inject, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, ConflictException, Inject, Optional, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { UserStatus, StreamStatus, UserRole, KycStatus } from '@prisma/client';
 import {
@@ -8,6 +8,9 @@ import {
   VIDEO_PROVIDER_TOKEN,
 } from '../video/interfaces/video-provider.interface';
 import { ChatService } from '../chat/chat.service';
+import { StorageService } from '../storage/storage.service';
+import { dbActivity } from '../../common/db-activity.coordinator';
+import { performAccountErasureTx, deleteKycFilesBestEffort } from '../../common/account-erasure.util';
 
 /** Masks a devotee email for privacy: "ab***@gmail.com" */
 function maskEmail(email: string): string {
@@ -29,6 +32,7 @@ export class AdminService {
     @Inject(VIDEO_PROVIDER_TOKEN)
     private readonly videoProvider: IVideoProviderService,
     private readonly chatService: ChatService,
+    @Optional() private readonly storageService?: StorageService,
   ) {}
 
   async getDashboardOverview() {
@@ -39,6 +43,7 @@ export class AdminService {
       totalStreams,
       openReports,
       pendingKyc,
+      pendingDeletions,
     ] = await Promise.all([
       this.prisma.user.count().catch(() => 0),
       this.prisma.streamerProfile.count({ where: { kycStatus: 'APPROVED' } }).catch(() => 0),
@@ -46,6 +51,7 @@ export class AdminService {
       this.prisma.stream.count().catch(() => 0),
       this.prisma.report.count({ where: { status: 'OPEN' } }).catch(() => 0),
       this.prisma.streamerProfile.count({ where: { kycStatus: 'PENDING' } }).catch(() => 0),
+      this.prisma.user.count({ where: { status: UserStatus.DELETION_REQUESTED, deletedAt: null } }).catch(() => 0),
     ]);
 
     return {
@@ -55,6 +61,7 @@ export class AdminService {
       totalStreams,
       openReports,
       pendingKyc,
+      pendingDeletions,
     };
   }
 
@@ -84,6 +91,8 @@ export class AdminService {
         status: true,
         isEmailVerified: true,
         isTwoFactorEnabled: true,
+        deletionRequestedAt: true,
+        deletedAt: true,
         createdAt: true,
       },
       orderBy: { createdAt: 'desc' },
@@ -94,6 +103,10 @@ export class AdminService {
   async updateUserStatus(userId: string, status: UserStatus, adminId: string, adminEmail: string, reason?: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
+
+    if (user.deletedAt) {
+      throw new BadRequestException('Account has already been permanently anonymized and cannot be modified');
+    }
 
     if (user.role === UserRole.ADMIN) {
       throw new BadRequestException('Cannot modify status of another administrator');
@@ -120,7 +133,10 @@ export class AdminService {
     const updated = await this.prisma.$transaction([
       this.prisma.user.update({
         where: { id: userId },
-        data: { status },
+        data: {
+          status,
+          ...(status === UserStatus.ACTIVE ? { deletionRequestedAt: null } : {}),
+        },
       }),
       this.prisma.auditLog.create({
         data: {
@@ -440,7 +456,7 @@ export class AdminService {
     const users = allStreamerIds.length
       ? await this.prisma.user.findMany({
           where: { id: { in: allStreamerIds } },
-          select: { id: true, name: true, email: true, avatarUrl: true },
+          select: { id: true, name: true, email: true, avatarUrl: true, status: true, deletedAt: true },
         })
       : [];
     const byId = new Map(users.map((u) => [u.id, u]));
@@ -463,6 +479,8 @@ export class AdminService {
           panditName: u?.name || 'Unknown',
           panditEmail: u?.email || '',
           panditAvatarUrl: u?.avatarUrl || null,
+          panditStatus: (u as any)?.status ?? null,
+          panditDeletedAt: (u as any)?.deletedAt ?? null,
           earnedCoins,
           paidCoins,
           dueCoins,
@@ -664,6 +682,9 @@ export class AdminService {
   // --- Pandit Management & Special Badges ---
   async getPanditsList() {
     const streamers = await this.prisma.streamerProfile.findMany({
+      where: {
+        user: { deletedAt: null },
+      },
       include: {
         user: {
           select: {
@@ -673,6 +694,8 @@ export class AdminService {
             avatarUrl: true,
             role: true,
             status: true,
+            deletionRequestedAt: true,
+            deletedAt: true,
             createdAt: true,
           },
         },
@@ -686,11 +709,13 @@ export class AdminService {
     });
 
     const userIds = streamers.map((s) => s.userId);
-    const streamCounts = await this.prisma.stream.groupBy({
-      by: ['streamerId'],
-      where: { streamerId: { in: userIds } },
-      _count: { id: true },
-    });
+    const streamCounts = userIds.length
+      ? await this.prisma.stream.groupBy({
+          by: ['streamerId'],
+          where: { streamerId: { in: userIds } },
+          _count: { id: true },
+        })
+      : [];
 
     const streamCountMap = new Map<string, number>();
     for (const sc of streamCounts) {
@@ -700,11 +725,14 @@ export class AdminService {
     return streamers.map((s) => ({
       id: s.id,
       userId: s.userId,
+      slug: (s as any).slug ?? null,
       name: s.user.name,
       email: s.user.email,
       avatarUrl: s.user.avatarUrl,
       role: s.user.role,
       status: s.user.status,
+      deletionRequestedAt: (s.user as any).deletionRequestedAt ?? null,
+      deletedAt: (s.user as any).deletedAt ?? null,
       bio: s.bio,
       languages: s.languages,
       specialties: s.specialties,
@@ -795,5 +823,209 @@ export class AdminService {
     }
 
     return updated;
+  }
+
+  // --- Pandit Pending Deletion Requests & Approval (gated by dueCoins === 0) ---
+  async getPendingDeletionRequests() {
+    const pendingUsers = await this.prisma.user.findMany({
+      where: {
+        status: UserStatus.DELETION_REQUESTED,
+        deletedAt: null,
+      },
+      include: {
+        streamerProfile: true,
+        wallet: true,
+      },
+      orderBy: { deletionRequestedAt: 'asc' },
+    });
+
+    if (pendingUsers.length === 0) {
+      return [];
+    }
+
+    const userIds = pendingUsers.map((u) => u.id);
+    const [earnedGroups, payoutGroups] = await Promise.all([
+      this.prisma.streamerEarning.groupBy({
+        by: ['streamerId'],
+        where: { streamerId: { in: userIds } },
+        _sum: { coins: true },
+      }),
+      this.prisma.panditPayout.groupBy({
+        by: ['streamerId'],
+        where: { streamerId: { in: userIds } },
+        _sum: { coins: true },
+      }),
+    ]);
+
+    const earnedMap = new Map<string, number>();
+    for (const g of earnedGroups) earnedMap.set(g.streamerId, g._sum.coins || 0);
+
+    const paidMap = new Map<string, number>();
+    for (const pg of payoutGroups) paidMap.set(pg.streamerId, pg._sum.coins || 0);
+
+    const netPaiseOf = (c: number) => Math.round(calculateCoinEarningsBreakdown(c).netInr * 100);
+
+    return pendingUsers.map((u) => {
+      const earnedCoins = earnedMap.get(u.id) || 0;
+      const paidCoins = paidMap.get(u.id) || 0;
+      const dueCoins = Math.max(0, earnedCoins - paidCoins);
+      const dueNetPaise = Math.max(0, netPaiseOf(earnedCoins) - netPaiseOf(paidCoins));
+      const dueBreakdown = calculateCoinEarningsBreakdown(dueCoins);
+
+      return {
+        userId: u.id,
+        name: u.name,
+        email: u.email,
+        avatarUrl: u.avatarUrl,
+        role: u.role,
+        status: u.status,
+        deletionRequestedAt: (u as any).deletionRequestedAt ?? u.updatedAt,
+        createdAt: u.createdAt,
+        streamerProfileId: u.streamerProfile?.id ?? null,
+        slug: (u.streamerProfile as any)?.slug ?? null,
+        kycStatus: u.streamerProfile?.kycStatus ?? null,
+        earnedCoins,
+        paidCoins,
+        dueCoins,
+        dueGrossInr: dueBreakdown.grossInr,
+        dueNetInr: dueNetPaise / 100,
+        walletBalanceCoins: u.wallet?.balanceCoins || 0,
+        walletPurchasedCoins: u.wallet?.purchasedCoins || 0,
+        walletBonusCoins: u.wallet?.bonusCoins || 0,
+      };
+    });
+  }
+
+  async approvePanditDeletion(userId: string, adminId: string, adminEmail: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { streamerProfile: true, wallet: true },
+    });
+    if (!user) throw new NotFoundException('User not found');
+    if (user.deletedAt) throw new BadRequestException('User account has already been permanently erased');
+    if (user.status !== UserStatus.DELETION_REQUESTED) {
+      throw new BadRequestException('User does not have a pending account deletion request');
+    }
+
+    if (user.role === UserRole.ADMIN) {
+      const activeAdmins = await this.prisma.user.count({
+        where: {
+          role: UserRole.ADMIN,
+          deletedAt: null,
+          status: { not: UserStatus.DELETION_REQUESTED },
+        },
+      });
+      if (activeAdmins < 1) {
+        throw new ForbiddenException('Cannot delete the last remaining platform administrator');
+      }
+    }
+
+    // Close any broadcasting streams before entering DB transaction (LiveKit endRoom is a network call)
+    const activeBroadcasts = await this.prisma.stream.findMany({
+      where: {
+        streamerId: userId,
+        status: { in: [StreamStatus.LIVE, StreamStatus.RECONNECTING_GRACE_PERIOD] },
+      },
+    });
+    for (const st of activeBroadcasts) {
+      await this.videoProvider.endRoom(st.id).catch(() => {});
+      await finalizeStreamRecord(this.prisma as any, st);
+    }
+
+    const { kycKeys } = await this.prisma.$transaction(async (tx) => {
+      // Serialize with recordPayout using the exact same advisory lock key so payout settlement
+      // and deletion approval never race each other.
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${'pandit-payout:' + userId}))`;
+
+      const txUser = await tx.user.findUnique({
+        where: { id: userId },
+        include: { streamerProfile: true, wallet: true },
+      });
+      if (!txUser || txUser.deletedAt || txUser.status !== UserStatus.DELETION_REQUESTED) {
+        throw new BadRequestException('Pending deletion request is no longer active');
+      }
+
+      const [earnedAgg, paidAgg] = await Promise.all([
+        tx.streamerEarning.aggregate({ where: { streamerId: userId }, _sum: { coins: true } }),
+        tx.panditPayout.aggregate({ where: { streamerId: userId }, _sum: { coins: true } }),
+      ]);
+      const earnedCoins = earnedAgg._sum.coins || 0;
+      const paidCoins = paidAgg._sum.coins || 0;
+      const dueCoins = Math.max(0, earnedCoins - paidCoins);
+
+      if (dueCoins > 0) {
+        const netPaiseOf = (c: number) => Math.round(calculateCoinEarningsBreakdown(c).netInr * 100);
+        const dueNetInr = Math.max(0, netPaiseOf(earnedCoins) - netPaiseOf(paidCoins)) / 100;
+        throw new BadRequestException(
+          `Cannot approve deletion while ${dueCoins.toLocaleString()} coins (₹${dueNetInr.toFixed(2)} net) of pandit payout remain unsettled. Settle all dues first.`,
+        );
+      }
+
+      await tx.stream.updateMany({
+        where: { streamerId: userId, status: StreamStatus.SCHEDULED },
+        data: { status: StreamStatus.CANCELLED, endedAt: new Date() },
+      });
+
+      return performAccountErasureTx(tx, {
+        user: txUser,
+        actorId: adminId,
+        actorEmail: adminEmail,
+        action: 'ADMIN_APPROVED_PANDIT_DELETION',
+        reason: 'Admin-approved pandit DPDP deletion after payout settlement',
+        extraDetails: { earnedCoins, paidCoins, dueCoins: 0 },
+      });
+    });
+
+    await deleteKycFilesBestEffort(kycKeys, this.storageService, this.logger, userId);
+    dbActivity.bumpPublicStreamsVersion();
+    dbActivity.markRemindersDirty();
+
+    return {
+      message: 'Pandit account deletion approved and permanently erased under DPDP Act 2023.',
+      userId,
+      dueCoins: 0,
+    };
+  }
+
+  async rejectPanditDeletion(userId: string, adminId: string, adminEmail: string, reason?: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, email: true, status: true, deletedAt: true },
+    });
+    if (!user) throw new NotFoundException('User not found');
+    if (user.deletedAt) throw new BadRequestException('User account has already been permanently erased');
+    if (user.status !== UserStatus.DELETION_REQUESTED) {
+      throw new BadRequestException('User does not have a pending deletion request');
+    }
+
+    const cleanReason = typeof reason === 'string' && reason.trim() ? reason.trim().slice(0, 255) : 'Restored by administrator';
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          status: UserStatus.ACTIVE,
+          deletionRequestedAt: null,
+        },
+      }),
+      this.prisma.auditLog.create({
+        data: {
+          actorId: adminId,
+          actorEmail: adminEmail,
+          action: 'ADMIN_REJECTED_DELETION_REQUEST',
+          targetResource: `User:${userId}`,
+          details: {
+            panditName: user.name,
+            reason: cleanReason,
+          },
+        },
+      }),
+    ]);
+
+    dbActivity.bumpPublicStreamsVersion();
+    return {
+      message: 'Account deletion request cancelled and account restored to active status.',
+      userId,
+    };
   }
 }

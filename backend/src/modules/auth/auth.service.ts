@@ -24,7 +24,9 @@ import { resolveTwoFactorSecret } from '../../common/config/validate-env';
 import { isDevMode, isProductionLike } from '../../common/runtime-mode';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
-import { Prisma, UserRole, UserStatus, WalletTxType, WalletTxCategory, StreamStatus } from '@prisma/client';
+import { Prisma, UserRole, UserStatus, WalletTxType, WalletTxCategory, StreamStatus, KycStatus } from '@prisma/client';
+import { calculateCoinEarningsBreakdown } from '../../common/config/economy.constants';
+import { performAccountErasureTx, deleteKycFilesBestEffort } from '../../common/account-erasure.util';
 import { authenticator } from 'otplib';
 import * as qrcode from 'qrcode';
 
@@ -206,7 +208,11 @@ export class AuthService {
   async verifyEmail(rawToken: string) {
     const tokenHash = CryptoUtil.hashSha256(rawToken);
     const user = await this.prisma.user.findFirst({
-      where: { emailVerifyTokenHash: tokenHash, deletedAt: null },
+      where: {
+        emailVerifyTokenHash: tokenHash,
+        deletedAt: null,
+        status: { not: UserStatus.DELETION_REQUESTED },
+      },
       include: { wallet: true },
     });
 
@@ -281,6 +287,12 @@ export class AuthService {
 
     if (user.status === UserStatus.SUSPENDED) {
       throw new UnauthorizedException('Your account is temporarily suspended. Please contact support.');
+    }
+
+    if (user.status === UserStatus.DELETION_REQUESTED) {
+      throw new UnauthorizedException(
+        'Your account deletion request is pending payout settlement and administrator approval.',
+      );
     }
 
     // If 2FA enabled, require 2FA challenge (unless currently locked from brute-force attempts)
@@ -461,7 +473,7 @@ export class AuthService {
 
   async forgotPassword(email: string) {
     const user = await this.findActiveUserByEmail(email);
-    if (!user) {
+    if (!user || user.status === UserStatus.DELETION_REQUESTED || user.status === UserStatus.BANNED) {
       // Generic success to prevent user enumeration
       return { message: 'If an account with that email exists, a password reset link has been dispatched.' };
     }
@@ -553,6 +565,7 @@ export class AuthService {
         resetTokenHash: tokenHash,
         resetTokenExpiry: { gt: new Date() },
         deletedAt: null,
+        status: { not: UserStatus.DELETION_REQUESTED },
       },
     });
 
@@ -648,7 +661,7 @@ export class AuthService {
       where: { id: userId },
       include: { streamerProfile: true, wallet: true },
     });
-    if (!user) throw new NotFoundException('User not found');
+    if (!user || user.deletedAt) throw new NotFoundException('User not found');
 
     // N-06 & N4: Verify password if account has one (Google OAuth-only users have passwordHash === null)
     if (user.passwordHash) {
@@ -664,60 +677,59 @@ export class AuthService {
     // N-06: Guard against deleting the last remaining platform administrator
     if (user.role === UserRole.ADMIN) {
       const activeAdminCount = await this.prisma.user.count({
-        where: { role: UserRole.ADMIN, deletedAt: null },
+        where: {
+          role: UserRole.ADMIN,
+          deletedAt: null,
+          status: { not: UserStatus.DELETION_REQUESTED },
+        },
       });
       if (activeAdminCount <= 1) {
         throw new ForbiddenException('Cannot delete the last remaining platform administrator');
       }
     }
 
-    // N-06: Permanently remove KYC documents from storage disk
-    if (user.streamerProfile?.kycDocuments) {
-      try {
-        const docs = Array.isArray(user.streamerProfile.kycDocuments)
-          ? user.streamerProfile.kycDocuments
-          : [user.streamerProfile.kycDocuments];
-        for (const doc of docs) {
-          const key = typeof doc === 'string' ? doc : (doc as any)?.storageKey;
-          if (key && typeof key === 'string') {
-            await this.storageService.deleteFile(key);
-          }
-        }
-      } catch (err: any) {
-        this.logger.warn(`Failed to delete some KYC files for user [${userId}]: ${err.message}`);
-      }
+    const earnedAgg = this.prisma.streamerEarning?.aggregate
+      ? await this.prisma.streamerEarning.aggregate({
+          where: { streamerId: userId },
+          _sum: { coins: true },
+        })
+      : null;
+    const earnedCoins = earnedAgg?._sum?.coins || 0;
+    const isPanditAccount =
+      user.role === UserRole.STREAMER ||
+      user.streamerProfile?.kycStatus === KycStatus.APPROVED ||
+      earnedCoins > 0;
+
+    if (isPanditAccount && user.status === UserStatus.DELETION_REQUESTED) {
+      throw new ConflictException(
+        'Your account deletion request is already pending payout settlement and administrator approval.',
+      );
     }
 
-    // N4: Anonymize all DakshinaOffering rows to remove devotee personal data (name, gotra, prayer message)
-    await this.prisma.dakshinaOffering.updateMany({
-      where: { devoteeId: userId },
-      data: {
-        devoteeName: 'Deleted Devotee',
-        gotra: null,
-        prayerMessage: null,
-      },
-    });
-
-    // N4: Conclude any active or scheduled streams owned by the user
+    // N4: Conclude any active, reconnecting, or scheduled streams owned by the user
     const liveStreams = await this.prisma.stream.findMany({
       where: {
         streamerId: userId,
-        status: { in: [StreamStatus.LIVE, StreamStatus.SCHEDULED] },
+        status: { in: [StreamStatus.LIVE, StreamStatus.RECONNECTING_GRACE_PERIOD, StreamStatus.SCHEDULED] },
       },
     });
 
     for (const s of liveStreams) {
       try {
-        if (s.status === StreamStatus.LIVE && this.streamsService) {
+        if ((s.status === StreamStatus.LIVE || s.status === StreamStatus.RECONNECTING_GRACE_PERIOD) && this.streamsService) {
           await this.streamsService.endStream(s.id, userId, true);
         } else {
+          const isBroadcasting = s.status === StreamStatus.LIVE || s.status === StreamStatus.RECONNECTING_GRACE_PERIOD;
           await this.prisma.stream.update({
             where: { id: s.id },
             data: {
-              status: s.status === StreamStatus.LIVE ? StreamStatus.ENDED : StreamStatus.CANCELLED,
+              status: isBroadcasting ? StreamStatus.ENDED : StreamStatus.CANCELLED,
               endedAt: new Date(),
             },
           });
+          if (isBroadcasting) {
+            dbActivity.markBroadcastDirty();
+          }
           dbActivity.markRemindersDirty();
           dbActivity.bumpPublicStreamsVersion();
         }
@@ -732,63 +744,81 @@ export class AuthService {
       data: { isRevoked: true },
     }).catch(() => {});
 
-    // N4: Track forfeited coin balances
-    const forfeitedPaidCoins = user.wallet?.purchasedCoins || 0;
-    const forfeitedBonusCoins = user.wallet?.bonusCoins || 0;
-    if (user.wallet && user.wallet.balanceCoins > 0) {
-      await this.prisma.userWallet.update({
-        where: { id: user.wallet.id },
-        data: { balanceCoins: 0, bonusCoins: 0, purchasedCoins: 0 },
-      }).catch(() => {});
+    // Pandits must have earned payouts settled (`dueCoins === 0`) and approved by an admin before full erasure.
+    if (isPanditAccount) {
+      const paidAgg = this.prisma.panditPayout?.aggregate
+        ? await this.prisma.panditPayout.aggregate({
+            where: { streamerId: userId },
+            _sum: { coins: true },
+          })
+        : null;
+      const paidCoins = paidAgg?._sum?.coins || 0;
+      const dueCoins = Math.max(0, earnedCoins - paidCoins);
+      const dueNetInr = calculateCoinEarningsBreakdown(dueCoins).netInr;
+
+      const requestedAt = new Date();
+      const applyPendingRequest = async (tx: any) => {
+        await tx.user.update({
+          where: { id: userId },
+          data: {
+            status: UserStatus.DELETION_REQUESTED,
+            deletionRequestedAt: requestedAt,
+          },
+        });
+        await tx.auditLog.create({
+          data: {
+            actorId: userId,
+            actorEmail: user.email,
+            action: 'DPDP_PANDIT_DELETION_REQUESTED',
+            targetResource: `User:${userId}`,
+            details: {
+              reason: 'Pandit account deletion requested; awaiting payout settlement and admin approval',
+              earnedCoins,
+              paidCoins,
+              dueCoins,
+              dueNetInr,
+            },
+          },
+        });
+      };
+
+      if (typeof (this.prisma as any).$transaction === 'function') {
+        await (this.prisma as any).$transaction(applyPendingRequest);
+      } else {
+        await applyPendingRequest(this.prisma);
+      }
+
+      dbActivity.bumpPublicStreamsVersion();
+      return {
+        pendingApproval: true,
+        dueCoins,
+        dueNetInr,
+        message:
+          dueCoins > 0
+            ? `Your deletion request has been submitted. Your pending payout of ${dueCoins.toLocaleString()} coins (₹${dueNetInr.toFixed(2)} net) will be settled before an administrator approves final erasure.`
+            : 'Your deletion request has been submitted and is awaiting final administrator approval.',
+      };
     }
 
-    const anonymizedEmail = `deleted_${Date.now()}_${user.id.slice(0, 8)}@paramdarshan.privacy`;
-
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        status: UserStatus.DELETION_REQUESTED,
-        deletedAt: new Date(),
-        passwordHash: null,
-        emailVerifyTokenHash: null,
-        googleId: null,
-        resetTokenHash: null,
-        resetTokenExpiry: null,
-        twoFactorSecretEnc: null,
-        twoFactorBackupCodes: [],
-        isTwoFactorEnabled: false,
-        email: anonymizedEmail,
-        name: 'Deleted Devotee',
-        avatarUrl: null,
-        streamerProfile: user.streamerProfile
-          ? {
-              update: {
-                kycDocuments: Prisma.JsonNull,
-                bio: null,
-                specialties: [],
-                languages: [],
-              },
-            }
-          : undefined,
-      },
-    });
-
-    // N-06 & N4: Do NOT retain the original user's email in the audit log after DPDP erasure
-    await this.prisma.auditLog.create({
-      data: {
+    // Immediate self-serve DPDP erasure for devotee accounts
+    const runErasure = (tx: any) =>
+      performAccountErasureTx(tx, {
+        user,
         actorId: userId,
         actorEmail: '[DPDP_REDACTED]',
         action: 'DPDP_USER_ACCOUNT_DELETED',
-        targetResource: `User:${userId}`,
-        details: {
-          reason: 'DPDP Act 2023 self-serve deletion request',
-          forfeitedPaidCoins,
-          forfeitedBonusCoins,
-        },
-      },
-    });
+        reason: 'DPDP Act 2023 self-serve deletion request',
+      });
+
+    const { kycKeys } =
+      typeof (this.prisma as any).$transaction === 'function'
+        ? await (this.prisma as any).$transaction(runErasure)
+        : await runErasure(this.prisma);
+
+    await deleteKycFilesBestEffort(kycKeys, this.storageService, this.logger, userId);
 
     return {
+      pendingApproval: false,
       message:
         'Account and personal data successfully deleted under DPDP Act 2023. Financial transaction records retained anonymously for statutory audit requirements.',
     };

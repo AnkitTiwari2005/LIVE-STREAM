@@ -171,7 +171,7 @@ export default function WalletTopupPage() {
               <ShieldCheck className="w-7 h-7 text-emerald-700 dark:text-emerald-400 mb-3" />
               <span className="font-serif text-base font-bold text-white mb-1">RBI Closed-Loop Wallet</span>
               <p className="text-stone-400 text-xs leading-relaxed">
-                Strict compliance with RBI PPI circulars: platform currency dedicated to live darshan &amp; Dakshina.
+                Strict compliance with RBI PPI circulars: platform currency dedicated to live darshan &amp; Dakshina. Top-up coin packs are final and non-refundable (normally and after account deletion).
               </p>
             </div>
             <div className="flex flex-col items-center">

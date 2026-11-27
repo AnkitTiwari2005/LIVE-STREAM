@@ -11,10 +11,12 @@ import { ApplyStreamerDto, ReviewKycDto } from './dto/apply-streamer.dto';
 import {
   KycStatus,
   UserRole,
+  UserStatus,
   StreamStatus,
   PaymentStatus,
   StreamerEarningSource,
 } from '@prisma/client';
+import { resolveUniqueStreamerSlug } from '../../common/streamer-slug.util';
 import {
   COINS_PER_100_INR,
   STREAMER_SHARE_PERCENT,
@@ -57,9 +59,14 @@ export class StreamersService {
       }
     }
 
+    const slug =
+      user.streamerProfile?.slug ||
+      (await resolveUniqueStreamerSlug(this.prisma, user.name, userId));
+
     const profile = await this.prisma.streamerProfile.upsert({
       where: { userId },
       update: {
+        ...(user.streamerProfile?.slug ? {} : { slug }),
         bio: dto.bio,
         languages: dto.languages,
         specialties: dto.specialties,
@@ -71,6 +78,7 @@ export class StreamersService {
       },
       create: {
         userId,
+        slug,
         bio: dto.bio,
         languages: dto.languages,
         specialties: dto.specialties,
@@ -196,11 +204,17 @@ export class StreamersService {
   }
 
   async getPublicProfile(profileIdOrUserId: string) {
-    let profile = await this.prisma.streamerProfile.findFirst({
+    const rawKey = (profileIdOrUserId || '').trim();
+    const normalizedSlug = rawKey.toLowerCase();
+
+    const profile = await this.prisma.streamerProfile.findFirst({
       where: {
-        OR: [{ id: profileIdOrUserId }, { userId: profileIdOrUserId }],
+        OR: [{ id: rawKey }, { userId: rawKey }, { slug: normalizedSlug }],
         kycStatus: KycStatus.APPROVED,
-        user: { deletedAt: null },
+        user: {
+          deletedAt: null,
+          status: { not: UserStatus.DELETION_REQUESTED },
+        },
       },
       include: {
         user: {
@@ -209,42 +223,6 @@ export class StreamersService {
         _count: { select: { followers: true } },
       },
     });
-
-    if (!profile) {
-      // Support slug resolution (e.g. 'rohit-tiwari', 'santosh-shastri')
-      const SLUG_TO_SEARCH: Record<string, string[]> = {
-        'rohit-tiwari': ['Rohit', 'रोहित'],
-        'santosh-shastri': ['Santosh', 'संतोष'],
-        'ravi-pathak': ['Ravi', 'रवि'],
-        'nitin-sharma': ['Nitin', 'नितिन'],
-        'umesh-shastri': ['Umesh', 'उमेश'],
-        'kuber-tripathi': ['Kuber', 'कुबेर'],
-        'subhash-shastri': ['Subhash', 'सुभाष'],
-        'sumit-shastri': ['Sumit', 'सुमित'],
-        'nandkishor-tripathi': ['Nandkishor', 'नंदकिशोर'],
-      };
-
-      const searchTerms = SLUG_TO_SEARCH[profileIdOrUserId.toLowerCase()];
-      if (searchTerms && searchTerms.length > 0) {
-        profile = await this.prisma.streamerProfile.findFirst({
-          where: {
-            kycStatus: KycStatus.APPROVED,
-            user: {
-              deletedAt: null,
-              OR: searchTerms.map((term) => ({
-                name: { contains: term, mode: 'insensitive' },
-              })),
-            },
-          },
-          include: {
-            user: {
-              select: { id: true, name: true, avatarUrl: true, createdAt: true },
-            },
-            _count: { select: { followers: true } },
-          },
-        });
-      }
-    }
 
     if (!profile) throw new NotFoundException('Verified streamer profile not found');
 
@@ -263,6 +241,7 @@ export class StreamersService {
       profile: {
         id: profile.id,
         userId: profile.userId,
+        slug: (profile as any).slug ?? null,
         name: profile.user.name,
         avatarUrl: profile.user.avatarUrl,
         bio: profile.bio,
@@ -280,9 +259,11 @@ export class StreamersService {
   async follow(followerId: string, streamerProfileId: string) {
     const profile: any = await this.prisma.streamerProfile.findUnique({
       where: { id: streamerProfileId },
-      include: { user: { select: { deletedAt: true } } },
+      include: { user: { select: { deletedAt: true, status: true } } },
     });
-    if (!profile || profile.user?.deletedAt) throw new NotFoundException('Streamer not found');
+    if (!profile || profile.user?.deletedAt || profile.user?.status === UserStatus.DELETION_REQUESTED) {
+      throw new NotFoundException('Streamer not found');
+    }
 
     const follower = await this.prisma.user.findUnique({
       where: { id: followerId },

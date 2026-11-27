@@ -47,10 +47,11 @@ export default function AdminConsolePage() {
   const router = useRouter();
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<
-    'kpi' | 'pandits' | 'categories' | 'bookings' | 'dakshina' | 'kyc' | 'streams' | 'reports' | 'wordFilters' | 'users' | 'audit' | 'banner'
+    'kpi' | 'pandits' | 'categories' | 'bookings' | 'dakshina' | 'deletionRequests' | 'kyc' | 'streams' | 'reports' | 'wordFilters' | 'users' | 'audit' | 'banner'
   >('kpi');
   const [stats, setStats] = useState<any>(null);
   const [panditsList, setPanditsList] = useState<any[]>([]);
+  const [deletionRequests, setDeletionRequests] = useState<any[]>([]);
   const [searchPandit, setSearchPandit] = useState('');
   const [panditFilter, setPanditFilter] = useState<'all' | 'special' | 'verified'>('all');
   const [editingSpecialBadge, setEditingSpecialBadge] = useState<{
@@ -120,7 +121,11 @@ export default function AdminConsolePage() {
   // M-01: Inline rejection modal — replaces window.prompt() which is blocked in some
   // browsers and leaks the admin URL in some CSP configurations.
   const [rejectModal, setRejectModal] = useState<{ profileId: string; reason: string } | null>(null);
-  const [confirmAction, setConfirmAction] = useState<{ type: 'endStream' | 'deleteWord' | 'deleteCategory'; id: string } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{
+    type: 'endStream' | 'deleteWord' | 'deleteCategory' | 'approveDeletion' | 'rejectDeletion';
+    id: string;
+    label?: string;
+  } | null>(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
 
   // Occasion Announcement Banner State
@@ -259,6 +264,10 @@ export default function AdminConsolePage() {
       const dakshinaRes = await fetch(`${apiUrl}/admin/dakshina-ledger`, { headers });
       if (dakshinaRes.ok) setDakshinaData(await dakshinaRes.json());
 
+      // 1.9. Pending Pandit Deletion Requests
+      const delReqRes = await fetch(`${apiUrl}/admin/deletion-requests`, { headers });
+      if (delReqRes.ok) setDeletionRequests(await delReqRes.json());
+
       // 2. Pending KYC
       const kycRes = await fetch(`${apiUrl}/streamers/admin/applications`, { headers });
       if (kycRes.ok) setKycList(await kycRes.json());
@@ -312,6 +321,8 @@ export default function AdminConsolePage() {
       fetchBookings(bookingStatusFilter);
     } else if (activeTab === 'dakshina') {
       fetchDakshinaLedger();
+    } else if (activeTab === 'deletionRequests') {
+      fetchDeletionRequests();
     } else if (activeTab === 'categories') {
       fetchCategories();
     }
@@ -415,6 +426,15 @@ export default function AdminConsolePage() {
     }
   };
 
+  const fetchDeletionRequests = async () => {
+    try {
+      const res = await apiFetch<any[]>('/admin/deletion-requests');
+      setDeletionRequests(Array.isArray(res) ? res : []);
+    } catch (err: any) {
+      console.error('Failed to load deletion requests:', err);
+    }
+  };
+
   const handleRecordPayout = async () => {
     if (!payoutModal) return;
     setSavingPayout(true);
@@ -434,6 +454,7 @@ export default function AdminConsolePage() {
       setPayoutModal(null);
       setPayoutForm({ coins: '', periodTo: new Date().toISOString().split('T')[0], method: 'UPI', reference: '', note: '' });
       fetchDakshinaLedger();
+      fetchDeletionRequests();
     } catch (err: any) {
       toast.error(err.message || 'Failed to record payout');
     } finally {
@@ -689,6 +710,19 @@ export default function AdminConsolePage() {
         setCategoriesList((prev) => prev.filter((c) => c.id !== confirmAction.id));
         setConfirmAction(null);
         toast.success('Category deleted successfully.');
+      } else if (confirmAction.type === 'approveDeletion') {
+        const res = await apiFetch<any>(`/admin/deletion-requests/${confirmAction.id}/approve`, { method: 'POST' });
+        setConfirmAction(null);
+        toast.success(res?.message || 'Pandit account approved and permanently erased.');
+        loadAdminData();
+      } else if (confirmAction.type === 'rejectDeletion') {
+        const res = await apiFetch<any>(`/admin/deletion-requests/${confirmAction.id}/reject`, {
+          method: 'POST',
+          body: JSON.stringify({ reason: 'Deletion request cancelled by administrator' }),
+        });
+        setConfirmAction(null);
+        toast.success(res?.message || 'Account restored to active status.');
+        loadAdminData();
       } else {
         const wordId = confirmAction.id;
         await apiFetch(`/admin/word-filters/${wordId}`, { method: 'DELETE' });
@@ -892,6 +926,7 @@ export default function AdminConsolePage() {
           { key: 'categories', label: `Stream Categories (${categoriesList.length})` },
           { key: 'bookings', label: `Dakshina Offerings (${bookingsTotal || bookingsList.length})` },
           { key: 'dakshina', label: 'Dakshina Ledger' },
+          { key: 'deletionRequests', label: `Deletion Requests (${deletionRequests.length})` },
           { key: 'kyc', label: `Pending KYC (${kycList.length})` },
           { key: 'streams', label: `Live Monitor (${liveStreams.length})` },
           { key: 'reports', label: `Safety Reports (${reports.length})` },
@@ -1050,6 +1085,11 @@ export default function AdminConsolePage() {
                         {pandit.hasSpecialBadge && (
                           <SpecialPanditBadge title={pandit.specialBadgeTitle} size="sm" />
                         )}
+                        {pandit.status === 'DELETION_REQUESTED' && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950/70 text-amber-300 border border-amber-500/40">
+                            Deletion Pending
+                          </span>
+                        )}
                       </div>
 
                       <div className="flex flex-wrap items-center gap-3 text-[11px] text-stone-400">
@@ -1124,38 +1164,15 @@ export default function AdminConsolePage() {
                     </button>
 
                     {/* View Public Profile Link */}
-                    {(() => {
-                      const SLUG_MAP: Record<string, string> = {
-                        'tripathiayush068@gmail.com': 'rohit-tiwari',
-                        'rohit.tiwari@shubhdarshan.com': 'rohit-tiwari',
-                        's.k.jyotish@gmail.com': 'santosh-shastri',
-                        'skjyotish@gmail.com': 'santosh-shastri',
-                        'ravipathak8877@gmail.com': 'ravi-pathak',
-                        'ravi.pathak@shubhdarshan.com': 'ravi-pathak',
-                        'nitinsharma3797@gmail.com': 'nitin-sharma',
-                        'nitin.sharma@shubhdarshan.com': 'nitin-sharma',
-                        'umeshdubey867@gmail.com': 'umesh-shastri',
-                        'umesh.shastri@shubhdarshan.com': 'umesh-shastri',
-                        'Kdtripathi481@gmail.com': 'kuber-tripathi',
-                        'kdtripathi481@gmail.com': 'kuber-tripathi',
-                        'kuber.tripathi@shubhdarshan.com': 'kuber-tripathi',
-                        'subhash.shastri@shubhdarshan.com': 'subhash-shastri',
-                        'sumitpachori8@gmail.com': 'sumit-shastri',
-                        'nandkishortripathi893@gmail.com': 'nandkishor-tripathi',
-                      };
-                      const slug = SLUG_MAP[pandit.email] || pandit.id;
-                      return (
-                        <a
-                          href={`/pandit/${slug}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-stone-950 hover:bg-stone-800 text-stone-300 border border-stone-800 transition"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                          <span>View Profile</span>
-                        </a>
-                      );
-                    })()}
+                    <a
+                      href={`/pandit/${pandit.slug || pandit.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-stone-950 hover:bg-stone-800 text-stone-300 border border-stone-800 transition"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>View Profile</span>
+                    </a>
                   </div>
                 </div>
               ))}
@@ -1640,7 +1657,14 @@ export default function AdminConsolePage() {
                             />
                           </div>
                           <div>
-                            <span className="font-bold text-white text-sm block font-serif">{p.panditName}</span>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-bold text-white text-sm font-serif">{p.panditName}</span>
+                              {p.panditStatus === 'DELETION_REQUESTED' && !p.panditDeletedAt && (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950/70 text-amber-300 border border-amber-500/40">
+                                  Deletion Pending
+                                </span>
+                              )}
+                            </div>
                             <span className="text-stone-400 text-[11px]">{p.panditEmail}</span>
                           </div>
                         </div>
@@ -1705,6 +1729,137 @@ export default function AdminConsolePage() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Tab: Pandit Account Deletion Requests (payout settlement gate) */}
+      {activeTab === 'deletionRequests' && (
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-stone-900/70 p-4 rounded-2xl border border-stone-800">
+            <div>
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Trash2 className="w-4 h-4 text-amber-400" /> Pandit Account Deletion Approvals
+              </h3>
+              <p className="text-xs text-stone-400 mt-1">
+                Pandit deletion requests stay paused here until all earned payouts are settled (<code className="text-amber-300">dueCoins === 0</code>). Remaining wallet/top-up coins are forfeited with no refund upon approval.
+              </p>
+            </div>
+            <button
+              onClick={fetchDeletionRequests}
+              className="px-3.5 py-2 bg-stone-950 hover:bg-stone-800 text-stone-300 rounded-xl border border-stone-800 text-xs font-semibold flex items-center gap-1.5 transition shrink-0 self-start sm:self-center"
+            >
+              <RefreshCw className="w-3.5 h-3.5" /> Refresh Requests
+            </button>
+          </div>
+
+          {deletionRequests.length === 0 ? (
+            <div className="bg-stone-900 border border-stone-800 p-12 text-center rounded-2xl text-stone-400 text-xs">
+              No pending pandit deletion requests right now.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {deletionRequests.map((req) => (
+                <div
+                  key={req.userId}
+                  className="bg-stone-900 border border-stone-800 p-5 rounded-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-lg"
+                >
+                  <div className="space-y-1.5 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="font-serif font-bold text-white text-base">{req.name}</h4>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950/70 text-amber-300 border border-amber-500/40">
+                        PENDING APPROVAL
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-stone-950 text-stone-300 border border-stone-700">
+                        {req.role}
+                      </span>
+                    </div>
+                    <div className="text-xs text-stone-400">
+                      <span>{req.email}</span>
+                      {req.deletionRequestedAt && (
+                        <span> • Requested: {new Date(req.deletionRequestedAt).toLocaleString()}</span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-4 pt-1 text-xs">
+                      <span className="text-stone-300">
+                        Earned: <strong className="text-gold">{(req.earnedCoins || 0).toLocaleString()}</strong>
+                      </span>
+                      <span className="text-stone-300">
+                        Paid: <strong className="text-emerald-400">{(req.paidCoins || 0).toLocaleString()}</strong>
+                      </span>
+                      <span className="text-stone-300">
+                        Due:{' '}
+                        <strong className={req.dueCoins > 0 ? 'text-red-400' : 'text-emerald-400'}>
+                          {(req.dueCoins || 0).toLocaleString()} coins (₹{(req.dueNetInr || 0).toFixed(2)} net)
+                        </strong>
+                      </span>
+                      {req.walletBalanceCoins > 0 && (
+                        <span className="text-stone-500 text-[11px]">
+                          Personal wallet ({req.walletBalanceCoins} coins) forfeited on approval
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 shrink-0 justify-end">
+                    {req.dueCoins > 0 && (
+                      <button
+                        onClick={() => {
+                          setPayoutModal({
+                            panditId: req.userId,
+                            panditName: req.name,
+                            dueCoins: req.dueCoins,
+                            dueNetInr: req.dueNetInr,
+                          });
+                          setPayoutForm({
+                            coins: String(req.dueCoins),
+                            periodTo: new Date().toISOString().split('T')[0],
+                            method: 'UPI',
+                            reference: '',
+                            note: 'Final settlement before account deletion approval',
+                          });
+                        }}
+                        className="px-3.5 py-2 bg-gradient-to-r from-amber-600 to-yellow-500 text-obsidian rounded-xl text-xs font-bold flex items-center gap-1.5 shadow hover:opacity-90 transition"
+                      >
+                        <IndianRupee className="w-3.5 h-3.5" /> Settle Payout (₹{(req.dueNetInr || 0).toFixed(2)})
+                      </button>
+                    )}
+
+                    <button
+                      disabled={req.dueCoins > 0}
+                      title={
+                        req.dueCoins > 0
+                          ? `Settle ${req.dueCoins} due coins before approving deletion`
+                          : 'Approve and permanently erase account'
+                      }
+                      onClick={() =>
+                        setConfirmAction({
+                          type: 'approveDeletion',
+                          id: req.userId,
+                          label: req.name,
+                        })
+                      }
+                      className="px-3.5 py-2 bg-red-700 hover:bg-red-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <Check className="w-3.5 h-3.5" /> Approve &amp; Erase
+                    </button>
+
+                    <button
+                      onClick={() =>
+                        setConfirmAction({
+                          type: 'rejectDeletion',
+                          id: req.userId,
+                          label: req.name,
+                        })
+                      }
+                      className="px-3.5 py-2 bg-stone-950 hover:bg-stone-800 text-stone-300 border border-stone-700 rounded-xl text-xs font-semibold transition"
+                    >
+                      Restore Account
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -2106,7 +2261,11 @@ export default function AdminConsolePage() {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                  {u.role !== 'ADMIN' && (
+                  {u.deletedAt ? (
+                    <span className="px-3 py-1.5 rounded-xl text-[11px] font-semibold bg-stone-950 text-stone-500 border border-stone-800">
+                      Erased (DPDP)
+                    </span>
+                  ) : u.role !== 'ADMIN' ? (
                     <>
                       {u.status === 'ACTIVE' ? (
                         <button
@@ -2124,7 +2283,7 @@ export default function AdminConsolePage() {
                         </button>
                       )}
                     </>
-                  )}
+                  ) : null}
                 </div>
               </div>
             ))}
@@ -2446,6 +2605,10 @@ export default function AdminConsolePage() {
             ? 'Emergency Force-End Stream'
             : confirmAction?.type === 'deleteCategory'
             ? 'Delete Stream Category'
+            : confirmAction?.type === 'approveDeletion'
+            ? 'Approve & Permanently Erase Pandit Account'
+            : confirmAction?.type === 'rejectDeletion'
+            ? 'Restore Account to Active'
             : 'Remove Chat Filter Word'
         }
         description={
@@ -2453,6 +2616,10 @@ export default function AdminConsolePage() {
             ? 'Emergency Action: Force end this stream immediately on LiveKit SFU? Connected participants will be disconnected right away.'
             : confirmAction?.type === 'deleteCategory'
             ? 'Delete this category? If any streams are assigned to it, the action will be blocked to protect platform integrity.'
+            : confirmAction?.type === 'approveDeletion'
+            ? `Permanently erase "${confirmAction.label || 'this pandit'}" under DPDP Act 2023? All personal details, KYC files, credentials, and remaining wallet coins will be wiped permanently (no refund). This succeeds only when dueCoins === 0.`
+            : confirmAction?.type === 'rejectDeletion'
+            ? `Cancel deletion request and restore "${confirmAction.label || 'this user'}" back to ACTIVE status?`
             : 'Remove this word from the prohibited chat filter list?'
         }
         confirmLabel={
@@ -2460,10 +2627,14 @@ export default function AdminConsolePage() {
             ? 'Force End Stream'
             : confirmAction?.type === 'deleteCategory'
             ? 'Delete Category'
+            : confirmAction?.type === 'approveDeletion'
+            ? 'Approve & Erase'
+            : confirmAction?.type === 'rejectDeletion'
+            ? 'Restore Account'
             : 'Remove Word'
         }
         cancelLabel="Cancel"
-        variant="danger"
+        variant={confirmAction?.type === 'rejectDeletion' ? 'warning' : 'danger'}
         loading={confirmBusy}
         onConfirm={executeConfirmAction}
         onCancel={() => setConfirmAction(null)}

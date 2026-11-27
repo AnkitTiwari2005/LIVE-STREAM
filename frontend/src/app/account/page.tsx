@@ -318,10 +318,13 @@ export default function AccountPage() {
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         purgeClientSession();
-        toast.success('Your account and personal data have been permanently erased under DPDP Act 2023.');
+        toast.success(
+          data.message ||
+            'Your account and personal data have been permanently erased under DPDP Act 2023.',
+        );
         setTimeout(() => {
           window.location.href = '/';
-        }, 1500);
+        }, 1800);
       } else {
         toast.error(data.message || 'Failed to delete account. Please verify your password.');
       }
@@ -924,7 +927,7 @@ export default function AccountPage() {
                     <span>Confirm Permanent Account &amp; Personal Data Erasure</span>
                   </div>
                   <p className="text-[11px] text-stone-700 dark:text-stone-300 leading-relaxed">
-                    Under Section 12(3) of the DPDP Act 2023, this action will immediately revoke all access, permanently anonymize your profile records, and forfeit any remaining darshan coins (they are not refunded). This action is irreversible.
+                    Under Section 12(3) of the DPDP Act 2023, this action will immediately revoke all access, permanently anonymize your profile records, and forfeit any remaining wallet or top-up coins (top-up coins are strictly non-refundable normally and after deletion). For verified Pandit accounts, your deletion request enters Administrator approval until any pending earned payouts are settled.
                   </p>
                   {user?.hasPassword === false ? (
                     <p className="text-[11px] text-stone-700 dark:text-stone-300">

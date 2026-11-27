@@ -204,6 +204,7 @@ async function main() {
       profile = await prisma.streamerProfile.create({
         data: {
           userId: user.id,
+          slug: p.slug,
           bio: p.bio,
           specialties: p.specialties,
           languages: p.languages,
@@ -220,6 +221,7 @@ async function main() {
       profile = await prisma.streamerProfile.update({
         where: { id: profile.id },
         data: {
+          slug: profile.slug || p.slug,
           bio: p.bio,
           specialties: p.specialties,
           languages: p.languages,

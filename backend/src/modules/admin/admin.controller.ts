@@ -254,4 +254,32 @@ export class AdminController {
   async getPanditPayouts(@Param('streamerId') streamerId: string) {
     return this.adminService.getPanditPayouts(streamerId);
   }
+
+  // --- Pandit Account Deletion Requests ---
+  @Get('deletion-requests')
+  @ApiOperation({ summary: 'List pending pandit account deletion requests with payout settlement status' })
+  async getPendingDeletionRequests() {
+    return this.adminService.getPendingDeletionRequests();
+  }
+
+  @Post('deletion-requests/:userId/approve')
+  @ApiOperation({ summary: 'Approve pandit account deletion once all payout dues (dueCoins === 0) are settled' })
+  async approvePanditDeletion(
+    @Param('userId') userId: string,
+    @CurrentUser('id') adminId: string,
+    @CurrentUser('email') adminEmail: string,
+  ) {
+    return this.adminService.approvePanditDeletion(userId, adminId, adminEmail);
+  }
+
+  @Post('deletion-requests/:userId/reject')
+  @ApiOperation({ summary: 'Cancel/restore a pending account deletion request back to ACTIVE' })
+  async rejectPanditDeletion(
+    @Param('userId') userId: string,
+    @CurrentUser('id') adminId: string,
+    @CurrentUser('email') adminEmail: string,
+    @Body('reason') reason?: string,
+  ) {
+    return this.adminService.rejectPanditDeletion(userId, adminId, adminEmail, reason);
+  }
 }

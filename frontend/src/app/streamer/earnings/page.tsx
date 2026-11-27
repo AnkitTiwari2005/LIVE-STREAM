@@ -259,6 +259,10 @@ export default function StreamerEarningsPage() {
               </div>
             </div>
 
+            <div className="rounded-2xl border border-gold/20 bg-stone-900/70 p-4 text-xs text-stone-300 leading-relaxed">
+              <strong className="text-gold-pale">Payout Eligibility Notice:</strong> Only coins earned here through live broadcasts and Devotee Dakshina are eligible for cash payout settlement. Initial welcome/free or bonus coins in your personal wallet cannot be redeemed for payouts. If you request account deletion, pending payout dues are settled before an administrator finalizes erasure.
+            </div>
+
             {/* Conditional Legacy INR History Notice (pre-cutover direct Razorpay rows) */}
             {earnings?.legacyInr && earnings.legacyInr.count > 0 && (
               <div className="rounded-2xl border border-amber-300 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-950/40 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-amber-950 dark:text-amber-200">

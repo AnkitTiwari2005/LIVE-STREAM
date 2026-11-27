@@ -101,6 +101,7 @@ model User {
   isAgeConfirmed18Plus Boolean            @default(false) // Self-declaration
   consentRecordedAt    DateTime?          @db.Timestamptz
   termsVersionAccepted String?            @default("v1.0")
+  deletionRequestedAt  DateTime?          @db.Timestamptz // Pending pandit deletion request timestamp
   deletedAt            DateTime?          @db.Timestamptz // Soft delete
   createdAt            DateTime           @default(now()) @db.Timestamptz
   updatedAt            DateTime           @updatedAt @db.Timestamptz
@@ -132,6 +133,7 @@ model StreamerProfile {
   id               String       @id @default(uuid())
   userId           String       @unique
   user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slug             String?      @unique @db.VarChar(120)
   bio              String?      @db.Text
   languages        String[]     
   specialties      String[]     

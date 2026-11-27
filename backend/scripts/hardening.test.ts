@@ -146,30 +146,34 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
     'AuthService.verifyEmail and resetPassword exclude soft-deleted users',
   );
 
-  // StreamersService: exclude soft-deleted users from public profile lookups and follows
+  // StreamersService: resolve via permanent DB slug without name fallback, and exclude deleted/pending-deletion users
   const { StreamersService } = require('../src/modules/streamers/streamers.service');
-  const { NotFoundException } = require('@nestjs/common');
+  const { buildStreamerSlugBase, resolveUniqueStreamerSlug } = require('../src/common/streamer-slug.util');
+  const { NotFoundException, BadRequestException, UnauthorizedException } = require('@nestjs/common');
   const streamerQueries: any[] = [];
   const streamersPrisma: any = {
     streamerProfile: {
       findFirst: async (args: any) => {
         streamerQueries.push(args);
+        if (args?.where?.slug === 'rohit-tiwari') return { userId: 'u-other' };
         return null;
       },
       findUnique: async () => ({
         id: 'sp-deleted',
         userId: 'u-deleted',
-        user: { deletedAt: new Date() },
+        user: { deletedAt: new Date(), status: 'ACTIVE' },
       }),
     },
   };
   const streamersSvc = new StreamersService(streamersPrisma);
   try { await streamersSvc.getPublicProfile('ravi-pathak'); } catch {}
   ok(
-    streamerQueries.length === 2 &&
+    streamerQueries.length === 1 &&
+      Array.isArray(streamerQueries[0]?.where?.OR) &&
+      streamerQueries[0].where.OR.some((c: any) => c?.slug === 'ravi-pathak') &&
       streamerQueries[0]?.where?.user?.deletedAt === null &&
-      streamerQueries[1]?.where?.user?.deletedAt === null,
-    'StreamersService.getPublicProfile filters deleted users on direct and slug lookups',
+      streamerQueries[0]?.where?.user?.status?.not === 'DELETION_REQUESTED',
+    'StreamersService.getPublicProfile resolves permanent slug in one query excluding deleted/pending users',
   );
   let rejectedDeletedFollow = false;
   try {
@@ -178,6 +182,130 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
     rejectedDeletedFollow = err instanceof NotFoundException;
   }
   ok(rejectedDeletedFollow, 'StreamersService.follow rejects soft-deleted pandit profiles');
+
+  ok(
+    buildStreamerSlugBase('पंडित अरुण', '1234abcd-0000-0000-0000-000000000000') === 'pandit-1234abcd' &&
+      (await resolveUniqueStreamerSlug(streamersPrisma, 'Rohit Tiwari', 'u-new')) === 'rohit-tiwari-2',
+    'Streamer slug helper handles Devanagari fallback and deduplicates collisions',
+  );
+
+  // Pandit pending deletion + Admin approval gated by dueCoins === 0
+  const panditUpdates: any[] = [];
+  const panditAudits: any[] = [];
+  const panditLoginHash = await require('bcryptjs').hash('SecretPass123!', 4);
+  const panditPrisma: any = {
+    user: {
+      findFirst: async () => ({
+        id: 'u-pandit',
+        email: 'pandit@example.com',
+        passwordHash: panditLoginHash,
+        status: 'DELETION_REQUESTED',
+        deletedAt: null,
+      }),
+      findUnique: async () => ({
+        id: 'u-pandit',
+        email: 'pandit@example.com',
+        name: 'Pandit Test',
+        passwordHash: null,
+        role: 'STREAMER',
+        status: 'ACTIVE',
+        deletedAt: null,
+        streamerProfile: { id: 'sp-p', slug: 'pandit-test', kycStatus: 'APPROVED', kycDocuments: null },
+        wallet: { id: 'w-p', balanceCoins: 50, bonusCoins: 50, purchasedCoins: 0 },
+      }),
+      update: async (args: any) => { panditUpdates.push(args); return {}; },
+    },
+    streamerEarning: { aggregate: async () => ({ _sum: { coins: 300 } }) },
+    panditPayout: { aggregate: async () => ({ _sum: { coins: 150 } }) },
+    stream: { findMany: async () => [], updateMany: async () => ({ count: 0 }) },
+    privateAccessLink: { updateMany: async () => ({ count: 0 }) },
+    auditLog: { create: async (args: any) => { panditAudits.push(args); return {}; } },
+    $transaction: async (opsOrFn: any) => (typeof opsOrFn === 'function' ? opsOrFn(panditPrisma) : Promise.all(opsOrFn)),
+  };
+  const panditAuthSvc = new AuthService(panditPrisma, {} as any, {} as any, {} as any, {} as any);
+  const reqRes = await panditAuthSvc.deleteAccount('u-pandit');
+  ok(
+    reqRes.pendingApproval === true &&
+      reqRes.dueCoins === 150 &&
+      panditUpdates[0]?.data?.status === 'DELETION_REQUESTED' &&
+      panditUpdates[0]?.data?.deletionRequestedAt instanceof Date &&
+      panditUpdates[0]?.data?.deletedAt === undefined &&
+      panditAudits[0]?.data?.action === 'DPDP_PANDIT_DELETION_REQUESTED',
+    'Pandit deleteAccount queues pending admin approval without erasing payout-identifying details',
+  );
+
+  let pendingLoginBlocked = false;
+  try {
+    await panditAuthSvc.login({ email: 'pandit@example.com', password: 'SecretPass123!' });
+  } catch (err: any) {
+    pendingLoginBlocked = err instanceof UnauthorizedException;
+  }
+  ok(pendingLoginBlocked, 'Login blocks pandits with DELETION_REQUESTED status awaiting approval');
+
+  const { AdminService } = require('../src/modules/admin/admin.service');
+  let paidForApproval = 150;
+  let adminErasureState: any = {
+    id: 'u-pandit',
+    email: 'pandit@example.com',
+    name: 'Pandit Test',
+    role: 'STREAMER',
+    status: 'DELETION_REQUESTED',
+    deletedAt: null,
+    deletionRequestedAt: new Date(),
+    streamerProfile: { id: 'sp-p', slug: 'pandit-test', kycStatus: 'APPROVED', kycDocuments: [{ storageKey: 'kyc/p1_doc.pdf' }] },
+    wallet: { id: 'w-p', balanceCoins: 100, bonusCoins: 50, purchasedCoins: 50 },
+  };
+  const deletedKycKeys: string[] = [];
+  const adminApprovalUpdates: any[] = [];
+  const adminPrisma: any = {
+    $queryRaw: async () => [],
+    $transaction: async (opsOrFn: any) => (typeof opsOrFn === 'function' ? opsOrFn(adminPrisma) : Promise.all(opsOrFn)),
+    user: {
+      findUnique: async () => adminErasureState,
+      update: async (args: any) => { adminApprovalUpdates.push(args); adminErasureState = { ...adminErasureState, ...args.data }; return adminErasureState; },
+      count: async () => 2,
+    },
+    stream: { findMany: async () => [], updateMany: async () => ({ count: 0 }) },
+    streamerEarning: { aggregate: async () => ({ _sum: { coins: 300 } }) },
+    panditPayout: { aggregate: async () => ({ _sum: { coins: paidForApproval } }) },
+    dakshinaOffering: { updateMany: async () => ({ count: 0 }) },
+    privateAccessLink: { updateMany: async () => ({ count: 0 }) },
+    userWallet: { update: async () => ({}) },
+    auditLog: { create: async () => ({}) },
+  };
+  const adminSvc = new AdminService(adminPrisma, { endRoom: async () => true } as any, {} as any, {
+    deleteFile: async (k: string) => { deletedKycKeys.push(k); },
+  } as any);
+
+  let blockedByDueCoins = false;
+  try {
+    await adminSvc.approvePanditDeletion('u-pandit', 'admin-1', 'admin@paramdarshan.com');
+  } catch (err: any) {
+    blockedByDueCoins = err instanceof BadRequestException && /150\s+coins/i.test(err.message);
+  }
+  ok(
+    blockedByDueCoins && adminErasureState.deletedAt === null && deletedKycKeys.length === 0,
+    'AdminService.approvePanditDeletion blocks approval while dueCoins > 0',
+  );
+
+  paidForApproval = 300;
+  const approvedRes = await adminSvc.approvePanditDeletion('u-pandit', 'admin-1', 'admin@paramdarshan.com');
+  const finalUpdate = adminApprovalUpdates[adminApprovalUpdates.length - 1]?.data || {};
+  ok(
+    approvedRes.dueCoins === 0 &&
+      finalUpdate.deletedAt instanceof Date &&
+      finalUpdate.streamerProfile?.update?.slug === null &&
+      deletedKycKeys[0] === 'kyc/p1_doc.pdf',
+    'AdminService.approvePanditDeletion erases pandit & KYC once dueCoins === 0',
+  );
+
+  let rejectErasedBlocked = false;
+  try {
+    await adminSvc.rejectPanditDeletion('u-pandit', 'admin-1', 'admin@paramdarshan.com');
+  } catch (err: any) {
+    rejectErasedBlocked = err instanceof BadRequestException;
+  }
+  ok(rejectErasedBlocked, 'AdminService.rejectPanditDeletion refuses restoring an already erased account');
 
   console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);
 })();
